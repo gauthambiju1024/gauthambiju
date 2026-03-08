@@ -73,7 +73,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.8 }}
-          className="hidden md:block absolute right-[-120px] top-1/2 -translate-y-1/2 w-[420px] h-[420px] lg:w-[500px] lg:h-[500px]"
+          className="hidden md:block absolute right-[-120px] bottom-[-80px] w-[420px] h-[420px] lg:w-[500px] lg:h-[500px]"
         >
           <div className="w-full h-full rounded-full overflow-hidden opacity-60">
             <Globe />
