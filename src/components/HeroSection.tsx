@@ -41,7 +41,7 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground"
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground"
             >
               Technology should
             </motion.h1>
