@@ -50,7 +50,7 @@ const StorySection = () => {
                 { value: "100%", label: "Passion" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <span className="font-display text-2xl md:text-3xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
+                  <span className="font-handwritten text-3xl md:text-4xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
                     {stat.value}
                   </span>
                   <span className="font-mono text-[10px] tracking-widest uppercase text-card-foreground/30">
