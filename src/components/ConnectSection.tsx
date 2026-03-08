@@ -40,7 +40,7 @@ const ConnectSection = () => {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="font-body text-sm text-card-foreground/40 max-w-md mb-10 leading-relaxed"
+          className="font-handwritten text-base text-card-foreground/40 max-w-md mb-10 leading-relaxed"
         >
           I'm always excited to meet new people and explore interesting projects.
           Don't hesitate to reach out.
