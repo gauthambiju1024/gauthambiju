@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import Globe from "./Globe";
 
 const HeroSection = () => {
   return (
