@@ -234,6 +234,36 @@
     }
   }
 
+  /* Notebook page — stacked pages in a binder */
+  .notebook-page {
+    background: hsl(var(--notebook-paper));
+    border-radius: 1rem;
+    border: 3px solid hsl(var(--notebook-border));
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px hsl(var(--notebook-border) / 0.3),
+      0 25px 80px -12px hsl(0 0% 0% / 0.5),
+      0 8px 24px -4px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+  }
+
+  .notebook-page + .notebook-page {
+    margin-top: 8px;
+  }
+
+  /* Ribbon bookmark */
+  .ribbon-bookmark {
+    position: absolute;
+    right: -3px;
+    width: 32px;
+    height: 64px;
+    background: hsl(var(--primary));
+    border-radius: 0 0 4px 4px;
+    box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
+    z-index: 10;
+  }
+
   /* Card hover */
   .card-hover {
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
