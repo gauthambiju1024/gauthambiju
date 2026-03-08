@@ -19,9 +19,9 @@ const StorySection = () => {
             <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
               Background
             </p>
-            <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-card-foreground">
+            <h2 className="font-handwritten text-3xl md:text-5xl font-bold tracking-tight text-card-foreground">
               My
-              <span className="font-serif-i italic font-normal text-card-foreground/45 ml-2">journey</span>
+              <span className="font-handwritten font-normal text-card-foreground/45 ml-2">journey</span>
             </h2>
           </div>
 
