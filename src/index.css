@@ -1,0 +1,487 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    /* Dark charcoal background */
+    --background: 0 0% 10%;
+    --foreground: 40 20% 90%;
+
+    /* Cream notebook */
+    --card: 45 30% 94%;
+    --card-foreground: 20 15% 15%;
+
+    --popover: 45 30% 94%;
+    --popover-foreground: 20 15% 15%;
+
+    /* Terracotta accent */
+    --primary: 15 70% 50%;
+    --primary-foreground: 45 30% 94%;
+
+    /* Muted cream */
+    --secondary: 40 25% 88%;
+    --secondary-foreground: 20 15% 20%;
+
+    --muted: 40 20% 85%;
+    --muted-foreground: 20 10% 40%;
+
+    /* Terracotta accent */
+    --accent: 15 70% 50%;
+    --accent-foreground: 45 30% 94%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 25 20% 80%;
+    --input: 25 20% 80%;
+    --ring: 15 70% 50%;
+
+    --radius: 0.5rem;
+
+    /* Custom variables */
+    --notebook-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --font-handwritten: 'Caveat', cursive;
+    --font-serif: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Grid lines color */
+    --grid-line: 200 30% 85%;
+    --grid-line-accent: 0 60% 70%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 40 20% 90%;
+    --card: 45 30% 94%;
+    --card-foreground: 20 15% 15%;
+    --popover: 45 30% 94%;
+    --popover-foreground: 20 15% 15%;
+    --primary: 15 70% 50%;
+    --primary-foreground: 45 30% 94%;
+    --secondary: 40 25% 88%;
+    --secondary-foreground: 20 15% 20%;
+    --muted: 40 20% 85%;
+    --muted-foreground: 20 10% 40%;
+    --accent: 15 70% 50%;
+    --accent-foreground: 45 30% 94%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 25 20% 80%;
+    --input: 25 20% 80%;
+    --ring: 15 70% 50%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.3);
+    color: hsl(var(--card-foreground));
+  }
+}
+
+@layer components {
+  .font-handwritten {
+    font-family: var(--font-handwritten);
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .notebook-container {
+    background-color: hsl(var(--card));
+    box-shadow: var(--notebook-shadow);
+    position: relative;
+  }
+
+  .notebook-grid {
+    background-image: 
+      linear-gradient(hsl(var(--grid-line)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid-line)) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .notebook-margin {
+    position: absolute;
+    left: 60px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: hsl(var(--grid-line-accent) / 0.4);
+  }
+
+  .bookmark-ribbon {
+    position: absolute;
+    top: -10px;
+    right: 40px;
+    width: 30px;
+    height: 80px;
+    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+    z-index: 10;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.2);
+  }
+
+  .bookmark-ribbon-left {
+    position: absolute;
+    top: -10px;
+    left: 80px;
+    width: 24px;
+    height: 60px;
+    background: linear-gradient(180deg, hsl(var(--muted-foreground)), hsl(var(--muted-foreground) / 0.7));
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+    z-index: 10;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.15);
+  }
+
+  /* Sketchy underline with SVG-like draw effect */
+  .sketch-underline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .sketch-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: -2px;
+    right: -2px;
+    height: 4px;
+    background: hsl(var(--primary));
+    transform: rotate(-1deg) scaleX(0);
+    transform-origin: left;
+    border-radius: 2px;
+    animation: draw-underline 0.6s ease-out forwards;
+    animation-delay: 0.5s;
+  }
+
+  @keyframes draw-underline {
+    to {
+      transform: rotate(-1deg) scaleX(1);
+    }
+  }
+
+  /* Hover lift effect for cards */
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-6px) rotate(0.5deg);
+    box-shadow: 0 15px 40px -10px hsl(var(--primary) / 0.25);
+  }
+
+  /* Draggable sticker effect */
+  .sticker {
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .sticker:active {
+    cursor: grabbing;
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+  }
+
+  /* Paper tape decoration */
+  .tape {
+    position: relative;
+  }
+
+  .tape::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    width: 60px;
+    height: 24px;
+    background: linear-gradient(180deg, 
+      hsl(45 40% 85% / 0.9),
+      hsl(45 40% 80% / 0.9)
+    );
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* Polaroid photo style */
+  .polaroid {
+    background: white;
+    padding: 12px 12px 40px 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    transform: rotate(-2deg);
+    transition: transform 0.3s ease;
+  }
+
+  .polaroid:hover {
+    transform: rotate(0deg) scale(1.02);
+  }
+
+  /* Marquee animation */
+  .marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .marquee-content {
+    display: inline-flex;
+    animation: marquee 20s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Sketchy border effect */
+  .sketchy-border {
+    border: 2px solid hsl(var(--primary) / 0.3);
+    border-radius: 4px 8px 4px 8px;
+    position: relative;
+  }
+
+  .sketchy-border::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 1px dashed hsl(var(--primary) / 0.2);
+    border-radius: 6px 10px 6px 10px;
+    pointer-events: none;
+  }
+
+  /* Handwritten annotation */
+  .annotation {
+    position: relative;
+    display: inline-block;
+  }
+
+  .annotation::before {
+    content: '→';
+    position: absolute;
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: hsl(var(--primary));
+    font-family: var(--font-handwritten);
+    font-size: 1.5rem;
+    animation: point 1s ease-in-out infinite;
+  }
+
+  @keyframes point {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50% { transform: translateY(-50%) translateX(4px); }
+  }
+
+  /* Coffee stain decoration */
+  .coffee-stain {
+    position: relative;
+  }
+
+  .coffee-stain::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 40%,
+      hsl(30 40% 70% / 0.1) 45%,
+      hsl(30 40% 60% / 0.15) 50%,
+      transparent 55%
+    );
+    pointer-events: none;
+    right: -20px;
+    bottom: -20px;
+  }
+
+  /* Ink blot effect */
+  .ink-blot {
+    position: relative;
+  }
+
+  .ink-blot::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: hsl(var(--primary) / 0.6);
+    border-radius: 50% 60% 40% 70%;
+    right: 10px;
+    top: 10px;
+    filter: blur(1px);
+  }
+
+  /* Page curl effect */
+  .page-curl {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-curl::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(
+      135deg,
+      transparent 50%,
+      hsl(var(--card)) 50%,
+      hsl(40 25% 88%) 100%
+    );
+    box-shadow: -3px -3px 5px rgba(0,0,0,0.05);
+    border-radius: 0 0 0 10px;
+  }
+
+  /* Washi tape decorations */
+  .washi-tape {
+    position: absolute;
+    height: 28px;
+    background: repeating-linear-gradient(
+      45deg,
+      hsl(var(--primary) / 0.6),
+      hsl(var(--primary) / 0.6) 10px,
+      hsl(var(--primary) / 0.4) 10px,
+      hsl(var(--primary) / 0.4) 20px
+    );
+    opacity: 0.8;
+  }
+
+  .washi-tape-1 {
+    width: 100px;
+    top: 20px;
+    right: 100px;
+    transform: rotate(-8deg);
+  }
+
+  .washi-tape-2 {
+    width: 80px;
+    top: 60px;
+    left: 20px;
+    transform: rotate(5deg);
+    background: repeating-linear-gradient(
+      45deg,
+      hsl(200 50% 70% / 0.5),
+      hsl(200 50% 70% / 0.5) 10px,
+      hsl(200 50% 60% / 0.3) 10px,
+      hsl(200 50% 60% / 0.3) 20px
+    );
+  }
+
+  /* Sticky note style */
+  .sticky-note {
+    background: linear-gradient(
+      135deg,
+      hsl(50 80% 80%) 0%,
+      hsl(50 70% 75%) 100%
+    );
+    padding: 20px;
+    box-shadow: 
+      3px 3px 10px rgba(0,0,0,0.1),
+      inset 0 -2px 5px rgba(0,0,0,0.05);
+    transform: rotate(-1deg);
+    position: relative;
+  }
+
+  .sticky-note::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.3),
+      transparent
+    );
+  }
+
+  /* Notebook spiral binding */
+  .spiral-binding {
+    position: absolute;
+    left: 50px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 15px,
+      hsl(var(--muted-foreground) / 0.3) 15px,
+      hsl(var(--muted-foreground) / 0.3) 18px,
+      transparent 18px,
+      transparent 24px
+    );
+  }
+
+  /* Decorative doodle line */
+  .doodle-divider {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.3) 10%,
+      hsl(var(--primary) / 0.5) 50%,
+      hsl(var(--primary) / 0.3) 90%,
+      transparent
+    );
+    position: relative;
+  }
+
+  .doodle-divider::before {
+    content: '✦';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: hsl(var(--card));
+    padding: 0 8px;
+    color: hsl(var(--primary));
+    font-size: 1rem;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
