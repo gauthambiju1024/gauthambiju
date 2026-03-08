@@ -28,10 +28,6 @@ const ConnectSection = () => {
           <Globe />
         </div>
       </motion.div>
-      {/* Tape */}
-      <div className="absolute top-4 right-16 tape-strip px-3 py-1 hidden md:block" style={{ transform: 'rotate(-1.5deg)' }}>
-        <span className="font-handwritten text-sm text-card-foreground/40">page 03</span>
-      </div>
 
       <div ref={ref} className="md:ml-8">
         <motion.div

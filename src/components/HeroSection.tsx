@@ -69,15 +69,6 @@ const HeroSection = () => {
 
       </div>
 
-      {/* Decorative tape strip */}
-      <motion.div
-        initial={{ opacity: 0, rotate: -5 }}
-        animate={{ opacity: 1, rotate: -2 }}
-        transition={{ duration: 0.6, delay: 1.1 }}
-        className="absolute top-6 right-12 md:right-20 tape-strip px-4 py-1.5 hidden md:block z-20"
-      >
-        <span className="font-handwritten text-sm text-card-foreground/40">page 01</span>
-      </motion.div>
     </section>
   );
 };
