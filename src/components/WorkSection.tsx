@@ -94,7 +94,7 @@ const WorkSection = () => {
                     {project.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="font-mono text-[9px] tracking-wider uppercase text-card-foreground/25 px-2 py-0.5"
+                        className="font-handwritten text-xs tracking-wider uppercase text-card-foreground/25 px-2 py-0.5"
                         style={{ border: '1px solid hsl(30 20% 78% / 0.4)' }}
                       >
                         {tag}
