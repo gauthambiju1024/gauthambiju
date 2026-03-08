@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Mail, Github, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
+import Globe from "./Globe";
 
 const socialLinks = [
   { name: "Email", icon: Mail, href: "mailto:hello@gauthambiju.com", label: "hello@gauthambiju.com" },
