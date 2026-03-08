@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Mail, Github, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
+import Globe from "./Globe";
 
 const socialLinks = [
   { name: "Email", icon: Mail, href: "mailto:hello@gauthambiju.com", label: "hello@gauthambiju.com" },
@@ -14,7 +15,19 @@ const ConnectSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="connect" className="py-16 md:py-24 px-8 md:px-16 relative">
+    <section id="connect" className="py-16 md:py-24 px-8 md:px-16 relative overflow-hidden">
+      {/* Globe background */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2 }}
+        className="absolute -right-24 top-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[500px] lg:h-[500px] hidden md:block pointer-events-none"
+      >
+        <div className="w-full h-full rounded-full overflow-hidden opacity-40">
+          <Globe />
+        </div>
+      </motion.div>
       {/* Tape */}
       <div className="absolute top-4 right-16 tape-strip px-3 py-1 hidden md:block" style={{ transform: 'rotate(-1.5deg)' }}>
         <span className="font-handwritten text-sm text-card-foreground/40">page 03</span>
