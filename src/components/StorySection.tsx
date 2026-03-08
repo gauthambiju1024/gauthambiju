@@ -32,7 +32,7 @@ const StorySection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-5"
           >
-            <p className="font-serif-i italic text-lg md:text-xl text-card-foreground/55 leading-relaxed">
+            <p className="font-handwritten text-xl md:text-2xl text-card-foreground/55 leading-relaxed">
               From curiosity to creation.
             </p>
             <p className="font-body text-sm text-card-foreground/40 leading-relaxed">
