@@ -85,7 +85,7 @@ const WorkSection = () => {
                       {project.title}
                       <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                     </h3>
-                    <p className="font-body text-xs text-card-foreground/35 mt-0.5">{project.subtitle}</p>
+                    <p className="font-handwritten text-sm text-card-foreground/35 mt-0.5">{project.subtitle}</p>
                   </div>
                 </div>
 
