@@ -68,6 +68,20 @@ const HeroSection = () => {
           </motion.p>
         </motion.div>
 
+        {/* Portrait */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="hidden md:block flex-shrink-0 w-[340px] lg:w-[420px] relative z-0"
+        >
+          <img
+            src={heroPortrait}
+            alt="Gautham portrait sketch"
+            className="w-full h-auto mix-blend-multiply opacity-90"
+          />
+        </motion.div>
+
       </div>
 
     </section>
