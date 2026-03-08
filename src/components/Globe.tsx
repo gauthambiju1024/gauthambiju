@@ -8,7 +8,7 @@ const GLOBE_CONFIG: COBEOptions = {
   onRender: () => {},
   devicePixelRatio: 2,
   phi: 1.2,
-  theta: 0.15,
+  theta: -0.3,
   dark: 1,
   diffuse: 0.3,
   mapSamples: 16000,

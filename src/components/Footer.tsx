@@ -16,7 +16,7 @@ const Footer = () => {
         <span className="font-handwritten text-base text-card-foreground/30">
           Gautham Biju
         </span>
-        <span className="font-mono text-[10px] tracking-widest uppercase text-card-foreground/15">
+        <span className="font-handwritten text-sm tracking-widest uppercase text-card-foreground/15">
           {currentYear} All rights reserved
         </span>
       </div>

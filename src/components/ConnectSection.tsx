@@ -67,7 +67,7 @@ const ConnectSection = () => {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-card-foreground/18 hidden md:block">{link.label}</span>
+                <span className="font-handwritten text-sm text-card-foreground/18 hidden md:block">{link.label}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
               </div>
             </motion.a>

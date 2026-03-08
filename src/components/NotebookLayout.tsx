@@ -6,8 +6,8 @@ interface NotebookLayoutProps {
 
 const NotebookLayout = ({ children }: NotebookLayoutProps) => {
   return (
-    <div className="min-h-screen desk-pattern py-6 md:py-10 px-4 md:px-8 lg:px-16" style={{ background: 'hsl(20 15% 8%)' }}>
-      <div className="notebook notebook-grid max-w-5xl mx-auto relative">
+    <div className="min-h-screen desk-pattern py-4 md:py-6 px-2 md:px-4 lg:px-8" style={{ background: 'hsl(20 15% 8%)' }}>
+      <div className="notebook notebook-grid max-w-7xl mx-auto relative">
         {/* Spine */}
         <div className="notebook-spine hidden md:block" />
 

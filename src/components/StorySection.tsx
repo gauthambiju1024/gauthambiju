@@ -53,7 +53,7 @@ const StorySection = () => {
                   <span className="font-handwritten text-3xl md:text-4xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
                     {stat.value}
                   </span>
-                  <span className="font-mono text-[10px] tracking-widest uppercase text-card-foreground/30">
+                  <span className="font-handwritten text-sm tracking-widest uppercase text-card-foreground/30">
                     {stat.label}
                   </span>
                 </div>

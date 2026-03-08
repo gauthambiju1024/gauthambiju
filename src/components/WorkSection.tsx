@@ -101,7 +101,7 @@ const WorkSection = () => {
                       </span>
                     ))}
                   </div>
-                  <span className="font-mono text-[10px] text-card-foreground/15 hidden md:block">
+                  <span className="font-handwritten text-sm text-card-foreground/15 hidden md:block">
                     {project.year}
                   </span>
                 </div>

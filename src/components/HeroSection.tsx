@@ -62,7 +62,7 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.9 }}
-            className="font-mono text-[11px] tracking-wider text-card-foreground/30"
+            className="font-handwritten text-sm tracking-wider text-card-foreground/30"
           >
             Based remotely — Available worldwide
           </motion.p>
