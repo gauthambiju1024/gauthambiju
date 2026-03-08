@@ -1,45 +1,18 @@
-import { motion } from "framer-motion";
-import { Diamond } from "lucide-react";
-
-const items = [
-  { text: "Developer", isIcon: false },
-  { text: "", isIcon: true },
-  { text: "Creator", isIcon: false },
-  { text: "", isIcon: true },
-  { text: "Designer", isIcon: false },
-  { text: "", isIcon: true },
-  { text: "Problem Solver", isIcon: false },
-  { text: "", isIcon: true },
-  { text: "Tech Enthusiast", isIcon: false },
-  { text: "", isIcon: true },
-];
+const items = ["Developer", "Designer", "Creator", "Problem Solver", "Tech Enthusiast"];
 
 const MarqueeText = () => {
   return (
-    <div className="marquee-container py-6 border-y-2 border-dashed border-border overflow-hidden">
-      <motion.div 
-        className="marquee-content"
-        animate={{ x: [0, "-50%"] }}
-        transition={{ 
-          duration: 20, 
-          repeat: Infinity, 
-          ease: "linear" 
-        }}
-      >
-        {/* Double the content for seamless loop */}
-        {[...items, ...items].map((item, index) => (
-          <span
-            key={index}
-            className="mx-6 text-3xl md:text-4xl"
-          >
-            {item.isIcon ? (
-              <Diamond className="w-5 h-5 text-primary animate-spin-slow inline-block" />
-            ) : (
-              <span className="font-handwritten text-card-foreground">{item.text}</span>
-            )}
+    <div className="py-8 border-y border-foreground/5 overflow-hidden">
+      <div className="marquee-track">
+        {[...items, ...items, ...items, ...items].map((item, index) => (
+          <span key={index} className="flex items-center gap-8 mx-8 whitespace-nowrap">
+            <span className="font-display text-2xl md:text-3xl font-light tracking-tight text-foreground/15">
+              {item}
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
           </span>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 };
