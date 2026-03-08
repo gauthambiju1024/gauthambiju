@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import Globe from "./Globe";
 
 const HeroSection = () => {
   return (
@@ -68,17 +67,6 @@ const HeroSection = () => {
           </motion.p>
         </motion.div>
 
-        {/* Globe — partial, clipped on right */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, delay: 0.8 }}
-          className="hidden md:block absolute right-[-120px] bottom-[-80px] w-[420px] h-[420px] lg:w-[500px] lg:h-[500px]"
-        >
-          <div className="w-full h-full rounded-full overflow-hidden opacity-60">
-            <Globe />
-          </div>
-        </motion.div>
       </div>
 
       {/* Decorative tape strip */}
