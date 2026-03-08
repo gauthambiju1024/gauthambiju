@@ -62,7 +62,7 @@ const ConnectSection = () => {
             >
               <div className="flex items-center gap-3">
                 <link.icon className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
-                <span className="font-display text-sm font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
+                <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
                   {link.name}
                 </span>
               </div>
