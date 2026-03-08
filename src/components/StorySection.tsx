@@ -35,7 +35,7 @@ const StorySection = () => {
             <p className="font-handwritten text-xl md:text-2xl text-card-foreground/55 leading-relaxed">
               From curiosity to creation.
             </p>
-            <p className="font-body text-sm text-card-foreground/40 leading-relaxed">
+            <p className="font-handwritten text-base text-card-foreground/40 leading-relaxed">
               Every project, every line of code, every design decision has been a step
               in a journey of learning, growing, and building things that matter.
               I believe the best work comes from genuine curiosity and an unwillingness
