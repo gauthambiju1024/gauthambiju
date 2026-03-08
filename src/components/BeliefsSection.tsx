@@ -53,7 +53,7 @@ const BeliefsSection = () => {
               >
                 {belief.number}
               </span>
-              <h3 className="font-display text-lg md:text-xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+              <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                 {belief.title}
               </h3>
               <p className="font-body text-sm text-card-foreground/45 leading-relaxed max-w-lg">
