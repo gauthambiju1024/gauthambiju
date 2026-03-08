@@ -30,7 +30,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="font-mono text-xs tracking-[0.2em] uppercase text-card-foreground/40 mb-6"
+            className="font-handwritten text-base tracking-wide uppercase text-card-foreground/40 mb-6"
           >
             Developer / Designer / Creator
           </motion.p>
