@@ -25,8 +25,7 @@ const Navigation = () => {
     >
       <button
         onClick={() => scrollToSection("about")}
-        className="font-handwritten text-2xl font-bold tracking-tight"
-        style={{ color: 'hsl(8 68% 45%)' }}
+        className="font-handwritten text-2xl font-bold tracking-tight text-primary"
       >
         GB.
       </button>
@@ -46,8 +45,7 @@ const Navigation = () => {
             {activeSection === item.id && (
               <motion.div
                 layoutId="nav-underline"
-                className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
-                style={{ background: 'hsl(8 68% 45%)' }}
+                className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-primary"
                 transition={{ type: "spring", stiffness: 350, damping: 30 }}
               />
             )}
