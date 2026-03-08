@@ -77,7 +77,7 @@ const WorkSection = () => {
 
               <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex items-baseline gap-5">
-                  <span className="font-mono text-[10px] tracking-widest text-card-foreground/18 w-6">
+                  <span className="font-handwritten text-sm text-card-foreground/18 w-6">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
