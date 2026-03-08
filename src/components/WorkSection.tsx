@@ -81,7 +81,7 @@ const WorkSection = () => {
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <h3 className="font-display text-lg md:text-xl font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-2">
+                    <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-2">
                       {project.title}
                       <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                     </h3>
