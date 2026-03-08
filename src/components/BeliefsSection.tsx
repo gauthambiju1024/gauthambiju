@@ -49,7 +49,7 @@ const BeliefsSection = () => {
               style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.3)' }}
             >
               <span
-                className="absolute left-0 top-4 font-mono text-[10px] tracking-widest text-card-foreground/20"
+                className="absolute left-0 top-4 font-handwritten text-sm text-card-foreground/20"
               >
                 {belief.number}
               </span>
