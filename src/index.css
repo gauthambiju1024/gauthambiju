@@ -6,46 +6,48 @@
 
 @layer base {
   :root {
-    /* Dark desk surface — deep navy */
-    --background: 215 30% 10%;
-    --foreground: 210 20% 20%;
+    /* Paper background #F8F5F1 → hsl(36, 37%, 96%) */
+    --background: 220 15% 12%;
+    --foreground: 220 25% 20%;
 
-    /* Warm cream paper */
-    --card: 42 40% 93%;
-    --card-foreground: 215 20% 15%;
+    /* Paper surface #F8F5F1 */
+    --card: 36 37% 96%;
+    --card-foreground: 218 30% 21%;
 
-    --popover: 42 40% 93%;
-    --popover-foreground: 215 20% 15%;
+    --popover: 36 37% 96%;
+    --popover-foreground: 218 30% 21%;
 
-    /* Steel blue ink */
-    --primary: 210 45% 40%;
-    --primary-foreground: 42 40% 93%;
+    /* Sepia accent #806458 */
+    --primary: 16 21% 42%;
+    --primary-foreground: 36 37% 96%;
 
-    /* Muted blue-grey */
-    --secondary: 210 15% 85%;
-    --secondary-foreground: 215 20% 18%;
+    /* Light paper shadow #E3E6E8 */
+    --secondary: 210 8% 93%;
+    --secondary-foreground: 218 30% 21%;
 
-    --muted: 210 12% 82%;
-    --muted-foreground: 210 10% 45%;
+    --muted: 210 12% 87%;
+    --muted-foreground: 214 14% 50%;
 
-    --accent: 210 45% 40%;
-    --accent-foreground: 42 40% 93%;
+    /* Sweater blue #5B708C */
+    --accent: 214 21% 45%;
+    --accent-foreground: 36 37% 96%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 18% 78%;
-    --input: 210 18% 78%;
-    --ring: 210 45% 40%;
+    /* Grid #C3CDD6 */
+    --border: 210 16% 84%;
+    --input: 210 16% 84%;
+    --ring: 16 21% 42%;
 
     --radius: 0.5rem;
 
     /* Notebook-specific */
-    --notebook-border: 210 35% 38%;
-    --notebook-paper: 42 40% 93%;
-    --notebook-grid: 210 12% 86%;
-    --notebook-ruling: 210 30% 78%;
-    --ink: 215 18% 18%;
+    --notebook-border: 16 21% 42%;
+    --notebook-paper: 36 37% 96%;
+    --notebook-grid: 210 16% 84%;
+    --notebook-ruling: 210 16% 84%;
+    --ink: 218 30% 21%;
 
     /* Typography */
     --font-display: 'Space Grotesk', sans-serif;
