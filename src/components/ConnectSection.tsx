@@ -14,57 +14,61 @@ const ConnectSection = () => {
   const isInView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section id="connect" className="py-24 md:py-32 px-6 md:px-12 lg:px-20">
-      <div ref={ref} className="max-w-6xl mx-auto">
+    <section id="connect" className="py-16 md:py-24 px-8 md:px-16 relative">
+      {/* Tape */}
+      <div className="absolute top-4 right-16 tape-strip px-3 py-1 hidden md:block" style={{ transform: 'rotate(-1.5deg)' }}>
+        <span className="font-handwritten text-sm text-card-foreground/40">page 03</span>
+      </div>
+
+      <div ref={ref} className="md:ml-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mb-16 md:mb-20"
+          transition={{ duration: 0.5 }}
+          className="mb-10"
         >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-px bg-primary" />
-            <span className="font-mono text-xs tracking-[0.25em] uppercase text-primary">Contact</span>
-          </div>
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-foreground max-w-lg">
+          <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
+            Get in touch
+          </p>
+          <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-card-foreground max-w-md">
             Let's shape the
-            <br />
-            <span className="font-serif-i italic font-normal text-foreground/50">future together</span>
+            <span className="font-serif-i italic font-normal text-card-foreground/45 ml-2">future</span>
           </h2>
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="font-body text-sm text-foreground/40 max-w-md mb-14 leading-relaxed"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="font-body text-sm text-card-foreground/40 max-w-md mb-10 leading-relaxed"
         >
           I'm always excited to meet new people and explore interesting projects.
           Don't hesitate to reach out.
         </motion.p>
 
-        {/* Links as list */}
-        <div className="border-t border-foreground/10">
+        {/* Links */}
+        <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
           {socialLinks.map((link, index) => (
             <motion.a
               key={link.name}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.2 + index * 0.08 }}
-              className="group flex items-center justify-between py-5 border-b border-foreground/10 transition-colors duration-300 hover:border-primary/30"
+              transition={{ duration: 0.35, delay: 0.2 + index * 0.07 }}
+              className="group flex items-center justify-between py-4 transition-colors duration-300"
+              style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }}
             >
-              <div className="flex items-center gap-4">
-                <link.icon className="w-4 h-4 text-foreground/25 group-hover:text-primary transition-colors duration-300" />
-                <span className="font-display text-sm font-medium text-foreground/60 group-hover:text-foreground transition-colors duration-300">
+              <div className="flex items-center gap-3">
+                <link.icon className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
+                <span className="font-display text-sm font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
                   {link.name}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-foreground/20 hidden md:block">{link.label}</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-foreground/15 group-hover:text-primary transition-all duration-300 translate-y-0.5 group-hover:translate-y-0" />
+                <span className="font-mono text-xs text-card-foreground/18 hidden md:block">{link.label}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
               </div>
             </motion.a>
           ))}

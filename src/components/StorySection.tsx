@@ -6,56 +6,54 @@ const StorySection = () => {
   const isInView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="py-24 md:py-32 px-6 md:px-12 lg:px-20">
-      <div ref={ref} className="max-w-6xl mx-auto">
+    <section className="py-16 md:py-24 px-8 md:px-16">
+      <div ref={ref} className="md:ml-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
-          className="grid md:grid-cols-[1fr_1.2fr] gap-12 md:gap-20 items-start"
+          transition={{ duration: 0.6 }}
+          className="grid md:grid-cols-[1fr_1.4fr] gap-10 md:gap-16 items-start"
         >
           {/* Left */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-px bg-primary" />
-              <span className="font-mono text-xs tracking-[0.25em] uppercase text-primary">Background</span>
-            </div>
-            <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-2">
+            <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
+              Background
+            </p>
+            <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-card-foreground">
               My
-              <br />
-              <span className="font-serif-i italic font-normal text-foreground/50">journey</span>
+              <span className="font-serif-i italic font-normal text-card-foreground/45 ml-2">journey</span>
             </h2>
           </div>
 
           {/* Right */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-5"
           >
-            <p className="font-serif-i italic text-xl md:text-2xl text-foreground/60 leading-relaxed">
+            <p className="font-serif-i italic text-lg md:text-xl text-card-foreground/55 leading-relaxed">
               From curiosity to creation.
             </p>
-            <p className="font-body text-sm text-foreground/40 leading-relaxed">
+            <p className="font-body text-sm text-card-foreground/40 leading-relaxed">
               Every project, every line of code, every design decision has been a step
               in a journey of learning, growing, and building things that matter.
               I believe the best work comes from genuine curiosity and an unwillingness
               to settle for "good enough."
             </p>
 
-            {/* Stats row */}
-            <div className="grid grid-cols-3 gap-px bg-foreground/5 mt-10">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6 mt-8 pt-6" style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
               {[
                 { value: "3+", label: "Years" },
                 { value: "10+", label: "Projects" },
                 { value: "100%", label: "Passion" },
               ].map((stat) => (
-                <div key={stat.label} className="bg-background py-6 pr-4">
-                  <span className="font-display text-2xl md:text-3xl font-bold text-primary block">
+                <div key={stat.label}>
+                  <span className="font-display text-2xl md:text-3xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
                     {stat.value}
                   </span>
-                  <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-foreground/30">
+                  <span className="font-mono text-[10px] tracking-widest uppercase text-card-foreground/30">
                     {stat.label}
                   </span>
                 </div>
