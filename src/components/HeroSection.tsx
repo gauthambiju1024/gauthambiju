@@ -30,7 +30,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="font-mono text-xs tracking-[0.2em] uppercase text-card-foreground/40 mb-6"
+            className="font-handwritten text-base tracking-wide uppercase text-card-foreground/40 mb-6"
           >
             Developer / Designer / Creator
           </motion.p>
@@ -41,7 +41,7 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground"
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground"
             >
               Technology should
             </motion.h1>
@@ -51,7 +51,7 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="font-serif-i italic text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50"
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50"
             >
               feel human.
             </motion.h1>
@@ -62,7 +62,7 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.9 }}
-            className="font-mono text-[11px] tracking-wider text-card-foreground/30"
+            className="font-handwritten text-sm tracking-wider text-card-foreground/30"
           >
             Based remotely — Available worldwide
           </motion.p>
@@ -73,7 +73,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.8 }}
-          className="hidden md:block absolute right-[-120px] top-1/2 -translate-y-1/2 w-[420px] h-[420px] lg:w-[500px] lg:h-[500px]"
+          className="hidden md:block absolute right-[-120px] bottom-[-80px] w-[420px] h-[420px] lg:w-[500px] lg:h-[500px]"
         >
           <div className="w-full h-full rounded-full overflow-hidden opacity-60">
             <Globe />

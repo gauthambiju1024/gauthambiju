@@ -49,14 +49,14 @@ const BeliefsSection = () => {
               style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.3)' }}
             >
               <span
-                className="absolute left-0 top-4 font-mono text-[10px] tracking-widest text-card-foreground/20"
+                className="absolute left-0 top-4 font-handwritten text-sm text-card-foreground/20"
               >
                 {belief.number}
               </span>
-              <h3 className="font-display text-lg md:text-xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+              <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors duration-300">
                 {belief.title}
               </h3>
-              <p className="font-body text-sm text-card-foreground/45 leading-relaxed max-w-lg">
+              <p className="font-handwritten text-base text-card-foreground/45 leading-relaxed max-w-lg">
                 {belief.body}
               </p>
             </motion.div>

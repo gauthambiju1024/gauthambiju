@@ -30,9 +30,9 @@ const ConnectSection = () => {
           <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
             Get in touch
           </p>
-          <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-card-foreground max-w-md">
+          <h2 className="font-handwritten text-3xl md:text-5xl font-bold tracking-tight text-card-foreground max-w-md">
             Let's shape the
-            <span className="font-serif-i italic font-normal text-card-foreground/45 ml-2">future</span>
+            <span className="font-handwritten font-normal text-card-foreground/45 ml-2">future</span>
           </h2>
         </motion.div>
 
@@ -40,7 +40,7 @@ const ConnectSection = () => {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="font-body text-sm text-card-foreground/40 max-w-md mb-10 leading-relaxed"
+          className="font-handwritten text-base text-card-foreground/40 max-w-md mb-10 leading-relaxed"
         >
           I'm always excited to meet new people and explore interesting projects.
           Don't hesitate to reach out.
@@ -62,12 +62,12 @@ const ConnectSection = () => {
             >
               <div className="flex items-center gap-3">
                 <link.icon className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
-                <span className="font-display text-sm font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
+                <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
                   {link.name}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-card-foreground/18 hidden md:block">{link.label}</span>
+                <span className="font-handwritten text-sm text-card-foreground/18 hidden md:block">{link.label}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
               </div>
             </motion.a>

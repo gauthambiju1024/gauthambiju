@@ -19,9 +19,9 @@ const StorySection = () => {
             <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
               Background
             </p>
-            <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-card-foreground">
+            <h2 className="font-handwritten text-3xl md:text-5xl font-bold tracking-tight text-card-foreground">
               My
-              <span className="font-serif-i italic font-normal text-card-foreground/45 ml-2">journey</span>
+              <span className="font-handwritten font-normal text-card-foreground/45 ml-2">journey</span>
             </h2>
           </div>
 
@@ -32,10 +32,10 @@ const StorySection = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-5"
           >
-            <p className="font-serif-i italic text-lg md:text-xl text-card-foreground/55 leading-relaxed">
+            <p className="font-handwritten text-xl md:text-2xl text-card-foreground/55 leading-relaxed">
               From curiosity to creation.
             </p>
-            <p className="font-body text-sm text-card-foreground/40 leading-relaxed">
+            <p className="font-handwritten text-base text-card-foreground/40 leading-relaxed">
               Every project, every line of code, every design decision has been a step
               in a journey of learning, growing, and building things that matter.
               I believe the best work comes from genuine curiosity and an unwillingness
@@ -50,10 +50,10 @@ const StorySection = () => {
                 { value: "100%", label: "Passion" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <span className="font-display text-2xl md:text-3xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
+                  <span className="font-handwritten text-3xl md:text-4xl font-bold block" style={{ color: 'hsl(8 68% 45%)' }}>
                     {stat.value}
                   </span>
-                  <span className="font-mono text-[10px] tracking-widest uppercase text-card-foreground/30">
+                  <span className="font-handwritten text-sm tracking-widest uppercase text-card-foreground/30">
                     {stat.label}
                   </span>
                 </div>
