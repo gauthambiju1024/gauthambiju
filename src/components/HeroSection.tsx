@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import heroPortrait from "@/assets/hero-portrait.png";
 
 const HeroSection = () => {
   return (
