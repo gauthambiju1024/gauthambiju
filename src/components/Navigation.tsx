@@ -4,16 +4,27 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const el = document.getElementById(sectionId);
-    el?.scrollIntoView({ behavior: "smooth" });
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else {
+      setActiveSection(sectionId);
+      const el = document.getElementById(sectionId);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const navItems = [
     { id: "about", label: "about" },
     { id: "work", label: "work" },
+    { id: "blog", label: "blog", isRoute: true },
     { id: "connect", label: "connect" },
   ];
 
