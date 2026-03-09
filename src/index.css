@@ -110,6 +110,8 @@
   /* Notebook container */
   .notebook {
     background: hsl(var(--notebook-paper));
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
     border-radius: 1rem;
     border: 3px solid hsl(var(--notebook-border));
     position: relative;
@@ -189,14 +191,15 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: linear-gradient(
       135deg,
       transparent 50%,
-      hsl(var(--notebook-grid)) 50%,
+      hsl(var(--muted) / 0.8) 50%,
       hsl(var(--muted)) 100%
     );
+    box-shadow: -2px -2px 6px hsl(0 0% 0% / 0.06);
     z-index: 5;
     pointer-events: none;
   }
@@ -255,12 +258,13 @@
   .ribbon-bookmark {
     position: absolute;
     right: -3px;
-    width: 32px;
-    height: 64px;
+    width: 28px;
+    height: 52px;
     background: hsl(var(--primary));
-    border-radius: 0 0 4px 4px;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
     box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
     z-index: 10;
+    pointer-events: none;
   }
 
   /* Card hover */
