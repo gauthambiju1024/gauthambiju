@@ -57,7 +57,7 @@ const HeroSection = () => {
               Ideas are easy.
             </motion.h1>
           </div>
-          <div className="overflow-hidden mb-8">
+          <div className="mb-8">
             <motion.h1
               initial={{ y: 80 }}
               animate={{ y: 0 }}
