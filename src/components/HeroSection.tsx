@@ -62,7 +62,7 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50">
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50 whitespace-nowrap">
               
               <AnimatePresence mode="wait">
                 <motion.span
