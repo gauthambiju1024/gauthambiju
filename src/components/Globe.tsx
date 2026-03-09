@@ -13,10 +13,10 @@ const GLOBE_CONFIG: COBEOptions = {
   diffuse: 0.3,
   mapSamples: 16000,
   mapBrightness: 1.8,
-  // Sepia/paper tones matching the website
-  baseColor: [0.51, 0.39, 0.33], // Primary sepia hsl(16, 21%, 42%)
-  markerColor: [0.36, 0.44, 0.55], // Accent blue hsl(214, 21%, 45%)
-  glowColor: [0.51, 0.39, 0.33], // Primary sepia glow
+  // Blueish tones
+  baseColor: [0.25, 0.35, 0.55], // Soft blue
+  markerColor: [0.4, 0.5, 0.7], // Light blue markers
+  glowColor: [0.2, 0.3, 0.5], // Blue glow
   markers: [
     { location: [25.7895, 55.9432], size: 0.07 },
     { location: [23.2156, 72.6369], size: 0.07 },
