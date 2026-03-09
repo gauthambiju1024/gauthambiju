@@ -62,9 +62,9 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.9 }}
-            className="font-handwritten text-sm tracking-wider text-card-foreground/30">
+            className="text-sm tracking-wider text-card-foreground/30 font-mono">
             
-            Based remotely — Available worldwide
+            INDIA . + 5:30             
           </motion.p>
         </motion.div>
 
@@ -73,7 +73,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0">
+          className="hidden md:block flex-shrink-0 w-[340px] lg:w-[420px] relative z-0">
           
           <img
             src={heroPortrait}
