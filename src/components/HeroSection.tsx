@@ -70,8 +70,8 @@ const HeroSection = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -20, opacity: 0 }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block underline decoration-primary decoration-[3px] underline-offset-4"
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="inline-block font-bold font-sans text-card-foreground relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
                 >
                   {rotatingWords[wordIndex]}
                 </motion.span>
