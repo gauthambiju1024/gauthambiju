@@ -47,7 +47,7 @@ const Navigation = () => {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => scrollToSection(item.id)}
+            onClick={() => (item as any).isRoute ? navigate('/blog') : scrollToSection(item.id)}
             className="relative px-4 py-2 font-handwritten text-xl transition-colors duration-300"
             style={{
               color: activeSection === item.id
