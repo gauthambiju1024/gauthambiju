@@ -1,6 +1,11 @@
-const items = ["Developer", "Designer", "Creator", "Problem Solver", "Tech Enthusiast"];
+import { useSiteContent } from "@/hooks/useSiteData";
+
+const defaultItems = ["Developer", "Designer", "Creator", "Problem Solver", "Tech Enthusiast"];
 
 const MarqueeText = () => {
+  const { value } = useSiteContent('marquee', 'items');
+  const items = (value as string[] | null) ?? defaultItems;
+
   return (
     <div className="py-5 overflow-hidden" style={{ borderTop: '1px solid hsl(30 20% 78% / 0.5)', borderBottom: '1px solid hsl(30 20% 78% / 0.5)' }}>
       <div className="marquee-track">
