@@ -64,15 +64,15 @@ const HeroSection = () => {
 
           <motion.div variants={item} className="mb-8">
             <h1 className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50 whitespace-nowrap">
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="wait">
                 <motion.span
                   key={rotatingWords[wordIndex]}
-                  initial={{ y: 24, opacity: 0, filter: 'blur(4px)' }}
-                  animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                  exit={{ y: -24, opacity: 0, filter: 'blur(4px)' }}
-                  transition={{ type: "spring", stiffness: 200, damping: 22 }}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className="inline-block font-bold font-sans text-card-foreground relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
-                  style={{ willChange: 'transform, opacity, filter' }}
+                  style={{ willChange: 'transform, opacity' }}
                 >
                   {rotatingWords[wordIndex]}
                 </motion.span>

@@ -121,12 +121,9 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.15);
   }
 
-  /* Grid paper background */
+  /* Grid paper background — grid removed for clean look */
   .notebook-grid {
-    background-image:
-      linear-gradient(hsl(var(--notebook-grid)) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--notebook-grid)) 1px, transparent 1px);
-    background-size: 24px 24px;
+    /* plain paper, no grid lines */
   }
 
   /* Ruled lines */

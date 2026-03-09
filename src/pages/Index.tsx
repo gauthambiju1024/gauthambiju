@@ -84,7 +84,16 @@ const Index = () => {
           <div className="relative z-[1]">
             {groups.map((group, gi) => (
               <div key={gi}>
-                {gi > 0 && <div className="section-divider" />}
+              {gi > 0 && (
+                  <motion.div
+                    className="section-divider"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    whileInView={{ scaleX: 1, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transformOrigin: 'left center' }}
+                  />
+              )}
                 {group.map((key) => {
                   const Component = sectionMap[key];
                   if (!Component) return null;
