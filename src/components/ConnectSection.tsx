@@ -2,21 +2,30 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Mail, Github, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
 import Globe from "./Globe";
+import { useSocialLinks } from "@/hooks/useSiteData";
 
-const socialLinks = [
-  { name: "Email", icon: Mail, href: "mailto:hello@gauthambiju.com", label: "hello@gauthambiju.com" },
-  { name: "GitHub", icon: Github, href: "https://github.com", label: "github.com" },
-  { name: "LinkedIn", icon: Linkedin, href: "https://linkedin.com", label: "linkedin.com" },
-  { name: "Twitter", icon: Twitter, href: "https://twitter.com", label: "twitter.com" },
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Mail, Github, Linkedin, Twitter,
+};
+
+const defaultLinks = [
+  { name: "Email", icon: "Mail", url: "mailto:hello@gauthambiju.com", label: "hello@gauthambiju.com" },
+  { name: "GitHub", icon: "Github", url: "https://github.com", label: "github.com" },
+  { name: "LinkedIn", icon: "Linkedin", url: "https://linkedin.com", label: "linkedin.com" },
+  { name: "Twitter", icon: "Twitter", url: "https://twitter.com", label: "twitter.com" },
 ];
 
 const ConnectSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const { links: dbLinks } = useSocialLinks();
+
+  const links = dbLinks.length > 0
+    ? dbLinks.map(l => ({ name: l.name, icon: l.icon, url: l.url, label: l.label ?? '' }))
+    : defaultLinks;
 
   return (
     <section id="connect" className="py-16 md:py-24 px-8 md:px-16 relative overflow-hidden">
-      {/* Globe background */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
@@ -55,32 +64,34 @@ const ConnectSection = () => {
           Don't hesitate to reach out.
         </motion.p>
 
-        {/* Links */}
         <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
-          {socialLinks.map((link, index) => (
-            <motion.a
-              key={link.name}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 16 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.35, delay: 0.2 + index * 0.07 }}
-              className="group flex items-center justify-between py-4 transition-colors duration-300"
-              style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }}
-            >
-              <div className="flex items-center gap-3">
-                <link.icon className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
-                <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
-                  {link.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-handwritten text-sm text-card-foreground/18 hidden md:block">{link.label}</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
-              </div>
-            </motion.a>
-          ))}
+          {links.map((link, index) => {
+            const IconComp = iconMap[link.icon] ?? Mail;
+            return (
+              <motion.a
+                key={link.name}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 16 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.35, delay: 0.2 + index * 0.07 }}
+                className="group flex items-center justify-between py-4 transition-colors duration-300"
+                style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <IconComp className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
+                  <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">
+                    {link.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-handwritten text-sm text-card-foreground/18 hidden md:block">{link.label}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
+                </div>
+              </motion.a>
+            );
+          })}
         </div>
       </div>
     </section>

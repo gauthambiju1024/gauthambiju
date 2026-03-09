@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const el = document.getElementById(sectionId);
-    el?.scrollIntoView({ behavior: "smooth" });
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        el?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else {
+      setActiveSection(sectionId);
+      const el = document.getElementById(sectionId);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const navItems = [
     { id: "about", label: "about" },
     { id: "work", label: "work" },
+    { id: "blog", label: "blog", isRoute: true },
     { id: "connect", label: "connect" },
   ];
 
@@ -35,7 +47,7 @@ const Navigation = () => {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => scrollToSection(item.id)}
+            onClick={() => (item as any).isRoute ? navigate('/blog') : scrollToSection(item.id)}
             className="relative px-4 py-2 font-handwritten text-xl transition-colors duration-300"
             style={{
               color: activeSection === item.id
