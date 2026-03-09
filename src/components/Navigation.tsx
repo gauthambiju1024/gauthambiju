@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
