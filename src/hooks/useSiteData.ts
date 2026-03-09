@@ -68,3 +68,17 @@ export function useSocialLinks() {
 
   return { links, loading };
 }
+
+// Homepage sections hook
+export function useHomepageSections() {
+  const [sections, setSections] = useState<{ section_key: string; page_group: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('homepage_sections').select('section_key, page_group')
+      .eq('is_visible', true).order('sort_order')
+      .then(({ data }) => { setSections((data as any[]) ?? []); setLoading(false); });
+  }, []);
+
+  return { sections, loading };
+}
