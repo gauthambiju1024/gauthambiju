@@ -13,10 +13,16 @@ const sectionIds = navItems.map(n => n.id);
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Scroll-spy via IntersectionObserver
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   useEffect(() => {
     if (location.pathname !== '/') return;
 
@@ -56,8 +62,11 @@ const Navigation = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="sticky top-0 z-50 flex items-center justify-between px-8 md:px-16 py-5 max-w-7xl mx-auto backdrop-blur-md"
-      style={{ background: 'hsl(var(--background) / 0.85)' }}
+      className="sticky top-0 z-50 flex items-center justify-between px-8 md:px-16 py-5 max-w-7xl mx-auto backdrop-blur-md transition-all duration-300"
+      style={{
+        background: 'hsl(var(--background) / 0.85)',
+        borderBottom: scrolled ? '1px solid hsl(var(--border) / 0.15)' : '1px solid transparent',
+      }}
     >
       <button
         onClick={() => scrollToSection("about")}

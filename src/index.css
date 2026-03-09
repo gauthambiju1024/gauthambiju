@@ -191,14 +191,15 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: linear-gradient(
       135deg,
       transparent 50%,
-      hsl(var(--notebook-grid)) 50%,
+      hsl(var(--muted) / 0.8) 50%,
       hsl(var(--muted)) 100%
     );
+    box-shadow: -2px -2px 6px hsl(0 0% 0% / 0.06);
     z-index: 5;
     pointer-events: none;
   }
