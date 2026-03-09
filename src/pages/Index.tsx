@@ -6,6 +6,7 @@ import MarqueeText from "@/components/MarqueeText";
 import BeliefsSection from "@/components/BeliefsSection";
 import WorkSection from "@/components/WorkSection";
 import StorySection from "@/components/StorySection";
+import BlogSection from "@/components/BlogSection";
 import ConnectSection from "@/components/ConnectSection";
 import Footer from "@/components/Footer";
 import { useHomepageSections } from "@/hooks/useSiteData";
@@ -16,6 +17,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   beliefs: BeliefsSection,
   work: WorkSection,
   story: StorySection,
+  blog: BlogSection,
   connect: ConnectSection,
   footer: Footer,
 };
@@ -24,6 +26,7 @@ const sectionMap: Record<string, React.ComponentType> = {
 const sectionAnchors: Record<string, string> = {
   hero: 'about',
   work: 'work',
+  blog: 'blog',
   connect: 'connect',
 };
 
