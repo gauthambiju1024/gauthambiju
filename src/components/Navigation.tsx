@@ -9,7 +9,7 @@ const navItems = [
   { id: "connect", label: "connect" },
 ];
 
-const sectionIds = navItems.filter(n => !n.isRoute).map(n => n.id);
+const sectionIds = navItems.map(n => n.id);
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
