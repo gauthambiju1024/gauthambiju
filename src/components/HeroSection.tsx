@@ -6,15 +6,13 @@ const rotatingWords = ["Systems", "Products", "Markets", "Technology"];
 
 const HeroSection = () => {
   const [wordIndex, setWordIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 4000);
+    }, 2500);
     return () => clearInterval(interval);
   }, []);
-
   return (
     <section
       id="about"
@@ -54,20 +52,9 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] tracking-tight text-card-foreground my-[16px]"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <span 
-                className={`font-serif font-black transition-all duration-300 ${
-                  isHovered 
-                    ? 'underline decoration-primary decoration-[3px] underline-offset-4' 
-                    : ''
-                }`}
-              >
-                Ideas
-              </span>
-              <span className="font-handwritten font-bold"> are easy.</span>
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground my-[16px]">
+              
+              Ideas are easy.
             </motion.h1>
           </div>
           <div className="overflow-hidden mb-8">
@@ -80,10 +67,10 @@ const HeroSection = () => {
               <AnimatePresence mode="wait">
                 <motion.span
                   key={rotatingWords[wordIndex]}
-                  initial={{ y: 30, opacity: 0, filter: "blur(4px)" }}
-                  animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                  exit={{ y: -30, opacity: 0, filter: "blur(4px)" }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   className="inline-block underline decoration-primary decoration-[3px] underline-offset-4"
                 >
                   {rotatingWords[wordIndex]}
@@ -109,7 +96,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0">
+          className="hidden md:block flex-shrink-0 w-[340px] lg:w-[420px] relative z-0">
           
           <img
             src={heroPortrait}
@@ -120,8 +107,8 @@ const HeroSection = () => {
 
       </div>
 
-    </section>
-  );
+    </section>);
+
 };
 
 export default HeroSection;
