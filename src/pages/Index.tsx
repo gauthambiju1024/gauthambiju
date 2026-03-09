@@ -32,11 +32,6 @@ const Index = () => {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
-  const allKeys = useMemo(() => {
-    if (loading) return ['hero', 'marquee', 'beliefs', 'work', 'story', 'connect', 'footer'];
-    return sections.map(s => s.section_key);
-  }, [sections, loading]);
-
   // Group into visual clusters for dividers (by page_group)
   const groups = useMemo(() => {
     if (loading) return [['hero', 'marquee', 'beliefs'], ['work', 'story'], ['connect', 'footer']];
