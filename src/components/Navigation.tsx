@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 const navItems = [
   { id: "about", label: "about" },
   { id: "work", label: "work" },
-  { id: "blog", label: "blog", isRoute: true },
+  { id: "blog", label: "blog" },
   { id: "connect", label: "connect" },
 ];
 
