@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom';
 import { useBlogPost } from '@/hooks/useSiteData';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -52,8 +54,10 @@ export default function BlogPostPage() {
             ))}
           </div>
 
-          <div className="font-handwritten text-lg text-card-foreground/60 leading-relaxed whitespace-pre-wrap">
-            {post.content}
+          <div className="prose prose-stone max-w-none font-handwritten text-card-foreground/60 prose-headings:font-handwritten prose-headings:text-card-foreground prose-a:text-primary prose-img:rounded-lg prose-pre:bg-muted prose-code:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content ?? ''}
+            </ReactMarkdown>
           </div>
         </motion.div>
       </article>

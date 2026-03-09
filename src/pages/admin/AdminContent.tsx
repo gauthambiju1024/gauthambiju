@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 type ContentMap = Record<string, Json>;
 
@@ -20,14 +21,11 @@ export default function AdminContent() {
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     const { data } = await supabase.from('site_content').select('*');
     if (!data) return;
-
     for (const row of data) {
       const val = row.value as any;
       if (row.section === 'hero' && row.key === 'main') setHeroContent(val);
@@ -67,6 +65,14 @@ export default function AdminContent() {
               <div><Label>Name</Label><Input value={(heroContent as any).name ?? ''} onChange={e => setHeroContent({ ...heroContent, name: e.target.value })} /></div>
               <div><Label>Tagline</Label><Input value={(heroContent as any).tagline ?? ''} onChange={e => setHeroContent({ ...heroContent, tagline: e.target.value })} /></div>
               <div><Label>Location</Label><Input value={(heroContent as any).location ?? ''} onChange={e => setHeroContent({ ...heroContent, location: e.target.value })} /></div>
+              <div>
+                <Label>Hero Portrait</Label>
+                <ImageUpload
+                  value={(heroContent as any).portrait ?? ''}
+                  onChange={url => setHeroContent({ ...heroContent, portrait: url })}
+                  folder="hero"
+                />
+              </div>
               <div>
                 <Label>Rotating Words (one per line)</Label>
                 <Textarea rows={4} value={rotatingWords.join('\n')} onChange={e => setRotatingWords(e.target.value.split('\n').filter(Boolean))} />

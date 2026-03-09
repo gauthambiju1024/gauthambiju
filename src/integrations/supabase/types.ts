@@ -56,6 +56,36 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_sections: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_visible: boolean
+          label: string
+          page_group: string
+          section_key: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean
+          label: string
+          page_group?: string
+          section_key: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean
+          label?: string
+          page_group?: string
+          section_key?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string | null

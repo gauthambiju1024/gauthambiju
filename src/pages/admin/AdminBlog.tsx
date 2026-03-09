@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import ImageUpload from '@/components/admin/ImageUpload';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type BlogPost = Tables<'blog_posts'>;
 
@@ -27,6 +31,7 @@ export default function AdminBlog() {
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [form, setForm] = useState<TablesInsert<'blog_posts'>>(emptyPost);
   const [tagsInput, setTagsInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchPosts = async () => {
     const { data } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
@@ -76,6 +81,19 @@ export default function AdminBlog() {
     fetchPosts();
   };
 
+  const insertImageAtCursor = (url: string) => {
+    const ta = textareaRef.current;
+    const markdown = `![image](${url})`;
+    if (ta) {
+      const start = ta.selectionStart;
+      const before = (form.content ?? '').slice(0, start);
+      const after = (form.content ?? '').slice(ta.selectionEnd);
+      setForm({ ...form, content: before + markdown + after });
+    } else {
+      setForm({ ...form, content: (form.content ?? '') + '\n' + markdown });
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -115,7 +133,7 @@ export default function AdminBlog() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Post' : 'New Post'}</DialogTitle>
           </DialogHeader>
@@ -123,9 +141,38 @@ export default function AdminBlog() {
             <div><Label>Title</Label><Input value={form.title} onChange={e => { setForm({ ...form, title: e.target.value, slug: editing ? form.slug : slugify(e.target.value) }); }} /></div>
             <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} /></div>
             <div><Label>Excerpt</Label><Input value={form.excerpt ?? ''} onChange={e => setForm({ ...form, excerpt: e.target.value })} /></div>
-            <div><Label>Cover Image URL</Label><Input value={form.cover_image ?? ''} onChange={e => setForm({ ...form, cover_image: e.target.value })} /></div>
+            <div>
+              <Label>Cover Image</Label>
+              <ImageUpload value={form.cover_image ?? ''} onChange={url => setForm({ ...form, cover_image: url })} folder="blog" />
+            </div>
             <div><Label>Tags (comma separated)</Label><Input value={tagsInput} onChange={e => setTagsInput(e.target.value)} /></div>
-            <div><Label>Content (Markdown)</Label><Textarea rows={12} value={form.content ?? ''} onChange={e => setForm({ ...form, content: e.target.value })} /></div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Content (Markdown)</Label>
+                <ImageUpload
+                  value=""
+                  onChange={insertImageAtCursor}
+                  folder="blog"
+                  className="inline-flex"
+                />
+              </div>
+              <Tabs defaultValue="write">
+                <TabsList className="mb-2">
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="write">
+                  <Textarea ref={textareaRef} rows={14} value={form.content ?? ''} onChange={e => setForm({ ...form, content: e.target.value })} className="font-mono text-sm" />
+                </TabsContent>
+                <TabsContent value="preview">
+                  <div className="border rounded-md p-4 min-h-[280px] prose prose-stone max-w-none text-sm prose-headings:font-handwritten">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content ?? '*Nothing to preview*'}</ReactMarkdown>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
             <div className="flex items-center gap-2">
               <Switch checked={form.is_published ?? false} onCheckedChange={v => setForm({ ...form, is_published: v })} />
               <Label>Published</Label>

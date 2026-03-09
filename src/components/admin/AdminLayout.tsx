@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { LayoutDashboard, FolderOpen, FileText, Type, Link2, LogOut } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, FileText, Type, Link2, Layers, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/admin/blog', icon: FileText, label: 'Blog' },
   { to: '/admin/content', icon: Type, label: 'Content' },
   { to: '/admin/links', icon: Link2, label: 'Links' },
+  { to: '/admin/sections', icon: Layers, label: 'Sections' },
 ];
 
 export default function AdminLayout() {
