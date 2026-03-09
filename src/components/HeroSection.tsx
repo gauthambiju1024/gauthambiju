@@ -1,7 +1,18 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
 
+const rotatingWords = ["Systems", "Products", "Markets", "Technology"];
+
 const HeroSection = () => {
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <section
       id="about"
