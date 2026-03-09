@@ -8,7 +8,7 @@ const MarqueeText = () => {
 
   return (
     <div className="py-5 overflow-hidden" style={{ borderTop: '1px solid hsl(30 20% 78% / 0.5)', borderBottom: '1px solid hsl(30 20% 78% / 0.5)' }}>
-      <div className="marquee-track">
+      <div className="marquee-track" style={{ willChange: 'transform' }}>
         {[...items, ...items, ...items, ...items].map((item, index) => (
           <span key={index} className="flex items-center gap-6 mx-6 whitespace-nowrap">
             <span className="font-handwritten text-xl md:text-2xl text-card-foreground/20">

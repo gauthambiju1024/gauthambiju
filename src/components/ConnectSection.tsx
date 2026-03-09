@@ -1,4 +1,4 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Mail, Github, Linkedin, Twitter, ArrowUpRight } from "lucide-react";
 import Globe from "./Globe";
@@ -16,21 +16,26 @@ const defaultLinks = [
 ];
 
 const ConnectSection = () => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const ref = useRef<HTMLDivElement>(null!);
   const { links: dbLinks } = useSocialLinks();
-
   const links = dbLinks.length > 0
     ? dbLinks.map(l => ({ name: l.name, icon: l.icon, url: l.url, label: l.label ?? '' }))
     : defaultLinks;
 
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end 0.6"],
+  });
+
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+  const headerY = useTransform(scrollYProgress, [0, 0.2], [30, 0]);
+  const globeY = useTransform(scrollYProgress, [0, 1], [60, -40]);
+
   return (
-    <section id="connect" className="py-16 md:py-24 px-8 md:px-16 relative overflow-hidden">
+    <section className="py-16 md:py-24 px-8 md:px-16 relative overflow-hidden">
+      {/* Globe with parallax */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2 }}
+        style={{ y: globeY, willChange: 'transform' }}
         className="absolute -right-24 top-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[500px] lg:h-[500px] hidden md:block pointer-events-none"
       >
         <div className="w-full h-full rounded-full overflow-hidden opacity-40">
@@ -40,9 +45,7 @@ const ConnectSection = () => {
 
       <div ref={ref} className="md:ml-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
+          style={{ opacity: headerOpacity, y: headerY }}
           className="mb-10"
         >
           <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
@@ -55,9 +58,9 @@ const ConnectSection = () => {
         </motion.div>
 
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.4, delay: 0.15 }}
+          style={{
+            opacity: useTransform(scrollYProgress, [0.1, 0.3], [0, 1]),
+          }}
           className="font-handwritten text-base text-card-foreground/40 max-w-md mb-10 leading-relaxed"
         >
           I'm always excited to meet new people and explore interesting projects.
@@ -67,18 +70,21 @@ const ConnectSection = () => {
         <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
           {links.map((link, index) => {
             const IconComp = iconMap[link.icon] ?? Mail;
+            const start = 0.25 + index * 0.1;
+            const end = start + 0.15;
             return (
               <motion.a
                 key={link.name}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 16 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.35, delay: 0.2 + index * 0.07 }}
+                style={{
+                  opacity: useTransform(scrollYProgress, [start, end], [0, 1]),
+                  y: useTransform(scrollYProgress, [start, end], [20, 0]),
+                }}
                 className="group flex items-center justify-between py-4 transition-colors duration-300"
-                style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }}
               >
+                <div style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }} className="absolute left-0 right-0 bottom-0" />
                 <div className="flex items-center gap-3">
                   <IconComp className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
                   <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">

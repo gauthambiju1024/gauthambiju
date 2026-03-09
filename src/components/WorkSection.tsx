@@ -1,4 +1,4 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useProjects } from "@/hooks/useSiteData";
@@ -10,24 +10,28 @@ const fallbackProjects = [
 ];
 
 const WorkSection = () => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const ref = useRef<HTMLDivElement>(null!);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { projects: dbProjects, loading } = useProjects();
-
   const projects = dbProjects.length > 0 ? dbProjects : (loading ? [] : fallbackProjects);
 
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end 0.6"],
+  });
+
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+  const headerY = useTransform(scrollYProgress, [0, 0.15], [30, 0]);
+
   return (
-    <section id="work" className="py-16 md:py-24 px-8 md:px-16 relative">
+    <section className="py-16 md:py-24 px-8 md:px-16 relative">
       <div className="absolute top-4 left-16 tape-strip px-3 py-1 hidden md:block" style={{ transform: 'rotate(1deg)' }}>
         <span className="font-handwritten text-sm text-card-foreground/40">page 02</span>
       </div>
 
       <div ref={ref} className="md:ml-8">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
+          style={{ opacity: headerOpacity, y: headerY }}
           className="mb-12"
         >
           <p className="font-handwritten text-xl mb-3" style={{ color: 'hsl(8 68% 45%)' }}>
@@ -40,59 +44,64 @@ const WorkSection = () => {
         </motion.div>
 
         <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
-          {projects.map((project, index) => (
-            <motion.a
-              key={project.id}
-              href={project.url || '#'}
-              target={project.url && project.url !== '#' ? '_blank' : undefined}
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 24 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.1 * index }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              className="group block py-6 md:py-8 relative"
-              style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }}
-            >
-              <motion.div
-                className="absolute inset-0 -mx-4 rounded-sm"
-                style={{ background: 'hsl(8 68% 45% / 0.04)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: hoveredIndex === index ? 1 : 0 }}
-                transition={{ duration: 0.25 }}
-              />
-              <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="flex items-baseline gap-5">
-                  <span className="font-handwritten text-sm text-card-foreground/18 w-6">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-2">
-                      {project.title}
-                      <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                    </h3>
-                    <p className="font-handwritten text-sm text-card-foreground/35 mt-0.5">{project.subtitle}</p>
+          {projects.map((project, index) => {
+            const start = 0.15 + index * 0.12;
+            const end = start + 0.18;
+            return (
+              <motion.a
+                key={project.id}
+                href={project.url || '#'}
+                target={project.url && project.url !== '#' ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                style={{
+                  opacity: useTransform(scrollYProgress, [start, end], [0, 1]),
+                  y: useTransform(scrollYProgress, [start, end], [30, 0]),
+                }}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className="group block py-6 md:py-8 relative"
+              >
+                <div style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.4)' }} className="absolute bottom-0 left-0 right-0" />
+                <motion.div
+                  className="absolute inset-0 -mx-4 rounded-sm"
+                  style={{ background: 'hsl(8 68% 45% / 0.04)' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: hoveredIndex === index ? 1 : 0 }}
+                  transition={{ duration: 0.25 }}
+                />
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="flex items-baseline gap-5">
+                    <span className="font-handwritten text-sm text-card-foreground/18 w-6">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-2">
+                        {project.title}
+                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                      </h3>
+                      <p className="font-handwritten text-sm text-card-foreground/35 mt-0.5">{project.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 ml-11 md:ml-0">
+                    <div className="flex gap-1.5">
+                      {(project.tags ?? []).map((tag) => (
+                        <span key={tag} className="font-handwritten text-xs tracking-wider uppercase text-card-foreground/25 px-2 py-0.5" style={{ border: '1px solid hsl(30 20% 78% / 0.4)' }}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="font-handwritten text-sm text-card-foreground/15 hidden md:block">{project.year}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 ml-11 md:ml-0">
-                  <div className="flex gap-1.5">
-                    {(project.tags ?? []).map((tag) => (
-                      <span key={tag} className="font-handwritten text-xs tracking-wider uppercase text-card-foreground/25 px-2 py-0.5" style={{ border: '1px solid hsl(30 20% 78% / 0.4)' }}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="font-handwritten text-sm text-card-foreground/15 hidden md:block">{project.year}</span>
-                </div>
-              </div>
-            </motion.a>
-          ))}
+              </motion.a>
+            );
+          })}
         </div>
 
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          style={{
+            opacity: useTransform(scrollYProgress, [0.8, 1], [0, 1]),
+          }}
           className="mt-8 font-handwritten text-base text-card-foreground/25 text-center"
         >
           More projects in progress...
