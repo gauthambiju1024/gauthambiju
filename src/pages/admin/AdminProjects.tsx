@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import ImageUpload from '@/components/admin/ImageUpload';
 
 type Project = Tables<'projects'>;
 
@@ -22,6 +23,7 @@ export default function AdminProjects() {
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<TablesInsert<'projects'>>(emptyProject);
   const [tagsInput, setTagsInput] = useState('');
+  const [thumbnail, setThumbnail] = useState('');
 
   const fetchProjects = async () => {
     const { data } = await supabase.from('projects').select('*').order('sort_order');
@@ -34,6 +36,7 @@ export default function AdminProjects() {
     setEditing(null);
     setForm(emptyProject);
     setTagsInput('');
+    setThumbnail('');
     setDialogOpen(true);
   };
 
@@ -41,6 +44,7 @@ export default function AdminProjects() {
     setEditing(p);
     setForm({ title: p.title, subtitle: p.subtitle, tags: p.tags, year: p.year, url: p.url, sort_order: p.sort_order, is_active: p.is_active });
     setTagsInput((p.tags ?? []).join(', '));
+    setThumbnail('');
     setDialogOpen(true);
   };
 
@@ -121,6 +125,10 @@ export default function AdminProjects() {
               <div><Label>Sort Order</Label><Input type="number" value={form.sort_order ?? 0} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} /></div>
             </div>
             <div><Label>URL</Label><Input value={form.url ?? ''} onChange={e => setForm({ ...form, url: e.target.value })} /></div>
+            <div>
+              <Label>Thumbnail</Label>
+              <ImageUpload value={thumbnail} onChange={setThumbnail} folder="projects" />
+            </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_active ?? true} onCheckedChange={v => setForm({ ...form, is_active: v })} />
               <Label>Active</Label>
