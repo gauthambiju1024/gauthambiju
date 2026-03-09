@@ -13,7 +13,7 @@ const HeroSection = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="max-w-3xl md:ml-8 relative z-10 flex-1">
+          className="max-w-3xl md:ml-8 relative z-10 flex-1 my-0">
           
           {/* Handwritten name */}
           <motion.p
@@ -22,7 +22,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="font-handwritten text-2xl md:text-3xl mb-2 text-primary">
             
-            Gautham
+            Gautham Biju  
           </motion.p>
 
           {/* Role */}
@@ -41,9 +41,9 @@ const HeroSection = () => {
               initial={{ y: 80 }}
               animate={{ y: 0 }}
               transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground">
+              className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground my-[16px]">
               
-              Technology should
+              Ideas are easy.
             </motion.h1>
           </div>
           <div className="overflow-hidden mb-8">
@@ -53,7 +53,7 @@ const HeroSection = () => {
               transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50">
               
-              feel human.
+              Systems change the world.
             </motion.h1>
           </div>
 
@@ -73,7 +73,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="hidden md:block flex-shrink-0 w-[420px] lg:w-[520px] relative z-0">
+          className="hidden md:block flex-shrink-0 w-[340px] lg:w-[420px] relative z-0">
           
           <img
             src={heroPortrait}
