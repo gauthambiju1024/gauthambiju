@@ -6,6 +6,7 @@ import MarqueeText from "@/components/MarqueeText";
 import BeliefsSection from "@/components/BeliefsSection";
 import WorkSection from "@/components/WorkSection";
 import StorySection from "@/components/StorySection";
+import BlogSection from "@/components/BlogSection";
 import ConnectSection from "@/components/ConnectSection";
 import Footer from "@/components/Footer";
 import { useHomepageSections } from "@/hooks/useSiteData";
@@ -16,6 +17,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   beliefs: BeliefsSection,
   work: WorkSection,
   story: StorySection,
+  blog: BlogSection,
   connect: ConnectSection,
   footer: Footer,
 };
@@ -24,6 +26,7 @@ const sectionMap: Record<string, React.ComponentType> = {
 const sectionAnchors: Record<string, string> = {
   hero: 'about',
   work: 'work',
+  blog: 'blog',
   connect: 'connect',
 };
 
@@ -81,7 +84,16 @@ const Index = () => {
           <div className="relative z-[1]">
             {groups.map((group, gi) => (
               <div key={gi}>
-                {gi > 0 && <div className="section-divider" />}
+              {gi > 0 && (
+                  <motion.div
+                    className="section-divider"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    whileInView={{ scaleX: 1, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transformOrigin: 'left center' }}
+                  />
+              )}
                 {group.map((key) => {
                   const Component = sectionMap[key];
                   if (!Component) return null;

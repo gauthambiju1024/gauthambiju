@@ -5,11 +5,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 const navItems = [
   { id: "about", label: "about" },
   { id: "work", label: "work" },
-  { id: "blog", label: "blog", isRoute: true },
+  { id: "blog", label: "blog" },
   { id: "connect", label: "connect" },
 ];
 
-const sectionIds = navItems.filter(n => !n.isRoute).map(n => n.id);
+const sectionIds = navItems.map(n => n.id);
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState("about");
@@ -71,7 +71,7 @@ const Navigation = () => {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => item.isRoute ? navigate('/blog') : scrollToSection(item.id)}
+            onClick={() => scrollToSection(item.id)}
             className="relative px-4 py-2 font-handwritten text-xl transition-colors duration-300"
             style={{
               color: activeSection === item.id
