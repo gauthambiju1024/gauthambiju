@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, ArrowUp, ArrowDown } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Save, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Section {
@@ -19,6 +18,8 @@ interface Section {
 
 export default function AdminSections() {
   const [sections, setSections] = useState<Section[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
 
   const fetchSections = async () => {
     const { data } = await supabase
@@ -34,13 +35,34 @@ export default function AdminSections() {
     setSections(s => s.map(sec => sec.id === id ? { ...sec, is_visible: !sec.is_visible } : sec));
   };
 
-  const move = (index: number, dir: -1 | 1) => {
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
     const arr = [...sections];
-    const target = index + dir;
-    if (target < 0 || target >= arr.length) return;
-    [arr[index], arr[target]] = [arr[target], arr[index]];
+    const [moved] = arr.splice(dragIndex, 1);
+    arr.splice(dropIndex, 0, moved);
     arr.forEach((s, i) => (s.sort_order = i));
     setSections(arr);
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setOverIndex(null);
   };
 
   const saveAll = async () => {
@@ -54,8 +76,6 @@ export default function AdminSections() {
     toast.success('Sections saved');
   };
 
-  const groups = ['about', 'work', 'connect'];
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -65,16 +85,22 @@ export default function AdminSections() {
 
       <div className="space-y-2">
         {sections.map((s, i) => (
-          <Card key={s.id} className={!s.is_visible ? 'opacity-50' : ''}>
+          <Card
+            key={s.id}
+            draggable
+            onDragStart={() => handleDragStart(i)}
+            onDragOver={(e) => handleDragOver(e, i)}
+            onDrop={(e) => handleDrop(e, i)}
+            onDragEnd={handleDragEnd}
+            className={[
+              'transition-all duration-150',
+              dragIndex === i ? 'opacity-40 scale-95' : '',
+              overIndex === i && dragIndex !== i ? 'border-primary ring-2 ring-primary/30' : '',
+              !s.is_visible ? 'opacity-50' : '',
+            ].join(' ')}
+          >
             <CardContent className="flex items-center gap-4 py-3 px-4">
-              <div className="flex flex-col gap-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => move(i, -1)} disabled={i === 0}>
-                  <ArrowUp className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => move(i, 1)} disabled={i === sections.length - 1}>
-                  <ArrowDown className="h-3 w-3" />
-                </Button>
-              </div>
+              <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-card-foreground">{s.label}</p>
                 <p className="text-xs text-muted-foreground">{s.section_key} · {s.page_group}</p>
