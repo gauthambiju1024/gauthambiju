@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
@@ -40,7 +40,8 @@ const sectionReveal = {
 
 const Index = () => {
   const { sections, loading } = useHomepageSections();
-  const { scrollYProgress } = useScroll();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ container: scrollRef });
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
   const groups = useMemo(() => {
@@ -59,16 +60,17 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen desk-pattern" style={{ background: 'hsl(var(--background))' }}>
+      <div className="h-screen overflow-hidden desk-pattern" style={{ background: 'hsl(var(--background))' }}>
+        {/* Progress bar — fixed to top of viewport */}
         <motion.div
           className="fixed top-0 left-0 right-0 h-[3px] bg-primary origin-left z-[100]"
           style={{ scaleX }}
         />
 
-        <Navigation />
-
-        <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pb-8">
-          <div className="notebook notebook-grid relative">
+        {/* Notebook outer frame */}
+        <div className="h-full flex items-center justify-center px-2 md:px-4 lg:px-8 py-3 md:py-5">
+          <div className="notebook notebook-grid relative w-full max-w-7xl h-[calc(100vh-1.5rem)] md:h-[calc(100vh-2.5rem)]">
+            {/* Fixed decorations */}
             <div className="notebook-spine hidden md:block" />
             <div className="notebook-margin hidden md:block" />
             <div className="notebook-holes hidden md:block">
@@ -81,7 +83,13 @@ const Index = () => {
             <div className="ribbon-bookmark" style={{ top: '120px', opacity: 0.5, width: '24px' }} />
             <div className="page-fold" />
 
-            <div className="relative z-[1]">
+            {/* Scrollable interior */}
+            <div
+              ref={scrollRef}
+              className="notebook-scroll-area relative z-[1] h-full overflow-y-auto"
+            >
+              <Navigation scrollContainer={scrollRef} />
+
               {groups.map((group, gi) => (
                 <div key={gi}>
                   {gi > 0 && (

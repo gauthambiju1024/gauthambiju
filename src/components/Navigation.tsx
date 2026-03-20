@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, RefObject } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -11,20 +11,27 @@ const navItems = [
 
 const sectionIds = navItems.map(n => n.id);
 
-const Navigation = () => {
+interface NavigationProps {
+  scrollContainer?: RefObject<HTMLDivElement>;
+}
+
+const Navigation = ({ scrollContainer }: NavigationProps) => {
   const [activeSection, setActiveSection] = useState("about");
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const container = scrollContainer?.current;
+    if (!container) return;
+    const onScroll = () => setScrolled(container.scrollTop > 20);
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [scrollContainer]);
 
   useEffect(() => {
     if (location.pathname !== '/') return;
+    const root = scrollContainer?.current ?? null;
 
     const observers: IntersectionObserver[] = [];
 
@@ -37,23 +44,29 @@ const Navigation = () => {
             setActiveSection(id);
           }
         },
-        { rootMargin: "-40% 0px -55% 0px" }
+        { root, rootMargin: "-40% 0px -55% 0px" }
       );
       observer.observe(el);
       observers.push(observer);
     });
 
     return () => observers.forEach(o => o.disconnect());
-  }, [location.pathname]);
+  }, [location.pathname, scrollContainer]);
 
   const scrollToSection = (sectionId: string) => {
     if (location.pathname !== '/') {
       navigate('/');
       setTimeout(() => {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+        const el = document.getElementById(sectionId);
+        el?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } else {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+      const el = document.getElementById(sectionId);
+      if (el && scrollContainer?.current) {
+        el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        el?.scrollIntoView({ behavior: "smooth" });
+      }
     }
   };
 
@@ -64,14 +77,14 @@ const Navigation = () => {
       transition={{ duration: 0.5, delay: 0.3 }}
       className="sticky top-0 z-50 flex items-center justify-between px-8 md:px-16 py-5 max-w-7xl mx-auto backdrop-blur-md transition-all duration-300"
       style={{
-        background: 'hsl(var(--background) / 0.85)',
-        borderBottom: scrolled ? '1px solid hsl(var(--border) / 0.15)' : '1px solid transparent',
+        background: 'hsl(var(--notebook-paper) / 0.92)',
+        borderBottom: scrolled ? '1px solid hsl(var(--border) / 0.3)' : '1px solid transparent',
       }}
     >
       <button
         onClick={() => scrollToSection("about")}
         className="font-handwritten text-2xl font-bold tracking-tight"
-        style={{ color: 'hsl(var(--notebook-paper))' }}
+        style={{ color: 'hsl(var(--ink))' }}
       >
         GB.
       </button>
@@ -85,7 +98,7 @@ const Navigation = () => {
             style={{
               color: activeSection === item.id
                 ? 'hsl(var(--primary))'
-                : 'hsl(var(--notebook-paper) / 0.6)',
+                : 'hsl(var(--ink) / 0.5)',
             }}
           >
             {item.label}

@@ -331,3 +331,26 @@
     text-wrap: balance;
   }
 }
+
+/* Custom scrollbar for notebook interior */
+.notebook-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--notebook-border) / 0.3) transparent;
+}
+
+.notebook-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notebook-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notebook-scroll-area::-webkit-scrollbar-thumb {
+  background: hsl(var(--notebook-border) / 0.3);
+  border-radius: 3px;
+}
+
+.notebook-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--notebook-border) / 0.5);
+}
