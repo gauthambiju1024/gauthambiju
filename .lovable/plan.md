@@ -1,56 +1,45 @@
 
 
-## Plan: Scrollable Notebook Interior with Fixed Outer Shell
+## Plan: Fixed Header, Smoother Word Animation, Functional Bookmarks
 
-The goal is to make the notebook look like a real diary — the outer notebook border, spine, holes, and ribbons stay fixed on screen, while only the content inside scrolls. Like looking down at an open book on a desk.
+### 1. Move Navigation Outside Scroll Area
 
-### Architecture
-
-```text
-┌─── viewport (desk background, no scroll) ────────────┐
-│                                                        │
-│  ┌─── notebook (fixed frame) ──────────────────────┐  │
-│  │ spine │ holes │ margin │ ribbon │ page-fold      │  │
-│  │       │       │        │        │                │  │
-│  │  ┌─── scrollable inner ──────────────────────┐  │  │
-│  │  │  Navigation (sticky inside scroll)        │  │  │
-│  │  │  Hero                                     │  │  │
-│  │  │  Marquee                                  │  │  │
-│  │  │  Beliefs                                  │  │  │
-│  │  │  ...                                      │  │  │
-│  │  │  Footer                                   │  │  │
-│  │  └───────────────────────────────────────────┘  │  │
-│  │                                                  │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                        │
-└────────────────────────────────────────────────────────┘
-```
-
-### Changes
+Currently `Navigation` is inside the scrollable `notebook-scroll-area` div (sticky). Move it **above** the scroll container but still inside the notebook frame, so it never scrolls.
 
 **`src/pages/Index.tsx`**:
-- Make the outer wrapper `h-screen overflow-hidden` (no page-level scroll)
-- The `.notebook` container becomes `h-[calc(100vh-3rem)]` (or similar) with fixed positioning characteristics
-- Move all section content into an inner `div` with `overflow-y-auto` that scrolls independently
-- Navigation moves inside the scrollable area (sticky within it)
-- Scroll progress bar tracks the inner scroll container instead of `window`
-- Use `useScroll({ container: scrollRef })` targeting the inner scrollable div
-- IntersectionObserver `root` in Navigation also targets this container
+- Move `<Navigation scrollContainer={scrollRef} />` out of the scroll div, place it between the decorations and the scroll area
+- Give the scroll area `h-[calc(100%-nav_height)]` to account for the fixed nav above it
 
-**`src/components/Navigation.tsx`**:
-- Accept an optional `scrollContainer` ref prop
-- Use that container for `scrollIntoView` calls and `IntersectionObserver` root
-- Sticky within the scroll container (already works with `sticky top-0`)
+### 2. Smoother Word Rotation
+
+The current `clipPath` reveal is functional but abrupt. Make it more elegant:
+
+**`src/components/HeroSection.tsx`**:
+- Increase duration from `0.55s` to `0.7s`
+- Use a softer easing curve `[0.16, 1, 0.3, 1]` (decelerate-heavy)
+- Add a subtle `opacity` cross-fade (initial: 0, animate: 1, exit: 0) layered with the clipPath for a gentler feel
+- Increase interval from `3500ms` to `4000ms` to give more reading time
+
+### 3. Functional Bookmark Ribbons
+
+Make the two ribbon bookmarks clickable — they scroll to specific sections within the notebook.
+
+**`src/pages/Index.tsx`**:
+- Replace the static `<div className="ribbon-bookmark">` elements with `<button>` elements
+- First ribbon scrolls to `#work`, second to `#blog`
+- Add `pointer-events: auto`, `cursor: pointer`, remove `pointer-events: none` from CSS
+- Add hover effect (slight translateX or scale)
+- Add a tooltip on hover showing the target section name
 
 **`src/index.css`**:
-- Add a utility class for the inner scroll area with custom scrollbar styling (thin, paper-colored) so it blends with the diary aesthetic
-- Notebook holes get `position: fixed` relative to the notebook frame (they already are absolute to notebook)
+- Add `.ribbon-bookmark-interactive` variant with hover states and `cursor: pointer`
+- Keep `pointer-events: none` only on the non-interactive variant
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/pages/Index.tsx` | Outer `h-screen overflow-hidden`, inner scroll container with ref, pass ref to `useScroll` |
-| `src/components/Navigation.tsx` | Accept scroll container ref, use as IntersectionObserver root and scroll target |
-| `src/index.css` | Custom scrollbar styles for the notebook interior |
+| `src/pages/Index.tsx` | Move nav outside scroll area, make ribbons functional buttons |
+| `src/components/HeroSection.tsx` | Softer word animation timing |
+| `src/index.css` | Interactive ribbon styles |
 
