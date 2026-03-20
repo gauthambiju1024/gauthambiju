@@ -69,7 +69,7 @@ const Index = () => {
 
         {/* Notebook outer frame */}
         <div className="h-full flex items-center justify-center px-2 md:px-4 lg:px-8 py-3 md:py-5">
-          <div className="notebook notebook-grid relative w-full max-w-7xl h-[calc(100vh-1.5rem)] md:h-[calc(100vh-2.5rem)]">
+          <div className="notebook notebook-grid relative w-full max-w-7xl h-[calc(100vh-1.5rem)] md:h-[calc(100vh-2.5rem)] flex flex-col">
             {/* Fixed decorations */}
             <div className="notebook-spine hidden md:block" />
             <div className="notebook-margin hidden md:block" />
@@ -79,16 +79,36 @@ const Index = () => {
               <div className="notebook-hole" style={{ top: '66%' }} />
               <div className="notebook-hole" style={{ bottom: '80px' }} />
             </div>
-            <div className="ribbon-bookmark" style={{ top: '40px' }} />
-            <div className="ribbon-bookmark" style={{ top: '120px', opacity: 0.5, width: '24px' }} />
+            <button
+              className="ribbon-bookmark ribbon-bookmark-interactive"
+              style={{ top: '40px' }}
+              onClick={() => {
+                const el = document.getElementById('work');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              title="Work"
+            />
+            <button
+              className="ribbon-bookmark ribbon-bookmark-interactive"
+              style={{ top: '120px', opacity: 0.7, width: '24px' }}
+              onClick={() => {
+                const el = document.getElementById('blog');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              title="Blog"
+            />
             <div className="page-fold" />
+
+            {/* Fixed navigation */}
+            <div className="relative z-[2] flex-shrink-0">
+              <Navigation scrollContainer={scrollRef} />
+            </div>
 
             {/* Scrollable interior */}
             <div
               ref={scrollRef}
-              className="notebook-scroll-area relative z-[1] h-full overflow-y-auto"
+              className="notebook-scroll-area relative z-[1] flex-1 overflow-y-auto"
             >
-              <Navigation scrollContainer={scrollRef} />
 
               {groups.map((group, gi) => (
                 <div key={gi}>

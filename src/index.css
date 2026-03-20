@@ -265,6 +265,23 @@
     box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
     z-index: 10;
     pointer-events: none;
+    border: none;
+    padding: 0;
+  }
+
+  .ribbon-bookmark-interactive {
+    pointer-events: auto;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  }
+
+  .ribbon-bookmark-interactive:hover {
+    transform: translateX(-3px);
+    box-shadow: -4px 2px 8px hsl(0 0% 0% / 0.25);
+  }
+
+  .ribbon-bookmark-interactive:active {
+    transform: translateX(-1px) scale(0.97);
   }
 
   /* Card hover */
