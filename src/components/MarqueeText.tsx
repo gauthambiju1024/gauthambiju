@@ -13,9 +13,8 @@ const MarqueeText = () => {
     >
       <div
         className="marquee-track group-hover:[animation-play-state:paused]"
-        style={{ willChange: 'transform' }}
       >
-        {[...items, ...items, ...items, ...items].map((item, index) => (
+        {[...items, ...items, ...items].map((item, index) => (
           <span key={index} className="flex items-center gap-6 mx-6 whitespace-nowrap">
             <span className="font-handwritten text-xl md:text-2xl text-card-foreground/20">
               {item}

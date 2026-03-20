@@ -37,12 +37,12 @@ const LinkRow = ({ link, index, scrollYProgress }: LinkRowProps) => {
       className="group flex items-center justify-between py-4 transition-colors duration-300 relative"
     >
       <div className="flex items-center gap-3">
-        <IconComp className="w-4 h-4 text-card-foreground/20 group-hover:text-primary transition-colors duration-300" />
+        <IconComp className="w-4 h-4 text-card-foreground/20 group-hover:text-primary group-hover:rotate-12 transition-all duration-300" />
         <span className="font-handwritten text-lg font-medium text-card-foreground/55 group-hover:text-card-foreground transition-colors duration-300">{link.name}</span>
       </div>
       <div className="flex items-center gap-2">
         <span className="font-handwritten text-sm text-card-foreground/18 hidden md:block">{link.label}</span>
-        <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300" />
+        <ArrowUpRight className="w-3.5 h-3.5 text-card-foreground/12 group-hover:text-primary transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
     </motion.a>
   );
@@ -64,7 +64,7 @@ const ConnectSection = () => {
   return (
     <section className="py-16 md:py-24 px-8 md:px-16 relative overflow-hidden">
       <motion.div
-        style={{ y: globeY, willChange: 'transform' }}
+        style={{ y: globeY }}
         className="absolute -right-24 top-1/2 -translate-y-1/2 w-[400px] h-[400px] lg:w-[500px] lg:h-[500px] hidden md:block pointer-events-none"
       >
         <div className="w-full h-full rounded-full overflow-hidden opacity-40">
