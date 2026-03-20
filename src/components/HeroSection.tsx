@@ -66,14 +66,14 @@ const HeroSection = () => {
             <h1 className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50 whitespace-nowrap">
               <span className="inline-block overflow-hidden align-bottom" style={{ height: 'clamp(2.5rem,6vw,4.5rem)' }}>
                 <AnimatePresence mode="wait">
-                  <motion.span
+                   <motion.span
                     key={rotatingWords[wordIndex]}
-                    initial={{ clipPath: 'inset(0 0 100% 0)' }}
-                    animate={{ clipPath: 'inset(0 0 0% 0)' }}
-                    exit={{ clipPath: 'inset(100% 0 0 0)' }}
-                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    initial={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
+                    animate={{ clipPath: 'inset(0 0 0% 0)', opacity: 1 }}
+                    exit={{ clipPath: 'inset(100% 0 0 0)', opacity: 0 }}
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                     className="inline-block font-bold font-sans text-card-foreground relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
-                    style={{ willChange: 'clip-path' }}
+                    style={{ willChange: 'clip-path, opacity' }}
                   >
                     {rotatingWords[wordIndex]}
                   </motion.span>
