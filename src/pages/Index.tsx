@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
-import { motion, useScroll } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import MarqueeText from "@/components/MarqueeText";
