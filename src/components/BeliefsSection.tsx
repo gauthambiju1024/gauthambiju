@@ -17,8 +17,6 @@ const BeliefItem = ({ belief, index, scrollYProgress }: { belief: typeof default
   return (
     <motion.div style={{ opacity, y }} className="group relative pl-10 py-4">
       <div style={{ borderBottom: '1px solid hsl(30 20% 78% / 0.3)' }} className="absolute inset-0 pointer-events-none" />
-      {/* Left accent border on hover */}
-      <div className="absolute left-0 top-4 bottom-4 w-[2px] bg-primary/0 group-hover:bg-primary/40 transition-all duration-500 rounded-full" />
       <span className="absolute left-0 top-4 font-handwritten text-sm text-card-foreground/20">{belief.number}</span>
       <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors duration-300">{belief.title}</h3>
       <p className="font-handwritten text-base text-card-foreground/45 leading-relaxed max-w-lg">{belief.body}</p>

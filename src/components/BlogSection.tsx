@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Calendar } from "lucide-react";
 import { useBlogPosts } from "@/hooks/useSiteData";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const fallbackPosts = [
   { id: "1", title: "Coming soon", excerpt: "Blog posts will appear here.", published_at: null, slug: "#", tags: [] },
@@ -25,7 +24,7 @@ const PostRow = ({ post, index, scrollYProgress }: PostRowProps) => {
     <motion.div style={{ opacity, y }}>
       <Link
         to={`/blog/${post.slug}`}
-        className="group flex items-start justify-between py-5 border-b border-border/30 transition-all hover:bg-muted/20 px-2 -mx-2 rounded hover:translate-x-1 duration-300"
+        className="group flex items-start justify-between py-5 border-b border-border/30 transition-colors hover:bg-muted/20 px-2 -mx-2 rounded"
       >
         <div className="flex-1 min-w-0">
           <h3 className="font-handwritten text-2xl text-card-foreground group-hover:text-primary transition-colors">
@@ -50,22 +49,11 @@ const PostRow = ({ post, index, scrollYProgress }: PostRowProps) => {
             ))}
           </div>
         </div>
-        <ArrowUpRight className="w-5 h-5 text-card-foreground/20 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 mt-2 flex-shrink-0 duration-300" />
+        <ArrowUpRight className="w-5 h-5 text-card-foreground/20 group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 mt-2 flex-shrink-0" />
       </Link>
     </motion.div>
   );
 };
-
-const BlogSkeleton = () => (
-  <div className="space-y-4">
-    {[1, 2, 3].map(i => (
-      <div key={i} className="py-5">
-        <Skeleton className="h-6 w-56 mb-2" style={{ background: 'hsl(var(--card-foreground) / 0.06)' }} />
-        <Skeleton className="h-4 w-80" style={{ background: 'hsl(var(--card-foreground) / 0.04)' }} />
-      </div>
-    ))}
-  </div>
-);
 
 const BlogSection = () => {
   const ref = useRef<HTMLDivElement>(null!);
@@ -89,7 +77,7 @@ const BlogSection = () => {
       </motion.div>
 
       {loading ? (
-        <BlogSkeleton />
+        <p className="font-handwritten text-lg text-card-foreground/40">Loading…</p>
       ) : (
         <div>
           {displayPosts.map((post, i) => (

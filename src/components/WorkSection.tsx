@@ -2,7 +2,6 @@ import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useProjects } from "@/hooks/useSiteData";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const fallbackProjects = [
   { id: '1', title: "Project One", subtitle: "A creative exploration in digital experiences", tags: ["React", "Design", "UI/UX"], year: "2025", url: "#" },
@@ -43,7 +42,7 @@ const ProjectRow = ({ project, index, scrollYProgress, isHovered, onHover, onLea
         animate={{ opacity: isHovered ? 1 : 0 }}
         transition={{ duration: 0.25 }}
       />
-      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3 transition-transform duration-300 group-hover:translate-x-1">
+      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-baseline gap-5">
           <span className="font-handwritten text-sm text-card-foreground/18 w-6">
             {String(index + 1).padStart(2, "0")}
@@ -51,7 +50,7 @@ const ProjectRow = ({ project, index, scrollYProgress, isHovered, onHover, onLea
           <div>
             <h3 className="font-handwritten text-xl md:text-2xl font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300 flex items-center gap-2">
               {project.title}
-              <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
             </h3>
             <p className="font-handwritten text-sm text-card-foreground/35 mt-0.5">{project.subtitle}</p>
           </div>
@@ -70,17 +69,6 @@ const ProjectRow = ({ project, index, scrollYProgress, isHovered, onHover, onLea
     </motion.a>
   );
 };
-
-const WorkSkeleton = () => (
-  <div className="space-y-6">
-    {[1, 2, 3].map(i => (
-      <div key={i} className="py-6">
-        <Skeleton className="h-6 w-48 mb-2" style={{ background: 'hsl(var(--card-foreground) / 0.06)' }} />
-        <Skeleton className="h-4 w-72" style={{ background: 'hsl(var(--card-foreground) / 0.04)' }} />
-      </div>
-    ))}
-  </div>
-);
 
 const WorkSection = () => {
   const ref = useRef<HTMLDivElement>(null!);
@@ -111,23 +99,19 @@ const WorkSection = () => {
           </h2>
         </motion.div>
 
-        {loading ? (
-          <WorkSkeleton />
-        ) : (
-          <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
-            {projects.map((project, index) => (
-              <ProjectRow
-                key={project.id}
-                project={project}
-                index={index}
-                scrollYProgress={scrollYProgress}
-                isHovered={hoveredIndex === index}
-                onHover={() => setHoveredIndex(index)}
-                onLeave={() => setHoveredIndex(null)}
-              />
-            ))}
-          </div>
-        )}
+        <div style={{ borderTop: '1px solid hsl(30 20% 78% / 0.4)' }}>
+          {projects.map((project, index) => (
+            <ProjectRow
+              key={project.id}
+              project={project}
+              index={index}
+              scrollYProgress={scrollYProgress}
+              isHovered={hoveredIndex === index}
+              onHover={() => setHoveredIndex(index)}
+              onLeave={() => setHoveredIndex(null)}
+            />
+          ))}
+        </div>
 
         <motion.p style={{ opacity: footerOpacity }} className="mt-8 font-handwritten text-base text-card-foreground/25 text-center">
           More projects in progress...
