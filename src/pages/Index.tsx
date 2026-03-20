@@ -46,7 +46,6 @@ const Index = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollRef });
   const [activeSection, setActiveSection] = useState('about');
-  const [activeSection, setActiveSection] = useState('about');
 
   // Track active section for dots
   useEffect(() => {
