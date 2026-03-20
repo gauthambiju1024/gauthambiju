@@ -82,12 +82,12 @@ const HeroSection = () => {
             </h1>
           </motion.div>
 
-          <motion.p variants={item} className="text-[11px] tracking-[0.25em] uppercase text-card-foreground/25 font-mono mb-6">
+          <motion.p variants={item} className="text-sm tracking-[0.2em] uppercase text-card-foreground/30 font-mono mb-6">
             At the intersection of Technology · Business · Design
           </motion.p>
 
-          <motion.p variants={item} className="text-sm tracking-wider text-card-foreground/30 font-mono">
-            {hero?.location ?? "INDIA . + 5:30"}
+          <motion.p variants={item} className="text-[10px] tracking-wider text-card-foreground/20 font-mono">
+            {hero?.location ?? "INDIA · GMT + 5:30"}
           </motion.p>
         </motion.div>
 
