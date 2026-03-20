@@ -44,7 +44,6 @@ const navSections = ['about', 'work', 'blog', 'connect'];
 const Index = () => {
   const { sections, loading } = useHomepageSections();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ container: scrollRef });
   const [activeSection, setActiveSection] = useState('about');
 
   // Track active section for dots
