@@ -1,45 +1,29 @@
 
 
-## Plan: Fixed Header, Smoother Word Animation, Functional Bookmarks
+## Plan: Move Header Outside Notebook, Remove Bookmarks
 
-### 1. Move Navigation Outside Scroll Area
+### 1. Move Navigation Outside the Notebook Frame
 
-Currently `Navigation` is inside the scrollable `notebook-scroll-area` div (sticky). Move it **above** the scroll container but still inside the notebook frame, so it never scrolls.
-
-**`src/pages/Index.tsx`**:
-- Move `<Navigation scrollContainer={scrollRef} />` out of the scroll div, place it between the decorations and the scroll area
-- Give the scroll area `h-[calc(100%-nav_height)]` to account for the fixed nav above it
-
-### 2. Smoother Word Rotation
-
-The current `clipPath` reveal is functional but abrupt. Make it more elegant:
-
-**`src/components/HeroSection.tsx`**:
-- Increase duration from `0.55s` to `0.7s`
-- Use a softer easing curve `[0.16, 1, 0.3, 1]` (decelerate-heavy)
-- Add a subtle `opacity` cross-fade (initial: 0, animate: 1, exit: 0) layered with the clipPath for a gentler feel
-- Increase interval from `3500ms` to `4000ms` to give more reading time
-
-### 3. Functional Bookmark Ribbons
-
-Make the two ribbon bookmarks clickable — they scroll to specific sections within the notebook.
+Move `<Navigation>` above the `.notebook` container so it sits in the dark desk background area, matching the `--background` color. It becomes a standalone fixed header above the diary.
 
 **`src/pages/Index.tsx`**:
-- Replace the static `<div className="ribbon-bookmark">` elements with `<button>` elements
-- First ribbon scrolls to `#work`, second to `#blog`
-- Add `pointer-events: auto`, `cursor: pointer`, remove `pointer-events: none` from CSS
-- Add hover effect (slight translateX or scale)
-- Add a tooltip on hover showing the target section name
+- Move `<Navigation scrollContainer={scrollRef} />` out of the `.notebook` div, place it directly inside the outer `h-screen` wrapper, above the notebook frame div
+- Remove the `relative z-[2] flex-shrink-0` wrapper
 
-**`src/index.css`**:
-- Add `.ribbon-bookmark-interactive` variant with hover states and `cursor: pointer`
-- Keep `pointer-events: none` only on the non-interactive variant
+**`src/components/Navigation.tsx`**:
+- Change background from `hsl(var(--notebook-paper))` to `hsl(var(--background))`
+- Change text colors from `--ink` to lighter tones that work on the dark background (e.g. `--notebook-paper` for logo, muted paper tones for nav items)
+- Update active/inactive colors accordingly
+
+### 2. Remove Bookmark Ribbons
+
+**`src/pages/Index.tsx`**:
+- Delete the two `<button className="ribbon-bookmark ...">` elements (lines 82–99)
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/pages/Index.tsx` | Move nav outside scroll area, make ribbons functional buttons |
-| `src/components/HeroSection.tsx` | Softer word animation timing |
-| `src/index.css` | Interactive ribbon styles |
+| `src/pages/Index.tsx` | Move nav outside notebook, remove ribbon buttons |
+| `src/components/Navigation.tsx` | Dark background styling |
 
