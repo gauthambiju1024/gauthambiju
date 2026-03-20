@@ -12,7 +12,7 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 30, filter: 'blur(4px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
 const HeroSection = () => {

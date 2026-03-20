@@ -45,7 +45,7 @@ const Index = () => {
   const { sections, loading } = useHomepageSections();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ container: scrollRef });
-  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
+  const [activeSection, setActiveSection] = useState('about');
   const [activeSection, setActiveSection] = useState('about');
 
   // Track active section for dots
