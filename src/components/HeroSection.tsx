@@ -7,12 +7,12 @@ const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.3 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
+  hidden: { opacity: 0, y: 30, filter: 'blur(4px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
 const HeroSection = () => {
@@ -48,18 +48,18 @@ const HeroSection = () => {
           animate="show"
           className="max-w-3xl md:ml-8 relative z-10 flex-1 my-0"
         >
-          <motion.p variants={item} className="font-handwritten text-2xl md:text-3xl mb-6 text-primary">
+          <motion.p variants={item} className="font-serif-i italic text-2xl md:text-3xl mb-6 text-primary">
             {hero?.name ?? "Gautham Biju"}
           </motion.p>
 
           <motion.div variants={item} className="overflow-hidden mb-2">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+            <h1 className="font-serif-i italic text-[clamp(2.5rem,7vw,5.5rem)] leading-[1.05] text-card-foreground/40">
               I'm learning to build
             </h1>
           </motion.div>
 
           <motion.div variants={item} className="mb-2">
-            <div className="overflow-hidden" style={{ height: 'clamp(2.8rem,6.5vw,5rem)' }}>
+            <div className="overflow-hidden" style={{ height: 'clamp(3.5rem,8.5vw,6.5rem)' }}>
               <AnimatePresence mode="wait">
                 <motion.h1
                   key={rotatingWords[wordIndex]}
@@ -67,7 +67,7 @@ const HeroSection = () => {
                   animate={{ clipPath: 'inset(0 0 0% 0)', opacity: 1 }}
                   exit={{ clipPath: 'inset(100% 0 0 0)', opacity: 0 }}
                   transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                  className="font-sans font-bold text-[clamp(2.8rem,6.5vw,5rem)] leading-[1] text-card-foreground relative inline-block after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
+                  className="font-sans font-bold text-[clamp(3.5rem,8vw,6.5rem)] leading-[1] text-card-foreground relative inline-block after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
                   style={{ willChange: 'clip-path, opacity' }}
                 >
                   {rotatingWords[wordIndex]}
@@ -77,7 +77,7 @@ const HeroSection = () => {
           </motion.div>
 
           <motion.div variants={item} className="mb-8">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+            <h1 className="font-serif-i italic text-[clamp(2.5rem,7vw,5.5rem)] leading-[1.05] text-card-foreground/40">
               for problems worth solving.
             </h1>
           </motion.div>
@@ -92,16 +92,23 @@ const HeroSection = () => {
         </motion.div>
 
         <motion.div
-          style={{ y: portraitY, scale: portraitScale, willChange: 'transform' }}
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
+          style={{ y: portraitY, scale: portraitScale }}
+          className="hidden md:block absolute top-0 right-0 bottom-0 w-[50%] z-0"
         >
           <motion.img
             initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 0.9, x: 0 }}
+            animate={{ opacity: 0.85, x: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
             src={heroPortrait}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply"
+            className="w-full h-full object-cover object-top mix-blend-multiply"
+            loading="lazy"
+            style={{
+              maskImage: 'linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 100%), linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 30%)',
+              maskComposite: 'intersect',
+              WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 100%), linear-gradient(to top, transparent 0%, rgba(0,0,0,1) 30%)',
+              WebkitMaskComposite: 'source-in',
+            }}
           />
         </motion.div>
       </div>
