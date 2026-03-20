@@ -60,16 +60,21 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <div className="h-screen overflow-hidden desk-pattern" style={{ background: 'hsl(var(--background))' }}>
+      <div className="h-screen overflow-hidden desk-pattern flex flex-col" style={{ background: 'hsl(var(--background))' }}>
         {/* Progress bar — fixed to top of viewport */}
         <motion.div
           className="fixed top-0 left-0 right-0 h-[3px] bg-primary origin-left z-[100]"
           style={{ scaleX }}
         />
 
+        {/* Navigation outside notebook — on desk background */}
+        <div className="flex-shrink-0 w-full max-w-7xl mx-auto px-2 md:px-4 lg:px-8">
+          <Navigation scrollContainer={scrollRef} />
+        </div>
+
         {/* Notebook outer frame */}
-        <div className="h-full flex items-center justify-center px-2 md:px-4 lg:px-8 py-3 md:py-5">
-          <div className="notebook notebook-grid relative w-full max-w-7xl h-[calc(100vh-1.5rem)] md:h-[calc(100vh-2.5rem)] flex flex-col">
+        <div className="flex-1 min-h-0 flex items-center justify-center px-2 md:px-4 lg:px-8 pb-3 md:pb-5">
+          <div className="notebook notebook-grid relative w-full max-w-7xl h-full flex flex-col">
             {/* Fixed decorations */}
             <div className="notebook-spine hidden md:block" />
             <div className="notebook-margin hidden md:block" />
@@ -79,30 +84,7 @@ const Index = () => {
               <div className="notebook-hole" style={{ top: '66%' }} />
               <div className="notebook-hole" style={{ bottom: '80px' }} />
             </div>
-            <button
-              className="ribbon-bookmark ribbon-bookmark-interactive"
-              style={{ top: '40px' }}
-              onClick={() => {
-                const el = document.getElementById('work');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              title="Work"
-            />
-            <button
-              className="ribbon-bookmark ribbon-bookmark-interactive"
-              style={{ top: '120px', opacity: 0.7, width: '24px' }}
-              onClick={() => {
-                const el = document.getElementById('blog');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              title="Blog"
-            />
             <div className="page-fold" />
-
-            {/* Fixed navigation */}
-            <div className="relative z-[2] flex-shrink-0">
-              <Navigation scrollContainer={scrollRef} />
-            </div>
 
             {/* Scrollable interior */}
             <div
