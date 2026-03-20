@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 
-const defaultWords = ["Systems", "Products", "Markets", "Technology"];
+const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const container = {
   hidden: {},
