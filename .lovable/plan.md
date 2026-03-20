@@ -1,29 +1,39 @@
 
 
-## Plan: Move Header Outside Notebook, Remove Bookmarks
+## Plan: Redesign Hero Section Text
 
-### 1. Move Navigation Outside the Notebook Frame
+### What the user wants
 
-Move `<Navigation>` above the `.notebook` container so it sits in the dark desk background area, matching the `--background` color. It becomes a standalone fixed header above the diary.
+Replace the current hero text with this structure:
+- **Main heading**: "I'm learning to build"
+- **Rotating word** (bold, highlighted): products / systems / platforms / experiences
+- **Continuation**: "for problems worth solving."
+- **Subtext**: "At the intersection of Technology · Business · Design"
+- Remove "Ideas are easy." and "change the world."
 
-**`src/pages/Index.tsx`**:
-- Move `<Navigation scrollContainer={scrollRef} />` out of the `.notebook` div, place it directly inside the outer `h-screen` wrapper, above the notebook frame div
-- Remove the `relative z-[2] flex-shrink-0` wrapper
+### Changes
 
-**`src/components/Navigation.tsx`**:
-- Change background from `hsl(var(--notebook-paper))` to `hsl(var(--background))`
-- Change text colors from `--ink` to lighter tones that work on the dark background (e.g. `--notebook-paper` for logo, muted paper tones for nav items)
-- Update active/inactive colors accordingly
+**`src/components/HeroSection.tsx`**:
 
-### 2. Remove Bookmark Ribbons
+Remove the two `<h1>` blocks ("Ideas are easy." and "[word] change the world."). Replace with:
 
-**`src/pages/Index.tsx`**:
-- Delete the two `<button className="ribbon-bookmark ...">` elements (lines 82–99)
+```
+I'm learning to build
+[rotating word]        ← bold, primary underline, clipPath reveal
+for problems worth solving.
+```
 
-### Files to Modify
+- Line 1: `"I'm learning to build"` — large handwritten font, muted color
+- Line 2: Rotating word (products/systems/platforms/experiences) — bold, `font-sans`, primary accent underline, same smooth clipPath animation
+- Line 3: `"for problems worth solving."` — same size as line 1, muted
+- Below: subtext `"At the intersection of Technology · Business · Design"` — small, uppercase, tracked, very muted
 
+Update `defaultWords` to `["products", "systems", "platforms", "experiences"]`.
+
+Keep: name, portrait parallax, location line, stagger animation. Remove tagline line (merged into subtext).
+
+### Files
 | File | Change |
 |---|---|
-| `src/pages/Index.tsx` | Move nav outside notebook, remove ribbon buttons |
-| `src/components/Navigation.tsx` | Dark background styling |
+| `src/components/HeroSection.tsx` | Replace hero text structure, update default words |
 
