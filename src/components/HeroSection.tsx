@@ -48,40 +48,43 @@ const HeroSection = () => {
           animate="show"
           className="max-w-3xl md:ml-8 relative z-10 flex-1 my-0"
         >
-          <motion.p variants={item} className="font-handwritten text-2xl md:text-3xl mb-2 text-primary">
+          <motion.p variants={item} className="font-handwritten text-2xl md:text-3xl mb-6 text-primary">
             {hero?.name ?? "Gautham Biju"}
           </motion.p>
 
-          <motion.p variants={item} className="font-handwritten text-base tracking-wide uppercase text-card-foreground/40 mb-6">
-            {hero?.tagline ?? "Technology . Business . Design"}
-          </motion.p>
-
-          <motion.div variants={item} className="overflow-hidden mb-4">
-            <h1 className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1] tracking-tight text-card-foreground my-[16px]">
-              Ideas are easy.
+          <motion.div variants={item} className="overflow-hidden mb-2">
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+              I'm learning to build
             </h1>
+          </motion.div>
+
+          <motion.div variants={item} className="mb-2">
+            <div className="overflow-hidden" style={{ height: 'clamp(2.8rem,6.5vw,5rem)' }}>
+              <AnimatePresence mode="wait">
+                <motion.h1
+                  key={rotatingWords[wordIndex]}
+                  initial={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
+                  animate={{ clipPath: 'inset(0 0 0% 0)', opacity: 1 }}
+                  exit={{ clipPath: 'inset(100% 0 0 0)', opacity: 0 }}
+                  transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  className="font-sans font-bold text-[clamp(2.8rem,6.5vw,5rem)] leading-[1] text-card-foreground relative inline-block after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
+                  style={{ willChange: 'clip-path, opacity' }}
+                >
+                  {rotatingWords[wordIndex]}
+                </motion.h1>
+              </AnimatePresence>
+            </div>
           </motion.div>
 
           <motion.div variants={item} className="mb-8">
-            <h1 className="font-handwritten text-[clamp(2.5rem,6vw,4.5rem)] leading-[1] text-card-foreground/50 whitespace-nowrap">
-              <span className="inline-block overflow-hidden align-bottom" style={{ height: 'clamp(2.5rem,6vw,4.5rem)' }}>
-                <AnimatePresence mode="wait">
-                   <motion.span
-                    key={rotatingWords[wordIndex]}
-                    initial={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
-                    animate={{ clipPath: 'inset(0 0 0% 0)', opacity: 1 }}
-                    exit={{ clipPath: 'inset(100% 0 0 0)', opacity: 0 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="inline-block font-bold font-sans text-card-foreground relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300 after:origin-left"
-                    style={{ willChange: 'clip-path, opacity' }}
-                  >
-                    {rotatingWords[wordIndex]}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-              {" "}change the world.
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+              for problems worth solving.
             </h1>
           </motion.div>
+
+          <motion.p variants={item} className="text-[11px] tracking-[0.25em] uppercase text-card-foreground/25 font-mono mb-6">
+            At the intersection of Technology · Business · Design
+          </motion.p>
 
           <motion.p variants={item} className="text-sm tracking-wider text-card-foreground/30 font-mono">
             {hero?.location ?? "INDIA . + 5:30"}
