@@ -75,16 +75,15 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="sticky top-0 z-50 flex items-center justify-between px-8 md:px-16 py-5 max-w-7xl mx-auto backdrop-blur-md transition-all duration-300"
+      className="z-50 flex items-center justify-between px-8 md:px-16 py-4 transition-all duration-300"
       style={{
-        background: 'hsl(var(--notebook-paper) / 0.92)',
-        borderBottom: scrolled ? '1px solid hsl(var(--border) / 0.3)' : '1px solid transparent',
+        background: 'transparent',
       }}
     >
       <button
         onClick={() => scrollToSection("about")}
         className="font-handwritten text-2xl font-bold tracking-tight"
-        style={{ color: 'hsl(var(--ink))' }}
+        style={{ color: 'hsl(var(--notebook-paper))' }}
       >
         GB.
       </button>
@@ -98,7 +97,7 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
             style={{
               color: activeSection === item.id
                 ? 'hsl(var(--primary))'
-                : 'hsl(var(--ink) / 0.5)',
+                : 'hsl(var(--notebook-paper) / 0.5)',
             }}
           >
             {item.label}
