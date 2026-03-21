@@ -23,32 +23,32 @@ export const MorphingText = ({
 
   useEffect(() => {
     const morphDuration = 800;
-    const steps = 20;
-    let step = 0;
-    let morphTimer: ReturnType<typeof setInterval>;
-
     const currentWord = words[currentIndex];
     const nextWord = words[(currentIndex + 1) % words.length];
+    const totalTicks = currentWord.length + nextWord.length;
+    const tickInterval = morphDuration / totalTicks;
+    let tick = 0;
+    let morphTimer: ReturnType<typeof setInterval>;
 
     const startMorph = () => {
-      step = 0;
+      tick = 0;
       setIsMorphing(true);
       morphTimer = setInterval(() => {
-        step++;
-        const progress = step / steps;
-
-        if (step >= steps) {
+        tick++;
+        if (tick <= currentWord.length) {
+          // Phase 1: remove one char at a time
+          setDisplayText(currentWord.slice(0, currentWord.length - tick));
+        } else {
+          // Phase 2: add one char at a time
+          const addedChars = tick - currentWord.length;
+          setDisplayText(nextWord.slice(0, addedChars));
+        }
+        if (tick >= totalTicks) {
           clearInterval(morphTimer);
           setDisplayText(nextWord);
           setIsMorphing(false);
-        } else if (progress < 0.5) {
-          const charCount = Math.min(currentWord.length, Math.max(1, Math.round(currentWord.length * (1 - progress * 2))));
-          setDisplayText(currentWord.slice(0, charCount));
-        } else {
-          const charCount = Math.min(nextWord.length, Math.max(1, Math.round(nextWord.length * ((progress - 0.5) * 2))));
-          setDisplayText(nextWord.slice(0, charCount));
         }
-      }, morphDuration / steps);
+      }, tickInterval);
     };
 
     const wordTimeout = setTimeout(startMorph, interval - morphDuration);
