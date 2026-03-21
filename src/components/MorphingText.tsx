@@ -42,11 +42,11 @@ export const MorphingText = ({
           setDisplayText(nextWord);
           setIsMorphing(false);
         } else if (progress < 0.5) {
-          const charCount = Math.max(1, Math.ceil(currentWord.length * (1 - progress * 2)));
+          const charCount = Math.min(currentWord.length, Math.max(1, Math.round(currentWord.length * (1 - progress * 2))));
           setDisplayText(currentWord.slice(0, charCount));
         } else {
-          const charCount = Math.ceil(nextWord.length * ((progress - 0.5) * 2));
-          setDisplayText(nextWord.slice(0, Math.max(1, charCount)));
+          const charCount = Math.min(nextWord.length, Math.max(1, Math.round(nextWord.length * ((progress - 0.5) * 2))));
+          setDisplayText(nextWord.slice(0, charCount));
         }
       }, morphDuration / steps);
     };
@@ -69,7 +69,7 @@ export const MorphingText = ({
       <span className="invisible font-sans font-bold" aria-hidden="true">
         {longestWord}
       </span>
-      <span className="absolute left-0 top-0 font-sans font-bold text-primary whitespace-nowrap">
+      <span className="absolute left-0 top-0 font-sans font-bold text-card-foreground whitespace-nowrap">
         {displayText}
         {isMorphing && (
           <span className="animate-blink">|</span>
