@@ -99,7 +99,7 @@ const HeroSection = () => {
           <motion.img
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 0.9, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
             src={heroPortrait}
             alt="Gautham portrait sketch"
             className="w-full h-auto mix-blend-multiply"

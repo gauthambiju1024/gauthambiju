@@ -108,7 +108,12 @@ const Index = () => {
                     const Component = sectionMap[key];
                     if (!Component) return null;
                     const anchorId = sectionAnchors[key];
-                    return (
+                    const isHero = key === 'hero';
+                    return isHero ? (
+                      <div key={key} id={anchorId}>
+                        <Component />
+                      </div>
+                    ) : (
                       <motion.div
                         key={key}
                         id={anchorId}
