@@ -7,7 +7,7 @@ const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } },
 };
 
 const item = {
