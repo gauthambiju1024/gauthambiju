@@ -14,6 +14,7 @@ export const MorphingText = ({
 }: MorphingTextProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayText, setDisplayText] = useState(words[0]);
+  const [isMorphing, setIsMorphing] = useState(false);
 
   const longestWord = useMemo(
     () => words.reduce((a, b) => (a.length >= b.length ? a : b), ""),
@@ -31,21 +32,21 @@ export const MorphingText = ({
 
     const startMorph = () => {
       step = 0;
+      setIsMorphing(true);
       morphTimer = setInterval(() => {
         step++;
         const progress = step / steps;
 
-        if (progress < 0.5) {
-          const charCount = Math.max(0, Math.round(currentWord.length * (1 - progress * 2)));
-          setDisplayText(currentWord.slice(0, charCount) || "\u00A0");
-        } else {
-          const charCount = Math.round(nextWord.length * ((progress - 0.5) * 2));
-          setDisplayText(nextWord.slice(0, charCount) || "\u00A0");
-        }
-
         if (step >= steps) {
           clearInterval(morphTimer);
           setDisplayText(nextWord);
+          setIsMorphing(false);
+        } else if (progress < 0.5) {
+          const charCount = Math.max(1, Math.ceil(currentWord.length * (1 - progress * 2)));
+          setDisplayText(currentWord.slice(0, charCount));
+        } else {
+          const charCount = Math.ceil(nextWord.length * ((progress - 0.5) * 2));
+          setDisplayText(nextWord.slice(0, Math.max(1, charCount)));
         }
       }, morphDuration / steps);
     };
@@ -65,13 +66,14 @@ export const MorphingText = ({
 
   return (
     <span className={cn("relative inline-block", className)}>
-      {/* Hidden sizer to reserve width */}
       <span className="invisible font-sans font-bold" aria-hidden="true">
         {longestWord}
       </span>
-      {/* Visible text overlaid */}
       <span className="absolute left-0 top-0 font-sans font-bold text-primary whitespace-nowrap">
         {displayText}
+        {isMorphing && (
+          <span className="animate-blink">|</span>
+        )}
       </span>
     </span>
   );
