@@ -47,6 +47,7 @@ const HeroSection = () => {
           initial="hidden"
           animate="show"
           className="max-w-3xl md:ml-8 relative z-10 flex-1 my-0"
+          style={{ willChange: 'transform, opacity' }}
         >
           <motion.p variants={item} className="font-handwritten text-2xl md:text-3xl mb-6 text-primary">
             {hero?.name ?? "Gautham Biju"}
