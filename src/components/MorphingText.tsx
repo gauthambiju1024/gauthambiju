@@ -22,7 +22,7 @@ export const MorphingText = ({
   );
 
   useEffect(() => {
-    const morphDuration = 500;
+    const morphDuration = 800;
     const steps = 20;
     let step = 0;
     let morphTimer: ReturnType<typeof setInterval>;
