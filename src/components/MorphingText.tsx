@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface MorphingTextProps {
   words: string[];
@@ -12,9 +12,11 @@ export const MorphingText = ({
   className,
   interval = 4000,
 }: MorphingTextProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [displayText, setDisplayText] = useState(words[0]);
-  const [isMorphing, setIsMorphing] = useState(false);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const currentWord = words[wordIndex];
 
   const longestWord = useMemo(
     () => words.reduce((a, b) => (a.length >= b.length ? a : b), ""),
@@ -22,47 +24,31 @@ export const MorphingText = ({
   );
 
   useEffect(() => {
-    const morphDuration = 800;
-    const currentWord = words[currentIndex];
-    const nextWord = words[(currentIndex + 1) % words.length];
-    const totalTicks = currentWord.length + nextWord.length;
-    const tickInterval = morphDuration / totalTicks;
-    let tick = 0;
-    let morphTimer: ReturnType<typeof setInterval>;
+    const typeSpeed = 80;
+    const deleteSpeed = 50;
+    const pauseAfterType = interval - 800;
 
-    const startMorph = () => {
-      tick = 0;
-      setIsMorphing(true);
-      morphTimer = setInterval(() => {
-        tick++;
-        if (tick <= currentWord.length) {
-          // Phase 1: remove one char at a time
-          setDisplayText(currentWord.slice(0, currentWord.length - tick));
-        } else {
-          // Phase 2: add one char at a time
-          const addedChars = tick - currentWord.length;
-          setDisplayText(nextWord.slice(0, addedChars));
-        }
-        if (tick >= totalTicks) {
-          clearInterval(morphTimer);
-          setDisplayText(nextWord);
-          setIsMorphing(false);
-        }
-      }, tickInterval);
-    };
+    let timeout: ReturnType<typeof setTimeout>;
 
-    const wordTimeout = setTimeout(startMorph, interval - morphDuration);
+    if (!isDeleting && charCount < currentWord.length) {
+      // Typing forward
+      timeout = setTimeout(() => setCharCount(charCount + 1), typeSpeed);
+    } else if (!isDeleting && charCount === currentWord.length) {
+      // Finished typing — pause then start deleting
+      timeout = setTimeout(() => setIsDeleting(true), pauseAfterType);
+    } else if (isDeleting && charCount > 0) {
+      // Deleting
+      timeout = setTimeout(() => setCharCount(charCount - 1), deleteSpeed);
+    } else if (isDeleting && charCount === 0) {
+      // Done deleting — move to next word
+      setIsDeleting(false);
+      setWordIndex((prev) => (prev + 1) % words.length);
+    }
 
-    const cycleTimeout = setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % words.length);
-    }, interval + 100);
+    return () => clearTimeout(timeout);
+  }, [charCount, isDeleting, currentWord, words, interval]);
 
-    return () => {
-      clearInterval(morphTimer);
-      clearTimeout(wordTimeout);
-      clearTimeout(cycleTimeout);
-    };
-  }, [currentIndex, interval, words]);
+  const displayText = currentWord.slice(0, charCount);
 
   return (
     <span className={cn("relative inline-block", className)}>
@@ -71,9 +57,7 @@ export const MorphingText = ({
       </span>
       <span className="absolute left-0 top-0 font-sans font-bold text-card-foreground whitespace-nowrap">
         {displayText}
-        {isMorphing && (
-          <span className="animate-blink">|</span>
-        )}
+        <span className="animate-pulse ml-[1px]">|</span>
       </span>
     </span>
   );
