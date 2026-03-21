@@ -284,6 +284,42 @@
     transform: translateX(-1px) scale(0.97);
   }
 
+  /* Flip book */
+  .flip-book-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .flip-book {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .flip-page {
+    background: hsl(var(--notebook-paper));
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--notebook-border) / 0.3) transparent;
+  }
+
+  .flip-page::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .flip-page::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .flip-page::-webkit-scrollbar-thumb {
+    background: hsl(var(--notebook-border) / 0.3);
+    border-radius: 3px;
+  }
+
+  .flip-page-content {
+    min-height: 100%;
+  }
+
   /* Card hover */
   .card-hover {
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
