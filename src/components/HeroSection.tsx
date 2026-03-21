@@ -27,10 +27,10 @@ const HeroSection = () => {
             </h1>
           </div>
 
-          <div className="mb-2" style={{ height: 'clamp(2.8rem,6.5vw,5rem)' }}>
+          <div className="mb-2 py-1">
             <MorphingText
               words={rotatingWords}
-              className="text-[clamp(2.8rem,6.5vw,5rem)] leading-[1]"
+              className="text-[clamp(2.8rem,6.5vw,5rem)] leading-[1.15]"
               interval={3500}
             />
           </div>
