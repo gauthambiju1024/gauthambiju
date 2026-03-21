@@ -1,59 +1,34 @@
 
+## Plan: Fix Rotating Word Visibility and Keep Accent Styling Consistent
 
-## Plan: Strip All Animations Except Word Rotation
-
-Remove all Framer Motion animations across the site. The only animation that remains is the rotating word in the hero section, simplified to a clean opacity crossfade.
+### Problem
+The rotating word still has two issues:
+- letters disappear or get cropped because the current effect slices the text while the word row is too tight
+- the first loaded word looks brighter/bolder than later states because the morphing state changes its visual treatment
 
 ### Changes
 
+**`src/components/MorphingText.tsx`**
+- Keep a single consistent accent style for all words: same bold weight and same highlighted color from the initial “products” state
+- Remove the temporary dimming during morph so the word never looks weaker mid-transition
+- Reserve width for the longest word so nothing gets cut off and the layout does not shift
+- Adjust the transition logic so each cycle clearly finishes on the full next word before changing again
+- Keep the animation simple and smooth, but not at the cost of readability
+
 **`src/components/HeroSection.tsx`**
-- Remove stagger container/item variants — render all elements as plain `div`/`p`/`h1`
-- Remove portrait parallax (`useScroll`, `useTransform`, `portraitY`, `portraitScale`) — portrait becomes a static `img`
-- Keep `AnimatePresence` + `motion.h1` for the rotating word only, simplify to pure `opacity` fade (no `clipPath`), duration `0.5s`, ease `easeInOut`
-- Remove `will-change` properties
+- Increase the word row’s vertical space slightly so bold letters are never clipped
+- Make the rotating-word wrapper allow full visibility instead of feeling tightly boxed
+- Preserve the current hero hierarchy while keeping the highlighted word visually steady and consistent
 
-**`src/pages/Index.tsx`**
-- Remove `PageTransition` wrapper — render content directly
-- Remove progress bar (`motion.div` with `scaleX`)
-- Remove `sectionReveal` variants — all sections render as plain `div` instead of `motion.div`
-- Remove section divider `motion.div` animation — use plain `div`
-- Remove `useScroll`, `useSpring` imports (no longer needed)
-
-**`src/components/PageTransition.tsx`**
-- Can be left as-is (unused) or simplified, since it's no longer imported
-
-**`src/components/BeliefsSection.tsx`**
-- Remove all `motion` usage (`useScroll`, `useTransform`, scroll-driven opacity/y on each belief item and header)
-- Render as plain divs
-
-**`src/components/WorkSection.tsx`**
-- Remove scroll-driven `motion` transforms on project rows and header
-- Render as plain divs
-
-**`src/components/StorySection.tsx`**
-- Remove scroll-driven parallax, sticky header transforms, animated stats
-- Render as plain divs
-
-**`src/components/BlogSection.tsx`**
-- Remove scroll-driven transforms on post rows and header
-- Render as plain divs
-
-**`src/components/ConnectSection.tsx`**
-- Remove scroll-driven transforms on link rows, header, and globe
-- Render as plain divs
-
-**`src/components/MarqueeText.tsx`**
-- Keep the CSS marquee (it's a CSS animation, not framer motion) — this is decorative scrolling text, not a transition animation. If user considers it an animation, remove it too. Will keep it since it's functional UI.
+### Technical detail
+- Use a hidden sizing reference based on the longest rotating word to lock the required width
+- Move the accent color/weight into the base rotating-word styling instead of applying it only on first render
+- Remove the opacity drop tied to the morphing state
+- Slightly loosen the word line-height / container height to prevent top or bottom clipping
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/HeroSection.tsx` | Strip all motion except word rotation (simple opacity fade) |
-| `src/pages/Index.tsx` | Remove PageTransition, progress bar, section reveal animations |
-| `src/components/BeliefsSection.tsx` | Remove all framer-motion |
-| `src/components/WorkSection.tsx` | Remove all framer-motion |
-| `src/components/StorySection.tsx` | Remove all framer-motion |
-| `src/components/BlogSection.tsx` | Remove all framer-motion |
-| `src/components/ConnectSection.tsx` | Remove all framer-motion |
-
+| `src/components/MorphingText.tsx` | Fix truncation/clipping, stabilize timing, keep accent color/weight consistent |
+| `src/components/HeroSection.tsx` | Add enough space for the rotating word and prevent visual clipping |
