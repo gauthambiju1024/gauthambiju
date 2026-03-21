@@ -1,24 +1,17 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useScroll, useSpring } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
+import { MorphingText } from "./MorphingText";
 
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const HeroSection = () => {
-  const [wordIndex, setWordIndex] = useState(0);
   const { value: heroData } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
 
   const hero = heroData as { name?: string; tagline?: string; location?: string } | null;
   const rotatingWords = (wordsData as string[] | null) ?? defaultWords;
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [rotatingWords.length]);
 
   return (
     <section className="relative px-8 md:px-16 pt-8 pb-20 md:pt-12 md:pb-28 overflow-hidden">
@@ -34,21 +27,12 @@ const HeroSection = () => {
             </h1>
           </div>
 
-          <div className="mb-2">
-            <div className="overflow-hidden" style={{ height: 'clamp(2.8rem,6.5vw,5rem)' }}>
-              <AnimatePresence mode="wait">
-                <motion.h1
-                  key={rotatingWords[wordIndex]}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="font-sans font-bold text-[clamp(2.8rem,6.5vw,5rem)] leading-[1] text-card-foreground"
-                >
-                  {rotatingWords[wordIndex]}
-                </motion.h1>
-              </AnimatePresence>
-            </div>
+          <div className="mb-2" style={{ height: 'clamp(2.8rem,6.5vw,5rem)' }}>
+            <MorphingText
+              words={rotatingWords}
+              className="text-[clamp(2.8rem,6.5vw,5rem)] leading-[1]"
+              interval={3500}
+            />
           </div>
 
           <div className="mb-8">
