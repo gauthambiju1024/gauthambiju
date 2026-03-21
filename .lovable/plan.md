@@ -1,39 +1,41 @@
 
 
-## Plan: Redesign Hero Section Text
+## Plan: Smoother Initial Page Load Animation
 
-### What the user wants
+### Problem
 
-Replace the current hero text with this structure:
-- **Main heading**: "I'm learning to build"
-- **Rotating word** (bold, highlighted): products / systems / platforms / experiences
-- **Continuation**: "for problems worth solving."
-- **Subtext**: "At the intersection of Technology · Business · Design"
-- Remove "Ideas are easy." and "change the world."
+On first load, multiple animations compete simultaneously:
+1. `PageTransition` does a 3D rotateY + scale + opacity (0.6s)
+2. Inside it, every section has `sectionReveal` (opacity + y + scale via `whileInView`)
+3. Hero has its own stagger container (0.3s delay + 0.1s stagger per child)
+4. Portrait fades in with 0.5s delay
+5. Progress bar spring starts calculating
 
-### Changes
+All fire at once, causing a janky first frame with too many transforms.
 
-**`src/components/HeroSection.tsx`**:
+### Solution
 
-Remove the two `<h1>` blocks ("Ideas are easy." and "[word] change the world."). Replace with:
+**Layer the animations sequentially** so the page flip completes first, then content reveals gracefully.
 
-```
-I'm learning to build
-[rotating word]        ← bold, primary underline, clipPath reveal
-for problems worth solving.
-```
+#### `src/components/PageTransition.tsx`
+- Reduce rotateY from `-12` to `-6` (subtler flip)
+- Reduce duration from `0.6s` to `0.45s`
+- Add `onAnimationComplete` callback or use CSS to signal when page flip is done
 
-- Line 1: `"I'm learning to build"` — large handwritten font, muted color
-- Line 2: Rotating word (products/systems/platforms/experiences) — bold, `font-sans`, primary accent underline, same smooth clipPath animation
-- Line 3: `"for problems worth solving."` — same size as line 1, muted
-- Below: subtext `"At the intersection of Technology · Business · Design"` — small, uppercase, tracked, very muted
+#### `src/pages/Index.tsx`
+- For the **hero section specifically** (first group, first item): skip `sectionReveal` variants — the hero already has its own stagger animation. Wrapping it in another reveal causes double-animation
+- Add `delayChildren: 0.3` to `sectionReveal` so non-hero sections wait for the page flip to finish before revealing
 
-Update `defaultWords` to `["products", "systems", "platforms", "experiences"]`.
+#### `src/components/HeroSection.tsx`
+- Increase `delayChildren` from `0.3` to `0.5` so hero content waits for page flip
+- Change portrait delay from `0.5` to `0.7` so it enters after text
+- Add `will-change: transform, opacity` to the stagger container for GPU compositing on first paint
 
-Keep: name, portrait parallax, location line, stagger animation. Remove tagline line (merged into subtext).
+### Files to Modify
 
-### Files
 | File | Change |
 |---|---|
-| `src/components/HeroSection.tsx` | Replace hero text structure, update default words |
+| `src/components/PageTransition.tsx` | Subtler, faster flip animation |
+| `src/pages/Index.tsx` | Skip sectionReveal for hero, delay others |
+| `src/components/HeroSection.tsx` | Increase initial delay so content enters after page flip |
 
