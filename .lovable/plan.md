@@ -1,27 +1,23 @@
 
 
-## Plan: Fix Morphing Text — Cursor, Blue Color, Full Words
+## Plan: Fix Rotating Word Color and Truncation
 
-### Issues
-1. **Missing cursor**: The blinking `|` cursor that appeared during morphing was removed in a previous refactor
-2. **Brown color**: `--primary` is sepia `16 21% 42%`. User wants blue like it was before
-3. **Truncated words**: `Math.round` with fractional progress can produce a charCount of `currentWord.length - 1`, cutting the last letter
+### Issue 1: Wrong blue
+The rotating word uses `text-primary` (`220 60% 50%` — bright blue). The text "Tirelessly pursue clarity" uses `text-card-foreground` (`218 30% 21%` — dark navy). The user wants the dark navy, not the bright blue.
+
+### Issue 2: Word truncation
+The `Math.ceil` / `Math.max` character slicing still occasionally drops the last letter. The fix: **always show the complete word** at the end of the morph-in phase by clamping `charCount` to `nextWord.length` explicitly, and removing the fractional ceiling math that causes off-by-one.
 
 ### Changes
 
 **`src/components/MorphingText.tsx`**
-- Add a blinking `|` cursor after `displayText` that shows during the morphing phase (when text is being sliced). Use a `isMorphing` state flag toggled on/off around the morph interval
-- Fix truncation: in the "morphing in" half, ensure the final step always sets `charCount = nextWord.length` (use `Math.ceil` instead of `Math.round`, or clamp to full length when `step >= steps`)
-- The cursor blinks via CSS animation (`animate-pulse` or a custom `@keyframes blink`)
+- Change `text-primary` to `text-card-foreground` on the display span so the rotating word matches the dark navy used elsewhere
+- Fix morph-in: replace `Math.ceil(nextWord.length * ((progress - 0.5) * 2))` with `Math.min(nextWord.length, Math.ceil(...))` and ensure the final step explicitly uses `nextWord.length`
+- Same fix for morph-out: clamp `charCount` to never exceed `currentWord.length`
 
-**`src/index.css`**
-- Change `--primary` from `16 21% 42%` (sepia brown) to a blue hue, e.g. `220 60% 50%` (medium blue that fits the notebook aesthetic)
-- Update `--primary-foreground` to work with the new blue
-
-### Files to Modify
+### Files
 
 | File | Change |
 |---|---|
-| `src/components/MorphingText.tsx` | Add blinking cursor, fix charCount to never truncate |
-| `src/index.css` | Change `--primary` to blue |
+| `src/components/MorphingText.tsx` | Change color class, clamp charCount |
 
