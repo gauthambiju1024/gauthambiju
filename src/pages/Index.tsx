@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import MarqueeText from "@/components/MarqueeText";
@@ -31,6 +32,8 @@ const sectionAnchors: Record<string, string> = {
 const Index = () => {
   const { sections, loading } = useHomepageSections();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ container: scrollRef });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
   const groups = useMemo(() => {
     if (loading) return [['hero', 'marquee', 'beliefs'], ['work', 'story'], ['blog'], ['connect', 'footer']];
@@ -48,7 +51,13 @@ const Index = () => {
 
   return (
     <div className="h-screen overflow-hidden desk-pattern flex flex-col" style={{ background: 'hsl(var(--background))' }}>
-      {/* Navigation outside notebook — on desk background */}
+      {/* Progress bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-[2px] bg-primary origin-left z-[100]"
+        style={{ scaleX }}
+      />
+
+      {/* Navigation outside notebook */}
       <div className="flex-shrink-0 w-full max-w-7xl mx-auto px-2 md:px-4 lg:px-8">
         <Navigation scrollContainer={scrollRef} />
       </div>
@@ -56,7 +65,6 @@ const Index = () => {
       {/* Notebook outer frame */}
       <div className="flex-1 min-h-0 flex items-center justify-center px-2 md:px-4 lg:px-8 pb-3 md:pb-5">
         <div className="notebook notebook-grid relative w-full max-w-7xl h-full flex flex-col">
-          {/* Fixed decorations */}
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
           <div className="notebook-holes hidden md:block">
