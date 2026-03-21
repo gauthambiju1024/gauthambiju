@@ -17,9 +17,9 @@
     --popover: 36 37% 96%;
     --popover-foreground: 218 30% 21%;
 
-    /* Sepia accent #806458 */
-    --primary: 16 21% 42%;
-    --primary-foreground: 36 37% 96%;
+    /* Blue accent */
+    --primary: 220 60% 50%;
+    --primary-foreground: 0 0% 100%;
 
     /* Light paper shadow #E3E6E8 */
     --secondary: 210 8% 93%;
