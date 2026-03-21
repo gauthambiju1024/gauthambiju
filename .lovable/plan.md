@@ -1,23 +1,12 @@
 
 
-## Plan: Fix Rotating Word Color and Truncation
+## Plan: Slow Down Morphing Animation
 
-### Issue 1: Wrong blue
-The rotating word uses `text-primary` (`220 60% 50%` — bright blue). The text "Tirelessly pursue clarity" uses `text-card-foreground` (`218 30% 21%` — dark navy). The user wants the dark navy, not the bright blue.
-
-### Issue 2: Word truncation
-The `Math.ceil` / `Math.max` character slicing still occasionally drops the last letter. The fix: **always show the complete word** at the end of the morph-in phase by clamping `charCount` to `nextWord.length` explicitly, and removing the fractional ceiling math that causes off-by-one.
+Increase `morphDuration` from `500ms` to `800ms` and bump `interval` from `3500ms` to `4000ms` so each word stays visible longer and the character-by-character transition feels more deliberate.
 
 ### Changes
 
 **`src/components/MorphingText.tsx`**
-- Change `text-primary` to `text-card-foreground` on the display span so the rotating word matches the dark navy used elsewhere
-- Fix morph-in: replace `Math.ceil(nextWord.length * ((progress - 0.5) * 2))` with `Math.min(nextWord.length, Math.ceil(...))` and ensure the final step explicitly uses `nextWord.length`
-- Same fix for morph-out: clamp `charCount` to never exceed `currentWord.length`
-
-### Files
-
-| File | Change |
-|---|---|
-| `src/components/MorphingText.tsx` | Change color class, clamp charCount |
+- Line 13: Change default `interval` from `3500` to `4000`
+- Line 25: Change `morphDuration` from `500` to `800`
 
