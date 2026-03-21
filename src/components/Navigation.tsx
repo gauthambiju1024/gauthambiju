@@ -1,5 +1,4 @@
 import { useState, useEffect, RefObject } from "react";
-import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -17,17 +16,8 @@ interface NavigationProps {
 
 const Navigation = ({ scrollContainer }: NavigationProps) => {
   const [activeSection, setActiveSection] = useState("about");
-  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const container = scrollContainer?.current;
-    if (!container) return;
-    const onScroll = () => setScrolled(container.scrollTop > 20);
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [scrollContainer]);
 
   useEffect(() => {
     if (location.pathname !== '/') return;
@@ -71,15 +61,7 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
   };
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-      className="z-50 flex items-center justify-between px-8 md:px-16 py-4 transition-all duration-300"
-      style={{
-        background: 'transparent',
-      }}
-    >
+    <nav className="z-50 flex items-center justify-between px-8 md:px-16 py-4">
       <button
         onClick={() => scrollToSection("about")}
         className="font-handwritten text-2xl font-bold tracking-tight"
@@ -102,16 +84,12 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
           >
             {item.label}
             {activeSection === item.id && (
-              <motion.div
-                layoutId="nav-underline"
-                className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-primary"
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              />
+              <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-primary" />
             )}
           </button>
         ))}
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 
