@@ -1,34 +1,27 @@
 
-## Plan: Fix Rotating Word Visibility and Keep Accent Styling Consistent
 
-### Problem
-The rotating word still has two issues:
-- letters disappear or get cropped because the current effect slices the text while the word row is too tight
-- the first loaded word looks brighter/bolder than later states because the morphing state changes its visual treatment
+## Plan: Fix Morphing Text — Cursor, Blue Color, Full Words
+
+### Issues
+1. **Missing cursor**: The blinking `|` cursor that appeared during morphing was removed in a previous refactor
+2. **Brown color**: `--primary` is sepia `16 21% 42%`. User wants blue like it was before
+3. **Truncated words**: `Math.round` with fractional progress can produce a charCount of `currentWord.length - 1`, cutting the last letter
 
 ### Changes
 
 **`src/components/MorphingText.tsx`**
-- Keep a single consistent accent style for all words: same bold weight and same highlighted color from the initial “products” state
-- Remove the temporary dimming during morph so the word never looks weaker mid-transition
-- Reserve width for the longest word so nothing gets cut off and the layout does not shift
-- Adjust the transition logic so each cycle clearly finishes on the full next word before changing again
-- Keep the animation simple and smooth, but not at the cost of readability
+- Add a blinking `|` cursor after `displayText` that shows during the morphing phase (when text is being sliced). Use a `isMorphing` state flag toggled on/off around the morph interval
+- Fix truncation: in the "morphing in" half, ensure the final step always sets `charCount = nextWord.length` (use `Math.ceil` instead of `Math.round`, or clamp to full length when `step >= steps`)
+- The cursor blinks via CSS animation (`animate-pulse` or a custom `@keyframes blink`)
 
-**`src/components/HeroSection.tsx`**
-- Increase the word row’s vertical space slightly so bold letters are never clipped
-- Make the rotating-word wrapper allow full visibility instead of feeling tightly boxed
-- Preserve the current hero hierarchy while keeping the highlighted word visually steady and consistent
-
-### Technical detail
-- Use a hidden sizing reference based on the longest rotating word to lock the required width
-- Move the accent color/weight into the base rotating-word styling instead of applying it only on first render
-- Remove the opacity drop tied to the morphing state
-- Slightly loosen the word line-height / container height to prevent top or bottom clipping
+**`src/index.css`**
+- Change `--primary` from `16 21% 42%` (sepia brown) to a blue hue, e.g. `220 60% 50%` (medium blue that fits the notebook aesthetic)
+- Update `--primary-foreground` to work with the new blue
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/MorphingText.tsx` | Fix truncation/clipping, stabilize timing, keep accent color/weight consistent |
-| `src/components/HeroSection.tsx` | Add enough space for the rotating word and prevent visual clipping |
+| `src/components/MorphingText.tsx` | Add blinking cursor, fix charCount to never truncate |
+| `src/index.css` | Change `--primary` to blue |
+
