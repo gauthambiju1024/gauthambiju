@@ -10,7 +10,7 @@ interface MorphingTextProps {
 export const MorphingText = ({
   words,
   className,
-  interval = 3500,
+  interval = 4000,
 }: MorphingTextProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayText, setDisplayText] = useState(words[0]);
