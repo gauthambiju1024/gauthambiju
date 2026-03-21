@@ -57,7 +57,7 @@ export const MorphingText = ({
       </span>
       <span className="absolute left-0 top-0 font-sans font-bold text-card-foreground whitespace-nowrap">
         {displayText}
-        <span className="animate-pulse ml-[1px]">|</span>
+        <span className="animate-pulse ml-[1px] font-light">|</span>
       </span>
     </span>
   );
