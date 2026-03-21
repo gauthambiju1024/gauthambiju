@@ -69,7 +69,7 @@ export const MorphingText = ({
       <span className="invisible font-sans font-bold" aria-hidden="true">
         {longestWord}
       </span>
-      <span className="absolute left-0 top-0 font-sans font-bold text-primary whitespace-nowrap">
+      <span className="absolute left-0 top-0 font-sans font-bold text-card-foreground whitespace-nowrap">
         {displayText}
         {isMorphing && (
           <span className="animate-blink">|</span>
