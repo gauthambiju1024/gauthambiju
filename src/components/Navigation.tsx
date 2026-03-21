@@ -1,4 +1,3 @@
-import { useState, useEffect, RefObject } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
@@ -8,62 +7,28 @@ const navItems = [
   { id: "connect", label: "connect" },
 ];
 
-const sectionIds = navItems.map(n => n.id);
-
 interface NavigationProps {
-  scrollContainer?: RefObject<HTMLDivElement>;
+  activeSection?: string;
+  onNavigate?: (sectionId: string) => void;
 }
 
-const Navigation = ({ scrollContainer }: NavigationProps) => {
-  const [activeSection, setActiveSection] = useState("about");
+const Navigation = ({ activeSection = "about", onNavigate }: NavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    if (location.pathname !== '/') return;
-    const root = scrollContainer?.current ?? null;
-
-    const observers: IntersectionObserver[] = [];
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveSection(id);
-          }
-        },
-        { root, rootMargin: "-40% 0px -55% 0px" }
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-
-    return () => observers.forEach(o => o.disconnect());
-  }, [location.pathname, scrollContainer]);
-
-  const scrollToSection = (sectionId: string) => {
+  const handleClick = (sectionId: string) => {
     if (location.pathname !== '/') {
       navigate('/');
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        el?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    } else {
-      const el = document.getElementById(sectionId);
-      if (el && scrollContainer?.current) {
-        el.scrollIntoView({ behavior: "smooth" });
-      } else {
-        el?.scrollIntoView({ behavior: "smooth" });
-      }
+      // After navigating home, the flip book will start at page 0
+      return;
     }
+    onNavigate?.(sectionId);
   };
 
   return (
     <nav className="z-50 flex items-center justify-between px-8 md:px-16 py-4">
       <button
-        onClick={() => scrollToSection("about")}
+        onClick={() => handleClick("about")}
         className="font-handwritten text-2xl font-bold tracking-tight"
         style={{ color: 'hsl(var(--notebook-paper))' }}
       >
@@ -74,7 +39,7 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => scrollToSection(item.id)}
+            onClick={() => handleClick(item.id)}
             className="relative px-4 py-2 font-handwritten text-xl transition-colors duration-300"
             style={{
               color: activeSection === item.id
