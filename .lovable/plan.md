@@ -1,61 +1,39 @@
 
 
-## Plan: Add Page-Flip Animation Between Sections
+## Plan: Simplify Morphing to Per-Character Stepping (No Math)
 
-### Concept
-Replace the current vertical scroll layout with a page-flip book interface. Each section group becomes a "page" in a notebook that you flip through with a realistic 3D page-turn animation. The notebook frame (spine, holes, page-fold) stays fixed while pages flip inside it.
+### Problem
+The progress-based `Math.round` / `Math.min` / `Math.max` calculations cause uneven pacing — some ticks show no change (stall), then multiple characters appear at once (rush).
 
-### Approach
-Use the `react-pageflip` library — a mature React wrapper around StPageFlip that provides realistic CSS3D page-flip animations with touch/swipe support.
+### Fix
 
-### Pages
-Each section group becomes one page in the flip book:
-1. **Page 1**: Hero + Marquee + Beliefs
-2. **Page 2**: Work + Story
-3. **Page 3**: Blog
-4. **Page 4**: Connect + Footer
+**`src/components/MorphingText.tsx`**
 
-### Changes
+Replace the entire morph logic with dead-simple character stepping:
 
-**Install dependency**
-- `react-pageflip` (npm package)
+- **Phase 1 (morph out)**: Start from full `currentWord`. Each tick removes one character from the end. So `currentWord.length` ticks total.
+- **Phase 2 (morph in)**: Build up `nextWord` one character at a time. So `nextWord.length` ticks total.
+- **Total ticks** = `currentWord.length + nextWord.length` (for "products" → "systems" that's 8 + 7 = 15 ticks)
+- **Tick interval** = `morphDuration / totalTicks` (800ms / 15 ≈ 53ms per tick)
+- No `Math.round`, no `Math.ceil`, no `Math.min`, no `Math.max`, no `progress` float. Just a counter and two `if` branches with direct `.slice()`.
 
-**`src/pages/Index.tsx`**
-- Replace the scrollable `div` interior with an `HTMLFlipBook` component from `react-pageflip`
-- Each section group becomes a `React.forwardRef` page component (required by the library)
-- Configure flip book: single-page mode, paper size matching the notebook interior, page-flip animation on click/swipe, shadow enabled
-- Remove scroll-based progress bar (no longer scrolling) — replace with a page indicator (e.g., "2 / 4")
-- Add left/right arrow buttons or click zones to flip pages
-- Wire navigation clicks (about, work, blog, connect) to flip to the corresponding page via the `pageFlip().flip(n)` API
+```
+tick 0:  "products"
+tick 1:  "product"
+tick 2:  "produc"
+...
+tick 7:  "p"
+tick 8:  "s"
+tick 9:  "sy"
+...
+tick 14: "systems"  → done, clear interval
+```
 
-**`src/components/Navigation.tsx`**
-- Instead of `scrollIntoView`, call a callback that flips to the correct page number
-- Pass the flip-book API ref down or use a shared context/callback
-
-**`src/components/FlipPage.tsx`** (new)
-- A `forwardRef` wrapper that gives each page the notebook paper styling, correct dimensions, and overflow-y scroll for content taller than one page
-
-**`src/index.css`**
-- Add styles for the flip book container to fit inside the notebook frame
-- Style page shadows and flip animation to match the notebook aesthetic
-- Each page gets the paper background and notebook grid styling
-
-### Navigation integration
-- Nav items map to page indices: about → 0, work → 1, blog → 2, connect → 3
-- Clicking a nav item calls `flipBook.current.pageFlip().flip(pageIndex)`
-- Active section updates based on current page number via the `onFlip` callback
-
-### Mobile / touch
-- `react-pageflip` supports swipe gestures out of the box
-- On small screens, pages display in single-page mode (already the plan)
+Everything else stays the same: blinking cursor, longest-word sizing, interval timing.
 
 ### Files
 
 | File | Change |
 |---|---|
-| `package.json` | Add `react-pageflip` |
-| `src/components/FlipPage.tsx` | New forwardRef page wrapper |
-| `src/pages/Index.tsx` | Replace scroll layout with HTMLFlipBook, add page controls |
-| `src/components/Navigation.tsx` | Change scroll-to-section to flip-to-page |
-| `src/index.css` | Add flip book container styles |
+| `src/components/MorphingText.tsx` | Replace progress math with simple counter + slice |
 
