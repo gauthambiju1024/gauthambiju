@@ -37,7 +37,7 @@ export const MorphingText = ({
           const charCount = Math.floor(currentWord.length * (1 - progress * 2));
           setDisplayText(currentWord.slice(0, charCount));
         } else {
-          const charCount = Math.floor(nextWord.length * ((progress - 0.5) * 2));
+          const charCount = Math.ceil(nextWord.length * ((progress - 0.5) * 2));
           setDisplayText(nextWord.slice(0, charCount));
         }
 
@@ -51,11 +51,11 @@ export const MorphingText = ({
 
     const wordTimeout = setTimeout(() => {
       startMorph();
-    }, interval - 600);
+    }, interval - morphDuration);
 
     const cycleTimeout = setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % words.length);
-    }, interval);
+    }, interval + 50);
 
     return () => {
       clearInterval(morphTimer);
