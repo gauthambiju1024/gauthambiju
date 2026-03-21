@@ -10,7 +10,7 @@ interface MorphingTextProps {
 export const MorphingText = ({
   words,
   className,
-  interval = 3500,
+  interval = 4000,
 }: MorphingTextProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayText, setDisplayText] = useState(words[0]);
@@ -22,7 +22,7 @@ export const MorphingText = ({
   );
 
   useEffect(() => {
-    const morphDuration = 500;
+    const morphDuration = 800;
     const steps = 20;
     let step = 0;
     let morphTimer: ReturnType<typeof setInterval>;
