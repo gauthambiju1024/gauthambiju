@@ -4,7 +4,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
 
-const defaultWords = ["products", "systems", "platforms", "experiences"];
+const defaultWords = ["products", "platforms", "systems", "experiences"];
 
 const HeroSection = () => {
   const { value: heroData } = useSiteContent('hero', 'main');
