@@ -7,7 +7,7 @@ const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } },
 };
 
 const item = {
@@ -47,6 +47,7 @@ const HeroSection = () => {
           initial="hidden"
           animate="show"
           className="max-w-3xl md:ml-8 relative z-10 flex-1 my-0"
+          style={{ willChange: 'transform, opacity' }}
         >
           <motion.p variants={item} className="font-handwritten text-2xl md:text-3xl mb-6 text-primary">
             {hero?.name ?? "Gautham Biju"}
@@ -98,7 +99,7 @@ const HeroSection = () => {
           <motion.img
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 0.9, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
             src={heroPortrait}
             alt="Gautham portrait sketch"
             className="w-full h-auto mix-blend-multiply"

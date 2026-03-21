@@ -8,8 +8,8 @@ interface PageTransitionProps {
 const pageVariants = {
   initial: {
     opacity: 0,
-    rotateY: -12,
-    scale: 0.96,
+    rotateY: -6,
+    scale: 0.97,
     transformPerspective: 1200,
   },
   animate: {
@@ -18,17 +18,17 @@ const pageVariants = {
     scale: 1,
     transformPerspective: 1200,
     transition: {
-      duration: 0.6,
+      duration: 0.45,
       ease: [0.22, 1, 0.36, 1] as const,
     },
   },
   exit: {
     opacity: 0,
-    rotateY: 12,
-    scale: 0.96,
+    rotateY: 6,
+    scale: 0.97,
     transformPerspective: 1200,
     transition: {
-      duration: 0.4,
+      duration: 0.35,
       ease: [0.22, 1, 0.36, 1] as const,
     },
   },
