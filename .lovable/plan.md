@@ -1,41 +1,59 @@
 
 
-## Plan: Smoother Initial Page Load Animation
+## Plan: Strip All Animations Except Word Rotation
 
-### Problem
+Remove all Framer Motion animations across the site. The only animation that remains is the rotating word in the hero section, simplified to a clean opacity crossfade.
 
-On first load, multiple animations compete simultaneously:
-1. `PageTransition` does a 3D rotateY + scale + opacity (0.6s)
-2. Inside it, every section has `sectionReveal` (opacity + y + scale via `whileInView`)
-3. Hero has its own stagger container (0.3s delay + 0.1s stagger per child)
-4. Portrait fades in with 0.5s delay
-5. Progress bar spring starts calculating
+### Changes
 
-All fire at once, causing a janky first frame with too many transforms.
+**`src/components/HeroSection.tsx`**
+- Remove stagger container/item variants — render all elements as plain `div`/`p`/`h1`
+- Remove portrait parallax (`useScroll`, `useTransform`, `portraitY`, `portraitScale`) — portrait becomes a static `img`
+- Keep `AnimatePresence` + `motion.h1` for the rotating word only, simplify to pure `opacity` fade (no `clipPath`), duration `0.5s`, ease `easeInOut`
+- Remove `will-change` properties
 
-### Solution
+**`src/pages/Index.tsx`**
+- Remove `PageTransition` wrapper — render content directly
+- Remove progress bar (`motion.div` with `scaleX`)
+- Remove `sectionReveal` variants — all sections render as plain `div` instead of `motion.div`
+- Remove section divider `motion.div` animation — use plain `div`
+- Remove `useScroll`, `useSpring` imports (no longer needed)
 
-**Layer the animations sequentially** so the page flip completes first, then content reveals gracefully.
+**`src/components/PageTransition.tsx`**
+- Can be left as-is (unused) or simplified, since it's no longer imported
 
-#### `src/components/PageTransition.tsx`
-- Reduce rotateY from `-12` to `-6` (subtler flip)
-- Reduce duration from `0.6s` to `0.45s`
-- Add `onAnimationComplete` callback or use CSS to signal when page flip is done
+**`src/components/BeliefsSection.tsx`**
+- Remove all `motion` usage (`useScroll`, `useTransform`, scroll-driven opacity/y on each belief item and header)
+- Render as plain divs
 
-#### `src/pages/Index.tsx`
-- For the **hero section specifically** (first group, first item): skip `sectionReveal` variants — the hero already has its own stagger animation. Wrapping it in another reveal causes double-animation
-- Add `delayChildren: 0.3` to `sectionReveal` so non-hero sections wait for the page flip to finish before revealing
+**`src/components/WorkSection.tsx`**
+- Remove scroll-driven `motion` transforms on project rows and header
+- Render as plain divs
 
-#### `src/components/HeroSection.tsx`
-- Increase `delayChildren` from `0.3` to `0.5` so hero content waits for page flip
-- Change portrait delay from `0.5` to `0.7` so it enters after text
-- Add `will-change: transform, opacity` to the stagger container for GPU compositing on first paint
+**`src/components/StorySection.tsx`**
+- Remove scroll-driven parallax, sticky header transforms, animated stats
+- Render as plain divs
+
+**`src/components/BlogSection.tsx`**
+- Remove scroll-driven transforms on post rows and header
+- Render as plain divs
+
+**`src/components/ConnectSection.tsx`**
+- Remove scroll-driven transforms on link rows, header, and globe
+- Render as plain divs
+
+**`src/components/MarqueeText.tsx`**
+- Keep the CSS marquee (it's a CSS animation, not framer motion) — this is decorative scrolling text, not a transition animation. If user considers it an animation, remove it too. Will keep it since it's functional UI.
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/PageTransition.tsx` | Subtler, faster flip animation |
-| `src/pages/Index.tsx` | Skip sectionReveal for hero, delay others |
-| `src/components/HeroSection.tsx` | Increase initial delay so content enters after page flip |
+| `src/components/HeroSection.tsx` | Strip all motion except word rotation (simple opacity fade) |
+| `src/pages/Index.tsx` | Remove PageTransition, progress bar, section reveal animations |
+| `src/components/BeliefsSection.tsx` | Remove all framer-motion |
+| `src/components/WorkSection.tsx` | Remove all framer-motion |
+| `src/components/StorySection.tsx` | Remove all framer-motion |
+| `src/components/BlogSection.tsx` | Remove all framer-motion |
+| `src/components/ConnectSection.tsx` | Remove all framer-motion |
 
