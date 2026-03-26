@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         display: ['Space Grotesk', 'sans-serif'],
         'serif-i': ['Instrument Serif', 'serif'],
+        'serif-display': ['Playfair Display', 'serif'],
         body: ['DM Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
         handwritten: ['Caveat', 'cursive'],
@@ -53,6 +54,10 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
