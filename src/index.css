@@ -164,6 +164,10 @@
     z-index: 2;
   }
 
+  .notebook-margin {
+    pointer-events: none;
+  }
+
   /* Red margin line */
   .notebook-margin {
     position: absolute;
