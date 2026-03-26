@@ -64,6 +64,17 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Gold accent */
+    --gold: 38 60% 52%;
+    --gold-foreground: 38 10% 16%;
+
+    /* Section-specific */
+    --shelf-wood: 24 18% 18%;
+    --shelf-wood-light: 24 14% 28%;
+    --whiteboard: 210 8% 96%;
+    --toolbox-metal: 220 10% 22%;
+    --editorial-cream: 40 30% 96%;
   }
 }
 
