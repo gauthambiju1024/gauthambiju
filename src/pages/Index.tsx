@@ -78,7 +78,7 @@ const Index = () => {
 
       {/* Notebook outer frame */}
       <div className="flex-1 min-h-0 flex items-center justify-center px-2 md:px-4 lg:px-8 pb-3 md:pb-5">
-        <div className="notebook notebook-grid relative w-full max-w-7xl h-full flex flex-col">
+        <div className="notebook notebook-grid relative w-full max-w-7xl h-full min-h-0 flex flex-col">
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
           <div className="notebook-holes hidden md:block">

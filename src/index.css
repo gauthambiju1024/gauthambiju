@@ -126,7 +126,7 @@
     border-radius: 1rem;
     border: 3px solid hsl(var(--notebook-border));
     position: relative;
-    overflow: hidden;
+    overflow: clip;
     box-shadow:
       0 0 0 1px hsl(var(--notebook-border) / 0.3),
       0 25px 80px -12px hsl(0 0% 0% / 0.5),
@@ -162,6 +162,10 @@
     border-right: 2px solid hsl(var(--primary) / 0.12);
     pointer-events: none;
     z-index: 2;
+  }
+
+  .notebook-margin {
+    pointer-events: none;
   }
 
   /* Red margin line */
