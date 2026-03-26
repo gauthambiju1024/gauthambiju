@@ -2,32 +2,46 @@ import { useMemo, useRef } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
-import MarqueeText from "@/components/MarqueeText";
-import BeliefsSection from "@/components/BeliefsSection";
-import WorkSection from "@/components/WorkSection";
-import StorySection from "@/components/StorySection";
-import BlogSection from "@/components/BlogSection";
-import ConnectSection from "@/components/ConnectSection";
-import Footer from "@/components/Footer";
+import AboutSection from "@/components/AboutSection";
+import ProjectsShelf from "@/components/ProjectsShelf";
+import ThinkingWall from "@/components/ThinkingWall";
+import SkillsToolbox from "@/components/SkillsToolbox";
+import JourneyTimeline from "@/components/JourneyTimeline";
+import WritingDesk from "@/components/WritingDesk";
+import ContactClosing from "@/components/ContactClosing";
 import { useHomepageSections } from "@/hooks/useSiteData";
 
 const sectionMap: Record<string, React.ComponentType> = {
   hero: HeroSection,
-  marquee: MarqueeText,
-  beliefs: BeliefsSection,
-  work: WorkSection,
-  story: StorySection,
-  blog: BlogSection,
-  connect: ConnectSection,
-  footer: Footer,
+  about: AboutSection,
+  projects: ProjectsShelf,
+  thinking: ThinkingWall,
+  skills: SkillsToolbox,
+  journey: JourneyTimeline,
+  writing: WritingDesk,
+  contact: ContactClosing,
 };
 
 const sectionAnchors: Record<string, string> = {
-  hero: 'about',
-  work: 'work',
-  blog: 'blog',
-  connect: 'connect',
+  hero: 'home',
+  about: 'about',
+  projects: 'projects',
+  thinking: 'thinking',
+  skills: 'skills',
+  journey: 'journey',
+  writing: 'writing',
+  contact: 'contact',
 };
+
+const defaultGroups = [
+  ['hero', 'about'],
+  ['projects'],
+  ['thinking'],
+  ['skills'],
+  ['journey'],
+  ['writing'],
+  ['contact'],
+];
 
 const Index = () => {
   const { sections, loading } = useHomepageSections();
@@ -36,7 +50,7 @@ const Index = () => {
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
   const groups = useMemo(() => {
-    if (loading) return [['hero', 'marquee', 'beliefs'], ['work', 'story'], ['blog'], ['connect', 'footer']];
+    if (loading || sections.length === 0) return defaultGroups;
     const g: string[][] = [];
     let lastGroup = '';
     for (const s of sections) {
