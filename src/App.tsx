@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
-import AdminLogin from "./pages/admin/AdminLogin";
+
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -30,7 +30,7 @@ const AnimatedRoutes = () => {
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/projects/:slug" element={<ProjectPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="projects" element={<AdminProjects />} />
