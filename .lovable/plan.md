@@ -1,69 +1,63 @@
 
 
-## Plan: Redesign ProjectsShelf — Compact, Premium, Consistent
+## Plan: Polish ProjectsShelf — Fix Visibility, Add Spine Descriptions, Better Colors, Better Headings, Admin Color Picker
 
-### What's wrong now
-- Missing the consistent section header (`page 03 ─── Projects`) that every other section uses
-- Books are too narrow (65px) with tiny unreadable text
-- Too much vertical padding and empty space
-- Shelf area feels sparse and disconnected from the reference aesthetic
-- Detail card is functional but plain
+### Issues to fix
 
-### Design direction (inspired by reference image, adapted to site)
-The reference shows **wider, taller books** with readable vertical titles, a subtitle/description area at the bottom of each spine, and a warm wooden shelf with depth. We adapt this to the site's dark desk + editorial aesthetic:
+1. **"Project Library" title not visible** — likely clipped by `section-panel overflow: hidden` or rendered outside visible area. The title sits at `px-6 md:px-16` but the shelf container inside has its own `mx-4 md:mx-12` padding creating nesting issues.
 
-- **Wider spines** (80-90px) with clear vertical title text and a subtle description line at the bottom
-- **Linen/cloth texture effect** via CSS gradients on spines (no images needed)
-- **Deeper shelf ledge** with proper 3D wood-grain shadow
-- **Tighter vertical rhythm** — reduce py from 16/24 to 12/16, reduce gaps
-- **Consistent header** — add `page 03 ─── Projects` label matching ThinkingWall/SkillsToolbox pattern
-- **Section title**: "Project Library" with subtitle "Case Studies · Products · Builds"
+2. **Spine needs horizontal 4-5 word description** — like the reference image, each spine should show a short horizontal subtitle text (from `project.subtitle`) near the bottom of the spine, rotated back to horizontal.
+
+3. **Background too dark** — current `shelf-bg` uses `--shelf-wood: 24 18% 18%` which is very dark brown. Need a warmer, lighter tone that still feels premium.
+
+4. **Section headings inconsistent** — the `page 03 ─── Projects` pattern with small mono text is too subtle. Need to match other sections better while elevating the design.
+
+5. **Admin color picker** — replace the raw text input for spine color with a visual preset picker.
 
 ### File changes
 
-**`src/components/ProjectsShelf.tsx`** — Rewrite
+**`src/components/ProjectsShelf.tsx`** — Major polish
 
-1. **Add consistent section header**: `page 03` + divider + `Projects` label (same pattern as lines 68-71 of ThinkingWall, lines 59-63 of SkillsToolbox)
+1. **Fix title visibility**: Move "Project Library" heading and subtitle above the shelf container, ensure proper padding alignment. Remove conflicting nested padding.
 
-2. **Section title block**: "Project Library" heading + "Case Studies · Products · Builds" subtitle
+2. **Spine horizontal description**: Add a horizontal text block at the bottom of each spine (inside a rotated container) showing `project.subtitle` truncated to ~5 words. White text at 40% opacity, 9px font-body, positioned absolutely at the bottom with proper padding.
 
-3. **Book spines redesigned**:
-   - Width: 80px (up from 65px), height: 260px
-   - CSS linen texture: layered `background-image` with noise-like gradients over the base color
-   - Vertical title: larger (13px), `font-serif-display`, letter-spacing 0.2em
-   - Bottom area: small horizontal subtitle text (project.subtitle truncated) + an icon-like decorative element using a simple CSS shape
-   - Left edge: 4px highlight gradient for 3D spine edge feel
-   - Right edge: subtle dark gradient for depth
+3. **Refined section header**: Match ThinkingWall/SkillsToolbox pattern exactly — `page 03` left, divider, `Projects` right — but ensure it renders within the visible overflow area.
 
-4. **Shelf improvements**:
-   - Thicker ledge (6px height) with layered box-shadow for realistic wood depth
-   - Top inner shadow on the shelf container for recessed feel
-   - Reduce overall padding: `p-4 md:p-6` (down from `p-6 md:p-10`)
+4. **Better shelf background**: Change the inner shelf container from `shelf-bg` to a custom warm dark tone — `hsl(25 12% 14%)` with a subtle wood grain gradient. Update the outer section to not double-apply shelf-bg.
 
-5. **Compact spacing**:
-   - Section padding: `py-12 md:py-16` (down from `py-16 md:py-24`)
-   - Gap between books: `gap-3 md:gap-4` (down from `gap-5 md:gap-6`)
-   - Min-height reduced to 280px
+5. **Polish details**:
+   - Spine width increased slightly to 85px for the horizontal subtitle to breathe
+   - Better spine colors default palette — richer jewel tones
+   - Smoother hover shadow transitions
+   - Detail card: add a subtle top border matching the selected book's color
 
-6. **Hover/select polish**:
-   - Hover: lift `-8px`, rotate `Y: -3deg`, shadow intensifies
-   - Selected: lift `-14px`, subtle warm glow matching spine color at 10% opacity
-   - Transition: snappier spring (stiffness 350, damping 28)
+**`src/index.css`** — Update shelf-wood CSS variable
 
-7. **Detail card refinement**:
-   - Slightly tighter padding (`p-5 md:p-6`)
-   - Keep existing content structure (problem, role/stack grid, impact, tags, links)
+- Change `--shelf-wood` from `24 18% 18%` to `25 15% 16%` — slightly warmer, still dark but with more character
+- Add a new warm gradient to `.shelf-bg` for depth
 
-8. **Category row footer**: After the last shelf row, add a small centered text: `CURATED WORK · {earliest year} – {latest year}` in font-mono, matching reference
+**`src/pages/admin/AdminProjects.tsx`** — Visual color picker
 
-**`src/pages/Index.tsx`** — No changes needed (section already wrapped in panel)
+Replace the plain text input for "Spine Color" with a grid of preset color swatches (the 8-10 curated jewel tones) that the admin can click. Include a "Custom" option that reveals the text input for any HSL value. Each swatch shows a small circle with the color and a checkmark when selected.
 
-### No database changes needed — all columns already exist.
+### Preset spine colors for admin picker
+
+```text
+Teal:     hsl(170 25% 28%)
+Burgundy: hsl(350 28% 30%)
+Navy:     hsl(215 28% 28%)
+Olive:    hsl(85 18% 28%)
+Rust:     hsl(15 30% 30%)
+Plum:     hsl(280 18% 30%)
+Slate:    hsl(200 12% 32%)
+Amber:    hsl(35 25% 30%)
+Forest:   hsl(140 20% 25%)
+Charcoal: hsl(220 8% 22%)
+```
 
 ### Summary
-- 1 file modified: `ProjectsShelf.tsx`
-- Adds consistent section header matching all other sections
-- Wider, more readable book spines with textile texture
-- More compact vertical spacing throughout
-- Premium shelf depth and interaction polish
+- 3 files modified: `ProjectsShelf.tsx`, `index.css`, `AdminProjects.tsx`
+- No database changes
+- Fixes title visibility, adds horizontal spine descriptions, warmer background, and admin color picker
 
