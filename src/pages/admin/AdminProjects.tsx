@@ -7,10 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { Textarea } from '@/components/ui/textarea';
+
+const PRESET_COLORS = [
+  { name: 'Teal', value: 'hsl(170 25% 28%)' },
+  { name: 'Burgundy', value: 'hsl(350 28% 30%)' },
+  { name: 'Navy', value: 'hsl(215 28% 28%)' },
+  { name: 'Olive', value: 'hsl(85 18% 28%)' },
+  { name: 'Rust', value: 'hsl(15 30% 30%)' },
+  { name: 'Plum', value: 'hsl(280 18% 30%)' },
+  { name: 'Slate', value: 'hsl(200 12% 32%)' },
+  { name: 'Amber', value: 'hsl(35 25% 30%)' },
+  { name: 'Forest', value: 'hsl(140 20% 25%)' },
+  { name: 'Charcoal', value: 'hsl(220 8% 22%)' },
+];
 
 type Project = Tables<'projects'>;
 
@@ -148,7 +161,41 @@ export default function AdminProjects() {
             <div><Label>Tags (comma separated)</Label><Input value={tagsInput} onChange={e => setTagsInput(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>URL</Label><Input value={form.url ?? ''} onChange={e => setForm({ ...form, url: e.target.value })} /></div>
-              <div><Label>Spine Color</Label><Input value={form.color ?? ''} onChange={e => setForm({ ...form, color: e.target.value })} placeholder="hsl(215 20% 30%)" /></div>
+              <div>
+                <Label>Spine Color</Label>
+                <div className="flex flex-wrap gap-2 mt-1.5">
+                  {PRESET_COLORS.map(c => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, color: c.value })}
+                      className="relative w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center"
+                      style={{
+                        backgroundColor: c.value,
+                        borderColor: form.color === c.value ? 'hsl(var(--primary))' : 'transparent',
+                        boxShadow: form.color === c.value ? '0 0 0 2px hsl(var(--primary) / 0.3)' : 'none',
+                      }}
+                      title={c.name}
+                    >
+                      {form.color === c.value && <Check className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const custom = prompt('Enter custom HSL color:', form.color ?? '');
+                      if (custom) setForm({ ...form, color: custom });
+                    }}
+                    className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/30 text-muted-foreground text-xs font-mono flex items-center justify-center hover:border-primary/50 transition-colors"
+                    title="Custom color"
+                  >
+                    +
+                  </button>
+                </div>
+                {form.color && !PRESET_COLORS.some(c => c.value === form.color) && (
+                  <p className="text-[10px] font-mono text-muted-foreground mt-1">Custom: {form.color}</p>
+                )}
+              </div>
             </div>
 
             <div className="border-t border-border pt-4 mt-4">
