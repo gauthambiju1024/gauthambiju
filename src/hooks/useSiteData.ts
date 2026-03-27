@@ -69,6 +69,19 @@ export function useSocialLinks() {
   return { links, loading };
 }
 
+// Single project by slug hook
+export function useProject(slug: string) {
+  const [project, setProject] = useState<Tables<'projects'> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('projects').select('*').eq('slug', slug).maybeSingle()
+      .then(({ data }) => { setProject(data); setLoading(false); });
+  }, [slug]);
+
+  return { project, loading };
+}
+
 // Homepage sections hook
 export function useHomepageSections() {
   const [sections, setSections] = useState<{ section_key: string; page_group: string }[]>([]);

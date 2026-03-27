@@ -10,11 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { Textarea } from '@/components/ui/textarea';
 
 type Project = Tables<'projects'>;
 
 const emptyProject: TablesInsert<'projects'> = {
-  title: '', subtitle: '', tags: [], year: '', url: '', sort_order: 0, is_active: true,
+  title: '', slug: '', subtitle: '', tags: [], year: '', url: '', sort_order: 0, is_active: true,
+  category: 'General', color: 'hsl(215 20% 30%)', problem: '', role: '', contribution: '', stack: '', impact: '', description: '',
 };
 
 export default function AdminProjects() {
@@ -23,7 +25,7 @@ export default function AdminProjects() {
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<TablesInsert<'projects'>>(emptyProject);
   const [tagsInput, setTagsInput] = useState('');
-  const [thumbnail, setThumbnail] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
 
   const fetchProjects = async () => {
     const { data } = await supabase.from('projects').select('*').order('sort_order');
@@ -36,20 +38,32 @@ export default function AdminProjects() {
     setEditing(null);
     setForm(emptyProject);
     setTagsInput('');
-    setThumbnail('');
+    setThumbnailUrl('');
     setDialogOpen(true);
   };
 
   const openEdit = (p: Project) => {
     setEditing(p);
-    setForm({ title: p.title, subtitle: p.subtitle, tags: p.tags, year: p.year, url: p.url, sort_order: p.sort_order, is_active: p.is_active });
+    setForm({
+      title: p.title, slug: p.slug, subtitle: p.subtitle, tags: p.tags, year: p.year, url: p.url,
+      sort_order: p.sort_order, is_active: p.is_active, category: p.category, color: p.color,
+      problem: p.problem, role: p.role, contribution: p.contribution, stack: p.stack, impact: p.impact,
+      description: p.description,
+    });
     setTagsInput((p.tags ?? []).join(', '));
-    setThumbnail('');
+    setThumbnailUrl(p.thumbnail_url ?? '');
     setDialogOpen(true);
   };
 
+  const generateSlug = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
   const handleSave = async () => {
-    const payload = { ...form, tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean) };
+    const payload = {
+      ...form,
+      tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+      thumbnail_url: thumbnailUrl || null,
+      slug: form.slug || generateSlug(form.title),
+    };
     if (editing) {
       const { error } = await supabase.from('projects').update(payload).eq('id', editing.id);
       if (error) { toast.error(error.message); return; }
@@ -83,6 +97,7 @@ export default function AdminProjects() {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Year</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Active</TableHead>
@@ -92,7 +107,10 @@ export default function AdminProjects() {
           <TableBody>
             {projects.map(p => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">{p.title}<br /><span className="text-muted-foreground text-xs">{p.subtitle}</span></TableCell>
+                <TableCell className="font-medium">
+                  {p.title}<br /><span className="text-muted-foreground text-xs">{p.subtitle}</span>
+                </TableCell>
+                <TableCell className="text-xs">{p.category}</TableCell>
                 <TableCell>{p.year}</TableCell>
                 <TableCell>{(p.tags ?? []).join(', ')}</TableCell>
                 <TableCell>{p.is_active ? '✓' : '—'}</TableCell>
@@ -105,29 +123,48 @@ export default function AdminProjects() {
               </TableRow>
             ))}
             {projects.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No projects yet</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No projects yet</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Project' : 'New Project'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div><Label>Title</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
-            <div><Label>Subtitle</Label><Input value={form.subtitle ?? ''} onChange={e => setForm({ ...form, subtitle: e.target.value })} /></div>
-            <div><Label>Tags (comma separated)</Label><Input value={tagsInput} onChange={e => setTagsInput(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-4">
+              <div><Label>Title</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+              <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" /></div>
+            </div>
+            <div><Label>Subtitle</Label><Input value={form.subtitle ?? ''} onChange={e => setForm({ ...form, subtitle: e.target.value })} /></div>
+            <div className="grid grid-cols-3 gap-4">
+              <div><Label>Category</Label><Input value={form.category ?? 'General'} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
               <div><Label>Year</Label><Input value={form.year ?? ''} onChange={e => setForm({ ...form, year: e.target.value })} /></div>
               <div><Label>Sort Order</Label><Input type="number" value={form.sort_order ?? 0} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} /></div>
             </div>
-            <div><Label>URL</Label><Input value={form.url ?? ''} onChange={e => setForm({ ...form, url: e.target.value })} /></div>
+            <div><Label>Tags (comma separated)</Label><Input value={tagsInput} onChange={e => setTagsInput(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>URL</Label><Input value={form.url ?? ''} onChange={e => setForm({ ...form, url: e.target.value })} /></div>
+              <div><Label>Spine Color</Label><Input value={form.color ?? ''} onChange={e => setForm({ ...form, color: e.target.value })} placeholder="hsl(215 20% 30%)" /></div>
+            </div>
+
+            <div className="border-t border-border pt-4 mt-4">
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-3">Case Study Details</p>
+            </div>
+            <div><Label>Problem</Label><Textarea value={form.problem ?? ''} onChange={e => setForm({ ...form, problem: e.target.value })} rows={2} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Role</Label><Input value={form.role ?? ''} onChange={e => setForm({ ...form, role: e.target.value })} /></div>
+              <div><Label>Stack</Label><Input value={form.stack ?? ''} onChange={e => setForm({ ...form, stack: e.target.value })} /></div>
+            </div>
+            <div><Label>Contribution</Label><Textarea value={form.contribution ?? ''} onChange={e => setForm({ ...form, contribution: e.target.value })} rows={2} /></div>
+            <div><Label>Impact</Label><Textarea value={form.impact ?? ''} onChange={e => setForm({ ...form, impact: e.target.value })} rows={2} /></div>
+            <div><Label>Description (Markdown)</Label><Textarea value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} rows={6} /></div>
             <div>
               <Label>Thumbnail</Label>
-              <ImageUpload value={thumbnail} onChange={setThumbnail} folder="projects" />
+              <ImageUpload value={thumbnailUrl} onChange={setThumbnailUrl} folder="projects" />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.is_active ?? true} onCheckedChange={v => setForm({ ...form, is_active: v })} />

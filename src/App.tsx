@@ -13,6 +13,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminBlog from "./pages/admin/AdminBlog";
+import ProjectPage from "./pages/ProjectPage";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLinks from "./pages/admin/AdminLinks";
 import AdminSections from "./pages/admin/AdminSections";
@@ -27,6 +28,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/blog" element={<BlogPage />} />
+        <Route path="/projects/:slug" element={<ProjectPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
