@@ -88,36 +88,66 @@ export type Database = {
       }
       projects: {
         Row: {
+          category: string
+          color: string
+          contribution: string | null
           created_at: string | null
+          description: string | null
           id: string
+          impact: string | null
           is_active: boolean | null
+          problem: string | null
+          role: string | null
+          slug: string
           sort_order: number | null
+          stack: string | null
           subtitle: string | null
           tags: string[] | null
+          thumbnail_url: string | null
           title: string
           updated_at: string | null
           url: string | null
           year: string | null
         }
         Insert: {
+          category?: string
+          color?: string
+          contribution?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          impact?: string | null
           is_active?: boolean | null
+          problem?: string | null
+          role?: string | null
+          slug: string
           sort_order?: number | null
+          stack?: string | null
           subtitle?: string | null
           tags?: string[] | null
+          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           url?: string | null
           year?: string | null
         }
         Update: {
+          category?: string
+          color?: string
+          contribution?: string | null
           created_at?: string | null
+          description?: string | null
           id?: string
+          impact?: string | null
           is_active?: boolean | null
+          problem?: string | null
+          role?: string | null
+          slug?: string
           sort_order?: number | null
+          stack?: string | null
           subtitle?: string | null
           tags?: string[] | null
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           url?: string | null
