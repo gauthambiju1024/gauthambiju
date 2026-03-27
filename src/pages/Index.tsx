@@ -36,26 +36,28 @@ const Index = () => {
         <Navigation />
       </div>
 
-      {/* Notebook: Hero + About */}
-      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
-        <div className="notebook notebook-grid relative">
-          <div className="notebook-spine hidden md:block" />
-          <div className="notebook-margin hidden md:block" />
-          <div className="notebook-holes hidden md:block">
-            <div className="notebook-hole" style={{ top: '80px' }} />
-            <div className="notebook-hole" style={{ top: '33%' }} />
-            <div className="notebook-hole" style={{ top: '66%' }} />
-            <div className="notebook-hole" style={{ bottom: '80px' }} />
-          </div>
-          <div className="page-fold" />
-
-          <div className="relative z-[1]">
-            <div id="home">
-              <HeroSection />
+      {/* Notebook: Hero + About — sticky runway */}
+      <div className="md:h-[200vh] relative">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4 md:sticky md:top-[60px] z-40">
+          <div className="notebook notebook-grid relative md:h-[calc(100vh-80px)]">
+            <div className="notebook-spine hidden md:block" />
+            <div className="notebook-margin hidden md:block" />
+            <div className="notebook-holes hidden md:block">
+              <div className="notebook-hole" style={{ top: '80px' }} />
+              <div className="notebook-hole" style={{ top: '33%' }} />
+              <div className="notebook-hole" style={{ top: '66%' }} />
+              <div className="notebook-hole" style={{ bottom: '80px' }} />
             </div>
-            <div className="section-divider" />
-            <div id="about">
-              <AboutSection />
+            <div className="page-fold" />
+
+            <div className="relative z-[1] notebook-sticky">
+              <div id="home">
+                <HeroSection />
+              </div>
+              <div className="section-divider" />
+              <div id="about">
+                <AboutSection />
+              </div>
             </div>
           </div>
         </div>
