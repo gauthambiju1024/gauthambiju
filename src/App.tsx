@@ -32,6 +32,7 @@ const AnimatedRoutes = () => {
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/projects/:slug" element={<ProjectPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
+        <Route path="/case-studies/:slug" element={<CaseStudyPage />} />
         
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
