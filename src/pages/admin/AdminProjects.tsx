@@ -7,10 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { Textarea } from '@/components/ui/textarea';
+
+const PRESET_COLORS = [
+  { name: 'Teal', value: 'hsl(170 25% 28%)' },
+  { name: 'Burgundy', value: 'hsl(350 28% 30%)' },
+  { name: 'Navy', value: 'hsl(215 28% 28%)' },
+  { name: 'Olive', value: 'hsl(85 18% 28%)' },
+  { name: 'Rust', value: 'hsl(15 30% 30%)' },
+  { name: 'Plum', value: 'hsl(280 18% 30%)' },
+  { name: 'Slate', value: 'hsl(200 12% 32%)' },
+  { name: 'Amber', value: 'hsl(35 25% 30%)' },
+  { name: 'Forest', value: 'hsl(140 20% 25%)' },
+  { name: 'Charcoal', value: 'hsl(220 8% 22%)' },
+];
 
 type Project = Tables<'projects'>;
 
