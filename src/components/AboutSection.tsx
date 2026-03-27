@@ -20,7 +20,6 @@ const AboutSection = () => {
     <section className="px-6 md:px-16 py-16 md:py-24">
       {/* Section label */}
       <div className="flex items-center gap-3 mb-12">
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">page 02</span>
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">About</span>
       </div>

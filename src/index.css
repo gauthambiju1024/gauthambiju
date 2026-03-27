@@ -392,6 +392,18 @@
   .font-serif-display {
     font-family: 'Playfair Display', serif;
   }
+
+  /* Floating section panel */
+  .section-panel {
+    border-radius: 1rem;
+    border-width: 1px;
+    padding: 1px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 25px 60px -12px hsl(0 0% 0% / 0.4),
+      0 8px 24px -4px hsl(0 0% 0% / 0.25);
+  }
 }
 
 @layer utilities {
