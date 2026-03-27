@@ -69,6 +69,32 @@ export function useSocialLinks() {
   return { links, loading };
 }
 
+// Case studies hook
+export function useCaseStudies() {
+  const [studies, setStudies] = useState<Tables<'case_studies'>[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('case_studies').select('*').eq('is_published', true).order('sort_order')
+      .then(({ data }) => { setStudies(data ?? []); setLoading(false); });
+  }, []);
+
+  return { studies, loading };
+}
+
+// Single case study by slug hook
+export function useCaseStudy(slug: string) {
+  const [study, setStudy] = useState<Tables<'case_studies'> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from('case_studies').select('*').eq('slug', slug).maybeSingle()
+      .then(({ data }) => { setStudy(data); setLoading(false); });
+  }, [slug]);
+
+  return { study, loading };
+}
+
 // Single project by slug hook
 export function useProject(slug: string) {
   const [project, setProject] = useState<Tables<'projects'> | null>(null);
