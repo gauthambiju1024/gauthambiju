@@ -1,6 +1,6 @@
-import { useState, useEffect, RefObject } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion } from "framer-motion";
 
 const navItems = [
   { id: "home", label: "Home" },
@@ -15,28 +15,22 @@ const navItems = [
 
 const sectionIds = navItems.map(n => n.id);
 
-interface NavigationProps {
-  scrollContainer?: RefObject<HTMLDivElement>;
-}
-
-const Navigation = ({ scrollContainer }: NavigationProps) => {
+const Navigation = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isCompact, setIsCompact] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Track scroll for compact mode
+  // Track window scroll for compact mode
   useEffect(() => {
-    const root = scrollContainer?.current;
-    if (!root) return;
-    const handleScroll = () => setIsCompact(root.scrollTop > 60);
-    root.addEventListener("scroll", handleScroll, { passive: true });
-    return () => root.removeEventListener("scroll", handleScroll);
-  }, [scrollContainer]);
+    const handleScroll = () => setIsCompact(window.scrollY > 60);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
+  // Intersection observer for active section
   useEffect(() => {
     if (location.pathname !== '/') return;
-    const root = scrollContainer?.current ?? null;
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {
@@ -46,29 +40,23 @@ const Navigation = ({ scrollContainer }: NavigationProps) => {
         ([entry]) => {
           if (entry.isIntersecting) setActiveSection(id);
         },
-        { root, rootMargin: "-40% 0px -55% 0px" }
+        { root: null, rootMargin: "-40% 0px -55% 0px" }
       );
       observer.observe(el);
       observers.push(observer);
     });
 
     return () => observers.forEach(o => o.disconnect());
-  }, [location.pathname, scrollContainer]);
+  }, [location.pathname]);
 
   const scrollToSection = (sectionId: string) => {
     if (location.pathname !== '/') {
       navigate('/');
       setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        el?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } else {
-      const el = document.getElementById(sectionId);
-      if (el && scrollContainer?.current) {
-        el.scrollIntoView({ behavior: "smooth" });
-      } else {
-        el?.scrollIntoView({ behavior: "smooth" });
-      }
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
