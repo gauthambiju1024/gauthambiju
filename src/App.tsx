@@ -17,6 +17,8 @@ import ProjectPage from "./pages/ProjectPage";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLinks from "./pages/admin/AdminLinks";
 import AdminSections from "./pages/admin/AdminSections";
+import AdminCaseStudies from "./pages/admin/AdminCaseStudies";
+import CaseStudyPage from "./pages/CaseStudyPage";
 
 const queryClient = new QueryClient();
 
@@ -30,10 +32,12 @@ const AnimatedRoutes = () => {
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/projects/:slug" element={<ProjectPage />} />
         <Route path="/blog/:slug" element={<BlogPostPage />} />
+        <Route path="/case-studies/:slug" element={<CaseStudyPage />} />
         
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="projects" element={<AdminProjects />} />
+          <Route path="case-studies" element={<AdminCaseStudies />} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="content" element={<AdminContent />} />
           <Route path="links" element={<AdminLinks />} />

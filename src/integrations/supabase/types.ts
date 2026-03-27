@@ -56,6 +56,57 @@ export type Database = {
         }
         Relationships: []
       }
+      case_studies: {
+        Row: {
+          card_type: string
+          category: string
+          color: string | null
+          content: string | null
+          cover_image: string | null
+          created_at: string | null
+          id: string
+          is_published: boolean | null
+          slug: string
+          sort_order: number | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          card_type?: string
+          category?: string
+          color?: string | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug: string
+          sort_order?: number | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          card_type?: string
+          category?: string
+          color?: string | null
+          content?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          slug?: string
+          sort_order?: number | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       homepage_sections: {
         Row: {
           created_at: string | null

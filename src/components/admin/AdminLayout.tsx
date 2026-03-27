@@ -1,9 +1,10 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, FolderOpen, FileText, Type, Link2, Layers } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, FileText, Type, Link2, Layers, Lightbulb } from 'lucide-react';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/projects', icon: FolderOpen, label: 'Projects' },
+  { to: '/admin/case-studies', icon: Lightbulb, label: 'Case Studies' },
   { to: '/admin/blog', icon: FileText, label: 'Blog' },
   { to: '/admin/content', icon: Type, label: 'Content' },
   { to: '/admin/links', icon: Link2, label: 'Links' },
