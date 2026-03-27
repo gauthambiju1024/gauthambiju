@@ -17,6 +17,8 @@ import ProjectPage from "./pages/ProjectPage";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminLinks from "./pages/admin/AdminLinks";
 import AdminSections from "./pages/admin/AdminSections";
+import AdminCaseStudies from "./pages/admin/AdminCaseStudies";
+import CaseStudyPage from "./pages/CaseStudyPage";
 
 const queryClient = new QueryClient();
 
