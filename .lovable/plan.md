@@ -1,112 +1,69 @@
 
 
-## Plan: Redesign Projects Section + Dedicated Project Pages
+## Plan: Redesign ProjectsShelf — Compact, Premium, Consistent
 
-### Requirements Recap
+### What's wrong now
+- Missing the consistent section header (`page 03 ─── Projects`) that every other section uses
+- Books are too narrow (65px) with tiny unreadable text
+- Too much vertical padding and empty space
+- Shelf area feels sparse and disconnected from the reference aesthetic
+- Detail card is functional but plain
 
-1. Each project gets its own dedicated page (`/projects/:slug`)
-2. Keep the bookshelf visual metaphor on the homepage
-3. Clicking a book shows a quick-view overlay with a "View Full Case Study" link to the dedicated page
-4. Support multiple shelf rows (groupable by category/year) via a `category` field
-5. Database needs new fields for the detailed project page content
+### Design direction (inspired by reference image, adapted to site)
+The reference shows **wider, taller books** with readable vertical titles, a subtitle/description area at the bottom of each spine, and a warm wooden shelf with depth. We adapt this to the site's dark desk + editorial aesthetic:
 
-### Architecture
+- **Wider spines** (80-90px) with clear vertical title text and a subtle description line at the bottom
+- **Linen/cloth texture effect** via CSS gradients on spines (no images needed)
+- **Deeper shelf ledge** with proper 3D wood-grain shadow
+- **Tighter vertical rhythm** — reduce py from 16/24 to 12/16, reduce gaps
+- **Consistent header** — add `page 03 ─── Projects` label matching ThinkingWall/SkillsToolbox pattern
+- **Section title**: "Project Library" with subtitle "Case Studies · Products · Builds"
 
-```text
-Homepage Section (ProjectsShelf)
-┌─────────────────────────────────────────────┐
-│  Selected Work                              │
-│                                             │
-│  ── Product ──────────────────────────────  │
-│  ┌─────┐ ┌─────┐ ┌─────┐                   │
-│  │Book1│ │Book2│ │Book3│  ← shelf row       │
-│  └─────┘ └─────┘ └─────┘                   │
-│  ═══════════════════════  ← ledge           │
-│                                             │
-│  ── Research ─────────────────────────────  │
-│  ┌─────┐ ┌─────┐                            │
-│  │Book4│ │Book5│          ← shelf row       │
-│  └─────┘ └─────┘                            │
-│  ═══════════════════════  ← ledge           │
-└─────────────────────────────────────────────┘
+### File changes
 
-Click book → inline overlay (problem, role, tags, impact)
-           → "Full Case Study →" link to /projects/:slug
+**`src/components/ProjectsShelf.tsx`** — Rewrite
 
-/projects/:slug → dedicated page
-┌─────────────────────────────────────────────┐
-│  ← Back to Home                             │
-│  Project Title                              │
-│  subtitle · year · tags                     │
-│                                             │
-│  Problem ─────────────────────────────────  │
-│  Role · Stack                               │
-│  Contribution ────────────────────────────  │
-│  Impact ──────────────────────────────────  │
-│  Long description (rich text / markdown)    │
-│  [Visit Project →]                          │
-└─────────────────────────────────────────────┘
-```
+1. **Add consistent section header**: `page 03` + divider + `Projects` label (same pattern as lines 68-71 of ThinkingWall, lines 59-63 of SkillsToolbox)
 
-### Database Changes
+2. **Section title block**: "Project Library" heading + "Case Studies · Products · Builds" subtitle
 
-Add columns to `projects` table:
+3. **Book spines redesigned**:
+   - Width: 80px (up from 65px), height: 260px
+   - CSS linen texture: layered `background-image` with noise-like gradients over the base color
+   - Vertical title: larger (13px), `font-serif-display`, letter-spacing 0.2em
+   - Bottom area: small horizontal subtitle text (project.subtitle truncated) + an icon-like decorative element using a simple CSS shape
+   - Left edge: 4px highlight gradient for 3D spine edge feel
+   - Right edge: subtle dark gradient for depth
 
-| Column | Type | Purpose |
-|---|---|---|
-| `slug` | text, unique, not null | URL-friendly identifier |
-| `category` | text, default 'General' | Groups projects into shelf rows |
-| `problem` | text | Problem statement |
-| `role` | text | Your role |
-| `contribution` | text | What you did |
-| `stack` | text | Tech stack |
-| `impact` | text | Outcome/metrics |
-| `description` | text | Long-form content for the dedicated page |
-| `color` | text, default 'hsl(215 20% 30%)' | Book spine color |
-| `thumbnail_url` | text | Optional cover image for project page |
+4. **Shelf improvements**:
+   - Thicker ledge (6px height) with layered box-shadow for realistic wood depth
+   - Top inner shadow on the shelf container for recessed feel
+   - Reduce overall padding: `p-4 md:p-6` (down from `p-6 md:p-10`)
 
-### File Changes
+5. **Compact spacing**:
+   - Section padding: `py-12 md:py-16` (down from `py-16 md:py-24`)
+   - Gap between books: `gap-3 md:gap-4` (down from `gap-5 md:gap-6`)
+   - Min-height reduced to 280px
 
-**1. Database migration** — Add new columns to `projects`
+6. **Hover/select polish**:
+   - Hover: lift `-8px`, rotate `Y: -3deg`, shadow intensifies
+   - Selected: lift `-14px`, subtle warm glow matching spine color at 10% opacity
+   - Transition: snappier spring (stiffness 350, damping 28)
 
-**2. `src/components/ProjectsShelf.tsx`** — Redesign
-- Group projects by `category`, render each group as a labeled shelf row with its own ledge
-- Wider book spines (65px) with title + year, muted jewel-tone colors from DB `color` field
-- Click opens an inline detail card (not full-screen modal) — slides down from the book using `AnimatePresence`
-- Detail card shows: title, subtitle, problem, role/stack grid, impact, tags, and a "Full Case Study" link to `/projects/${slug}`
-- Remove "page 03" label and Archive slot
-- Remove hardcoded fallback project details (problem/role/etc) — these come from DB now
+7. **Detail card refinement**:
+   - Slightly tighter padding (`p-5 md:p-6`)
+   - Keep existing content structure (problem, role/stack grid, impact, tags, links)
 
-**3. `src/pages/ProjectPage.tsx`** — New dedicated project page
-- Route: `/projects/:slug`
-- Fetches project by slug from DB
-- Full case study layout: hero with title/subtitle/year/tags, then sections for Problem, Role, Stack, Contribution, Impact, and a long-form Description
-- Styled consistently with the notebook/editorial aesthetic (serif titles, mono labels, body text)
-- "Back to Home" link at top, "Visit Project" external link if URL exists
-- Navigation bar visible
+8. **Category row footer**: After the last shelf row, add a small centered text: `CURATED WORK · {earliest year} – {latest year}` in font-mono, matching reference
 
-**4. `src/hooks/useSiteData.ts`** — Add `useProject(slug)` hook for single project fetch by slug
+**`src/pages/Index.tsx`** — No changes needed (section already wrapped in panel)
 
-**5. `src/App.tsx`** — Add route `/projects/:slug` pointing to `ProjectPage`
-
-**6. `src/pages/admin/AdminProjects.tsx`** — Add form fields for the new columns (slug, category, problem, role, contribution, stack, impact, description, color)
-
-### Shelf Row Grouping Logic
-
-Projects are grouped by `category` field. Each unique category becomes a labeled shelf row. Categories are rendered in the order of the first project's `sort_order` within that category. Admin can control grouping by setting the category field (e.g., "Product", "Research", "Design").
-
-### Visual Refinements to Shelf
-
-- Each row: category label left-aligned above the books, subtle shelf ledge below
-- Books: 65px wide, 240px tall, uniform sizing, color from DB
-- Spine: vertical title (font-display), year at top (font-mono), first tag at bottom
-- Hover: lift `y: -10`, slight `rotateY: -5`, deeper shadow
-- Selected: book stays lifted, detail card animates open below the shelf row
-- Detail card: compact, max-width matching the shelf, same styling as current modal content but inline
+### No database changes needed — all columns already exist.
 
 ### Summary
-
-- 1 migration (add columns to projects)
-- 5 files modified/created
-- No breaking changes to existing data — all new columns are nullable or have defaults
+- 1 file modified: `ProjectsShelf.tsx`
+- Adds consistent section header matching all other sections
+- Wider, more readable book spines with textile texture
+- More compact vertical spacing throughout
+- Premium shelf depth and interaction polish
 
