@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useCaseStudies } from "@/hooks/useSiteData";
 import { ArrowRight } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 type CardType = "sticky" | "framework" | "diagram";
 
@@ -29,10 +29,6 @@ const rotations = [-1.5, 0.5, -0.8, 1.2, -0.3, 0.8, -1, 0.6, -0.5, 1.5];
 
 const ThinkingWall = () => {
   const { studies, loading } = useCaseStudies();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const cards = studies.length > 0
     ? studies.map(s => ({
@@ -45,20 +41,6 @@ const ThinkingWall = () => {
         slug: s.slug,
       }))
     : fallbackCards;
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollRef.current.offsetLeft);
-    setScrollLeft(scrollRef.current.scrollLeft);
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    scrollRef.current.scrollLeft = scrollLeft - (x - startX);
-  };
-  const handleMouseUp = () => setIsDragging(false);
 
   return (
     <section className="py-16 md:py-24">
@@ -87,16 +69,9 @@ const ThinkingWall = () => {
           }}
         />
 
-        {/* Scrollable area */}
-        <div
-          ref={scrollRef}
-          className="relative overflow-x-auto py-8 px-6 md:px-10 cursor-grab active:cursor-grabbing notebook-scroll-area"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <div className="flex gap-5 min-w-max">
+        {/* Vertical scrollable area */}
+        <ScrollArea className="h-[520px] w-full relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6 md:p-10">
             {cards.map((card, i) => {
               const rotation = rotations[i % rotations.length];
               const isSticky = card.card_type === "sticky";
@@ -106,11 +81,10 @@ const ThinkingWall = () => {
                 <Link
                   key={card.id}
                   to={`/case-studies/${card.slug}`}
-                  onClick={(e) => isDragging && e.preventDefault()}
                   className="block"
                 >
                   <motion.div
-                    className={`relative rounded-md p-5 w-[260px] shrink-0 select-none ${
+                    className={`relative rounded-md p-5 select-none ${
                       isSticky ? "shadow-md border-0" : isFramework ? "shadow-sm border border-border" : "shadow-sm border border-primary/10"
                     }`}
                     style={{ backgroundColor: card.color, rotate: `${rotation}deg` }}
@@ -159,7 +133,8 @@ const ThinkingWall = () => {
               );
             })}
           </div>
-        </div>
+          <ScrollBar orientation="vertical" className="w-2 bg-transparent [&>div]:bg-card-foreground/15 [&>div]:rounded-full hover:[&>div]:bg-card-foreground/25" />
+        </ScrollArea>
       </div>
     </section>
   );
