@@ -51,9 +51,12 @@ const Index = () => {
 
   const groups = useMemo(() => {
     if (loading || sections.length === 0) return defaultGroups;
+    // Only keep keys that have a matching component
+    const valid = sections.filter(s => sectionMap[s.section_key]);
+    if (valid.length === 0) return defaultGroups;
     const g: string[][] = [];
     let lastGroup = '';
-    for (const s of sections) {
+    for (const s of valid) {
       if (s.page_group !== lastGroup) {
         g.push([]);
         lastGroup = s.page_group;
