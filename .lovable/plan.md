@@ -1,52 +1,81 @@
 
-Goal: restore sections 3–8 by aligning the homepage’s backend-driven section list with the new 8-section frontend.
 
-What’s broken
-- The homepage is not rendering a static section list anymore; it reads visible sections from `homepage_sections`.
-- That table still contains the old keys:
+## Plan: Break Sections Out of the Notebook Frame
+
+### What's changing
+
+Right now, all 8 sections live inside a single notebook container that scrolls internally. The user wants:
+
+1. **Notebook only wraps Hero + About** (sections 1–2) — the "journal" metaphor stays for these two
+2. **Remove "Page 1", "Page 2" labels** from AboutSection
+3. **Sections 3–8 become independent floating cards/panels** on the dark desk background, each with its own distinct visual container matching its metaphor (shelf, wall, toolbox, etc.)
+
+### Architecture Change
+
 ```text
-hero, marquee, beliefs, work, story, connect, footer, blog
-```
-- But `src/pages/Index.tsx` only knows the new keys:
-```text
-hero, about, projects, thinking, skills, journey, writing, contact
-```
-- Result: only matching keys render. Most sections are skipped because `sectionMap[key]` is `undefined`.
+BEFORE:
+┌─ desk background ─────────────────┐
+│  ┌─ notebook (all sections) ────┐ │
+│  │  Hero                        │ │
+│  │  About                       │ │
+│  │  Projects                    │ │
+│  │  Thinking                    │ │
+│  │  ...                         │ │
+│  └──────────────────────────────┘ │
+└────────────────────────────────────┘
 
-Implementation plan
-1. Update the backend section configuration
-- Use a database migration to replace the old homepage section records with the new canonical 8-section set:
-```text
-hero, about, projects, thinking, skills, journey, writing, contact
-```
-- Set correct `page_group` and `sort_order` so the experience flow stays:
-```text
-hero/about → projects → thinking → skills → journey → writing → contact
-```
-- Mark legacy rows (`marquee`, `beliefs`, `work`, `story`, `blog`, `connect`, `footer`) as removed/replaced so they no longer drive the homepage.
-
-2. Add a frontend safety fallback in `Index.tsx`
-- Filter fetched sections to only keys present in `sectionMap`.
-- If the filtered list is empty or incomplete, fall back to the current `defaultGroups`.
-- This prevents the homepage from “disappearing” again if backend content gets out of sync later.
-
-3. Keep navigation and anchors aligned
-- Verify `sectionAnchors` still map exactly to the 8 visible nav items.
-- Make sure Hero CTA and nav scroll targets continue pointing to:
-```text
-home, about, projects, thinking, skills, journey, writing, contact
+AFTER:
+┌─ desk background (full-page scroll) ──┐
+│  ┌─ notebook ────────────────────┐    │
+│  │  Hero                         │    │
+│  │  About                        │    │
+│  └───────────────────────────────┘    │
+│                                        │
+│  ┌─ shelf panel (projects) ──────┐    │
+│  │  ProjectsShelf                │    │
+│  └───────────────────────────────┘    │
+│                                        │
+│  ┌─ whiteboard panel (thinking) ─┐    │
+│  │  ThinkingWall                 │    │
+│  └───────────────────────────────┘    │
+│  ...each section in its own frame...  │
+└────────────────────────────────────────┘
 ```
 
-4. Update admin section management
-- Update `src/pages/admin/AdminSections.tsx` expectations so the admin UI shows the new section names/order instead of old legacy keys.
-- This avoids saving outdated section configurations back into the backend.
+### File Changes
 
-5. QA after implementation
-- Confirm all 8 sections render in sequence inside the notebook scroll area.
-- Confirm top nav can scroll to every section.
-- Confirm section highlighting works while scrolling.
-- Confirm no blank groups/dividers appear from unknown keys.
+**1. `src/pages/Index.tsx`** — Major restructure
+- Switch from internal notebook scroll to **full-page scroll** (`overflow-y-auto` on the outer div)
+- Render Hero + About inside the notebook frame (keep spine, holes, page-fold)
+- Render sections 3–8 as independent `<section>` elements outside the notebook, each wrapped in a styled floating card with rounded corners, subtle shadow, and its section-specific background class
+- Remove `scrollRef` container-based scroll; use window scroll instead
+- Add vertical spacing (gap) between floating section panels
 
-Technical notes
-- No auth/RLS redesign is needed; the issue is content/config mismatch, not permissions.
-- Best long-term fix is backend data migration plus frontend guardrails, not just hardcoding the page.
+**2. `src/components/AboutSection.tsx`** — Remove "Page 1" / "Page 2" labels
+- Delete any page number text/badges from the component
+
+**3. `src/index.css`** — Add a `.section-panel` utility class
+- Shared styles for the floating section containers: `max-w-7xl`, centered, rounded corners, border, shadow, background
+- Each section applies its own bg class (`.shelf-bg`, `.whiteboard-bg`, `.toolbox-bg`, etc.)
+
+**4. `src/components/Navigation.tsx`** — Update scroll targeting
+- Since scroll moves to full-page scroll instead of container scroll, update the `IntersectionObserver` root and `scrollToSection` to use `document` / `window` instead of `scrollContainer.current`
+
+### Section Panel Styling
+
+| Section | Background | Border accent |
+|---|---|---|
+| Projects | `.shelf-bg` (dark wood) | warm brown |
+| Thinking | `.whiteboard-bg` (frosted white) | light gray |
+| Skills | `.toolbox-bg` (dark metal) | steel gray |
+| Journey | transparent / desk bg | primary blue line |
+| Writing | `.editorial-bg` (warm cream) | muted gold |
+| Contact | transparent | none (minimal closing) |
+
+Each panel gets: `rounded-xl`, `border`, `shadow-2xl`, `mx-auto max-w-7xl`, `my-8 md:my-12` vertical rhythm.
+
+### Summary
+- 5 files modified: `Index.tsx`, `AboutSection.tsx`, `index.css`, `Navigation.tsx`, and minor cleanup
+- No database changes needed
+- Preserves all existing section component internals — only the outer layout wrapper changes
+
