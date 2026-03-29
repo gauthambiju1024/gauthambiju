@@ -87,7 +87,7 @@ const HeroSection = () => {
         <div
           className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
           style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 25%, black 100%), linear-gradient(to bottom, black 60%, transparent 100%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, black 30%, black 100%), linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
             maskComposite: 'intersect',
             WebkitMaskComposite: 'source-in',
           }}
@@ -95,7 +95,7 @@ const HeroSection = () => {
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-80"
+            className="w-full h-auto mix-blend-multiply opacity-70"
           />
         </div>
       </div>
