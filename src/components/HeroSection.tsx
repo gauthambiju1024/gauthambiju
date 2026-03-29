@@ -84,18 +84,27 @@ const HeroSection = () => {
           </p>
         </div>
 
-        <div
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
-          style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 30%, black 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 50%, transparent 100%)',
-            maskComposite: 'intersect',
-            WebkitMaskComposite: 'source-in',
-          }}
-        >
+        <div className="hidden md:block absolute -top-4 right-0 w-[450px] lg:w-[560px] h-full z-0 pointer-events-none overflow-hidden">
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-70"
+            className="w-full h-auto blur-[0.5px] opacity-50"
+            style={{
+              filter: 'sepia(0.15) saturate(0.7) contrast(0.9)',
+              mixBlendMode: 'multiply',
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to right, hsl(var(--card)) 0%, transparent 40%, transparent 85%, hsl(var(--card)) 100%), linear-gradient(to bottom, hsl(var(--card)) 0%, transparent 20%, transparent 55%, hsl(var(--card)) 100%)',
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse at 60% 40%, transparent 30%, hsl(var(--card) / 0.6) 70%)',
+            }}
           />
         </div>
       </div>
