@@ -10,10 +10,17 @@ const defaultWords = ["products", "systems", "platforms", "experiences"];
 const HeroSection = () => {
   const { value: heroData } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
   const rotatingWords = (wordsData as string[] | null) ?? defaultWords;
-  const portraitSrc = hero?.portrait || heroPortrait;
+  const portraitSrc = hero?.portrait
+    ? `${hero.portrait}?t=${Date.now()}`
+    : heroPortrait;
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [portraitSrc]);
 
   return (
     <section className="relative px-6 md:px-16 pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden">
