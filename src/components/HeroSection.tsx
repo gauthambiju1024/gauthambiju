@@ -105,7 +105,7 @@ const HeroSection = () => {
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to right, hsl(var(--card)) 0%, transparent 40%, transparent 85%, hsl(var(--card)) 100%), linear-gradient(to bottom, hsl(var(--card)) 0%, transparent 20%, transparent 40%, hsl(var(--card)) 85%)',
+              background: 'linear-gradient(to right, hsl(var(--card)) 0%, transparent 40%, transparent 85%, hsl(var(--card)) 100%), linear-gradient(to bottom, hsl(var(--card)) 0%, transparent 18%, transparent 28%, hsl(var(--card)) 72%)',
             }}
           />
           <div
