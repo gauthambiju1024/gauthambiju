@@ -84,18 +84,32 @@ const HeroSection = () => {
           </p>
         </div>
 
+        {/* SVG filter for organic ink-wash edges */}
+        <svg className="absolute w-0 h-0" aria-hidden="true">
+          <defs>
+            <filter id="ink-wash">
+              <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" seed="2" />
+              <feDisplacementMap in="SourceGraphic" scale="25" />
+            </filter>
+          </defs>
+        </svg>
+
         <div
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
+          className="hidden md:block absolute -top-4 -right-4 w-[450px] lg:w-[560px] z-0 pointer-events-none"
           style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 30%, black 80%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 50%, transparent 100%)',
-            maskComposite: 'intersect',
-            WebkitMaskComposite: 'source-in',
+            maskImage: 'radial-gradient(ellipse 75% 70% at 65% 40%, black 20%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 75% 70% at 65% 40%, black 20%, transparent 70%)',
+            filter: 'url(#ink-wash)',
           }}
         >
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-70"
+            className="w-full h-auto opacity-50"
+            style={{
+              filter: 'sepia(0.2) saturate(0.7) contrast(0.9)',
+              mixBlendMode: 'multiply',
+            }}
           />
         </div>
       </div>
