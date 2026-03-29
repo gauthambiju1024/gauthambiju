@@ -11,8 +11,9 @@ const HeroSection = () => {
   const { value: heroData } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
 
-  const hero = heroData as { name?: string; tagline?: string; location?: string } | null;
+  const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
   const rotatingWords = (wordsData as string[] | null) ?? defaultWords;
+  const portraitSrc = hero?.portrait || heroPortrait;
 
   return (
     <section className="relative px-6 md:px-16 pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden">
@@ -83,11 +84,18 @@ const HeroSection = () => {
           </p>
         </div>
 
-        <div className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0">
+        <div
+          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
+          style={{
+            maskImage: 'linear-gradient(to left, transparent 0%, black 15%, black 70%, transparent 100%), linear-gradient(to top, transparent 0%, black 20%, black 100%)',
+            maskComposite: 'intersect',
+            WebkitMaskComposite: 'source-in',
+          }}
+        >
           <img
-            src={heroPortrait}
+            src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-90"
+            className="w-full h-auto mix-blend-multiply opacity-80"
           />
         </div>
       </div>
