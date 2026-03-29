@@ -95,7 +95,8 @@ const HeroSection = () => {
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto blur-[0.5px] opacity-50"
+            onLoad={() => setImageLoaded(true)}
+            className={`w-full h-auto blur-[0.5px] transition-opacity duration-700 ease-in-out ${imageLoaded ? 'opacity-50' : 'opacity-0'}`}
             style={{
               filter: 'sepia(0.15) saturate(0.7) contrast(0.9)',
               mixBlendMode: 'multiply',
