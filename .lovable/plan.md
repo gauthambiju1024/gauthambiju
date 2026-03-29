@@ -1,27 +1,25 @@
 
 
-## Fix: Hero Portrait Blending Edges
+## Fix: More Natural Hero Portrait Blending
 
 ### Problem
-The mask gradients are fading the wrong edges. The portrait sits at top-right, so:
-- **Horizontal**: should fade out on the **left** side (transparent left → opaque right) — current gradient does this correctly
-- **Vertical**: should fade out at the **bottom** (opaque top → transparent bottom) — current gradient fades the **top** instead (`to top, transparent 0%` means bottom is opaque and top fades out, which is backwards)
-
-The right edge also has a hard cutoff that could use softening.
+The current mask gradients create a somewhat harsh fade. The reference screenshot shows a softer, more diffused blend — the portrait dissolves gradually from all edges, especially the left and bottom, with a watercolor-like softness.
 
 ### Changes
 
-**`src/components/HeroSection.tsx`** — Fix the mask gradients:
+**`src/components/HeroSection.tsx`** — Adjust the mask gradients for a wider, softer fade:
+
+- **Left fade**: Start transparent further in (~30%) for a gentler dissolve
+- **Bottom fade**: Start fading earlier (~50%) for a longer tail
+- **Top fade**: Add slight top fade so the portrait doesn't have a hard edge at the top-right corner
+- Reduce opacity from 0.80 to 0.70 for a more ethereal feel
 
 ```css
 maskImage:
-  linear-gradient(to right, transparent 0%, black 25%, black 100%),
-  linear-gradient(to bottom, black 60%, transparent 100%)
+  linear-gradient(to right, transparent 0%, black 30%, black 100%),
+  linear-gradient(to bottom, black 0%, black 50%, transparent 100%)
 ```
 
-- **Horizontal**: fade from transparent on left to solid by 25%, staying solid to the right edge
-- **Vertical**: solid from top through 60%, then fading to transparent at the bottom
-- These two masks intersect so both edges blend smoothly
-
-No other file changes needed.
+### Files modified
+- `src/components/HeroSection.tsx` — softer gradient mask + reduced opacity
 
