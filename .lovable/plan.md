@@ -1,36 +1,25 @@
 
 
-## Plan: Cache-Bust & Smooth Image Loading for Hero Portrait
+## Fix: More Natural Hero Portrait Blending
 
 ### Problem
-1. Browser may serve a stale cached portrait when updated via admin
-2. Image appears abruptly — no fade-in transition
+The current mask gradients create a somewhat harsh fade. The reference screenshot shows a softer, more diffused blend — the portrait dissolves gradually from all edges, especially the left and bottom, with a watercolor-like softness.
 
 ### Changes
 
-**`src/components/HeroSection.tsx`**:
+**`src/components/HeroSection.tsx`** — Adjust the mask gradients for a wider, softer fade:
 
-1. **Cache busting** — Append a timestamp query param to the portrait URL when it comes from the CMS (not the static import):
-   ```ts
-   const portraitSrc = hero?.portrait
-     ? `${hero.portrait}?t=${Date.now()}`
-     : heroPortrait;
-   ```
+- **Left fade**: Start transparent further in (~30%) for a gentler dissolve
+- **Bottom fade**: Start fading earlier (~50%) for a longer tail
+- **Top fade**: Add slight top fade so the portrait doesn't have a hard edge at the top-right corner
+- Reduce opacity from 0.80 to 0.70 for a more ethereal feel
 
-2. **Smooth fade-in on load** — Add `useState` to track image loaded state. Start the `<img>` at `opacity-0` with a CSS transition, then set loaded → true `onLoad` to fade to the target opacity (`opacity-50`):
-   ```tsx
-   const [imageLoaded, setImageLoaded] = useState(false);
-   
-   <img
-     src={portraitSrc}
-     onLoad={() => setImageLoaded(true)}
-     className={`w-full h-auto blur-[0.5px] transition-opacity duration-700 ease-in-out ${imageLoaded ? 'opacity-50' : 'opacity-0'}`}
-     style={{ filter: '...', mixBlendMode: 'multiply' }}
-   />
-   ```
-
-3. **Reset on source change** — Add a `useEffect` watching `portraitSrc` to reset `imageLoaded` to `false`, so when the admin updates the portrait it fades in fresh rather than swapping abruptly.
+```css
+maskImage:
+  linear-gradient(to right, transparent 0%, black 30%, black 100%),
+  linear-gradient(to bottom, black 0%, black 50%, transparent 100%)
+```
 
 ### Files modified
-- `src/components/HeroSection.tsx`
+- `src/components/HeroSection.tsx` — softer gradient mask + reduced opacity
 
