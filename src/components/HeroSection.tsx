@@ -87,7 +87,7 @@ const HeroSection = () => {
         <div
           className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
           style={{
-            maskImage: 'linear-gradient(to left, transparent 0%, black 15%, black 70%, transparent 100%), linear-gradient(to top, transparent 0%, black 20%, black 100%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, black 25%, black 100%), linear-gradient(to bottom, black 60%, transparent 100%)',
             maskComposite: 'intersect',
             WebkitMaskComposite: 'source-in',
           }}
