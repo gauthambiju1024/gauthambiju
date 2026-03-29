@@ -10,10 +10,17 @@ const defaultWords = ["products", "systems", "platforms", "experiences"];
 const HeroSection = () => {
   const { value: heroData } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
   const rotatingWords = (wordsData as string[] | null) ?? defaultWords;
-  const portraitSrc = hero?.portrait || heroPortrait;
+  const portraitSrc = hero?.portrait
+    ? `${hero.portrait}?t=${Date.now()}`
+    : heroPortrait;
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [portraitSrc]);
 
   return (
     <section className="relative px-6 md:px-16 pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden">
@@ -88,7 +95,8 @@ const HeroSection = () => {
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto blur-[0.5px] opacity-50"
+            onLoad={() => setImageLoaded(true)}
+            className={`w-full h-auto blur-[0.5px] transition-opacity duration-700 ease-in-out ${imageLoaded ? 'opacity-50' : 'opacity-0'}`}
             style={{
               filter: 'sepia(0.15) saturate(0.7) contrast(0.9)',
               mixBlendMode: 'multiply',
