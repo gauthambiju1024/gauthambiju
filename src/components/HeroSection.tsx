@@ -95,7 +95,7 @@ const HeroSection = () => {
           <img
             src={portraitSrc}
             alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-80"
+            className="w-full h-auto mix-blend-multiply opacity-70"
           />
         </div>
       </div>
