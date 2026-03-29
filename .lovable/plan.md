@@ -1,13 +1,12 @@
 
 
-## Plan: Replace Hero Portrait Image
+## Plan: Update Hero Portrait Image
 
-Copy the uploaded image to `src/assets/` and update the import in `HeroSection.tsx`.
+The previous image copy may not have worked correctly. The fix is to overwrite `src/assets/hero-portrait.png` with the uploaded image again.
 
 ### Changes
 
-1. **Copy image**: `user-uploads://image-12.png` → `src/assets/hero-portrait.png` (overwrite existing)
-2. **`src/components/HeroSection.tsx`**: No code changes needed — it already imports from `@/assets/hero-portrait.png`
+1. **`src/assets/hero-portrait.png`** — Overwrite with the user-uploaded image (`user-uploads://image-12.png`)
 
-Single file copy, zero code changes.
+No code changes needed — `HeroSection.tsx` already imports from this path.
 
