@@ -1,25 +1,58 @@
 
 
-## Fix: More Natural Hero Portrait Blending
+## Plan: Premium Hero Portrait Blending
 
 ### Problem
-The current mask gradients create a somewhat harsh fade. The reference screenshot shows a softer, more diffused blend — the portrait dissolves gradually from all edges, especially the left and bottom, with a watercolor-like softness.
+The portrait has visible hard edges and doesn't feel naturally integrated into the notebook background. Need a premium, editorial-level blend.
 
-### Changes
+### Approach
+Combine multiple techniques from the user's reference patterns, adapted to the existing journal/notebook aesthetic:
 
-**`src/components/HeroSection.tsx`** — Adjust the mask gradients for a wider, softer fade:
+**`src/components/HeroSection.tsx`** — Rework the portrait container:
 
-- **Left fade**: Start transparent further in (~30%) for a gentler dissolve
-- **Bottom fade**: Start fading earlier (~50%) for a longer tail
-- **Top fade**: Add slight top fade so the portrait doesn't have a hard edge at the top-right corner
-- Reduce opacity from 0.80 to 0.70 for a more ethereal feel
+1. **Gradient overlay layer** — Add a `div` overlay on top of the image with a gradient matching the notebook background color (`hsl(var(--card))`), fading from left-to-right and bottom-to-top. This is the Apple/Airbnb technique.
+2. **Radial glow layer** — Add a subtle radial gradient for depth and soft focus.
+3. **Image treatment** — Apply `blur-[0.5px]`, reduce opacity to `0.5`, use `mix-blend-multiply` so it picks up the paper texture. Add CSS `filter: sepia(0.15) saturate(0.7) contrast(0.9)` to tone-match the warm notebook palette.
+4. **Remove CSS mask approach** — Replace `maskImage`/`maskComposite` with the overlay gradient method, which produces softer, more natural blending without geometric artifacts.
 
-```css
-maskImage:
-  linear-gradient(to right, transparent 0%, black 30%, black 100%),
-  linear-gradient(to bottom, black 0%, black 50%, transparent 100%)
+```tsx
+{/* Portrait container */}
+<div className="hidden md:block absolute -top-4 right-0 w-[450px] lg:w-[560px] h-full z-0 pointer-events-none overflow-hidden">
+  {/* Image */}
+  <img
+    src={portraitSrc}
+    alt="Gautham portrait sketch"
+    className="w-full h-auto blur-[0.5px] opacity-50"
+    style={{
+      filter: 'sepia(0.15) saturate(0.7) contrast(0.9)',
+      mixBlendMode: 'multiply',
+    }}
+  />
+  
+  {/* Gradient overlay — fades image into notebook bg */}
+  <div
+    className="absolute inset-0"
+    style={{
+      background: 'linear-gradient(to right, hsl(var(--card)) 0%, transparent 40%, transparent 85%, hsl(var(--card)) 100%), linear-gradient(to bottom, hsl(var(--card)) 0%, transparent 20%, transparent 55%, hsl(var(--card)) 100%)',
+    }}
+  />
+  
+  {/* Radial glow for depth */}
+  <div
+    className="absolute inset-0"
+    style={{
+      background: 'radial-gradient(ellipse at 60% 40%, transparent 30%, hsl(var(--card) / 0.6) 70%)',
+    }}
+  />
+</div>
 ```
 
+### Why this is better
+- **No hard edges anywhere** — gradient overlays using the actual background color create seamless transitions
+- **Color-matched** — sepia/desaturation tones the photo to match the warm paper
+- **Depth** — radial glow adds the "premium portfolio" polish
+- **No mask artifacts** — overlay approach is more forgiving than CSS masks
+
 ### Files modified
-- `src/components/HeroSection.tsx` — softer gradient mask + reduced opacity
+- `src/components/HeroSection.tsx`
 
