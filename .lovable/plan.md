@@ -1,66 +1,21 @@
 
-## Plan: Make Top and Right Edges Hard on Hero Portrait
 
-### What I understood
-You want the portrait to sit flush with the notebook border on desktop:
-- Top edge: hard
-- Right edge: hard
-- Left and lower area: blended/faded
+## Plan: Push Fade Start Closer to Image Edges
 
-That means the current mask is wrong because it fades all four sides, including the top and right.
+Currently the left fade goes from `transparent 0%` to `black 28%` and the bottom fade from `black 62%` to `transparent 100%`. This means the fade occupies ~28% of the left and ~38% of the bottom.
 
-### Implementation
-Update `src/components/HeroSection.tsx` only.
+### Change
+Push the fade transitions closer to the margins so more of the image is fully visible:
 
-#### Change the portrait mask
-Replace the current two-way intersecting mask with one that:
-- stays fully opaque at the top
-- stays fully opaque at the right
-- fades in from the left
-- fades out toward the bottom
-
-Use a mask shaped like this:
-
-```text
-top:    hard
-right:  hard
-left:   soft fade in
-bottom: soft fade out
-```
-
-#### Proposed mask logic
-Use:
-- a horizontal gradient that fades from transparent on the left to solid, then remains solid through the right edge
-- a vertical gradient that stays solid through most of the height, then fades near the bottom
-
-Example target shape:
+- **Left fade**: `transparent 0%, black 15%` (was 28%) — fade occupies only ~15% of the left edge
+- **Bottom fade**: `black 75%, transparent 100%` (was 62%) — fade starts later, occupying only ~25% of the bottom
 
 ```css
 maskImage:
-  linear-gradient(to right, transparent 0%, black 28%, black 100%),
-  linear-gradient(to bottom, black 0%, black 62%, transparent 100%)
+  linear-gradient(to right, transparent 0%, black 15%, black 100%),
+  linear-gradient(to bottom, black 0%, black 75%, transparent 100%)
 ```
 
-with the two masks intersected, so:
-- no fade on top
-- no fade on right
-- gentle fade on left
-- gentle fade on bottom
+### File modified
+- `src/components/HeroSection.tsx` — line 90 only
 
-### Why this will look more natural
-Because the portrait is anchored in the top-right corner of the notebook, fading those same edges makes it look detached from the page border. Keeping top/right hard will make it feel intentionally placed against the notebook frame, while the left/bottom fade keeps it integrated into the paper.
-
-### File affected
-- `src/components/HeroSection.tsx`
-
-### Technical details
-- Keep the existing absolute positioning and desktop-only behavior
-- Keep current image source behavior (`hero?.portrait || heroPortrait`)
-- Keep blend mode/opacity unless a second pass is needed after visual review
-- Only adjust the `maskImage` values and preserve the current mask composite setup
-
-### Expected result
-On desktop, the portrait should:
-- align crisply with the top-right notebook border
-- dissolve softly into the page toward the left and lower edge
-- feel cleaner and more intentional than the current all-sides fade
