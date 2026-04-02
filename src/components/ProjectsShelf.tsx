@@ -55,7 +55,7 @@ const ProjectsShelf = () => {
     : "";
 
   return (
-    <section className="py-6 md:py-8">
+    <section className="py-6 md:py-8" style={{ background: "hsl(220 10% 8%)", borderRadius: "8px" }}>
       {/* Section header — consistent with other sections */}
       <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
         <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -98,16 +98,17 @@ const ProjectsShelf = () => {
           <div
             className="rounded-lg mx-4 md:mx-8 p-3 md:p-4 relative overflow-hidden"
             style={{
-              background: "linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)",
+              background: "linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)",
               backgroundImage: `
+                radial-gradient(ellipse at 50% 0%, rgba(180,130,70,0.06) 0%, transparent 70%),
                 repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px),
-                linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)
+                linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)
               `,
             }}
           >
             {/* Recessed shadows */}
-            <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/25 to-transparent z-[1] pointer-events-none rounded-t-lg" />
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/10 to-transparent z-[1] pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/40 to-transparent z-[1] pointer-events-none rounded-t-lg" />
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/15 to-transparent z-[1] pointer-events-none" />
 
             <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
@@ -187,8 +188,8 @@ const ProjectsShelf = () => {
             <div
               className="mt-1 h-[6px] rounded-b-sm"
               style={{
-                background: "linear-gradient(to top, hsl(16 21% 34%), hsl(16 21% 44%))",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+                background: "linear-gradient(to top, hsl(220 8% 14%), hsl(220 8% 18%))",
+                boxShadow: "0 8px 30px rgba(180,130,70,0.15), 0 4px 15px rgba(180,130,70,0.1), 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             />
           </div>
