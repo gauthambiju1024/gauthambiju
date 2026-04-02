@@ -22,7 +22,6 @@ const ContactClosing = () => {
   return (
     <section className="py-20 md:py-32">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">page 08</span>
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">End Notes</span>
       </div>

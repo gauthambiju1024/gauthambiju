@@ -15,9 +15,6 @@ const WorkSection = () => {
 
   return (
     <section className="py-16 md:py-24 px-8 md:px-16 relative">
-      <div className="absolute top-4 left-16 tape-strip px-3 py-1 hidden md:block" style={{ transform: 'rotate(1deg)' }}>
-        <span className="font-handwritten text-sm text-card-foreground/40">page 02</span>
-      </div>
 
       <div className="md:ml-8">
         <div className="mb-12">
