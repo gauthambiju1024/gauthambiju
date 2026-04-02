@@ -109,7 +109,7 @@ const ProjectsShelf = () => {
             <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/25 to-transparent z-[1] pointer-events-none rounded-t-lg" />
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/10 to-transparent z-[1] pointer-events-none" />
 
-            <div className="flex gap-3 md:gap-4 items-end min-h-[260px] overflow-x-auto pb-1 relative z-[2]">
+            <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
                 const isSelected = selectedId === project.id;
                 const spineColor = project.color || SPINE_COLORS[i % SPINE_COLORS.length];
