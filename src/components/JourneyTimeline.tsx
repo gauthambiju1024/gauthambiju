@@ -51,7 +51,6 @@ const JourneyTimeline = () => {
       </div>
 
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12 relative z-10">
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">page 06</span>
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Journey</span>
       </div>

@@ -58,9 +58,6 @@ const ProjectsShelf = () => {
     <section className="py-6 md:py-8" style={{ background: "hsl(220 10% 8%)", borderRadius: "8px" }}>
       {/* Section header — consistent with other sections */}
       <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
-        <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
-          page 03
-        </span>
         <div className="h-px flex-1" style={{ background: "hsl(var(--border))" }} />
         <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
           Projects
