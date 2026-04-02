@@ -197,7 +197,7 @@ const ProjectsShelf = () => {
           <AnimatePresence>
             {selectedProject && grouped[category].some((p) => p.id === selectedProject.id) && (
               <motion.div
-                className="mx-4 md:mx-8 mt-2"
+                className="mx-4 md:mx-8 mt-1"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
