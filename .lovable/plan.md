@@ -1,28 +1,16 @@
 
 
-## Plan: Dark Shelf with Warm Under-Lighting
+## Plan: Unify Shelf to Single Dark Color
 
-Redesign the shelf to match the reference image — a dark, near-black shelf with subtle warm amber glow underneath each ledge.
+The section currently uses two slightly different dark shades — the outer section wrapper (`hsl(220 10% 8%)`) and the inner shelf (`hsl(220 10% 12%)` → `hsl(220 10% 10%)`). The user wants one uniform color throughout.
 
-### Changes
+### Changes — `src/components/ProjectsShelf.tsx`
 
-**File: `src/components/ProjectsShelf.tsx`**
+1. **Remove the inner shelf's separate background** (line 98-107) — remove `rounded-lg mx-4 md:mx-8` wrapper styling so the shelf blends into the section. Set the shelf background to match the section: `hsl(220 10% 8%)` flat (no gradient). Keep the subtle radial amber vignette and vertical line texture.
 
-**A. Dark shelf background** (lines 100-106)
-- Change shelf background from warm brown `hsl(16 21% 42%)` to dark charcoal: `hsl(220 10% 12%)` → `hsl(220 10% 10%)`
-- Add a subtle radial vignette overlay for depth
+2. **Shelf ledge** (line 191) — change ledge gradient to use `hsl(220 10% 8%)` / `hsl(220 10% 10%)` so it blends with the uniform background instead of standing out.
 
-**B. Warm under-shelf lighting** (lines 186-193)
-- Change the shelf ledge color to dark: `hsl(220 8% 18%)` → `hsl(220 8% 14%)`
-- Add a warm amber glow below the ledge using box-shadow: `0 8px 30px rgba(180, 130, 70, 0.15), 0 4px 15px rgba(180, 130, 70, 0.1)`
-- This replicates the warm downlight effect from the reference
+3. **Section wrapper** (line 58) — keep as `hsl(220 10% 8%)`. Everything matches this single color.
 
-**C. Recessed shadows** (lines 108-110)
-- Increase top shadow intensity for the deeper, darker look
-
-**D. Section outer wrapper** 
-- Darken the overall section background context so the shelf sits against a dark wall (add a dark wrapper around the shelf area)
-
-### Visual result
-Dark matte shelves against a dark background, with warm amber light pooling underneath each shelf ledge — matching the reference image's moody gallery aesthetic.
+Result: one seamless dark surface with no visible color split between outer wrapper and inner shelf.
 
