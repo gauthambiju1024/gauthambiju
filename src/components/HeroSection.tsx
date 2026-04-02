@@ -8,7 +8,7 @@ import { ArrowUpRight } from "lucide-react";
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const HeroSection = () => {
-  const { value: heroData } = useSiteContent('hero', 'main');
+  const { value: heroData, loading: heroLoading } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
 
   const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
@@ -85,7 +85,7 @@ const HeroSection = () => {
         </div>
 
         <div
-          className="hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0"
+          className={`hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0 transition-opacity duration-500 ${heroLoading ? 'opacity-0' : 'opacity-100'}`}
           style={{
             maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%), linear-gradient(to bottom, black 0%, black 75%, transparent 100%)',
             maskComposite: 'intersect',
