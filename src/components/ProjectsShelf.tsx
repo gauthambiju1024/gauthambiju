@@ -68,7 +68,7 @@ const ProjectsShelf = () => {
       </div>
 
       {/* Section title */}
-      <div className="px-6 md:px-10 mb-6">
+      <div className="px-6 md:px-10 mb-3">
         <h2 className="font-serif-display text-2xl md:text-3xl" style={{ color: "hsl(var(--card-foreground))" }}>
           Project Library
         </h2>
