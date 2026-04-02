@@ -84,7 +84,7 @@ const ProjectsShelf = () => {
       )}
 
       {categories.map((category) => (
-        <div key={category} className="mb-4">
+        <div key={category} className="mb-2">
           {categories.length > 1 && (
             <div className="px-6 md:px-10 flex items-center gap-3 mb-2">
               <span className="text-[9px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
