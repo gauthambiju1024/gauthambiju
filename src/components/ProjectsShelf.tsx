@@ -96,7 +96,7 @@ const ProjectsShelf = () => {
 
           {/* Shelf */}
           <div
-            className="p-3 md:p-4 mx-4 md:mx-8 relative overflow-hidden"
+            className="p-3 md:p-4 relative overflow-hidden"
             style={{
               background: "hsl(220 10% 8%)",
               backgroundImage: `
@@ -105,8 +105,7 @@ const ProjectsShelf = () => {
               `,
             }}
           >
-            {/* Recessed shadows */}
-            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/40 to-transparent z-[1] pointer-events-none rounded-t-lg" />
+            {/* Bottom recessed shadow */}
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/15 to-transparent z-[1] pointer-events-none" />
 
             <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
