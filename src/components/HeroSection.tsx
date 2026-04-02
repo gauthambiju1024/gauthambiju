@@ -8,7 +8,7 @@ import { ArrowUpRight } from "lucide-react";
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const HeroSection = () => {
-  const { value: heroData } = useSiteContent('hero', 'main');
+  const { value: heroData, loading: heroLoading } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
 
   const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
