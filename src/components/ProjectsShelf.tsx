@@ -187,7 +187,7 @@ const ProjectsShelf = () => {
             <div
               className="mt-1 h-[6px] rounded-b-sm"
               style={{
-                background: "linear-gradient(to top, hsl(24 14% 20%), hsl(24 14% 28%))",
+                background: "linear-gradient(to top, hsl(16 21% 34%), hsl(16 21% 44%))",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
               }}
             />
