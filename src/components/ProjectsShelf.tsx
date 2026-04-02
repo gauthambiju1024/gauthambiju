@@ -57,7 +57,7 @@ const ProjectsShelf = () => {
   return (
     <section className="py-6 md:py-8">
       {/* Section header — consistent with other sections */}
-      <div className="flex items-center gap-4 mb-8 px-6 md:px-10">
+      <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
         <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
           page 03
         </span>
