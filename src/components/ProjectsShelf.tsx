@@ -96,7 +96,7 @@ const ProjectsShelf = () => {
 
           {/* Shelf */}
           <div
-            className="p-3 md:p-4 mx-4 md:mx-8 relative overflow-hidden"
+            className="p-3 md:p-4 relative overflow-hidden"
             style={{
               background: "hsl(220 10% 8%)",
               backgroundImage: `
