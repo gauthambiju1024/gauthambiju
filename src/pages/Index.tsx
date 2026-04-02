@@ -63,7 +63,7 @@ const Index = () => {
 
       {/* Floating section panels */}
       {panelSections.map(({ key, Component, bg, border }) => (
-        <div key={key} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-8 md:my-12">
+        <div key={key} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
           <div
             id={key}
             className={`section-panel ${bg} ${border}`}

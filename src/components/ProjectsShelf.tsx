@@ -55,9 +55,9 @@ const ProjectsShelf = () => {
     : "";
 
   return (
-    <section className="py-10 md:py-14">
+    <section className="py-6 md:py-8">
       {/* Section header — consistent with other sections */}
-      <div className="flex items-center gap-4 mb-8 px-6 md:px-10">
+      <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
         <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
           page 03
         </span>
@@ -68,7 +68,7 @@ const ProjectsShelf = () => {
       </div>
 
       {/* Section title */}
-      <div className="px-6 md:px-10 mb-6">
+      <div className="px-6 md:px-10 mb-3">
         <h2 className="font-serif-display text-2xl md:text-3xl" style={{ color: "hsl(var(--card-foreground))" }}>
           Project Library
         </h2>
@@ -84,7 +84,7 @@ const ProjectsShelf = () => {
       )}
 
       {categories.map((category) => (
-        <div key={category} className="mb-4">
+        <div key={category} className="mb-2">
           {categories.length > 1 && (
             <div className="px-6 md:px-10 flex items-center gap-3 mb-2">
               <span className="text-[9px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -96,12 +96,12 @@ const ProjectsShelf = () => {
 
           {/* Shelf */}
           <div
-            className="rounded-lg mx-4 md:mx-8 p-4 md:p-5 relative overflow-hidden"
+            className="rounded-lg mx-4 md:mx-8 p-3 md:p-4 relative overflow-hidden"
             style={{
-              background: "linear-gradient(180deg, hsl(25 12% 14%) 0%, hsl(24 10% 12%) 100%)",
+              background: "linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)",
               backgroundImage: `
                 repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px),
-                linear-gradient(180deg, hsl(25 12% 14%) 0%, hsl(24 10% 12%) 100%)
+                linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)
               `,
             }}
           >
@@ -109,7 +109,7 @@ const ProjectsShelf = () => {
             <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/25 to-transparent z-[1] pointer-events-none rounded-t-lg" />
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/10 to-transparent z-[1] pointer-events-none" />
 
-            <div className="flex gap-3 md:gap-4 items-end min-h-[260px] overflow-x-auto pb-1 relative z-[2]">
+            <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
                 const isSelected = selectedId === project.id;
                 const spineColor = project.color || SPINE_COLORS[i % SPINE_COLORS.length];
@@ -128,7 +128,7 @@ const ProjectsShelf = () => {
                       className="relative rounded-sm overflow-hidden"
                       style={{
                         width: "85px",
-                        height: "260px",
+                        height: "240px",
                         ...linenTexture(spineColor),
                       }}
                       whileHover={{ rotateY: -3 }}
@@ -187,7 +187,7 @@ const ProjectsShelf = () => {
             <div
               className="mt-1 h-[6px] rounded-b-sm"
               style={{
-                background: "linear-gradient(to top, hsl(24 14% 20%), hsl(24 14% 28%))",
+                background: "linear-gradient(to top, hsl(16 21% 34%), hsl(16 21% 44%))",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
               }}
             />
@@ -197,7 +197,7 @@ const ProjectsShelf = () => {
           <AnimatePresence>
             {selectedProject && grouped[category].some((p) => p.id === selectedProject.id) && (
               <motion.div
-                className="mx-4 md:mx-8 mt-2"
+                className="mx-4 md:mx-8 mt-1"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
@@ -282,7 +282,7 @@ const ProjectsShelf = () => {
       ))}
 
       {yearRange && (
-        <div className="text-center mt-4">
+        <div className="text-center mt-2">
           <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
             Curated Work · {yearRange}
           </span>
