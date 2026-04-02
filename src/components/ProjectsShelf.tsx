@@ -282,7 +282,7 @@ const ProjectsShelf = () => {
       ))}
 
       {yearRange && (
-        <div className="text-center mt-4">
+        <div className="text-center mt-2">
           <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
             Curated Work · {yearRange}
           </span>
