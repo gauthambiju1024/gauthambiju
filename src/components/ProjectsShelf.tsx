@@ -128,7 +128,7 @@ const ProjectsShelf = () => {
                       className="relative rounded-sm overflow-hidden"
                       style={{
                         width: "85px",
-                        height: "260px",
+                        height: "240px",
                         ...linenTexture(spineColor),
                       }}
                       whileHover={{ rotateY: -3 }}
