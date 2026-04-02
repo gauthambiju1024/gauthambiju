@@ -98,16 +98,17 @@ const ProjectsShelf = () => {
           <div
             className="rounded-lg mx-4 md:mx-8 p-3 md:p-4 relative overflow-hidden"
             style={{
-              background: "linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)",
+              background: "linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)",
               backgroundImage: `
+                radial-gradient(ellipse at 50% 0%, rgba(180,130,70,0.06) 0%, transparent 70%),
                 repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px),
-                linear-gradient(180deg, hsl(16 21% 42%) 0%, hsl(16 21% 36%) 100%)
+                linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)
               `,
             }}
           >
             {/* Recessed shadows */}
-            <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/25 to-transparent z-[1] pointer-events-none rounded-t-lg" />
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/10 to-transparent z-[1] pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/40 to-transparent z-[1] pointer-events-none rounded-t-lg" />
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/15 to-transparent z-[1] pointer-events-none" />
 
             <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
