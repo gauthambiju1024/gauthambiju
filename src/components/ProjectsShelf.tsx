@@ -96,13 +96,12 @@ const ProjectsShelf = () => {
 
           {/* Shelf */}
           <div
-            className="rounded-lg mx-4 md:mx-8 p-3 md:p-4 relative overflow-hidden"
+            className="p-3 md:p-4 mx-4 md:mx-8 relative overflow-hidden"
             style={{
-              background: "linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)",
+              background: "hsl(220 10% 8%)",
               backgroundImage: `
                 radial-gradient(ellipse at 50% 0%, rgba(180,130,70,0.06) 0%, transparent 70%),
-                repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px),
-                linear-gradient(180deg, hsl(220 10% 12%) 0%, hsl(220 10% 10%) 100%)
+                repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px)
               `,
             }}
           >
