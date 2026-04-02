@@ -1,21 +1,16 @@
 
 
-## Plan: Push Fade Start Closer to Image Edges
+## Fix: Hero Portrait Image Flash on Load
 
-Currently the left fade goes from `transparent 0%` to `black 28%` and the bottom fade from `black 62%` to `transparent 100%`. This means the fade occupies ~28% of the left and ~38% of the bottom.
+### Problem
+When the page loads, the local bundled portrait (`hero-portrait.png`) shows immediately. Then, once the database query resolves, `portraitSrc` switches to the database URL, causing a visible flash/swap.
+
+### Solution
+Hide the portrait image until the `useSiteContent` hook has finished loading. This prevents the local fallback from briefly appearing before the database image replaces it.
 
 ### Change
-Push the fade transitions closer to the margins so more of the image is fully visible:
-
-- **Left fade**: `transparent 0%, black 15%` (was 28%) — fade occupies only ~15% of the left edge
-- **Bottom fade**: `black 75%, transparent 100%` (was 62%) — fade starts later, occupying only ~25% of the bottom
-
-```css
-maskImage:
-  linear-gradient(to right, transparent 0%, black 15%, black 100%),
-  linear-gradient(to bottom, black 0%, black 75%, transparent 100%)
-```
-
-### File modified
-- `src/components/HeroSection.tsx` — line 90 only
+**`src/components/HeroSection.tsx`**:
+1. Destructure the `loading` state from `useSiteContent('hero', 'main')`
+2. Add `opacity-0` to the portrait container while `loading` is true, with a CSS transition so it fades in smoothly once resolved
+3. This way only the final resolved image is ever shown to the user
 
