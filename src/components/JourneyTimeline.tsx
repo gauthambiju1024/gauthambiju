@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Globe from "./Globe";
 
 interface Milestone {
   id: string;
@@ -44,6 +45,11 @@ const JourneyTimeline = () => {
 
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
+      {/* Globe background - desktop only */}
+      <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.05] pointer-events-none">
+        <Globe className="w-[500px] h-[500px]" />
+      </div>
+
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12 relative z-10">
         <div className="h-px flex-1 bg-border" />
         <span className="dimension-label">Journey</span>
