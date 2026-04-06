@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
-import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import ProjectsShelf from "@/components/ProjectsShelf";
@@ -31,14 +30,16 @@ const Index = () => {
         style={{ scaleX }}
       />
 
-      {/* Sticky Navigation */}
-      <div className="sticky top-0 z-50 w-full max-w-7xl mx-auto px-2 md:px-4 lg:px-8">
-        <Navigation />
+      {/* Hero — Blueprint panel */}
+      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
+        <div id="home" className="blueprint-surface">
+          <HeroSection />
+        </div>
       </div>
 
-      {/* Notebook: Hero + About */}
-      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
-        <div className="notebook notebook-grid relative">
+      {/* About — Notebook panel */}
+      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
+        <div id="about" className="notebook notebook-grid relative">
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
           <div className="notebook-holes hidden md:block">
@@ -48,15 +49,8 @@ const Index = () => {
             <div className="notebook-hole" style={{ bottom: '80px' }} />
           </div>
           <div className="page-fold" />
-
           <div className="relative z-[1]">
-            <div id="home">
-              <HeroSection />
-            </div>
-            <div className="section-divider" />
-            <div id="about">
-              <AboutSection />
-            </div>
+            <AboutSection />
           </div>
         </div>
       </div>

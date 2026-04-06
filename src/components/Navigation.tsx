@@ -15,18 +15,23 @@ const navItems = [
 
 const sectionIds = navItems.map(n => n.id);
 
-const Navigation = () => {
+interface NavigationProps {
+  embedded?: boolean;
+}
+
+const Navigation = ({ embedded = false }: NavigationProps) => {
   const [activeSection, setActiveSection] = useState("home");
   const [isCompact, setIsCompact] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Track window scroll for compact mode
+  // Track window scroll for compact mode (only when not embedded)
   useEffect(() => {
+    if (embedded) return;
     const handleScroll = () => setIsCompact(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [embedded]);
 
   // Intersection observer for active section
   useEffect(() => {
@@ -59,6 +64,45 @@ const Navigation = () => {
       document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  if (embedded) {
+    return (
+      <nav className="flex items-center justify-between px-0 py-3">
+        <button
+          onClick={() => scrollToSection("home")}
+          className="font-handwritten text-xl font-bold tracking-tight"
+          style={{ color: 'hsl(40 30% 85%)' }}
+        >
+          GB.
+        </button>
+
+        <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToSection(item.id)}
+              className="relative px-2 md:px-3 py-1.5 font-body text-xs transition-colors duration-300 whitespace-nowrap"
+              style={{
+                color: activeSection === item.id
+                  ? 'hsl(40 30% 85%)'
+                  : 'hsl(0 0% 100% / 0.3)',
+              }}
+            >
+              {item.label}
+              {activeSection === item.id && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute bottom-0 left-1 right-1 h-[1.5px] rounded-full"
+                  style={{ background: 'hsl(40 30% 85%)' }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <motion.nav
