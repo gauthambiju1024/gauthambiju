@@ -389,6 +389,12 @@
     background: hsl(var(--editorial-cream));
   }
 
+  /* Doodle border columns — fade at top/bottom */
+  .doodle-column {
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  }
+
   .font-serif-display {
     font-family: 'Playfair Display', serif;
   }
