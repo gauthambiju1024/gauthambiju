@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
 import { ArrowUpRight } from "lucide-react";
+import Navigation from "./Navigation";
 
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
@@ -16,88 +16,143 @@ const HeroSection = () => {
   const portraitSrc = hero?.portrait || heroPortrait;
 
   return (
-    <section className="relative px-6 md:px-16 pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden">
-      {/* Field Notes label */}
+    <section className="relative px-6 md:px-12 pt-6 pb-0 overflow-hidden">
+      {/* Top bar */}
       <motion.div
-        className="mb-8 flex items-center gap-3"
+        className="flex items-center justify-between mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
       >
-        <div className="px-2 py-0.5 border border-border rounded-sm">
-          <span className="text-[9px] tracking-[0.25em] uppercase font-mono text-muted-foreground">Field Notes</span>
-        </div>
-        <div className="h-px flex-1 bg-border/50" />
-        <span className="text-[9px] font-mono text-muted-foreground/40">
-          {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+        <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: 'hsl(40 30% 85%)' }}>
+          {hero?.name ?? "Gautham Biju"}
+        </span>
+        <span className="text-[9px] tracking-[0.2em] uppercase font-mono" style={{ color: 'hsl(0 0% 100% / 0.3)' }}>
+          Field Notes / {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
         </span>
       </motion.div>
 
-      <div className="flex items-center">
-        <div className="max-w-3xl md:ml-4 relative z-10 flex-1 my-0">
-          <p className="font-handwritten text-2xl md:text-3xl mb-6 text-primary">
-            {hero?.name ?? "Gautham Biju"}
-          </p>
+      {/* Tagline box */}
+      <motion.div
+        className="flex items-center gap-3 mb-10"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.5 }}
+      >
+        <div className="w-6 h-6 border flex items-center justify-center" style={{ borderColor: 'hsl(0 0% 100% / 0.2)' }}>
+          <span className="text-[10px] font-mono" style={{ color: 'hsl(0 0% 100% / 0.4)' }}>#</span>
+        </div>
+        <div className="px-3 py-1.5 border" style={{ borderColor: 'hsl(0 0% 100% / 0.15)' }}>
+          <span className="text-[9px] tracking-[0.25em] uppercase font-mono" style={{ color: 'hsl(0 0% 100% / 0.35)' }}>
+            Intersection of Technology · Business · Design
+          </span>
+        </div>
+      </motion.div>
+
+      <div className="flex items-start gap-8 md:gap-12">
+        {/* Left — Headline */}
+        <div className="flex-1 relative z-10">
+          {/* Dashed annotation arrow */}
+          <motion.div
+            className="flex items-center gap-2 mb-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+          >
+            <span className="text-[9px] font-mono" style={{ color: 'hsl(0 0% 100% / 0.2)' }}>{'--->'}</span>
+          </motion.div>
 
           <div className="mb-2">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1]" style={{ color: 'hsl(40 30% 85% / 0.5)' }}>
               I'm learning to build
             </h1>
           </div>
 
-          <div className="mb-2 py-1">
-            <MorphingText
-              words={rotatingWords}
-              className="text-[clamp(2.8rem,6.5vw,5rem)] leading-[1.15]"
-              interval={3500}
-            />
+          {/* Morphing word with dashed box */}
+          <div className="mb-2 py-1 relative">
+            <div className="border border-dashed inline-block px-3 py-1" style={{ borderColor: 'hsl(0 0% 100% / 0.2)' }}>
+              <MorphingText
+                words={rotatingWords}
+                className="text-[clamp(2.8rem,6.5vw,5rem)] leading-[1.15]"
+                interval={3500}
+              />
+            </div>
+            {/* Label tag connected to dashed box */}
+            <span className="hidden md:inline-block ml-3 text-[8px] font-mono tracking-wider" style={{ color: 'hsl(0 0% 100% / 0.25)' }}>
+              {'--- [ ROTATING ]'}
+            </span>
           </div>
 
-          <div className="mb-8">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] text-card-foreground/40">
+          <div className="mb-10">
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1]" style={{ color: 'hsl(40 30% 85% / 0.5)' }}>
               for problems worth solving.
             </h1>
           </div>
 
-          <p className="text-sm tracking-[0.2em] uppercase text-card-foreground/30 font-mono mb-8">
-            At the intersection of Technology · Business · Design
-          </p>
-
           {/* CTAs */}
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-6">
             <button
               onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-5 py-2.5 bg-primary text-primary-foreground text-xs font-mono tracking-wider uppercase rounded-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+              className="px-5 py-2.5 text-xs font-mono tracking-wider uppercase rounded-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
+              style={{ background: 'hsl(40 30% 90%)', color: 'hsl(160 20% 16%)' }}
             >
               View Work <ArrowUpRight className="w-3 h-3" />
             </button>
             <a
               href="#"
-              className="px-5 py-2.5 border border-border text-card-foreground/60 text-xs font-mono tracking-wider uppercase rounded-sm hover:border-primary/30 hover:text-card-foreground transition-all"
+              className="px-5 py-2.5 border text-xs font-mono tracking-wider uppercase rounded-sm hover:opacity-80 transition-opacity"
+              style={{ borderColor: 'hsl(0 0% 100% / 0.2)', color: 'hsl(40 30% 85%)' }}
             >
               Resume
             </a>
           </div>
-
-          <p className="text-[10px] tracking-wider text-card-foreground/20 font-mono">
-            {hero?.location ?? "INDIA · GMT + 5:30"}
-          </p>
         </div>
 
-        <div
-          className={`hidden md:block absolute top-0 right-0 w-[400px] lg:w-[520px] z-0 transition-opacity duration-500 ${heroLoading ? 'opacity-0' : 'opacity-100'}`}
-          style={{
-            maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%), linear-gradient(to bottom, black 0%, black 75%, transparent 100%)',
-            maskComposite: 'intersect',
-            WebkitMaskComposite: 'source-in',
-          }}
+        {/* Right — Portrait */}
+        <motion.div
+          className="hidden md:flex flex-col items-center gap-2 relative z-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: heroLoading ? 0 : 1 }}
+          transition={{ duration: 0.5 }}
         >
-          <img
-            src={portraitSrc}
-            alt="Gautham portrait sketch"
-            className="w-full h-auto mix-blend-multiply opacity-70"
-          />
-        </div>
+          {/* Profile label */}
+          <span className="text-[8px] font-mono tracking-[0.3em] uppercase" style={{ color: 'hsl(0 0% 100% / 0.3)' }}>
+            — Profile —
+          </span>
+
+          {/* Portrait with corner brackets */}
+          <div className="relative">
+            <div className="corner-brackets">
+              <img
+                src={portraitSrc}
+                alt="Gautham portrait"
+                className="w-[180px] lg:w-[220px] h-auto border"
+                style={{ borderColor: 'hsl(0 0% 100% / 0.15)', filter: 'grayscale(0.3)' }}
+              />
+            </div>
+
+            {/* Right-side vertical dimension */}
+            <div className="absolute top-0 -right-8 h-full flex flex-col items-center justify-center">
+              <div className="w-px h-full" style={{ background: 'hsl(0 0% 100% / 0.15)' }} />
+              <span className="text-[7px] font-mono absolute rotate-90" style={{ color: 'hsl(0 0% 100% / 0.2)' }}>2E00</span>
+            </div>
+          </div>
+
+          {/* Bottom dimension line */}
+          <div className="dimension-line w-[180px] lg:w-[220px]">
+            <span>160 PX</span>
+          </div>
+
+          {/* Descriptor */}
+          <span className="text-[8px] font-mono tracking-[0.2em] uppercase mt-1" style={{ color: 'hsl(0 0% 100% / 0.25)' }}>
+            Builder · Thinker · Maker
+          </span>
+        </motion.div>
+      </div>
+
+      {/* Navigation at bottom */}
+      <div className="mt-4 border-t" style={{ borderColor: 'hsl(0 0% 100% / 0.08)' }}>
+        <Navigation embedded />
       </div>
     </section>
   );
