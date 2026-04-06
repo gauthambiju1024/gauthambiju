@@ -6,47 +6,37 @@
 
 @layer base {
   :root {
-    /* Paper background #F8F5F1 → hsl(36, 37%, 96%) */
     --background: 220 15% 12%;
     --foreground: 220 25% 20%;
 
-    /* Paper surface #F8F5F1 */
     --card: 36 37% 96%;
     --card-foreground: 218 30% 21%;
 
     --popover: 36 37% 96%;
     --popover-foreground: 218 30% 21%;
 
-    /* Blue accent */
     --primary: 220 60% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light paper shadow #E3E6E8 */
     --secondary: 210 8% 93%;
     --secondary-foreground: 218 30% 21%;
 
     --muted: 210 12% 87%;
     --muted-foreground: 214 14% 50%;
 
-    /* Sweater blue #5B708C */
     --accent: 214 21% 45%;
     --accent-foreground: 36 37% 96%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Grid #C3CDD6 */
     --border: 210 16% 84%;
     --input: 210 16% 84%;
     --ring: 16 21% 42%;
 
     --radius: 0.5rem;
 
-    /* Notebook-specific */
-    --notebook-border: 16 21% 42%;
-    --notebook-paper: 36 37% 96%;
-    --notebook-grid: 210 16% 84%;
-    --notebook-ruling: 210 16% 84%;
+    /* Builder workspace tokens */
     --ink: 218 30% 21%;
 
     /* Typography */
@@ -65,7 +55,6 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Gold accent */
     --gold: 38 60% 52%;
     --gold-foreground: 38 10% 16%;
 
@@ -75,6 +64,8 @@
     --whiteboard: 210 8% 96%;
     --toolbox-metal: 220 10% 22%;
     --editorial-cream: 40 30% 96%;
+    --notebook-paper: 36 37% 96%;
+    --notebook-border: 16 21% 42%;
   }
 }
 
@@ -118,128 +109,95 @@
     font-family: var(--font-handwritten);
   }
 
-  /* Notebook container */
-  .notebook {
-    background: hsl(var(--notebook-paper));
+  .font-serif-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* ─── Blueprint Grid ─── */
+  .blueprint-grid {
     background-image:
-      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
-    position: relative;
-    overflow: clip;
-    box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
-      0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+      linear-gradient(hsl(var(--primary) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  /* Grid paper background — grid removed for clean look */
-  .notebook-grid {
-    /* plain paper, no grid lines */
-  }
-
-  /* Ruled lines */
-  .notebook-ruled {
+  .blueprint-grid-fine {
     background-image:
-      linear-gradient(transparent 23px, hsl(var(--notebook-ruling) / 0.4) 23px, hsl(var(--notebook-ruling) / 0.4) 24px, transparent 24px);
-    background-size: 100% 24px;
+      linear-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.04) 1px, transparent 1px),
+      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px);
+    background-size: 10px 10px, 10px 10px, 40px 40px, 40px 40px;
   }
 
-  /* Notebook spine/binding */
-  .notebook-spine {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 48px;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--notebook-border) / 0.15) 0%,
-      hsl(var(--notebook-border) / 0.08) 40%,
-      transparent 100%
-    );
-    border-right: 2px solid hsl(var(--primary) / 0.12);
-    pointer-events: none;
-    z-index: 2;
+  /* ─── Notes Surface ─── */
+  .notes-surface {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 31px,
+        hsl(var(--border) / 0.15) 31px,
+        hsl(var(--border) / 0.15) 32px
+      );
+    background-size: 100% 32px;
   }
 
-  .notebook-margin {
-    pointer-events: none;
+  /* ─── Dimension Label ─── */
+  .dimension-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
   }
 
-  /* Red margin line */
-  .notebook-margin {
-    position: absolute;
-    left: 72px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: hsl(var(--primary) / 0.2);
-    pointer-events: none;
-    z-index: 2;
+  .dimension-label::before {
+    content: '⌐ ';
+    opacity: 0.4;
   }
 
-  /* Hole punches */
-  .notebook-holes {
-    position: absolute;
-    left: 18px;
-    top: 0;
-    bottom: 0;
-    width: 14px;
-    z-index: 3;
-    pointer-events: none;
+  .dimension-label::after {
+    content: ' ¬';
+    opacity: 0.4;
   }
 
-  .notebook-hole {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: hsl(var(--background));
-    border: 1.5px solid hsl(var(--notebook-border) / 0.3);
-    position: absolute;
-    left: 0;
-  }
-
-  /* Page fold corner */
-  .page-fold {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(
-      135deg,
-      transparent 50%,
-      hsl(var(--muted) / 0.8) 50%,
-      hsl(var(--muted)) 100%
-    );
-    box-shadow: -2px -2px 6px hsl(0 0% 0% / 0.06);
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  /* Section divider — torn paper edge feel */
-  .section-divider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--notebook-ruling) / 0.5) 15%,
-      hsl(var(--notebook-ruling) / 0.5) 85%,
-      transparent 100%
-    );
-    margin: 0 2rem;
-  }
-
-  /* Desk scatter decorations */
+  /* ─── Desk Pattern ─── */
   .desk-pattern {
     background-image:
       radial-gradient(circle at 15% 25%, hsl(var(--primary) / 0.03) 0%, transparent 50%),
       radial-gradient(circle at 85% 75%, hsl(var(--primary) / 0.02) 0%, transparent 50%);
   }
 
-  /* Marquee */
+  /* ─── Section Backgrounds ─── */
+  .shelf-bg {
+    background: hsl(220 10% 8%);
+  }
+
+  .whiteboard-bg {
+    background: hsl(var(--whiteboard));
+  }
+
+  .toolbox-bg {
+    background: hsl(var(--toolbox-metal));
+  }
+
+  .editorial-bg {
+    background: transparent;
+  }
+
+  /* ─── Section Panel ─── */
+  .section-panel {
+    border-radius: 0.75rem;
+    border-width: 1px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 20px 50px -12px hsl(0 0% 0% / 0.35),
+      0 6px 20px -4px hsl(0 0% 0% / 0.2);
+  }
+
+  /* ─── Marquee ─── */
   .marquee-track {
     display: flex;
     animation: marquee-scroll 30s linear infinite;
@@ -251,25 +209,56 @@
     }
   }
 
-  /* Notebook page — stacked pages in a binder */
-  .notebook-page {
-    background: hsl(var(--notebook-paper));
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
+  /* ─── Card hover ─── */
+  .card-hover {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.12);
+  }
+
+  /* ─── Measurement tick marks ─── */
+  .measure-ticks {
     position: relative;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
-      0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
   }
 
-  .notebook-page + .notebook-page {
-    margin-top: 8px;
+  .measure-ticks::before,
+  .measure-ticks::after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 8px;
+    background: hsl(var(--primary) / 0.15);
   }
 
-  /* Ribbon bookmark */
+  .measure-ticks::before {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .measure-ticks::after {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* ─── Section Divider ─── */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--border) / 0.3) 15%,
+      hsl(var(--border) / 0.3) 85%,
+      transparent 100%
+    );
+    margin: 0 2rem;
+  }
+
+  /* ─── Ribbon bookmark (kept for sub-pages) ─── */
   .ribbon-bookmark {
     position: absolute;
     right: -3px;
@@ -284,124 +273,52 @@
     padding: 0;
   }
 
-  .ribbon-bookmark-interactive {
-    pointer-events: auto;
-    cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
-  }
-
-  .ribbon-bookmark-interactive:hover {
-    transform: translateX(-3px);
-    box-shadow: -4px 2px 8px hsl(0 0% 0% / 0.25);
-  }
-
-  .ribbon-bookmark-interactive:active {
-    transform: translateX(-1px) scale(0.97);
-  }
-
-  /* Card hover */
-  .card-hover {
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.12);
-  }
-
-  /* Tape strip decoration */
-  .tape-strip {
-    background: hsl(45 40% 88% / 0.7);
-    backdrop-filter: blur(2px);
-    transform: rotate(-2deg);
-    border: 1px solid hsl(45 30% 80% / 0.5);
-  }
-
-  /* Bookmark tab */
-  .bookmark-tab {
-    width: 32px;
-    height: 64px;
-    background: hsl(var(--primary));
-    position: absolute;
-    right: -3px;
-    border-radius: 0 0 4px 4px;
-    box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
-    z-index: 10;
-  }
-
-  /* Corner marks */
-  .corner-marks {
-    position: relative;
-  }
-
-  .corner-marks::before,
-  .corner-marks::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-color: hsl(var(--primary) / 0.35);
-  }
-
-  .corner-marks::before {
-    top: -1px;
-    left: -1px;
-    border-top: 1.5px solid;
-    border-left: 1.5px solid;
-  }
-
-  .corner-marks::after {
-    bottom: -1px;
-    right: -1px;
-    border-bottom: 1.5px solid;
-    border-right: 1.5px solid;
-  }
-
-  /* Section backgrounds */
-  .shelf-bg {
-    background: hsl(var(--shelf-wood));
-    background-image:
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent 120px,
-        hsl(var(--shelf-wood-light) / 0.08) 120px,
-        hsl(var(--shelf-wood-light) / 0.08) 121px
-      );
-  }
-
-  .whiteboard-bg {
-    background: hsl(var(--whiteboard));
-    background-image:
-      radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.02) 0%, transparent 50%),
-      radial-gradient(circle at 80% 30%, hsl(var(--accent) / 0.03) 0%, transparent 40%);
-  }
-
-  .toolbox-bg {
-    background: hsl(var(--toolbox-metal));
-    background-image:
-      linear-gradient(135deg, hsl(0 0% 100% / 0.02) 25%, transparent 25%),
-      linear-gradient(225deg, hsl(0 0% 100% / 0.02) 25%, transparent 25%);
-    background-size: 60px 60px;
-  }
-
-  .editorial-bg {
-    background: hsl(var(--editorial-cream));
-  }
-
-  .font-serif-display {
-    font-family: 'Playfair Display', serif;
-  }
-
-  /* Floating section panel */
-  .section-panel {
+  /* ─── Notebook classes (backward compat for sub-pages) ─── */
+  .notebook {
+    background: hsl(var(--notebook-paper));
     border-radius: 1rem;
-    border-width: 1px;
-    padding: 1px;
+    border: 3px solid hsl(var(--notebook-border));
+    position: relative;
+    overflow: clip;
+    box-shadow:
+      0 0 0 1px hsl(var(--notebook-border) / 0.3),
+      0 25px 80px -12px hsl(0 0% 0% / 0.5),
+      0 8px 24px -4px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+  }
+
+  .notebook-grid {
+    /* clean surface */
+  }
+
+  .notebook-ruled {
+    background-image:
+      linear-gradient(transparent 23px, hsl(var(--border) / 0.4) 23px, hsl(var(--border) / 0.4) 24px, transparent 24px);
+    background-size: 100% 24px;
+  }
+
+  .notebook-page {
+    background: hsl(var(--notebook-paper));
+    border-radius: 1rem;
+    border: 3px solid hsl(var(--notebook-border));
     position: relative;
     overflow: hidden;
     box-shadow:
-      0 25px 60px -12px hsl(0 0% 0% / 0.4),
+      0 0 0 1px hsl(var(--notebook-border) / 0.3),
+      0 25px 80px -12px hsl(0 0% 0% / 0.5),
+      0 8px 24px -4px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+  }
+
+  /* ─── Workspace container — replaces notebook for homepage ─── */
+  .workspace-surface {
+    background: hsl(var(--notebook-paper));
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--border) / 0.4);
+    position: relative;
+    overflow: clip;
+    box-shadow:
+      0 20px 60px -12px hsl(0 0% 0% / 0.4),
       0 8px 24px -4px hsl(0 0% 0% / 0.25);
   }
 }
@@ -421,10 +338,10 @@
   animation: blink 0.7s step-end infinite;
 }
 
-/* Custom scrollbar for notebook interior */
+/* Custom scrollbar */
 .notebook-scroll-area {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--notebook-border) / 0.3) transparent;
+  scrollbar-color: hsl(var(--border) / 0.3) transparent;
 }
 
 .notebook-scroll-area::-webkit-scrollbar {
@@ -436,10 +353,10 @@
 }
 
 .notebook-scroll-area::-webkit-scrollbar-thumb {
-  background: hsl(var(--notebook-border) / 0.3);
+  background: hsl(var(--border) / 0.3);
   border-radius: 3px;
 }
 
 .notebook-scroll-area::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--notebook-border) / 0.5);
+  background: hsl(var(--border) / 0.5);
 }

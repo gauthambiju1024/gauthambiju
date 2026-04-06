@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Globe from "./Globe";
 
 interface Milestone {
   id: string;
@@ -45,14 +44,9 @@ const JourneyTimeline = () => {
 
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
-      {/* Globe background - desktop only */}
-      <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none">
-        <Globe className="w-[500px] h-[500px]" />
-      </div>
-
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12 relative z-10">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Journey</span>
+        <span className="dimension-label">Journey</span>
       </div>
 
       <div className="px-6 md:px-16 mb-14 relative z-10">
@@ -67,8 +61,8 @@ const JourneyTimeline = () => {
       {/* Timeline */}
       <div className="px-6 md:px-16 relative z-10">
         <div className="relative max-w-2xl mx-auto">
-          {/* Vertical line */}
-          <div className="absolute left-4 md:left-6 top-0 bottom-0 w-px bg-border" />
+          {/* Vertical line — thinner */}
+          <div className="absolute left-4 md:left-6 top-0 bottom-0 w-px bg-border/50" />
 
           {milestones.map((m, i) => (
             <motion.div
@@ -79,24 +73,24 @@ const JourneyTimeline = () => {
               viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
             >
-              {/* Station node */}
+              {/* Node — simpler circles */}
               <div className="absolute left-4 md:left-6 top-1 -translate-x-1/2">
                 {m.isCurrent ? (
                   <div className="relative">
-                    <div className="w-4 h-4 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.4)]" />
-                    <div className="absolute inset-0 w-4 h-4 rounded-full bg-primary/30 animate-ping" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.3)]" />
+                    <div className="absolute inset-0 w-3.5 h-3.5 rounded-full bg-primary/20 animate-ping" />
                   </div>
                 ) : (
-                  <div className="w-3 h-3 rounded-full bg-card border-2 border-border hover:border-primary/50 transition-colors" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-card border-[1.5px] border-border/60 hover:border-primary/40 transition-colors" />
                 )}
               </div>
 
               {/* Content card */}
               <motion.div
-                className={`rounded-lg p-4 md:p-5 border transition-all duration-300 cursor-pointer ${
+                className={`rounded-md p-4 md:p-5 border transition-all duration-300 cursor-pointer ${
                   m.isCurrent
-                    ? "bg-primary/5 border-primary/20"
-                    : "bg-card/50 border-border hover:border-border hover:bg-card/80"
+                    ? "bg-primary/5 border-primary/15"
+                    : "bg-card/40 border-border/40 hover:border-border/60 hover:bg-card/60"
                 }`}
                 onClick={() => setExpandedId(expandedId === m.id ? null : m.id)}
                 whileHover={{ x: 4 }}
@@ -119,7 +113,7 @@ const JourneyTimeline = () => {
                   transition={{ duration: 0.25 }}
                   className="overflow-hidden"
                 >
-                  <p className="mt-3 pt-3 border-t border-border text-xs text-card-foreground/60 font-body leading-relaxed">
+                  <p className="mt-3 pt-3 border-t border-border/30 text-xs text-card-foreground/60 font-body leading-relaxed">
                     {m.takeaway}
                   </p>
                 </motion.div>

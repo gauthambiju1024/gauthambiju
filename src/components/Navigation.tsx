@@ -21,14 +21,12 @@ const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Track window scroll for compact mode
   useEffect(() => {
     const handleScroll = () => setIsCompact(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Intersection observer for active section
   useEffect(() => {
     if (location.pathname !== '/') return;
     const observers: IntersectionObserver[] = [];
@@ -63,7 +61,7 @@ const Navigation = () => {
   return (
     <motion.nav
       className={`z-50 flex items-center justify-between px-4 md:px-12 transition-all duration-300 ${
-        isCompact ? "py-2 backdrop-blur-md bg-background/70" : "py-4"
+        isCompact ? "py-2 backdrop-blur-md bg-background/80" : "py-4"
       }`}
       initial={false}
       animate={{ height: isCompact ? 48 : 56 }}
@@ -94,8 +92,8 @@ const Navigation = () => {
             {activeSection === item.id && (
               <motion.div
                 layoutId="nav-indicator"
-                className="absolute bottom-0 left-1 right-1 h-[1.5px] rounded-full bg-primary"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="absolute bottom-0 left-2 right-2 h-px bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
           </button>

@@ -11,11 +11,11 @@ import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 
 const panelSections = [
-  { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
-  { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/40' },
-  { key: 'skills', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-border/30' },
-  { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-primary/20' },
-  { key: 'writing', Component: WritingDesk, bg: 'editorial-bg', border: 'border-[hsl(var(--notebook-border)/0.3)]' },
+  { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-border/20' },
+  { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/30' },
+  { key: 'skills', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-border/20' },
+  { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-primary/15' },
+  { key: 'writing', Component: WritingDesk, bg: '', border: 'border-border/20' },
   { key: 'contact', Component: ContactClosing, bg: '', border: 'border-transparent' },
 ];
 
@@ -36,19 +36,9 @@ const Index = () => {
         <Navigation />
       </div>
 
-      {/* Notebook: Hero + About */}
+      {/* Hero + About — clean workspace surface */}
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
-        <div className="notebook notebook-grid relative">
-          <div className="notebook-spine hidden md:block" />
-          <div className="notebook-margin hidden md:block" />
-          <div className="notebook-holes hidden md:block">
-            <div className="notebook-hole" style={{ top: '80px' }} />
-            <div className="notebook-hole" style={{ top: '33%' }} />
-            <div className="notebook-hole" style={{ top: '66%' }} />
-            <div className="notebook-hole" style={{ bottom: '80px' }} />
-          </div>
-          <div className="page-fold" />
-
+        <div className="workspace-surface">
           <div className="relative z-[1]">
             <div id="home">
               <HeroSection />
