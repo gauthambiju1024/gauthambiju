@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --background: 220 15% 12%;
-    --foreground: 220 25% 20%;
+    --background: 25 18% 14%;
+    --foreground: 30 10% 80%;
 
     --card: 36 37% 96%;
     --card-foreground: 218 30% 21%;
@@ -15,29 +15,37 @@
     --popover: 36 37% 96%;
     --popover-foreground: 218 30% 21%;
 
-    --primary: 220 60% 50%;
+    --primary: 25 80% 55%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 8% 93%;
     --secondary-foreground: 218 30% 21%;
 
-    --muted: 210 12% 87%;
-    --muted-foreground: 214 14% 50%;
+    --muted: 30 8% 28%;
+    --muted-foreground: 30 12% 55%;
 
-    --accent: 214 21% 45%;
+    --accent: 25 60% 48%;
     --accent-foreground: 36 37% 96%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 16% 84%;
-    --input: 210 16% 84%;
-    --ring: 16 21% 42%;
+    --border: 30 10% 25%;
+    --input: 30 10% 25%;
+    --ring: 25 80% 55%;
 
     --radius: 0.5rem;
 
     /* Builder workspace tokens */
-    --ink: 218 30% 21%;
+    --ink: 30 10% 80%;
+    --desk-wood: 25 18% 14%;
+    --desk-wood-light: 25 14% 18%;
+    --cutting-mat: 160 20% 16%;
+    --cutting-mat-light: 160 15% 20%;
+    --mat-grid: 160 15% 22%;
+    --ruler-accent: 25 80% 55%;
+    --paper: 40 30% 92%;
+    --paper-warm: 36 37% 96%;
 
     /* Typography */
     --font-display: 'Space Grotesk', sans-serif;
@@ -62,10 +70,10 @@
     --shelf-wood: 25 15% 16%;
     --shelf-wood-light: 25 12% 26%;
     --whiteboard: 210 8% 96%;
-    --toolbox-metal: 220 10% 22%;
+    --toolbox-metal: 160 18% 13%;
     --editorial-cream: 40 30% 96%;
-    --notebook-paper: 36 37% 96%;
-    --notebook-border: 16 21% 42%;
+    --notebook-paper: 40 30% 92%;
+    --notebook-border: 25 80% 55%;
   }
 }
 
@@ -75,7 +83,7 @@
   }
 
   body {
-    background: hsl(var(--background));
+    background: hsl(var(--desk-wood));
     color: hsl(var(--ink));
     font-family: var(--font-handwritten);
     -webkit-font-smoothing: antialiased;
@@ -87,8 +95,8 @@
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.2);
-    color: hsl(var(--card-foreground));
+    background: hsl(var(--ruler-accent) / 0.25);
+    color: hsl(var(--paper));
   }
 }
 
@@ -113,20 +121,127 @@
     font-family: 'Playfair Display', serif;
   }
 
-  /* ─── Blueprint Grid ─── */
+  /* ─── Desk Surface — wood grain via CSS gradients ─── */
+  .desk-surface {
+    background-color: hsl(var(--desk-wood));
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        hsl(25 15% 16% / 0.3) 0px,
+        transparent 1px,
+        transparent 80px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        hsl(25 12% 13% / 0.15) 0px,
+        transparent 1px,
+        transparent 200px
+      ),
+      linear-gradient(
+        180deg,
+        hsl(25 18% 13%) 0%,
+        hsl(25 18% 15%) 50%,
+        hsl(25 18% 13%) 100%
+      );
+  }
+
+  /* ─── Cutting Mat — green surface with grid ─── */
+  .cutting-mat {
+    background-color: hsl(var(--cutting-mat));
+    background-image:
+      linear-gradient(hsl(var(--mat-grid) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.4) 1px, transparent 1px),
+      linear-gradient(hsl(var(--mat-grid) / 0.15) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.15) 1px, transparent 1px);
+    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    border: 1px solid hsl(var(--mat-grid) / 0.5);
+    border-radius: 0.25rem;
+  }
+
+  /* ─── Ruler Edge — top ruler with tick marks ─── */
+  .ruler-edge {
+    position: relative;
+  }
+
+  .ruler-edge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background-color: hsl(var(--cutting-mat-light));
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        hsl(var(--ruler-accent) / 0.6) 0px,
+        hsl(var(--ruler-accent) / 0.6) 1px,
+        transparent 1px,
+        transparent 20px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        hsl(var(--ruler-accent) / 0.3) 0px,
+        hsl(var(--ruler-accent) / 0.3) 1px,
+        transparent 1px,
+        transparent 100px
+      );
+    background-size: 20px 8px, 100px 16px;
+    background-repeat: repeat-x;
+    background-position: 0 bottom, 0 bottom;
+    border-bottom: 1px solid hsl(var(--ruler-accent) / 0.3);
+    z-index: 2;
+  }
+
+  /* ─── Left ruler edge ─── */
+  .ruler-edge-left {
+    position: relative;
+  }
+
+  .ruler-edge-left::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    background-color: hsl(var(--cutting-mat-light));
+    background-image:
+      repeating-linear-gradient(
+        180deg,
+        hsl(var(--ruler-accent) / 0.6) 0px,
+        hsl(var(--ruler-accent) / 0.6) 1px,
+        transparent 1px,
+        transparent 20px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        hsl(var(--ruler-accent) / 0.3) 0px,
+        hsl(var(--ruler-accent) / 0.3) 1px,
+        transparent 1px,
+        transparent 100px
+      );
+    background-size: 8px 20px, 16px 100px;
+    background-repeat: repeat-y;
+    background-position: right 0, right 0;
+    border-right: 1px solid hsl(var(--ruler-accent) / 0.3);
+    z-index: 2;
+  }
+
+  /* ─── Blueprint Grid (updated for mat) ─── */
   .blueprint-grid {
     background-image:
-      linear-gradient(hsl(var(--primary) / 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.06) 1px, transparent 1px);
+      linear-gradient(hsl(var(--mat-grid) / 0.2) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.2) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
   .blueprint-grid-fine {
     background-image:
-      linear-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.04) 1px, transparent 1px),
-      linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px);
+      linear-gradient(hsl(var(--mat-grid) / 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.1) 1px, transparent 1px),
+      linear-gradient(hsl(var(--mat-grid) / 0.25) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.25) 1px, transparent 1px);
     background-size: 10px 10px, 10px 10px, 40px 40px, 40px 40px;
   }
 
@@ -143,39 +258,41 @@
     background-size: 100% 32px;
   }
 
-  /* ─── Dimension Label ─── */
+  /* ─── Dimension Label — ruler accent ─── */
   .dimension-label {
     font-family: var(--font-mono);
     font-size: 9px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--ruler-accent) / 0.7);
   }
 
   .dimension-label::before {
-    content: '⌐ ';
-    opacity: 0.4;
+    content: '◂ ';
+    opacity: 0.6;
+    color: hsl(var(--ruler-accent));
   }
 
   .dimension-label::after {
-    content: ' ¬';
-    opacity: 0.4;
+    content: ' ▸';
+    opacity: 0.6;
+    color: hsl(var(--ruler-accent));
   }
 
   /* ─── Desk Pattern ─── */
   .desk-pattern {
     background-image:
-      radial-gradient(circle at 15% 25%, hsl(var(--primary) / 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 85% 75%, hsl(var(--primary) / 0.02) 0%, transparent 50%);
+      radial-gradient(circle at 15% 25%, hsl(25 15% 16% / 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 85% 75%, hsl(25 12% 13% / 0.06) 0%, transparent 50%);
   }
 
   /* ─── Section Backgrounds ─── */
   .shelf-bg {
-    background: hsl(220 10% 8%);
+    background: hsl(var(--cutting-mat));
   }
 
   .whiteboard-bg {
-    background: hsl(var(--whiteboard));
+    background: hsl(var(--cutting-mat));
   }
 
   .toolbox-bg {
@@ -186,15 +303,29 @@
     background: transparent;
   }
 
-  /* ─── Section Panel ─── */
+  /* ─── Section Panel — cutting mat feel ─── */
   .section-panel {
-    border-radius: 0.75rem;
-    border-width: 1px;
+    border-radius: 0.25rem;
+    border: 1px solid hsl(var(--mat-grid) / 0.4);
     position: relative;
     overflow: hidden;
     box-shadow:
-      0 20px 50px -12px hsl(0 0% 0% / 0.35),
-      0 6px 20px -4px hsl(0 0% 0% / 0.2);
+      0 20px 50px -12px hsl(0 0% 0% / 0.4),
+      0 6px 20px -4px hsl(0 0% 0% / 0.25);
+    background-image:
+      linear-gradient(hsl(var(--mat-grid) / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.12) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* ─── Paper card on mat ─── */
+  .paper-card {
+    background: hsl(var(--paper-warm));
+    border: 1px solid hsl(30 10% 85%);
+    border-radius: 2px;
+    box-shadow:
+      0 2px 8px -2px hsl(0 0% 0% / 0.2),
+      0 1px 2px hsl(0 0% 0% / 0.1);
   }
 
   /* ─── Marquee ─── */
@@ -216,7 +347,7 @@
 
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.12);
+    box-shadow: 0 8px 30px -8px hsl(var(--ruler-accent) / 0.15);
   }
 
   /* ─── Measurement tick marks ─── */
@@ -230,7 +361,7 @@
     position: absolute;
     width: 1px;
     height: 8px;
-    background: hsl(var(--primary) / 0.15);
+    background: hsl(var(--ruler-accent) / 0.3);
   }
 
   .measure-ticks::before {
@@ -245,17 +376,38 @@
     transform: translateY(-50%);
   }
 
-  /* ─── Section Divider ─── */
+  /* ─── Section Divider — ruler style ─── */
   .section-divider {
     height: 1px;
     background: linear-gradient(
       90deg,
       transparent 0%,
-      hsl(var(--border) / 0.3) 15%,
-      hsl(var(--border) / 0.3) 85%,
+      hsl(var(--ruler-accent) / 0.2) 15%,
+      hsl(var(--ruler-accent) / 0.2) 85%,
       transparent 100%
     );
     margin: 0 2rem;
+    position: relative;
+  }
+
+  .section-divider::before {
+    content: '';
+    position: absolute;
+    left: 15%;
+    top: -2px;
+    width: 4px;
+    height: 5px;
+    background: hsl(var(--ruler-accent) / 0.3);
+  }
+
+  .section-divider::after {
+    content: '';
+    position: absolute;
+    right: 15%;
+    top: -2px;
+    width: 4px;
+    height: 5px;
+    background: hsl(var(--ruler-accent) / 0.3);
   }
 
   /* ─── Ribbon bookmark (kept for sub-pages) ─── */
@@ -264,7 +416,7 @@
     right: -3px;
     width: 28px;
     height: 52px;
-    background: hsl(var(--primary));
+    background: hsl(var(--ruler-accent));
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
     box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
     z-index: 10;
@@ -276,15 +428,13 @@
   /* ─── Notebook classes (backward compat for sub-pages) ─── */
   .notebook {
     background: hsl(var(--notebook-paper));
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
+    border-radius: 0.25rem;
+    border: 2px solid hsl(var(--notebook-border) / 0.3);
     position: relative;
     overflow: clip;
     box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
       0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+      0 8px 24px -4px hsl(0 0% 0% / 0.3);
   }
 
   .notebook-grid {
@@ -299,27 +449,29 @@
 
   .notebook-page {
     background: hsl(var(--notebook-paper));
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
+    border-radius: 0.25rem;
+    border: 2px solid hsl(var(--notebook-border) / 0.3);
     position: relative;
     overflow: hidden;
     box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
       0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+      0 8px 24px -4px hsl(0 0% 0% / 0.3);
   }
 
-  /* ─── Workspace container — replaces notebook for homepage ─── */
+  /* ─── Workspace container — cutting mat for homepage ─── */
   .workspace-surface {
-    background: hsl(var(--notebook-paper));
-    border-radius: 0.75rem;
-    border: 1px solid hsl(var(--border) / 0.4);
+    background: hsl(var(--cutting-mat));
+    border-radius: 0.25rem;
+    border: 1px solid hsl(var(--mat-grid) / 0.5);
     position: relative;
     overflow: clip;
     box-shadow:
-      0 20px 60px -12px hsl(0 0% 0% / 0.4),
-      0 8px 24px -4px hsl(0 0% 0% / 0.25);
+      0 20px 60px -12px hsl(0 0% 0% / 0.45),
+      0 8px 24px -4px hsl(0 0% 0% / 0.3);
+    background-image:
+      linear-gradient(hsl(var(--mat-grid) / 0.15) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mat-grid) / 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
 
@@ -341,7 +493,7 @@
 /* Custom scrollbar */
 .notebook-scroll-area {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border) / 0.3) transparent;
+  scrollbar-color: hsl(var(--ruler-accent) / 0.2) transparent;
 }
 
 .notebook-scroll-area::-webkit-scrollbar {
@@ -353,10 +505,10 @@
 }
 
 .notebook-scroll-area::-webkit-scrollbar-thumb {
-  background: hsl(var(--border) / 0.3);
+  background: hsl(var(--ruler-accent) / 0.2);
   border-radius: 3px;
 }
 
 .notebook-scroll-area::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--border) / 0.5);
+  background: hsl(var(--ruler-accent) / 0.4);
 }
