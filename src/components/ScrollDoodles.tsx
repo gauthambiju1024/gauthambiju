@@ -1,702 +1,664 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { MotionValue } from 'framer-motion';
 
 interface ScrollDoodlesProps {
-  scrollYProgress: { get: () => number; on: (event: string, cb: (v: number) => void) => () => void };
+  scrollYProgress: MotionValue<number>;
 }
 
-interface Doodle {
-  drawStart: number;
-  drawEnd: number;
-  draw: (ctx: CanvasRenderingContext2D, progress: number) => void;
+// ── Seeded RNG ──
+function sRng(s: number) {
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
 }
 
-// Helper: draw a path progressively
-function tracePath(
-  ctx: CanvasRenderingContext2D,
-  points: [number, number][],
-  progress: number,
-  close = false
-) {
-  if (points.length < 2 || progress <= 0) return;
-  const totalSegs = points.length - 1 + (close ? 1 : 0);
-  const drawn = progress * totalSegs;
+// ── Color helpers — read CSS vars once, build palette ──
+function getPalette() {
+  const s = getComputedStyle(document.documentElement);
+  const primary = s.getPropertyValue('--primary').trim();   // HSL values
+  const gold = s.getPropertyValue('--gold').trim();
+  const h = (raw: string, a: number) => `hsla(${raw}, ${a})`;
+  return {
+    gold04: h(gold, 0.4),
+    gold035: h(gold, 0.35),
+    gold03: h(gold, 0.3),
+    gold025: h(gold, 0.25),
+    gold02: h(gold, 0.2),
+    gold015: h(gold, 0.15),
+    gold01: h(gold, 0.1),
+    gold006: h(gold, 0.06),
+    gold045: h(gold, 0.45),
+    gold055: h(gold, 0.55),
+    gold05: h(gold, 0.5),
+    prim045: h(primary, 0.45),
+    prim04: h(primary, 0.4),
+    prim03: h(primary, 0.3),
+    prim025: h(primary, 0.25),
+    prim02: h(primary, 0.2),
+    prim05: h(primary, 0.5),
+    prim01: h(primary, 0.1),
+    prim008: h(primary, 0.08),
+    green04: 'rgba(52,211,153,0.4)',
+    green045: 'rgba(52,211,153,0.45)',
+    green025: 'rgba(52,211,153,0.25)',
+    green035: 'rgba(52,211,153,0.35)',
+    green02: 'rgba(52,211,153,0.2)',
+    green018: 'rgba(52,211,153,0.18)',
+    green006: 'rgba(52,211,153,0.06)',
+    green008: 'rgba(52,211,153,0.08)',
+    red05: 'rgba(239,100,97,0.5)',
+    red035: 'rgba(239,100,97,0.35)',
+    red025: 'rgba(239,100,97,0.25)',
+    red015: 'rgba(239,100,97,0.15)',
+    red06: 'rgba(239,100,97,0.6)',
+  };
+}
+type Pal = ReturnType<typeof getPalette>;
 
-  ctx.beginPath();
-  ctx.moveTo(points[0][0], points[0][1]);
-
-  for (let i = 0; i < totalSegs; i++) {
-    const nextIdx = (i + 1) % points.length;
-    if (i < Math.floor(drawn)) {
-      ctx.lineTo(points[nextIdx][0], points[nextIdx][1]);
-    } else if (i < drawn) {
-      const frac = drawn - i;
-      const x = points[i % points.length][0] + (points[nextIdx][0] - points[i % points.length][0]) * frac;
-      const y = points[i % points.length][1] + (points[nextIdx][1] - points[i % points.length][1]) * frac;
-      ctx.lineTo(x, y);
-    }
+// ── Hand-drawn primitives ──
+function wLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, w = 1.2) {
+  const d = Math.hypot(x2 - x1, y2 - y1);
+  const steps = Math.max(3, Math.floor(d / 5));
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    ctx.lineTo(x1 + (x2 - x1) * t + (Math.random() - 0.5) * w, y1 + (y2 - y1) * t + (Math.random() - 0.5) * w);
   }
   ctx.stroke();
 }
 
-function traceCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, progress: number) {
-  if (progress <= 0) return;
+function wRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, wb = 1.2) {
+  wLine(ctx, x, y, x + w, y, wb); wLine(ctx, x + w, y, x + w, y + h, wb);
+  wLine(ctx, x + w, y + h, x, y + h, wb); wLine(ctx, x, y + h, x, y, wb);
+}
+
+function wCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, wb = 0.8) {
+  const pts = Math.max(12, Math.floor(r * 3));
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2 * Math.min(progress, 1));
+  for (let i = 0; i <= pts; i++) {
+    const a = (i / pts) * Math.PI * 2;
+    const rr = r + (Math.random() - 0.5) * wb;
+    const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath(); ctx.stroke();
+}
+
+function wArc(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, startA: number, endA: number, wb = 0.6) {
+  const pts = Math.max(6, Math.floor(Math.abs(endA - startA) * r));
+  ctx.beginPath();
+  for (let i = 0; i <= pts; i++) {
+    const a = startA + (endA - startA) * (i / pts);
+    const rr = r + (Math.random() - 0.5) * wb;
+    const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
   ctx.stroke();
 }
 
-function traceLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, progress: number) {
-  if (progress <= 0) return;
+function wTriangle(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, wb = 1) {
+  wLine(ctx, x1, y1, x2, y2, wb); wLine(ctx, x2, y2, x3, y3, wb); wLine(ctx, x3, y3, x1, y1, wb);
+}
+
+function dashed(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, dl = 3, gl = 3) {
+  ctx.setLineDash([dl, gl]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+}
+
+// ── Doodle draw functions ──
+function drawGear(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, time: number, C: Pal) {
+  const teeth = 7, rot = time / 3000;
+  ctx.strokeStyle = C.gold05; ctx.lineWidth = 1;
+  wCircle(ctx, x, y, r * 0.5, 0.4); wCircle(ctx, x, y, r * 0.15, 0.2);
+  for (let t = 0; t < teeth; t++) {
+    const a = (t / teeth) * Math.PI * 2 + rot;
+    wLine(ctx, x + Math.cos(a) * r * 0.45, y + Math.sin(a) * r * 0.45, x + Math.cos(a) * r * 0.85, y + Math.sin(a) * r * 0.85, 0.4);
+    const a1 = a - 0.15, a2 = a + 0.15;
+    wLine(ctx, x + Math.cos(a1) * r * 0.85, y + Math.sin(a1) * r * 0.85, x + Math.cos(a2) * r * 0.85, y + Math.sin(a2) * r * 0.85, 0.3);
+  }
+}
+
+function drawLightbulb(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold055; ctx.lineWidth = 1;
+  wArc(ctx, x, y - s * 0.3, s * 0.4, -Math.PI * 0.8, -Math.PI * 0.2, 0.5);
+  wArc(ctx, x, y - s * 0.3, s * 0.4, -Math.PI * 0.2, Math.PI * 0.1, 0.5);
+  wArc(ctx, x, y - s * 0.3, s * 0.4, -Math.PI * 0.8, -Math.PI * 1.1, 0.5);
+  wLine(ctx, x - s * 0.15, y + s * 0.1, x + s * 0.15, y + s * 0.1, 0.3);
+  wLine(ctx, x - s * 0.12, y + s * 0.18, x + s * 0.12, y + s * 0.18, 0.3);
+  wLine(ctx, x - s * 0.08, y + s * 0.25, x + s * 0.08, y + s * 0.25, 0.3);
+  ctx.strokeStyle = C.gold025;
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i - 2) * 0.4;
+    wLine(ctx, x + Math.cos(a) * s * 0.55, y - s * 0.3 + Math.sin(a) * s * 0.55, x + Math.cos(a) * s * 0.75, y - s * 0.3 + Math.sin(a) * s * 0.75, 0.3);
+  }
+}
+
+function drawRocket(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.red05; ctx.lineWidth = 1;
+  wLine(ctx, x, y - s * 0.6, x - s * 0.15, y + s * 0.2, 0.5);
+  wLine(ctx, x, y - s * 0.6, x + s * 0.15, y + s * 0.2, 0.5);
+  wArc(ctx, x, y - s * 0.45, s * 0.15, -Math.PI * 0.8, -Math.PI * 0.2, 0.4);
+  wLine(ctx, x - s * 0.15, y + s * 0.2, x + s * 0.15, y + s * 0.2, 0.4);
+  wLine(ctx, x - s * 0.15, y + s * 0.1, x - s * 0.25, y + s * 0.3, 0.4);
+  wLine(ctx, x + s * 0.15, y + s * 0.1, x + s * 0.25, y + s * 0.3, 0.4);
+  wCircle(ctx, x, y - s * 0.2, s * 0.06, 0.3);
+  ctx.strokeStyle = C.gold03;
+  wLine(ctx, x - s * 0.05, y + s * 0.2, x - s * 0.08, y + s * 0.4, 0.5);
+  wLine(ctx, x, y + s * 0.2, x, y + s * 0.45, 0.5);
+  wLine(ctx, x + s * 0.05, y + s * 0.2, x + s * 0.08, y + s * 0.4, 0.5);
+}
+
+function drawCoffeeCup(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold045; ctx.lineWidth = 1;
+  wLine(ctx, x - s * 0.2, y - s * 0.1, x - s * 0.15, y + s * 0.25, 0.5);
+  wLine(ctx, x + s * 0.2, y - s * 0.1, x + s * 0.15, y + s * 0.25, 0.5);
+  wLine(ctx, x - s * 0.15, y + s * 0.25, x + s * 0.15, y + s * 0.25, 0.4);
+  wLine(ctx, x - s * 0.2, y - s * 0.1, x + s * 0.2, y - s * 0.1, 0.4);
+  wArc(ctx, x + s * 0.25, y + s * 0.05, s * 0.1, -Math.PI / 2, Math.PI / 2, 0.4);
+  ctx.strokeStyle = C.gold02;
+  for (let i = 0; i < 3; i++) {
+    const sx = x - s * 0.08 + i * s * 0.08;
+    const base = y - s * 0.15;
+    ctx.beginPath(); ctx.moveTo(sx, base);
+    ctx.quadraticCurveTo(sx + (i % 2 ? 3 : -3), base - s * 0.15, sx, base - s * 0.3);
+    ctx.stroke();
+  }
+}
+
+function drawBarChart(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rand: () => number, C: Pal) {
+  ctx.strokeStyle = C.prim045; ctx.lineWidth = 0.8;
+  wLine(ctx, x - s * 0.35, y - s * 0.4, x - s * 0.35, y + s * 0.3, 0.4);
+  wLine(ctx, x - s * 0.35, y + s * 0.3, x + s * 0.35, y + s * 0.3, 0.4);
+  const bars = 4, bw = (s * 0.6) / (bars * 1.5);
+  const colors = [C.gold03, C.prim025, C.green025, C.red025];
+  for (let b = 0; b < bars; b++) {
+    const bx = x - s * 0.3 + b * (bw * 1.5);
+    const bh = (0.3 + rand() * 0.6) * s * 0.6;
+    ctx.fillStyle = colors[b % 4];
+    ctx.fillRect(bx, y + s * 0.3 - bh, bw, bh);
+    ctx.strokeRect(bx, y + s * 0.3 - bh, bw, bh);
+  }
+  ctx.strokeStyle = C.green04;
+  wLine(ctx, x - s * 0.25, y + s * 0.1, x + s * 0.2, y - s * 0.25, 0.4);
+  wLine(ctx, x + s * 0.2, y - s * 0.25, x + s * 0.12, y - s * 0.2, 0.3);
+  wLine(ctx, x + s * 0.2, y - s * 0.25, x + s * 0.18, y - s * 0.15, 0.3);
+}
+
+function drawPieChart(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, C: Pal) {
+  ctx.lineWidth = 1;
+  const slices = [0.35, 0.25, 0.22, 0.18];
+  const colors = [C.gold025, C.prim02, C.green02, C.red015];
+  let startA = -Math.PI / 2;
+  slices.forEach((sl, i) => {
+    const endA = startA + sl * Math.PI * 2;
+    ctx.fillStyle = colors[i];
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, startA, endA); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = C.gold04;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(startA) * r, y + Math.sin(startA) * r); ctx.stroke();
+    startA = endA;
+  });
+  wCircle(ctx, x, y, r, 0.5);
+}
+
+function drawWifi(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, time: number, C: Pal) {
+  ctx.strokeStyle = C.prim04; ctx.lineWidth = 0.8;
+  ctx.fillStyle = C.prim05;
+  ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
+  for (let i = 1; i <= 3; i++) {
+    const alpha = 0.15 + Math.sin(time / 500 + i) * 0.1;
+    ctx.globalAlpha = alpha * 2;
+    wArc(ctx, x, y, s * 0.15 * i, -Math.PI * 0.75, -Math.PI * 0.25, 0.4);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBrackets(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.green04; ctx.lineWidth = 1;
+  ctx.font = `${s * 0.35}px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = C.green035;
+  ctx.fillText('{ }', x - s * 0.25, y + s * 0.1);
+}
+
+function drawCodeSnippet(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.font = `${Math.max(4, s * 0.12)}px 'JetBrains Mono', monospace`;
+  const lines = ['fn main()', '  let x = 42;', '  loop {', '    build();', '  }'];
+  lines.forEach((ln, i) => {
+    ctx.fillStyle = i === 0 ? C.gold03 : i === 3 ? C.green025 : 'rgba(138,138,138,0.25)';
+    ctx.fillText(ln, x - s * 0.3, y - s * 0.2 + i * s * 0.12);
+  });
+}
+
+function drawFlowchart(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 0.8;
+  wCircle(ctx, x, y - s * 0.35, s * 0.08, 0.3);
+  wLine(ctx, x, y - s * 0.27, x, y - s * 0.15, 0.3);
+  const dy = y - s * 0.05;
+  wLine(ctx, x, dy - s * 0.1, x + s * 0.12, dy, 0.4);
+  wLine(ctx, x + s * 0.12, dy, x, dy + s * 0.1, 0.4);
+  wLine(ctx, x, dy + s * 0.1, x - s * 0.12, dy, 0.4);
+  wLine(ctx, x - s * 0.12, dy, x, dy - s * 0.1, 0.4);
+  wLine(ctx, x + s * 0.12, dy, x + s * 0.25, dy, 0.3);
+  wLine(ctx, x, dy + s * 0.1, x, dy + s * 0.25, 0.3);
+  wRect(ctx, x + s * 0.18, dy - s * 0.05, s * 0.15, s * 0.1, 0.3);
+  wRect(ctx, x - s * 0.08, dy + s * 0.25, s * 0.16, s * 0.1, 0.3);
+  ctx.font = `${Math.max(3, s * 0.06)}px JetBrains Mono, monospace`;
+  ctx.fillStyle = C.gold03;
+  ctx.fillText('Y', x + s * 0.16, dy - 0.5);
+  ctx.fillText('N', x + 2, dy + s * 0.23);
+}
+
+function drawBattery(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, progress: number, C: Pal) {
+  ctx.strokeStyle = C.green045; ctx.lineWidth = 1;
+  wRect(ctx, x - s * 0.15, y - s * 0.2, s * 0.3, s * 0.5, 0.5);
+  wRect(ctx, x - s * 0.06, y - s * 0.25, s * 0.12, s * 0.06, 0.3);
+  const fillH = s * 0.42 * progress;
+  ctx.fillStyle = progress > 0.6 ? C.green02 : progress > 0.3 ? C.gold02 : C.red025;
+  ctx.fillRect(x - s * 0.13, y + s * 0.27 - fillH, s * 0.26, fillH);
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 0.8;
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 4;
+    wLine(ctx, x - Math.cos(a) * r, y - Math.sin(a) * r, x + Math.cos(a) * r, y + Math.sin(a) * r, 0.3);
+  }
+}
+
+function drawArrowUp(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.green04; ctx.lineWidth = 1;
+  wLine(ctx, x, y + s * 0.3, x, y - s * 0.3, 0.5);
+  wLine(ctx, x, y - s * 0.3, x - s * 0.12, y - s * 0.15, 0.4);
+  wLine(ctx, x, y - s * 0.3, x + s * 0.12, y - s * 0.15, 0.4);
+}
+
+function drawCheckbox(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, checked: boolean, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 1;
+  wRect(ctx, x - s * 0.12, y - s * 0.12, s * 0.24, s * 0.24, 0.5);
+  if (checked) {
+    ctx.strokeStyle = C.green04;
+    wLine(ctx, x - s * 0.06, y, x - s * 0.01, y + s * 0.07, 0.4);
+    wLine(ctx, x - s * 0.01, y + s * 0.07, x + s * 0.08, y - s * 0.06, 0.4);
+  }
+}
+
+function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.prim03; ctx.lineWidth = 0.8;
+  wArc(ctx, x, y, s * 0.2, Math.PI, 0, 0.4);
+  wArc(ctx, x - s * 0.15, y + s * 0.02, s * 0.12, Math.PI * 0.8, Math.PI * 0.1, 0.3);
+  wArc(ctx, x + s * 0.15, y + s * 0.02, s * 0.14, Math.PI * 0.9, Math.PI * 0.15, 0.3);
+  wLine(ctx, x - s * 0.25, y + s * 0.08, x + s * 0.27, y + s * 0.08, 0.3);
+  ctx.strokeStyle = C.gold03;
+  wLine(ctx, x, y + s * 0.08, x, y + s * 0.25, 0.3);
+  wLine(ctx, x, y + s * 0.08, x - s * 0.06, y + s * 0.14, 0.3);
+  wLine(ctx, x, y + s * 0.08, x + s * 0.06, y + s * 0.14, 0.3);
+}
+
+function drawMagnifier(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 1;
+  wCircle(ctx, x, y, s * 0.18, 0.4);
+  wLine(ctx, x + s * 0.13, y + s * 0.13, x + s * 0.28, y + s * 0.28, 0.5);
+}
+
+function drawPaperPlane(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold035; ctx.lineWidth = 0.8;
+  wLine(ctx, x - s * 0.25, y + s * 0.05, x + s * 0.25, y - s * 0.15, 0.4);
+  wLine(ctx, x + s * 0.25, y - s * 0.15, x - s * 0.05, y + s * 0.1, 0.4);
+  wLine(ctx, x - s * 0.05, y + s * 0.1, x - s * 0.25, y + s * 0.05, 0.4);
+  wLine(ctx, x - s * 0.05, y + s * 0.1, x + s * 0.05, y, 0.3);
+}
+
+function drawFormula(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.font = `italic ${Math.max(5, s * 0.16)}px 'Instrument Serif', serif`;
+  ctx.fillStyle = C.gold03;
+  const formulas = ['E = mc²', 'f(x) = ∫dx', 'Σ aₙxⁿ', '∇·F = ρ', 'λ = h/p'];
+  ctx.fillText(formulas[Math.floor(Math.random() * formulas.length)], x - s * 0.25, y);
+}
+
+function drawBird(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold03; ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress);
+  ctx.moveTo(x - s * 0.12, y); ctx.quadraticCurveTo(x - s * 0.05, y - s * 0.08, x, y);
+  ctx.quadraticCurveTo(x + s * 0.05, y - s * 0.08, x + s * 0.12, y);
   ctx.stroke();
 }
 
-function traceRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, progress: number) {
-  tracePath(ctx, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], progress, true);
+function drawTarget(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, C: Pal) {
+  ctx.strokeStyle = C.red035; ctx.lineWidth = 0.8;
+  wCircle(ctx, x, y, r, 0.4); wCircle(ctx, x, y, r * 0.6, 0.3); wCircle(ctx, x, y, r * 0.2, 0.2);
+  dashed(ctx, x - r * 1.2, y, x + r * 1.2, y, 2, 3);
+  dashed(ctx, x, y - r * 1.2, x, y + r * 1.2, 2, 3);
 }
 
-// --- LEFT DOODLES ---
-function createLeftDoodles(baseY: number): Doodle[] {
-  const doodles: Doodle[] = [];
-  let y = baseY;
-  const spacing = 90;
-
-  // 1. Ruler
-  doodles.push({
-    drawStart: 0.0, drawEnd: 0.12,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(20, y);
-      traceRect(ctx, 0, 0, 50, 16, p);
-      traceLine(ctx, 10, 0, 10, 6, p);
-      traceLine(ctx, 20, 0, 20, 10, p);
-      traceLine(ctx, 30, 0, 30, 6, p);
-      traceLine(ctx, 40, 0, 40, 10, p);
-      ctx.restore();
+function drawKanban(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold035; ctx.lineWidth = 0.8;
+  const cols = 3, cw = s * 0.22, ch = s * 0.5;
+  const cardColors = [C.gold01, C.prim008, C.green008];
+  for (let c = 0; c < cols; c++) {
+    const cx2 = x - s * 0.35 + c * (cw + 3);
+    wRect(ctx, cx2, y - ch / 2, cw, ch, 0.4);
+    const cards = 2 - (c === 2 ? 1 : 0);
+    for (let ca = 0; ca < cards; ca++) {
+      ctx.fillStyle = cardColors[c];
+      const cy = y - ch / 2 + 4 + ca * 12;
+      ctx.fillRect(cx2 + 2, cy, cw - 4, 8);
+      wRect(ctx, cx2 + 2, cy, cw - 4, 8, 0.3);
     }
-  });
-  y += spacing;
+  }
+}
 
-  // 2. Circuit board traces
-  doodles.push({
-    drawStart: 0.04, drawEnd: 0.18,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      tracePath(ctx, [[0, 0], [20, 0], [20, 15], [40, 15]], p);
-      tracePath(ctx, [[0, 20], [15, 20], [15, 35], [50, 35]], p);
-      tracePath(ctx, [[10, 40], [10, 50], [35, 50]], p);
-      traceCircle(ctx, 40, 15, 3, p);
-      traceCircle(ctx, 50, 35, 3, p);
-      traceCircle(ctx, 35, 50, 3, p);
-      ctx.restore();
+function drawServerRack(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold045; ctx.lineWidth = 1;
+  wRect(ctx, x - s * 0.2, y - s * 0.4, s * 0.4, s * 0.8, 0.6);
+  const slots = 5;
+  for (let sl = 0; sl < slots; sl++) {
+    const sy = y - s * 0.35 + sl * (s * 0.7 / slots);
+    wLine(ctx, x - s * 0.17, sy, x + s * 0.17, sy, 0.3);
+    const ledColors = [C.green04, C.prim05, C.gold04];
+    for (let l = 0; l < 3; l++) {
+      ctx.fillStyle = ledColors[l];
+      ctx.beginPath(); ctx.arc(x - s * 0.12 + l * 5, sy + 3, 1, 0, Math.PI * 2); ctx.fill();
     }
-  });
-  y += spacing;
+  }
+}
 
-  // 3. Measurement grid
-  doodles.push({
-    drawStart: 0.08, drawEnd: 0.22,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(10, y);
-      traceRect(ctx, 0, 0, 50, 50, p);
-      for (let i = 1; i < 5; i++) {
-        traceLine(ctx, i * 10, 0, i * 10, 50, p);
-        traceLine(ctx, 0, i * 10, 50, i * 10, p);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
+// ── Doodle dispatcher ──
+interface DoodleData { type: string; x: number; yPct: number; size: number; seed: number; yScreen: number; }
 
-  // 4. Server rack
-  doodles.push({
-    drawStart: 0.12, drawEnd: 0.28,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      traceRect(ctx, 0, 0, 40, 55, p);
-      for (let i = 0; i < 4; i++) {
-        traceRect(ctx, 4, 4 + i * 13, 32, 10, p);
-        traceCircle(ctx, 30, 9 + i * 13, 2, p);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
+function drawDoodle(ctx: CanvasRenderingContext2D, d: DoodleData, alpha: number, time: number, scrollP: number, C: Pal) {
+  ctx.globalAlpha = alpha;
+  const r = sRng(d.seed);
+  const s = d.size, x = d.x, y = d.yScreen;
+  switch (d.type) {
+    case 'gear': drawGear(ctx, x, y, s * 0.4, time, C); break;
+    case 'bulb': drawLightbulb(ctx, x, y, s, C); break;
+    case 'rocket': drawRocket(ctx, x, y, s, C); break;
+    case 'coffee': drawCoffeeCup(ctx, x, y, s, C); break;
+    case 'barChart': drawBarChart(ctx, x, y, s, r, C); break;
+    case 'pie': drawPieChart(ctx, x, y, s * 0.3, C); break;
+    case 'wifi': drawWifi(ctx, x, y, s, time, C); break;
+    case 'brackets': drawBrackets(ctx, x, y, s, C); break;
+    case 'code': drawCodeSnippet(ctx, x, y, s, C); break;
+    case 'flowchart': drawFlowchart(ctx, x, y, s, C); break;
+    case 'battery': drawBattery(ctx, x, y, s, scrollP, C); break;
+    case 'star': drawStar(ctx, x, y, s * 0.2, C); break;
+    case 'arrow': drawArrowUp(ctx, x, y, s, C); break;
+    case 'checkbox': drawCheckbox(ctx, x, y, s, scrollP > 0.7, C); break;
+    case 'cloud': drawCloud(ctx, x, y, s, C); break;
+    case 'magnifier': drawMagnifier(ctx, x, y, s, C); break;
+    case 'plane': drawPaperPlane(ctx, x, y, s, C); break;
+    case 'formula': drawFormula(ctx, x, y, s, C); break;
+    case 'bird': drawBird(ctx, x, y, s, C); break;
+    case 'target': drawTarget(ctx, x, y, s * 0.25, C); break;
+    case 'kanban': drawKanban(ctx, x, y, s, C); break;
+    case 'server': drawServerRack(ctx, x, y, s, C); break;
+  }
+  ctx.globalAlpha = 1;
+}
 
-  // 5. Protractor
-  doodles.push({
-    drawStart: 0.16, drawEnd: 0.32,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(20, y);
-      traceLine(ctx, 25, 40, 25, 10, p);
-      if (p > 0) {
-        ctx.beginPath();
-        ctx.arc(25, 40, 30, Math.PI, Math.PI * 2 * Math.min(p, 1) + Math.PI);
-        ctx.stroke();
-      }
-      traceLine(ctx, 10, 15, 25, 40, p);
-      traceLine(ctx, 40, 15, 25, 40, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
+// ── Building types ──
+interface Bld {
+  x: number; w: number; h: number; groundY: number; floors: number;
+  winStyle: number; roofType: number; hasAntenna: boolean; antH: number;
+  hasSignal: boolean; hasChimney: boolean; chimX: number; chimH: number;
+  hasSmoke: boolean; hasFlag: boolean; hasDoor: boolean;
+}
 
-  // 6. Bar chart
-  doodles.push({
-    drawStart: 0.22, drawEnd: 0.38,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(12, y);
-      traceLine(ctx, 0, 50, 55, 50, p);
-      traceLine(ctx, 0, 0, 0, 50, p);
-      const bars = [35, 20, 45, 15, 40];
-      bars.forEach((h, i) => {
-        const bx = 5 + i * 10;
-        const by = 50 - h * p;
-        tracePath(ctx, [[bx, 50], [bx, by], [bx + 7, by], [bx + 7, 50]], p);
-      });
-      ctx.restore();
-    }
-  });
-  y += spacing;
+function genBuildings(seed: number, cw: number, ch: number): Bld[] {
+  const r = sRng(seed); const blds: Bld[] = []; let cx = 2;
+  while (cx < cw - 4) {
+    const w = 12 + r() * 22; if (cx + w > cw - 2) break;
+    const h = 50 + r() * 250;
+    blds.push({ x: cx, w, h, groundY: ch, floors: Math.floor(h / 20), winStyle: Math.floor(r() * 3),
+      roofType: Math.floor(r() * 4), hasAntenna: r() > 0.5, antH: 6 + r() * 16, hasSignal: r() > 0.55,
+      hasChimney: r() > 0.55, chimX: w * 0.2 + r() * w * 0.5, chimH: 6 + r() * 10,
+      hasSmoke: r() > 0.6, hasFlag: r() > 0.8, hasDoor: r() > 0.35 });
+    cx += w + 1 + r() * 4;
+  }
+  blds.sort((a, b) => a.h - b.h);
+  return blds;
+}
 
-  // 7. Curly braces / code
-  doodles.push({
-    drawStart: 0.28, drawEnd: 0.42,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      tracePath(ctx, [[20, 0], [12, 5], [12, 18], [5, 25], [12, 32], [12, 45], [20, 50]], p);
-      tracePath(ctx, [[35, 0], [43, 5], [43, 18], [50, 25], [43, 32], [43, 45], [35, 50]], p);
-      traceLine(ctx, 22, 15, 33, 15, p);
-      traceLine(ctx, 22, 25, 30, 25, p);
-      traceLine(ctx, 22, 35, 36, 35, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 8. Coffee cup
-  doodles.push({
-    drawStart: 0.34, drawEnd: 0.48,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(18, y);
-      tracePath(ctx, [[5, 10], [5, 40], [10, 45], [30, 45], [35, 40], [35, 10]], p);
-      if (p > 0.3) {
-        ctx.beginPath();
-        ctx.arc(40, 22, 8, -Math.PI / 2, Math.PI / 2 * Math.min((p - 0.3) / 0.7, 1));
-        ctx.stroke();
-      }
-      // Steam
-      if (p > 0.6) {
-        const sp = (p - 0.6) / 0.4;
-        tracePath(ctx, [[15, 10], [13, 3], [15, -2]], sp);
-        tracePath(ctx, [[25, 10], [27, 2], [25, -4]], sp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 9. Lightbulb
-  doodles.push({
-    drawStart: 0.40, drawEnd: 0.55,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(20, y);
-      traceCircle(ctx, 20, 18, 16, p);
-      tracePath(ctx, [[12, 32], [12, 42], [28, 42], [28, 32]], p);
-      traceLine(ctx, 14, 46, 26, 46, p);
-      traceLine(ctx, 16, 50, 24, 50, p);
-      // Rays
-      if (p > 0.5) {
-        const rp = (p - 0.5) / 0.5;
-        traceLine(ctx, 20, -2, 20, -8, rp);
-        traceLine(ctx, 38, 18, 44, 18, rp);
-        traceLine(ctx, 2, 18, -4, 18, rp);
-        traceLine(ctx, 34, 6, 38, 2, rp);
-        traceLine(ctx, 6, 6, 2, 2, rp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 10. Pencil
-  doodles.push({
-    drawStart: 0.46, drawEnd: 0.60,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(25, y); ctx.rotate(-0.3);
-      tracePath(ctx, [[0, 0], [8, 0], [8, 40], [4, 48], [0, 40]], p, true);
-      traceLine(ctx, 0, 40, 8, 40, p);
-      traceLine(ctx, 0, 6, 8, 6, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 11. Satellite
-  doodles.push({
-    drawStart: 0.52, drawEnd: 0.66,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      traceRect(ctx, 15, 15, 20, 15, p);
-      traceLine(ctx, 15, 22, 0, 22, p);
-      traceLine(ctx, 35, 22, 50, 22, p);
-      traceRect(ctx, -5, 16, 10, 14, p);
-      traceRect(ctx, 45, 16, 10, 14, p);
-      traceLine(ctx, 25, 15, 25, 5, p);
-      traceCircle(ctx, 25, 3, 3, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 12. Paper plane
-  doodles.push({
-    drawStart: 0.58, drawEnd: 0.72,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y); ctx.rotate(-0.2);
-      tracePath(ctx, [[0, 20], [50, 0], [20, 25]], p, true);
-      traceLine(ctx, 20, 25, 50, 0, p);
-      traceLine(ctx, 20, 25, 18, 40, p);
-      traceLine(ctx, 18, 40, 30, 28, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 13. Growth arrow
-  doodles.push({
-    drawStart: 0.64, drawEnd: 0.78,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      traceLine(ctx, 0, 45, 50, 45, p);
-      traceLine(ctx, 0, 0, 0, 45, p);
-      tracePath(ctx, [[5, 40], [15, 30], [25, 35], [35, 15], [48, 5]], p);
-      if (p > 0.7) {
-        const ap = (p - 0.7) / 0.3;
-        traceLine(ctx, 48, 5, 40, 5, ap);
-        traceLine(ctx, 48, 5, 48, 13, ap);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 14. Pi / equation
-  doodles.push({
-    drawStart: 0.70, drawEnd: 0.84,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(10, y);
-      traceLine(ctx, 5, 8, 45, 8, p);
-      tracePath(ctx, [[15, 8], [14, 20], [12, 35], [8, 42]], p);
-      tracePath(ctx, [[35, 8], [35, 20], [35, 35], [35, 42]], p);
-      // E=mc²
-      if (p > 0.5) {
-        const tp = (p - 0.5) / 0.5;
-        tracePath(ctx, [[5, 52], [15, 52], [5, 52], [5, 58], [15, 58]], tp);
-        traceLine(ctx, 18, 55, 22, 55, tp);
-        tracePath(ctx, [[28, 52], [24, 52], [24, 58], [28, 58]], tp);
-      }
-      ctx.restore();
-    }
-  });
-
+function genDoodles(seed: number, cw: number, ch: number): DoodleData[] {
+  const r = sRng(seed); const doodles: DoodleData[] = [];
+  const types = ['gear', 'bulb', 'rocket', 'coffee', 'barChart', 'pie', 'wifi', 'brackets', 'code',
+    'flowchart', 'battery', 'star', 'arrow', 'checkbox', 'cloud', 'magnifier', 'plane', 'formula', 'bird', 'target', 'kanban', 'server'];
+  const count = 28 + Math.floor(r() * 12);
+  for (let i = 0; i < count; i++) {
+    doodles.push({ type: types[Math.floor(r() * types.length)], x: 8 + r() * (cw - 16),
+      yPct: i / count, size: 20 + r() * 28, seed: Math.floor(r() * 9999), yScreen: 0 });
+  }
+  doodles.sort((a, b) => a.yPct - b.yPct);
   return doodles;
 }
 
-// --- RIGHT DOODLES ---
-function createRightDoodles(baseY: number): Doodle[] {
-  const doodles: Doodle[] = [];
-  let y = baseY;
-  const spacing = 90;
-
-  // 1. Crane
-  doodles.push({
-    drawStart: 0.0, drawEnd: 0.14,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(10, y);
-      traceLine(ctx, 10, 55, 10, 0, p);
-      traceLine(ctx, 10, 0, 50, 0, p);
-      traceLine(ctx, 50, 0, 50, 10, p);
-      traceLine(ctx, 50, 10, 45, 10, p);
-      traceLine(ctx, 45, 10, 45, 30, p);
-      traceLine(ctx, 5, 55, 15, 55, p);
-      tracePath(ctx, [[0, 55], [10, 45], [20, 55]], p);
-      // Cable
-      if (p > 0.5) {
-        const cp = (p - 0.5) / 0.5;
-        traceLine(ctx, 45, 30, 45, 40, cp);
-        traceRect(ctx, 40, 40, 10, 8, cp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 2. Building
-  doodles.push({
-    drawStart: 0.05, drawEnd: 0.20,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(8, y);
-      traceRect(ctx, 5, 10, 35, 45, p);
-      tracePath(ctx, [[5, 10], [22, 0], [40, 10]], p);
-      // Windows
-      if (p > 0.4) {
-        const wp = (p - 0.4) / 0.6;
-        for (let r = 0; r < 3; r++) {
-          for (let c = 0; c < 3; c++) {
-            traceRect(ctx, 9 + c * 11, 15 + r * 12, 6, 8, wp);
-          }
-        }
-      }
-      // Door
-      if (p > 0.7) {
-        const dp = (p - 0.7) / 0.3;
-        traceRect(ctx, 16, 43, 12, 12, dp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 3. Gear
-  doodles.push({
-    drawStart: 0.10, drawEnd: 0.26,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      traceCircle(ctx, 22, 22, 10, p);
-      traceCircle(ctx, 22, 22, 4, p);
-      if (p > 0.3) {
-        const tp = (p - 0.3) / 0.7;
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          const x1 = 22 + Math.cos(angle) * 10;
-          const y1 = 22 + Math.sin(angle) * 10;
-          const x2 = 22 + Math.cos(angle) * 16;
-          const y2 = 22 + Math.sin(angle) * 16;
-          traceLine(ctx, x1, y1, x2, y2, tp);
-        }
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 4. Hammer
-  doodles.push({
-    drawStart: 0.15, drawEnd: 0.30,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(18, y); ctx.rotate(0.15);
-      traceLine(ctx, 15, 10, 15, 50, p);
-      traceRect(ctx, 5, 0, 25, 12, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 5. Pie chart
-  doodles.push({
-    drawStart: 0.22, drawEnd: 0.38,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(12, y);
-      traceCircle(ctx, 25, 25, 22, p);
-      if (p > 0.3) {
-        const sp = (p - 0.3) / 0.7;
-        traceLine(ctx, 25, 25, 25, 3, sp);
-        traceLine(ctx, 25, 25, 44, 15, sp);
-        traceLine(ctx, 25, 25, 10, 42, sp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 6. Terminal window
-  doodles.push({
-    drawStart: 0.30, drawEnd: 0.44,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(5, y);
-      traceRect(ctx, 0, 0, 55, 40, p);
-      traceLine(ctx, 0, 10, 55, 10, p);
-      traceCircle(ctx, 8, 5, 2, p);
-      traceCircle(ctx, 16, 5, 2, p);
-      traceCircle(ctx, 24, 5, 2, p);
-      if (p > 0.5) {
-        const tp = (p - 0.5) / 0.5;
-        tracePath(ctx, [[8, 18], [16, 24], [8, 30]], tp);
-        traceLine(ctx, 20, 30, 40, 30, tp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 7. Wrench
-  doodles.push({
-    drawStart: 0.36, drawEnd: 0.50,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y); ctx.rotate(-0.4);
-      traceLine(ctx, 20, 8, 20, 45, p);
-      if (p > 0.2) {
-        const hp = (p - 0.2) / 0.8;
-        traceCircle(ctx, 20, 8, 10, hp);
-        tracePath(ctx, [[14, 2], [14, 14]], hp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 8. Rocket
-  doodles.push({
-    drawStart: 0.42, drawEnd: 0.58,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      tracePath(ctx, [[20, 0], [30, 15], [30, 40], [20, 50], [10, 40], [10, 15]], p, true);
-      traceCircle(ctx, 20, 20, 5, p);
-      if (p > 0.5) {
-        const fp = (p - 0.5) / 0.5;
-        tracePath(ctx, [[10, 35], [2, 42]], fp);
-        tracePath(ctx, [[30, 35], [38, 42]], fp);
-        tracePath(ctx, [[15, 50], [13, 58], [20, 54], [27, 58], [25, 50]], fp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 9. WiFi / antenna
-  doodles.push({
-    drawStart: 0.50, drawEnd: 0.64,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      traceLine(ctx, 22, 45, 22, 20, p);
-      traceLine(ctx, 15, 45, 29, 45, p);
-      if (p > 0.3) {
-        const wp = (p - 0.3) / 0.7;
-        ctx.beginPath(); ctx.arc(22, 20, 10, Math.PI * 1.2, Math.PI * 1.8, false);
-        ctx.stroke();
-        ctx.beginPath(); ctx.arc(22, 20, 18, Math.PI * 1.25, Math.PI * 1.75, false);
-        ctx.stroke();
-        ctx.beginPath(); ctx.arc(22, 20, 26, Math.PI * 1.3, Math.PI * 1.7, false);
-        ctx.stroke();
-      }
-      traceCircle(ctx, 22, 20, 3, p);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 10. Star
-  doodles.push({
-    drawStart: 0.56, drawEnd: 0.70,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(15, y);
-      const pts: [number, number][] = [];
-      for (let i = 0; i < 10; i++) {
-        const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
-        const r = i % 2 === 0 ? 22 : 10;
-        pts.push([22 + Math.cos(angle) * r, 22 + Math.sin(angle) * r]);
-      }
-      tracePath(ctx, pts, p, true);
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 11. Flowchart
-  doodles.push({
-    drawStart: 0.62, drawEnd: 0.78,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(8, y);
-      traceRect(ctx, 12, 0, 26, 14, p);
-      traceLine(ctx, 25, 14, 25, 22, p);
-      // Diamond
-      if (p > 0.3) {
-        const dp = (p - 0.3) / 0.7;
-        tracePath(ctx, [[25, 22], [40, 32], [25, 42], [10, 32]], dp, true);
-        traceLine(ctx, 25, 42, 25, 50, dp);
-        traceRect(ctx, 12, 50, 26, 14, dp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 12. Blueprint roll
-  doodles.push({
-    drawStart: 0.68, drawEnd: 0.82,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(10, y);
-      traceRect(ctx, 0, 5, 45, 35, p);
-      if (p > 0.2) {
-        const rp = (p - 0.2) / 0.8;
-        traceCircle(ctx, 48, 22, 8, rp);
-        traceLine(ctx, 45, 5, 48, 14, rp);
-        traceLine(ctx, 45, 40, 48, 30, rp);
-      }
-      // Detail lines
-      if (p > 0.5) {
-        const dp = (p - 0.5) / 0.5;
-        traceLine(ctx, 5, 15, 35, 15, dp);
-        traceLine(ctx, 5, 25, 30, 25, dp);
-        traceLine(ctx, 5, 32, 20, 32, dp);
-      }
-      ctx.restore();
-    }
-  });
-  y += spacing;
-
-  // 13. Battery
-  doodles.push({
-    drawStart: 0.74, drawEnd: 0.88,
-    draw: (ctx, p) => {
-      ctx.save(); ctx.translate(18, y);
-      traceRect(ctx, 5, 6, 30, 44, p);
-      traceRect(ctx, 14, 0, 12, 6, p);
-      // Charge bars
-      if (p > 0.4) {
-        const bp = (p - 0.4) / 0.6;
-        for (let i = 0; i < 4; i++) {
-          if (bp > i * 0.25) {
-            const lp = Math.min((bp - i * 0.25) / 0.25, 1);
-            traceRect(ctx, 9, 40 - i * 10, 22, 7, lp);
-          }
-        }
-      }
-      ctx.restore();
-    }
-  });
-
-  return doodles;
+function elP(i: number, total: number, sp: number) {
+  const start = (i / total) * 0.82;
+  const end = start + (1 / total) * 1.4;
+  return Math.max(0, Math.min(1, (sp - start) / (end - start)));
 }
 
+function drawBld(ctx: CanvasRenderingContext2D, b: Bld, p: number, time: number, C: Pal) {
+  if (p <= 0) return;
+  p = Math.min(1, p);
+  const baseY = b.groundY, revH = b.h * Math.min(p * 1.25, 1), topY = baseY - revH;
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 1;
+  wRect(ctx, b.x, topY, b.w, revH, 0.6);
+  if (p > 0.2) {
+    const wP = (p - 0.2) / 0.6, vf = Math.floor(b.floors * Math.min(wP * 1.4, 1));
+    const m = 3, ws = 4;
+    for (let f = 0; f < vf && f < b.floors; f++) {
+      const fy = baseY - (f + 1) * (revH / b.floors) + 3;
+      if (fy < topY + 3) continue;
+      if (b.winStyle === 0) {
+        const cols2 = Math.max(1, Math.floor((b.w - m * 2) / (ws + 2)));
+        for (let c = 0; c < cols2; c++) {
+          const wx = b.x + m + c * (ws + 2);
+          ctx.strokeStyle = C.gold025; wRect(ctx, wx, fy, ws, ws, 0.3);
+          if ((f + c) % 4 === 0) { ctx.fillStyle = C.gold006; ctx.fillRect(wx, fy, ws, ws); }
+        }
+      } else if (b.winStyle === 1) {
+        ctx.strokeStyle = C.gold02; wRect(ctx, b.x + m, fy, b.w - m * 2, 3, 0.3);
+      } else {
+        const cols2 = Math.max(1, Math.floor((b.w - m * 2) / 5));
+        for (let c = 0; c < cols2; c++) {
+          ctx.fillStyle = (f + c) % 2 === 0 ? C.gold025 : C.prim02;
+          ctx.beginPath(); ctx.arc(b.x + m + 2 + c * 5, fy + 2, 1.2, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+  }
+  if (b.hasDoor && p > 0.15) {
+    const dw = Math.min(7, b.w * 0.3), dh = 9, dx = b.x + (b.w - dw) / 2;
+    ctx.strokeStyle = C.gold035; wRect(ctx, dx, baseY - dh, dw, dh, 0.4);
+    ctx.fillStyle = C.gold04;
+    ctx.beginPath(); ctx.arc(dx + dw - 2, baseY - dh / 2, 0.8, 0, Math.PI * 2); ctx.fill();
+  }
+  if (p > 0.7) {
+    const rP = (p - 0.7) / 0.3; ctx.globalAlpha = rP; ctx.strokeStyle = C.gold04;
+    if (b.roofType === 1) wTriangle(ctx, b.x - 1, topY, b.x + b.w / 2, topY - 10 * rP, b.x + b.w + 1, topY, 0.5);
+    else if (b.roofType === 3) wArc(ctx, b.x + b.w / 2, topY, b.w / 2, Math.PI, 0, 0.5);
+    ctx.globalAlpha = 1;
+  }
+  if (p > 0.82) {
+    const dP = (p - 0.82) / 0.18; ctx.globalAlpha = dP;
+    if (b.hasAntenna) {
+      const ax = b.x + b.w / 2; ctx.strokeStyle = C.gold045;
+      wLine(ctx, ax, topY, ax, topY - b.antH * dP, 0.3);
+      ctx.fillStyle = C.red06;
+      ctx.beginPath(); ctx.arc(ax, topY - b.antH * dP, 1.2, 0, Math.PI * 2); ctx.fill();
+      if (b.hasSignal && dP > 0.5) {
+        ctx.strokeStyle = C.prim02;
+        for (let w2 = 0; w2 < 3; w2++) {
+          const rr = 3 + w2 * 4 + Math.sin(time / 600 + w2) * 1.5;
+          wArc(ctx, ax, topY - b.antH * dP, rr, -Math.PI * 0.75, -Math.PI * 0.25, 0.3);
+        }
+      }
+    }
+    if (b.hasChimney) {
+      const cx2 = b.x + b.chimX; ctx.strokeStyle = C.gold04;
+      wRect(ctx, cx2, topY - b.chimH * dP, 5, b.chimH * dP, 0.4);
+      if (b.hasSmoke && dP > 0.5) {
+        ctx.strokeStyle = C.gold015;
+        const smokeB = topY - b.chimH * dP;
+        for (let s2 = 0; s2 < 3; s2++) {
+          const sx = cx2 + 2.5 + Math.sin(time / 700 + s2) * 3;
+          const sy = smokeB - 4 - s2 * 7;
+          wCircle(ctx, sx, sy, 2 + s2 * 0.8, 0.4);
+        }
+      }
+    }
+    if (b.hasFlag) {
+      const fx = b.x + b.w - 3; ctx.strokeStyle = C.gold04;
+      wLine(ctx, fx, topY, fx, topY - 11 * dP, 0.2);
+      ctx.fillStyle = C.gold03;
+      ctx.beginPath(); ctx.moveTo(fx, topY - 11 * dP); ctx.lineTo(fx + 6, topY - 8 * dP); ctx.lineTo(fx, topY - 5 * dP); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawGround(ctx: CanvasRenderingContext2D, w: number, h: number, C: Pal) {
+  ctx.strokeStyle = C.gold035; ctx.lineWidth = 1.5;
+  wLine(ctx, 0, h - 1, w, h - 1, 0.3);
+  ctx.strokeStyle = C.gold015; ctx.lineWidth = 0.5;
+  for (let tx = 5; tx < w; tx += 8) wLine(ctx, tx, h - 1, tx, h - 4, 0.1);
+}
+
+function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, C: Pal) {
+  if (p < 0.03) return;
+  const gP = Math.min(1, p * 2.5);
+  ctx.strokeStyle = C.gold006; ctx.lineWidth = 0.5;
+  for (let x = 10; x < w; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  const gH = h * gP;
+  for (let y = h; y > h - gH; y -= 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+}
+
+function drawConnections(ctx: CanvasRenderingContext2D, blds: Bld[], w: number, h: number, p: number, time: number, C: Pal) {
+  if (p < 0.45) return;
+  const cP = (p - 0.45) / 0.55;
+  ctx.strokeStyle = C.prim01; ctx.lineWidth = 0.5; ctx.setLineDash([2, 4]);
+  for (let i = 0; i < blds.length - 1; i++) {
+    const a = blds[i], b = blds[i + 1];
+    const aP = elP(i, blds.length, p), bP2 = elP(i + 1, blds.length, p);
+    if (aP < 0.4 || bP2 < 0.4) continue;
+    const aTop = a.groundY - a.h * Math.min(p * 1.25, 1) + 8;
+    const bTop = b.groundY - b.h * Math.min(p * 1.25, 1) + 8;
+    ctx.beginPath(); ctx.moveTo(a.x + a.w / 2, aTop);
+    ctx.quadraticCurveTo((a.x + a.w / 2 + b.x + b.w / 2) / 2, Math.min(aTop, bTop) - 12, b.x + b.w / 2, bTop);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function drawParticles(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, time: number, seed: number, C: Pal) {
+  if (p < 0.25) return;
+  const pP = (p - 0.25) / 0.75; const r = sRng(seed); const count = Math.floor(12 * pP);
+  const colors = [C.gold025, C.prim02, C.green018];
+  for (let i = 0; i < count; i++) {
+    const px = r() * w;
+    const by = h - r() * h * pP + Math.sin(time / 900 + i * 1.7) * 5;
+    const sz = 0.5 + r() * 1.2;
+    ctx.fillStyle = colors[i % 3];
+    ctx.beginPath(); ctx.arc(px, by, sz, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ── Main component ──
 const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const dataRef = useRef<{
+    lBlds: Bld[]; rBlds: Bld[]; lDoodles: DoodleData[]; rDoodles: DoodleData[];
+    palette: Pal | null;
+  }>({ lBlds: [], rBlds: [], lDoodles: [], rDoodles: [], palette: null });
 
-  const getColors = useCallback(() => {
-    const root = document.documentElement;
-    const style = getComputedStyle(root);
-    const primaryRaw = style.getPropertyValue('--primary').trim();
-    const goldRaw = style.getPropertyValue('--gold').trim();
-    return {
-      primary: `hsla(${primaryRaw}, 0.18)`,
-      gold: `hsla(${goldRaw}, 0.14)`,
-    };
+  const initData = useCallback(() => {
+    const lC = leftCanvasRef.current;
+    if (!lC) return;
+    const w = lC.offsetWidth, h = lC.offsetHeight;
+    dataRef.current.lBlds = genBuildings(42, w, h);
+    dataRef.current.rBlds = genBuildings(137, w, h);
+    dataRef.current.lDoodles = genDoodles(303, w, h);
+    dataRef.current.rDoodles = genDoodles(707, w, h);
+    dataRef.current.palette = getPalette();
   }, []);
 
-  const render = useCallback((progress: number) => {
-    const leftCanvas = leftCanvasRef.current;
-    const rightCanvas = rightCanvasRef.current;
-    if (!leftCanvas || !rightCanvas) return;
+  const render = useCallback((sp: number) => {
+    const lCanvas = leftCanvasRef.current, rCanvas = rightCanvasRef.current;
+    if (!lCanvas || !rCanvas) return;
+    const { lBlds, rBlds, lDoodles, rDoodles, palette: C } = dataRef.current;
+    if (!C) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const colors = getColors();
+    const time = Date.now();
+    const w = lCanvas.offsetWidth, h = lCanvas.offsetHeight;
+    const xL = lCanvas.getContext('2d')!, xR = rCanvas.getContext('2d')!;
+    xL.clearRect(0, 0, w, h); xR.clearRect(0, 0, w, h);
 
-    [leftCanvas, rightCanvas].forEach((canvas) => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
+    // Draw both sides
+    const drawSide = (ctx: CanvasRenderingContext2D, blds: Bld[], doodles: DoodleData[]) => {
+      drawGrid(ctx, w, h, sp, C);
+      drawGround(ctx, w, h, C);
+      blds.forEach((b, i) => drawBld(ctx, b, elP(i, blds.length, sp), time, C));
 
-    const leftCtx = leftCanvas.getContext('2d');
-    const rightCtx = rightCanvas.getContext('2d');
-    if (!leftCtx || !rightCtx) return;
+      doodles.forEach((d, i) => {
+        const dStart = (i / doodles.length) * 0.9;
+        const dEnd = dStart + (1 / doodles.length) * 1.6;
+        const dP = Math.max(0, Math.min(1, (sp - dStart) / (dEnd - dStart)));
+        if (dP <= 0) return;
+        d.yScreen = h - 10 - d.yPct * h * 0.85;
+        drawDoodle(ctx, d, Math.min(1, dP * 1.5) * 0.85, time, sp, C);
+      });
 
-    // Parallax offsets
-    const leftOffset = -progress * 400;
-    const rightOffset = 50 - progress * 350;
+      drawConnections(ctx, blds, w, h, sp, time, C);
+    };
 
-    const leftDoodles = createLeftDoodles(40);
-    const rightDoodles = createRightDoodles(80);
-
-    // Draw left
-    leftCtx.save();
-    leftCtx.scale(dpr, dpr);
-    leftCtx.translate(0, leftOffset);
-    leftCtx.lineWidth = 1.2;
-    leftCtx.lineCap = 'round';
-    leftCtx.lineJoin = 'round';
-
-    leftDoodles.forEach((d, i) => {
-      if (progress < d.drawStart) return;
-      const p = Math.min((progress - d.drawStart) / (d.drawEnd - d.drawStart), 1);
-      leftCtx.strokeStyle = (i === 5 || i === 7) ? colors.gold : colors.primary;
-      leftCtx.globalAlpha = p * 0.9;
-      d.draw(leftCtx, p);
-    });
-    leftCtx.restore();
-
-    // Draw right
-    rightCtx.save();
-    rightCtx.scale(dpr, dpr);
-    rightCtx.translate(0, rightOffset);
-    rightCtx.lineWidth = 1.2;
-    rightCtx.lineCap = 'round';
-    rightCtx.lineJoin = 'round';
-
-    rightDoodles.forEach((d, i) => {
-      if (progress < d.drawStart) return;
-      const p = Math.min((progress - d.drawStart) / (d.drawEnd - d.drawStart), 1);
-      rightCtx.strokeStyle = (i === 4 || i === 9) ? colors.gold : colors.primary;
-      rightCtx.globalAlpha = p * 0.9;
-      d.draw(rightCtx, p);
-    });
-    rightCtx.restore();
-  }, [getColors]);
+    drawSide(xL, lBlds, lDoodles);
+    drawSide(xR, rBlds, rDoodles);
+    drawParticles(xL, w, h, sp, time, 99, C);
+    drawParticles(xR, w, h, sp, time, 202, C);
+  }, []);
 
   useEffect(() => {
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      [leftCanvasRef.current, rightCanvasRef.current].forEach((canvas) => {
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+      [leftCanvasRef.current, rightCanvasRef.current].forEach(c => {
+        if (!c) return;
+        c.width = c.offsetWidth * dpr;
+        c.height = c.offsetHeight * dpr;
+        c.getContext('2d')!.setTransform(dpr, 0, 0, dpr, 0, 0);
       });
+      initData();
       render(scrollYProgress.get());
     };
 
     resize();
     window.addEventListener('resize', resize);
 
-    const unsub = scrollYProgress.on('change', (v: number) => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(() => render(v));
-    });
+    // Continuous animation loop for time-based effects (gears, smoke, signals)
+    let running = true;
+    const loop = () => {
+      if (!running) return;
+      render(scrollYProgress.get());
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    loop();
 
     return () => {
+      running = false;
       window.removeEventListener('resize', resize);
-      unsub();
       cancelAnimationFrame(rafRef.current);
     };
-  }, [scrollYProgress, render]);
+  }, [scrollYProgress, render, initData]);
 
   return (
     <div className="hidden lg:block fixed inset-0 pointer-events-none z-10">
       {/* Left fade overlay */}
-      <div className="absolute left-0 top-0 w-[110px] h-full pointer-events-none z-[11]"
-        style={{
-          background: 'linear-gradient(to right, transparent 40%, hsl(var(--background)) 100%)',
-        }}
-      />
+      <div className="absolute left-0 top-0 h-full pointer-events-none z-[11]"
+        style={{ width: 110, background: 'linear-gradient(to right, transparent 50%, hsl(var(--background)) 100%)' }} />
       {/* Right fade overlay */}
-      <div className="absolute right-0 top-0 w-[110px] h-full pointer-events-none z-[11]"
-        style={{
-          background: 'linear-gradient(to left, transparent 40%, hsl(var(--background)) 100%)',
-        }}
-      />
+      <div className="absolute right-0 top-0 h-full pointer-events-none z-[11]"
+        style={{ width: 110, background: 'linear-gradient(to left, transparent 50%, hsl(var(--background)) 100%)' }} />
 
-      <canvas
-        ref={leftCanvasRef}
-        className="doodle-column absolute left-0 top-0 w-[90px] xl:w-[110px] h-full"
-      />
-      <canvas
-        ref={rightCanvasRef}
-        className="doodle-column absolute right-0 top-0 w-[90px] xl:w-[110px] h-full"
-      />
+      <canvas ref={leftCanvasRef} className="absolute left-0 top-0 h-full" style={{ width: 110 }} />
+      <canvas ref={rightCanvasRef} className="absolute right-0 top-0 h-full" style={{ width: 110 }} />
     </div>
   );
 };
