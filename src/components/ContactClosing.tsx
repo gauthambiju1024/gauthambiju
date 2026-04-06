@@ -20,9 +20,9 @@ const ContactClosing = () => {
     : defaultLinks;
 
   return (
-    <section className="py-20 md:py-32">
+    <section className="py-20 md:py-32" style={{ background: 'hsl(var(--cutting-mat))' }}>
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
-        <div className="h-px flex-1 bg-border" />
+        <div className="h-px flex-1" style={{ background: 'hsl(var(--ruler-accent) / 0.2)' }} />
         <span className="dimension-label">End Notes</span>
       </div>
 
@@ -33,17 +33,19 @@ const ContactClosing = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight mb-6">
+          <h2 className="font-serif-display text-3xl md:text-4xl leading-tight mb-6"
+            style={{ color: 'hsl(var(--paper))' }}>
             Let's Connect
           </h2>
-          <p className="font-body text-base text-muted-foreground leading-relaxed mb-12">
+          <p className="font-body text-base leading-relaxed mb-12"
+            style={{ color: 'hsl(var(--paper) / 0.5)' }}>
             I'm always open to conversations about product, technology, and building things that matter.
             If something here resonated, I'd love to hear from you.
           </p>
         </motion.div>
 
-        {/* Baseline divider */}
-        <div className="h-px bg-border/30 mb-8 max-w-sm mx-auto" />
+        {/* Ruler divider */}
+        <div className="h-px mb-8 max-w-sm mx-auto" style={{ background: 'hsl(var(--ruler-accent) / 0.15)' }} />
 
         {/* Minimal link rows */}
         <motion.div
@@ -61,14 +63,17 @@ const ContactClosing = () => {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 px-4 py-2.5 hover:bg-card/5 transition-all duration-200 rounded-sm"
+                className="group flex items-center gap-3 px-4 py-2.5 transition-all duration-200 rounded-sm"
+                style={{ background: 'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'hsl(var(--mat-grid) / 0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
-                <IconComp className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="font-mono text-sm text-card-foreground/70 group-hover:text-card-foreground transition-colors">{link.name}</span>
+                <IconComp className="w-4 h-4 text-muted-foreground group-hover:text-ruler-accent transition-colors" />
+                <span className="font-mono text-sm transition-colors" style={{ color: 'hsl(var(--paper) / 0.6)' }}>{link.name}</span>
                 {link.label && (
-                  <span className="ml-auto text-xs font-mono text-muted-foreground/40">{link.label}</span>
+                  <span className="ml-auto text-xs font-mono" style={{ color: 'hsl(var(--paper) / 0.25)' }}>{link.label}</span>
                 )}
-                <ArrowUpRight className="w-3 h-3 text-muted-foreground/20 group-hover:text-primary transition-colors" />
+                <ArrowUpRight className="w-3 h-3 transition-colors" style={{ color: 'hsl(var(--ruler-accent) / 0.3)' }} />
               </a>
             );
           })}
@@ -83,14 +88,14 @@ const ContactClosing = () => {
           transition={{ delay: 0.4, duration: 0.8 }}
         >
           <div className="inline-block">
-            <p className="font-handwritten text-2xl text-card-foreground/30 mb-1">— GB</p>
-            <div className="h-px w-16 mx-auto bg-gradient-to-r from-transparent via-border/30 to-transparent" />
+            <p className="font-handwritten text-2xl mb-1" style={{ color: 'hsl(var(--ruler-accent) / 0.4)' }}>— GB</p>
+            <div className="h-px w-16 mx-auto" style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--ruler-accent) / 0.2), transparent)' }} />
           </div>
         </motion.div>
 
         {/* Footer */}
-        <div className="mt-12 pt-6 border-t border-border/20">
-          <p className="text-[10px] font-mono tracking-wider text-muted-foreground/30 uppercase">
+        <div className="mt-12 pt-6" style={{ borderTop: '1px solid hsl(var(--mat-grid) / 0.3)' }}>
+          <p className="text-[10px] font-mono tracking-wider uppercase" style={{ color: 'hsl(var(--paper) / 0.2)' }}>
             Designed & built with intent · {new Date().getFullYear()}
           </p>
         </div>
