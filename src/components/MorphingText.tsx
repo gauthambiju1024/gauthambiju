@@ -55,7 +55,7 @@ export const MorphingText = ({
       <span className="invisible font-sans font-bold" aria-hidden="true">
         {longestWord}
       </span>
-      <span className="absolute left-0 top-0 font-sans font-bold text-card-foreground whitespace-nowrap">
+      <span className="absolute left-0 top-0 font-sans font-bold whitespace-nowrap" style={{ color: 'hsl(var(--ruler-accent))' }}>
         {displayText}
         <span className="animate-pulse ml-[1px] font-light">|</span>
       </span>
