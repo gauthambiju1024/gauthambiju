@@ -1,63 +1,32 @@
 
 
-## Plan: Split Hero/About and Restyle Hero as Blueprint UI
+## Plan: Scroll-Animated Building Clipart on Left & Right Margins
 
-Separate Hero and About into independent panels and restyle the Hero section to match the reference image — dark green blueprint surface with grid lines, technical annotations, portrait with corner brackets, and navigation at the bottom.
-
----
-
-### Changes
-
-**1. `src/index.css` — Add blueprint utilities**
-- Add `.blueprint-surface` class: dark green background (`hsl(160 20% 16%)`) with 20px minor / 100px major CSS grid lines in white at ~3-5% opacity
-- Add `.corner-brackets` utility for portrait frame (using `::before`/`::after` pseudo-elements with border segments)
-- Add `.dimension-line` style for the "160 PX" measurement marker below portrait
-
-**2. `src/pages/Index.tsx` — Split Hero and About into separate panels**
-- Remove the shared notebook wrapper that contains both Hero and About
-- Hero gets its own full-width panel with `blueprint-surface` class, rounded corners, and border
-- About gets its own panel keeping the existing notebook/paper styling
-- Move `<Navigation />` out of the sticky top wrapper and into the Hero section (rendered at the bottom of Hero, inside the blueprint panel)
-- Remove the sticky nav wrapper entirely — nav lives inside hero panel
-- Keep About as a separate `.notebook` panel below
-
-**3. `src/components/HeroSection.tsx` — Blueprint redesign matching reference**
-- **Top bar**: "GAUTHAM BIJU" (left, tracked mono, cream) and "FIELD NOTES / MAR 2026" (right, mono, cream) — replaces current Field Notes badge
-- **Tagline box**: "#" symbol in a small bordered box + "INTERSECTION OF TECHNOLOGY - BUSINESS · DESIGN" in a bordered container below the top bar
-- **Headline**: Keep existing structure — "I'm learning to build" / MorphingText / "for problems worth solving" but add:
-  - Dashed arrow annotation (`--->`) to the left of "I'm learning to build"
-  - Dashed box around the morphing word area with a label tag (e.g., "PRODUCTS") connected by a dashed line to the right
-  - Dashed arrow after "I'm learning to build" pointing right
-- **Portrait**: Remove the gradient mask fade. Instead, frame with:
-  - "- PROFILE -" label centered above
-  - Corner bracket marks (thin white lines at corners)
-  - Right-side vertical dimension marker with "2E00" text
-  - Bottom dimension line with "160 PX" label
-  - "BUILDER · THINKER · MAKER" label below
-  - White border/frame around the image
-- **CTAs**: White/cream solid background with dark text, rounded-sm — "VIEW WORK →" and "RESUME"
-- **Remove** location line ("INDIA · GMT + 5:30") from bottom
-- **Navigation rendered at bottom**: Include `<Navigation />` component at the bottom of this section, separated by a thin top border line
-- All text colors: cream/white tones to contrast with dark green background
-
-**4. `src/components/Navigation.tsx` — Support embedded mode**
-- Accept an optional `embedded` prop (boolean)
-- When `embedded=true`: no sticky behavior, no compact mode, no backdrop blur — just a flat horizontal bar with cream text on transparent background
-- When `embedded=false` (default): current behavior (for fallback/future use)
-- In Index.tsx, render `<Navigation embedded />` inside the hero panel
+Add fixed-position decorative SVG illustrations related to building/construction on both sides of the viewport that animate (translate upward) as the user scrolls, creating a parallax diorama effect.
 
 ---
 
-### What stays the same
-- All content text, data fetching (`useSiteContent`), MorphingText component
-- About section content and internal styling (just gets its own wrapper)
-- All other section panels unchanged
-- Color CSS variables in `:root` unchanged
-- All routing, hooks, and Supabase integration
+### New Component: `src/components/ScrollDoodles.tsx`
 
-### Files modified (4)
-1. `src/index.css`
-2. `src/pages/Index.tsx`
-3. `src/components/HeroSection.tsx`
-4. `src/components/Navigation.tsx`
+A component rendered once in `Index.tsx` that places two fixed columns of SVG building-related doodles (crane, hammer, gears, ruler, pencil, bricks, blueprint roll, protractor, wrench, lightbulb) on the left and right edges of the screen.
+
+- **Position**: `fixed`, `left-0` and `right-0`, full viewport height, `pointer-events-none`, `z-10`
+- **Scroll binding**: Use `useScroll` + `useTransform` from Framer Motion to translate each column's `y` position based on scroll progress — left column moves up slowly, right column moves up at a different speed (parallax offset)
+- **SVGs**: Simple line-art/outline style doodles in `hsl(var(--primary)/0.12)` — very subtle, not distracting. ~8-10 icons per side, spaced vertically, each ~32-40px
+- **Responsive**: Hidden on mobile (`hidden lg:flex`) since the margins are too narrow on small screens
+- **Variety**: Left side gets architectural tools (ruler, protractor, pencil, T-square, compass). Right side gets construction items (crane, hammer, gears, bricks, wrench, lightbulb)
+
+### Technical approach
+- Each side is a `motion.div` with `style={{ y }}` driven by scroll progress
+- Left column: `useTransform(scrollYProgress, [0, 1], [0, -600])`
+- Right column: `useTransform(scrollYProgress, [0, 1], [100, -500])` (offset start for variety)
+- SVGs are inline React components for easy color theming via `currentColor`
+- Opacity is very low (~0.10-0.15) so they act as ambient decoration
+
+### Modified: `src/pages/Index.tsx`
+- Import and render `<ScrollDoodles />` inside the root div, passing `scrollYProgress` from the existing `useScroll` hook
+
+### Files
+1. `src/components/ScrollDoodles.tsx` — New component with SVG doodles and scroll animation
+2. `src/pages/Index.tsx` — Add `<ScrollDoodles />` render
 
