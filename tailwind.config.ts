@@ -59,12 +59,6 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           foreground: "hsl(var(--gold-foreground))",
         },
-        'desk-wood': "hsl(var(--desk-wood))",
-        'cutting-mat': "hsl(var(--cutting-mat))",
-        'mat-grid': "hsl(var(--mat-grid))",
-        'ruler-accent': "hsl(var(--ruler-accent))",
-        'paper': "hsl(var(--paper))",
-        'paper-warm': "hsl(var(--paper-warm))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

@@ -11,11 +11,11 @@ import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 
 const panelSections = [
-  { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-mat-grid/40' },
-  { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-mat-grid/30' },
-  { key: 'skills', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-mat-grid/40' },
-  { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-ruler-accent/20' },
-  { key: 'writing', Component: WritingDesk, bg: '', border: 'border-mat-grid/30' },
+  { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-border/20' },
+  { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/30' },
+  { key: 'skills', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-border/20' },
+  { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-primary/15' },
+  { key: 'writing', Component: WritingDesk, bg: '', border: 'border-border/20' },
   { key: 'contact', Component: ContactClosing, bg: '', border: 'border-transparent' },
 ];
 
@@ -24,11 +24,11 @@ const Index = () => {
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
   return (
-    <div className="min-h-screen desk-surface">
-      {/* Progress bar — ruler accent */}
+    <div className="min-h-screen desk-pattern" style={{ background: 'hsl(var(--background))' }}>
+      {/* Progress bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] origin-left z-[100]"
-        style={{ scaleX, background: 'hsl(var(--ruler-accent))' }}
+        className="fixed top-0 left-0 right-0 h-[2px] bg-primary origin-left z-[100]"
+        style={{ scaleX }}
       />
 
       {/* Sticky Navigation */}
@@ -36,10 +36,10 @@ const Index = () => {
         <Navigation />
       </div>
 
-      {/* Hero + About — cutting mat surface */}
+      {/* Hero + About — clean workspace surface */}
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
-        <div className="workspace-surface ruler-edge">
-          <div className="relative z-[1] pt-5">
+        <div className="workspace-surface">
+          <div className="relative z-[1]">
             <div id="home">
               <HeroSection />
             </div>
@@ -51,7 +51,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Floating section panels on desk */}
+      {/* Floating section panels */}
       {panelSections.map(({ key, Component, bg, border }) => (
         <div key={key} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
           <div

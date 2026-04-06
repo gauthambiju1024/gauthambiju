@@ -43,21 +43,21 @@ const ThinkingWall = () => {
   return (
     <section className="py-16 md:py-24">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
-        <div className="h-px flex-1" style={{ background: 'hsl(var(--ruler-accent) / 0.15)' }} />
+        <div className="h-px flex-1 bg-border" />
         <span className="dimension-label">Thinking</span>
       </div>
 
       <div className="px-6 md:px-16 mb-10">
-        <h2 className="font-serif-display text-3xl md:text-4xl leading-tight" style={{ color: 'hsl(var(--paper))' }}>
+        <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight">
           The Strategy Wall
         </h2>
-        <p className="mt-3 font-body text-sm" style={{ color: 'hsl(var(--paper) / 0.4)' }}>
+        <p className="mt-3 font-body text-sm text-muted-foreground">
           How I structure ambiguity, break down products, and think through problems. Click a card to read more.
         </p>
       </div>
 
-      {/* Paper cards on mat */}
-      <div className="rounded-sm mx-4 md:mx-12 relative">
+      {/* Clean panel grid */}
+      <div className="rounded-lg mx-4 md:mx-12 relative">
         <ScrollArea className="h-[520px] w-full relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 md:p-10">
             {cards.map((card, i) => (
@@ -67,34 +67,34 @@ const ThinkingWall = () => {
                 className="block"
               >
                 <motion.div
-                  className="relative rounded-sm p-5 select-none paper-card"
+                  className="relative rounded-md p-5 select-none border border-border/60 bg-card/80"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.06, duration: 0.4 }}
                   whileHover={{
                     y: -4,
-                    boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
                     transition: { duration: 0.2 },
                   }}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <span className="text-[9px] tracking-[0.15em] uppercase font-mono" style={{ color: 'hsl(var(--ruler-accent) / 0.7)' }}>
+                    <span className="dimension-label">
                       {card.category}
                     </span>
                   </div>
 
-                  <h4 className="font-display text-sm font-semibold mb-2" style={{ color: 'hsl(var(--card-foreground) / 0.85)' }}>{card.title}</h4>
-                  <p className="text-xs font-body leading-relaxed line-clamp-3" style={{ color: 'hsl(var(--card-foreground) / 0.45)' }}>{card.summary}</p>
+                  <h4 className="font-display text-sm font-semibold text-card-foreground/90 mb-2">{card.title}</h4>
+                  <p className="text-xs text-card-foreground/50 font-body leading-relaxed line-clamp-3">{card.summary}</p>
 
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-mono" style={{ color: 'hsl(var(--ruler-accent) / 0.5)' }}>
+                  <div className="mt-3 flex items-center gap-1 text-[10px] font-mono text-card-foreground/30">
                     Read more <ArrowRight className="w-3 h-3" />
                   </div>
                 </motion.div>
               </Link>
             ))}
           </div>
-          <ScrollBar orientation="vertical" className="w-2 bg-transparent [&>div]:bg-ruler-accent/15 [&>div]:rounded-full hover:[&>div]:bg-ruler-accent/25" />
+          <ScrollBar orientation="vertical" className="w-2 bg-transparent [&>div]:bg-card-foreground/15 [&>div]:rounded-full hover:[&>div]:bg-card-foreground/25" />
         </ScrollArea>
       </div>
     </section>

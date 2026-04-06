@@ -61,21 +61,15 @@ const Navigation = () => {
   return (
     <motion.nav
       className={`z-50 flex items-center justify-between px-4 md:px-12 transition-all duration-300 ${
-        isCompact
-          ? "py-2 backdrop-blur-md border-b"
-          : "py-4"
+        isCompact ? "py-2 backdrop-blur-md bg-background/80" : "py-4"
       }`}
-      style={{
-        background: isCompact ? 'hsl(var(--desk-wood) / 0.9)' : 'transparent',
-        borderColor: isCompact ? 'hsl(var(--ruler-accent) / 0.15)' : 'transparent',
-      }}
       initial={false}
       animate={{ height: isCompact ? 48 : 56 }}
     >
       <button
         onClick={() => scrollToSection("home")}
         className="font-handwritten text-xl md:text-2xl font-bold tracking-tight"
-        style={{ color: 'hsl(var(--ruler-accent))' }}
+        style={{ color: 'hsl(var(--notebook-paper))' }}
       >
         GB.
       </button>
@@ -90,16 +84,15 @@ const Navigation = () => {
             }`}
             style={{
               color: activeSection === item.id
-                ? 'hsl(var(--ruler-accent))'
-                : 'hsl(var(--foreground) / 0.45)',
+                ? 'hsl(var(--primary))'
+                : 'hsl(var(--notebook-paper) / 0.45)',
             }}
           >
             {item.label}
             {activeSection === item.id && (
               <motion.div
                 layoutId="nav-indicator"
-                className="absolute bottom-0 left-2 right-2 h-px"
-                style={{ background: 'hsl(var(--ruler-accent))' }}
+                className="absolute bottom-0 left-2 right-2 h-px bg-primary"
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
