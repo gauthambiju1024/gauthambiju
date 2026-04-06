@@ -47,25 +47,25 @@ const ProjectsShelf = () => {
     : "";
 
   return (
-    <section className="py-6 md:py-8" style={{ borderRadius: "8px" }}>
+    <section className="py-6 md:py-8" style={{ borderRadius: "4px" }}>
       {/* Section header */}
       <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
-        <div className="h-px flex-1 bg-border/30" />
+        <div className="h-px flex-1" style={{ background: 'hsl(var(--ruler-accent) / 0.15)' }} />
         <span className="dimension-label">Projects</span>
       </div>
 
       {/* Section title */}
       <div className="px-6 md:px-10 mb-3">
-        <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground">
+        <h2 className="font-serif-display text-2xl md:text-3xl" style={{ color: 'hsl(var(--paper))' }}>
           Project Library
         </h2>
-        <p className="mt-2 font-body text-sm text-muted-foreground">
+        <p className="mt-2 font-body text-sm" style={{ color: 'hsl(var(--paper) / 0.4)' }}>
           Case Studies · Products · Builds
         </p>
       </div>
 
       {categories.length === 0 && (
-        <p className="text-center font-body text-sm py-10 text-muted-foreground">
+        <p className="text-center font-body text-sm py-10" style={{ color: 'hsl(var(--paper) / 0.4)' }}>
           No projects yet — add some from the admin panel.
         </p>
       )}
@@ -74,14 +74,14 @@ const ProjectsShelf = () => {
         <div key={category} className="mb-2">
           {categories.length > 1 && (
             <div className="px-6 md:px-10 flex items-center gap-3 mb-2">
-              <span className="text-[9px] tracking-[0.25em] uppercase font-mono text-muted-foreground">
+              <span className="text-[9px] tracking-[0.25em] uppercase font-mono" style={{ color: 'hsl(var(--paper) / 0.3)' }}>
                 {category}
               </span>
-              <div className="h-px flex-1 bg-border/20" />
+              <div className="h-px flex-1" style={{ background: 'hsl(var(--mat-grid) / 0.3)' }} />
             </div>
           )}
 
-          {/* Shelf — clean dark background */}
+          {/* Shelf */}
           <div className="p-3 md:p-4 relative overflow-hidden">
             <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
@@ -111,20 +111,15 @@ const ProjectsShelf = () => {
                       }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
                     >
-                      {/* Left edge highlight */}
                       <div
                         className="absolute left-0 top-0 bottom-0 w-[3px]"
                         style={{ background: "linear-gradient(to right, rgba(255,255,255,0.12), transparent)" }}
                       />
-
-                      {/* Year top */}
                       <div className="absolute top-3 left-0 right-0 flex justify-center">
                         <span className="text-white/25 text-[8px] font-mono tracking-wider" style={{ writingMode: "vertical-lr" }}>
                           {project.year}
                         </span>
                       </div>
-
-                      {/* Vertical title */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span
                           className="text-white/85 text-[13px] font-serif-display font-semibold tracking-[0.2em] uppercase"
@@ -133,8 +128,6 @@ const ProjectsShelf = () => {
                           {project.title}
                         </span>
                       </div>
-
-                      {/* Bottom subtitle */}
                       <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-2.5 pt-6" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }}>
                         <div className="w-full h-px bg-white/10 mb-1.5" />
                         <p className="text-white/40 text-[8px] font-body leading-tight text-center">
@@ -142,22 +135,20 @@ const ProjectsShelf = () => {
                         </p>
                       </div>
                     </motion.div>
-
-                    {/* Book shadow */}
                     <div className="h-1 mx-1 bg-black/20 rounded-b-sm blur-[2px]" />
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Shelf ledge — subtle */}
-            <div
-              className="mt-1 h-[4px] rounded-b-sm"
-              style={{
-                background: "linear-gradient(to top, hsl(220 10% 6%), hsl(220 10% 10%))",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.3)",
-              }}
-            />
+            {/* Shelf ledge — ruler style */}
+            <div className="mt-1 h-[6px] relative" style={{ background: 'hsl(var(--cutting-mat-light))' }}>
+              <div className="absolute inset-0" style={{
+                backgroundImage: `repeating-linear-gradient(90deg, hsl(var(--ruler-accent) / 0.4) 0px, hsl(var(--ruler-accent) / 0.4) 1px, transparent 1px, transparent 20px)`,
+                backgroundSize: '20px 100%',
+              }} />
+              <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'hsl(var(--ruler-accent) / 0.3)' }} />
+            </div>
           </div>
 
           {/* Detail card */}
@@ -170,13 +161,14 @@ const ProjectsShelf = () => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 25 }}
               >
-                <div className="bg-card rounded-lg border border-border/50 p-5 md:p-6 shadow-lg relative overflow-hidden">
+                <div className="paper-card p-5 md:p-6 relative overflow-hidden">
                   {/* Top accent line */}
                   <div className="absolute top-0 left-0 right-0 h-px" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
 
                   <button
                     onClick={() => setSelectedId(null)}
-                    className="absolute top-3 right-3 p-1.5 text-muted-foreground hover:text-card-foreground transition-colors"
+                    className="absolute top-3 right-3 p-1.5 transition-colors"
+                    style={{ color: 'hsl(var(--card-foreground) / 0.4)' }}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -184,9 +176,9 @@ const ProjectsShelf = () => {
                   <div className="flex items-start gap-3 mb-4 mt-1">
                     <div className="w-0.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
                     <div>
-                      <h3 className="font-serif-display text-xl md:text-2xl text-card-foreground">{selectedProject.title}</h3>
+                      <h3 className="font-serif-display text-xl md:text-2xl" style={{ color: 'hsl(var(--card-foreground))' }}>{selectedProject.title}</h3>
                       {selectedProject.subtitle && (
-                        <p className="text-sm text-muted-foreground font-body">{selectedProject.subtitle}</p>
+                        <p className="text-sm font-body" style={{ color: 'hsl(var(--card-foreground) / 0.5)' }}>{selectedProject.subtitle}</p>
                       )}
                     </div>
                   </div>
@@ -195,27 +187,27 @@ const ProjectsShelf = () => {
                     {selectedProject.problem && (
                       <div>
                         <span className="dimension-label">Problem</span>
-                        <p className="mt-1 text-card-foreground/80">{selectedProject.problem}</p>
+                        <p className="mt-1" style={{ color: 'hsl(var(--card-foreground) / 0.7)' }}>{selectedProject.problem}</p>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-4">
                       {selectedProject.role && (
                         <div>
                           <span className="dimension-label">Role</span>
-                          <p className="mt-1 text-card-foreground/80">{selectedProject.role}</p>
+                          <p className="mt-1" style={{ color: 'hsl(var(--card-foreground) / 0.7)' }}>{selectedProject.role}</p>
                         </div>
                       )}
                       {selectedProject.stack && (
                         <div>
                           <span className="dimension-label">Stack</span>
-                          <p className="mt-1 text-card-foreground/80">{selectedProject.stack}</p>
+                          <p className="mt-1" style={{ color: 'hsl(var(--card-foreground) / 0.7)' }}>{selectedProject.stack}</p>
                         </div>
                       )}
                     </div>
                     {selectedProject.impact && (
                       <div>
                         <span className="dimension-label">Impact</span>
-                        <p className="mt-1 text-card-foreground/80">{selectedProject.impact}</p>
+                        <p className="mt-1" style={{ color: 'hsl(var(--card-foreground) / 0.7)' }}>{selectedProject.impact}</p>
                       </div>
                     )}
                   </div>
@@ -223,18 +215,23 @@ const ProjectsShelf = () => {
                   <div className="mt-4 flex items-center gap-3 flex-wrap">
                     <div className="flex gap-2">
                       {(selectedProject.tags ?? []).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 text-[10px] font-mono border border-border/50 rounded-sm text-muted-foreground">
+                        <span key={tag} className="px-2 py-0.5 text-[10px] font-mono border rounded-sm"
+                          style={{ borderColor: 'hsl(var(--card-foreground) / 0.15)', color: 'hsl(var(--card-foreground) / 0.5)' }}>
                           {tag}
                         </span>
                       ))}
                     </div>
                     <div className="ml-auto flex items-center gap-3">
                       {selectedProject.url && selectedProject.url !== "#" && (
-                        <a href={selectedProject.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-mono text-primary hover:underline">
+                        <a href={selectedProject.url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs font-mono hover:underline"
+                          style={{ color: 'hsl(var(--ruler-accent))' }}>
                           Visit <ArrowUpRight className="w-3 h-3" />
                         </a>
                       )}
-                      <Link to={`/projects/${selectedProject.slug}`} className="flex items-center gap-1 text-xs font-mono text-primary hover:underline font-semibold">
+                      <Link to={`/projects/${selectedProject.slug}`}
+                        className="flex items-center gap-1 text-xs font-mono hover:underline font-semibold"
+                        style={{ color: 'hsl(var(--ruler-accent))' }}>
                         Full Case Study <ArrowUpRight className="w-3 h-3" />
                       </Link>
                     </div>
@@ -248,7 +245,7 @@ const ProjectsShelf = () => {
 
       {yearRange && (
         <div className="text-center mt-2">
-          <span className="text-[10px] tracking-[0.3em] uppercase font-mono text-muted-foreground">
+          <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: 'hsl(var(--paper) / 0.3)' }}>
             Curated Work · {yearRange}
           </span>
         </div>

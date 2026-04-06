@@ -57,15 +57,15 @@ const SkillsToolbox = () => {
   return (
     <section className="py-16 md:py-24">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
-        <div className="h-px flex-1 bg-border/30" />
-        <span className="dimension-label" style={{ color: 'hsl(var(--notebook-paper) / 0.5)' }}>Skills</span>
+        <div className="h-px flex-1" style={{ background: 'hsl(var(--ruler-accent) / 0.15)' }} />
+        <span className="dimension-label">Skills</span>
       </div>
 
       <div className="px-6 md:px-16 mb-10">
-        <h2 className="font-serif-display text-3xl md:text-4xl leading-tight" style={{ color: 'hsl(var(--notebook-paper))' }}>
+        <h2 className="font-serif-display text-3xl md:text-4xl leading-tight" style={{ color: 'hsl(var(--paper))' }}>
           The Toolbox
         </h2>
-        <p className="mt-3 font-body text-sm" style={{ color: 'hsl(var(--notebook-paper) / 0.4)' }}>
+        <p className="mt-3 font-body text-sm" style={{ color: 'hsl(var(--paper) / 0.4)' }}>
           Tools I use, not buzzwords I list. Hover for context.
         </p>
       </div>
@@ -74,10 +74,11 @@ const SkillsToolbox = () => {
         {skillGroups.map((group, gi) => (
           <motion.div
             key={group.title}
-            className="rounded-lg border border-border/20 p-6 relative overflow-hidden"
+            className="rounded-sm border p-6 relative overflow-hidden"
             style={{
-              background: 'hsl(220 10% 18%)',
-              boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.04), inset 0 -1px 0 hsl(0 0% 0% / 0.2)',
+              background: 'hsl(160 18% 12%)',
+              borderColor: 'hsl(var(--ruler-accent) / 0.15)',
+              boxShadow: 'inset 0 1px 0 hsl(var(--mat-grid) / 0.2), inset 0 -1px 0 hsl(0 0% 0% / 0.3)',
             }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -86,10 +87,10 @@ const SkillsToolbox = () => {
             whileHover={{ y: -2 }}
           >
             {/* Compartment header */}
-            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border/15">
+            <div className="flex items-center gap-2 mb-5 pb-3" style={{ borderBottom: '1px solid hsl(var(--ruler-accent) / 0.12)' }}>
               <span className="text-lg opacity-60">{group.icon}</span>
-              <h3 className="font-display text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--notebook-paper) / 0.8)' }}>{group.title}</h3>
-              <span className="ml-auto text-[10px] font-mono" style={{ color: 'hsl(var(--notebook-paper) / 0.3)' }}>{group.skills.length}</span>
+              <h3 className="font-display text-sm font-semibold tracking-wide uppercase" style={{ color: 'hsl(var(--paper) / 0.75)' }}>{group.title}</h3>
+              <span className="ml-auto text-[10px] font-mono" style={{ color: 'hsl(var(--ruler-accent) / 0.4)' }}>{group.skills.length}</span>
             </div>
 
             {/* Skill chips */}
@@ -97,15 +98,17 @@ const SkillsToolbox = () => {
               {group.skills.map((skill, si) => (
                 <div key={skill.name} className="relative">
                   <motion.button
-                    className={`px-3 py-1.5 text-xs font-mono rounded-sm border transition-colors duration-200 ${
-                      activeSkill?.group === gi && activeSkill?.skill === si
-                        ? "bg-primary/15 border-primary/30 text-primary"
-                        : "border-border/20 hover:border-primary/20"
-                    }`}
+                    className="px-3 py-1.5 text-xs font-mono rounded-sm border transition-colors duration-200"
                     style={{
+                      borderColor: activeSkill?.group === gi && activeSkill?.skill === si
+                        ? 'hsl(var(--ruler-accent) / 0.4)'
+                        : 'hsl(var(--mat-grid) / 0.3)',
+                      background: activeSkill?.group === gi && activeSkill?.skill === si
+                        ? 'hsl(var(--ruler-accent) / 0.1)'
+                        : 'transparent',
                       color: activeSkill?.group === gi && activeSkill?.skill === si
-                        ? undefined
-                        : 'hsl(var(--notebook-paper) / 0.5)',
+                        ? 'hsl(var(--ruler-accent))'
+                        : 'hsl(var(--paper) / 0.5)',
                     }}
                     onHoverStart={() => setActiveSkill({ group: gi, skill: si })}
                     onHoverEnd={() => setActiveSkill(null)}
@@ -119,16 +122,15 @@ const SkillsToolbox = () => {
                   <AnimatePresence>
                     {activeSkill?.group === gi && activeSkill?.skill === si && (
                       <motion.div
-                        className="absolute z-20 bottom-full left-0 mb-2 w-52 p-3 rounded-md shadow-lg"
-                        style={{ background: 'hsl(var(--notebook-paper))', color: 'hsl(var(--card-foreground))' }}
+                        className="absolute z-20 bottom-full left-0 mb-2 w-52 p-3 rounded-sm shadow-lg paper-card"
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 4 }}
                         transition={{ duration: 0.15 }}
                       >
-                        <p className="text-[11px] leading-relaxed">{skill.context}</p>
+                        <p className="text-[11px] leading-relaxed" style={{ color: 'hsl(var(--card-foreground))' }}>{skill.context}</p>
                         {skill.project && (
-                          <span className="block mt-1.5 text-[9px] tracking-wider uppercase text-muted-foreground">
+                          <span className="block mt-1.5 text-[9px] tracking-wider uppercase" style={{ color: 'hsl(var(--ruler-accent) / 0.6)' }}>
                             Used in: {skill.project}
                           </span>
                         )}
