@@ -24,15 +24,7 @@ const Index = () => {
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 });
 
   return (
-    <div className="min-h-screen desk-pattern relative" style={{ background: 'hsl(25 30% 12%)' }}>
-      {/* Desk lamp light cone */}
-      <div
-        className="fixed top-0 right-0 w-[600px] h-[600px] pointer-events-none z-0"
-        style={{
-          background: 'radial-gradient(ellipse at 90% 10%, hsl(40 50% 50% / 0.04) 0%, transparent 60%)',
-        }}
-      />
-
+    <div className="min-h-screen desk-pattern" style={{ background: 'hsl(var(--background))' }}>
       {/* Progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-primary origin-left z-[100]"
@@ -50,10 +42,10 @@ const Index = () => {
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
           <div className="notebook-holes hidden md:block">
-            <div className="brass-rivet" style={{ top: '80px' }} />
-            <div className="brass-rivet" style={{ top: '33%' }} />
-            <div className="brass-rivet" style={{ top: '66%' }} />
-            <div className="brass-rivet" style={{ bottom: '80px' }} />
+            <div className="notebook-hole" style={{ top: '80px' }} />
+            <div className="notebook-hole" style={{ top: '33%' }} />
+            <div className="notebook-hole" style={{ top: '66%' }} />
+            <div className="notebook-hole" style={{ bottom: '80px' }} />
           </div>
           <div className="page-fold" />
 

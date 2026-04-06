@@ -24,7 +24,7 @@ const HeroSection = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6 }}
       >
-        <div className="px-2 py-0.5 border rounded-sm" style={{ borderColor: 'hsl(20 30% 35%)' }}>
+        <div className="px-2 py-0.5 border border-border rounded-sm">
           <span className="text-[9px] tracking-[0.25em] uppercase font-mono text-muted-foreground">Field Notes</span>
         </div>
         <div className="h-px flex-1 bg-border/50" />
@@ -68,9 +68,6 @@ const HeroSection = () => {
             <button
               onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-5 py-2.5 bg-primary text-primary-foreground text-xs font-mono tracking-wider uppercase rounded-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-              style={{
-                boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.15), inset 0 -2px 0 hsl(0 0% 0% / 0.2), 0 2px 4px hsl(0 0% 0% / 0.2)',
-              }}
             >
               View Work <ArrowUpRight className="w-3 h-3" />
             </button>

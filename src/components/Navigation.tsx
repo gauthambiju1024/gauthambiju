@@ -65,19 +65,13 @@ const Navigation = () => {
       className={`z-50 flex items-center justify-between px-4 md:px-12 transition-all duration-300 ${
         isCompact ? "py-2 backdrop-blur-md bg-background/70" : "py-4"
       }`}
-      style={{
-        borderBottom: isCompact ? '1px solid hsl(38 40% 40% / 0.2)' : 'none',
-      }}
       initial={false}
       animate={{ height: isCompact ? 48 : 56 }}
     >
       <button
         onClick={() => scrollToSection("home")}
         className="font-handwritten text-xl md:text-2xl font-bold tracking-tight"
-        style={{
-          color: 'hsl(var(--notebook-paper))',
-          textShadow: '0.5px 0.5px 0px hsl(45 50% 60% / 0.15), -0.5px -0.5px 0px hsl(0 0% 0% / 0.4)',
-        }}
+        style={{ color: 'hsl(var(--notebook-paper))' }}
       >
         GB.
       </button>
