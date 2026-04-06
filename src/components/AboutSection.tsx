@@ -17,15 +17,15 @@ const AboutSection = () => {
   const [hoveredStrength, setHoveredStrength] = useState<number | null>(null);
 
   return (
-    <section className="px-6 md:px-16 py-16 md:py-24 notes-surface">
+    <section className="px-6 md:px-16 py-16 md:py-24">
       {/* Section label */}
       <div className="flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
-        <span className="dimension-label">About</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">About</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-12 md:gap-16">
-        {/* Left — Narrative */}
+        {/* Left page — Narrative */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -53,15 +53,15 @@ const AboutSection = () => {
             </p>
           </div>
 
-          {/* Philosophy quote — highlighted snippet */}
-          <div className="mt-10 px-4 py-3 bg-primary/5 border-l-2 border-primary/30 rounded-r-sm">
+          {/* Philosophy quote */}
+          <div className="mt-10 pl-4 border-l-2 border-primary/20">
             <p className="font-handwritten text-xl text-card-foreground/50 italic">
               "Build with intent. Document deeply. Ship what matters."
             </p>
           </div>
         </motion.div>
 
-        {/* Right — Structured breakdown */}
+        {/* Right page — Structured breakdown */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -71,20 +71,19 @@ const AboutSection = () => {
         >
           {/* Strengths */}
           <div>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1 h-4 bg-primary/30 rounded-full" />
-              <span className="dimension-label">Traits</span>
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Traits</span>
             </div>
             <div className="space-y-3">
               {strengths.map((s, i) => (
                 <motion.div
                   key={s.title}
-                  className="group p-4 rounded-sm border border-transparent hover:border-border/60 hover:bg-card/30 transition-all duration-300 cursor-default"
+                  className="group p-4 rounded-lg border border-transparent hover:border-border hover:bg-card/50 transition-all duration-300 cursor-default"
                   onHoverStart={() => setHoveredStrength(i)}
                   onHoverEnd={() => setHoveredStrength(null)}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-xs font-mono text-primary/50 mt-0.5">[0{i + 1}]</span>
+                    <span className="text-xs font-mono text-primary/60 mt-0.5">0{i + 1}</span>
                     <div>
                       <h4 className="font-display text-sm font-semibold text-card-foreground">{s.title}</h4>
                       <motion.p
@@ -104,9 +103,8 @@ const AboutSection = () => {
 
           {/* Focus areas */}
           <div>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1 h-4 bg-primary/30 rounded-full" />
-              <span className="dimension-label">Focus</span>
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Focus</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {focusAreas.map((area) => (
@@ -122,9 +120,8 @@ const AboutSection = () => {
 
           {/* Quick facts */}
           <div>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-1 h-4 bg-primary/30 rounded-full" />
-              <span className="dimension-label">Quick Facts</span>
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Quick Facts</span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs font-mono text-muted-foreground">
               <div><span className="text-card-foreground/50">Based in</span> India</div>

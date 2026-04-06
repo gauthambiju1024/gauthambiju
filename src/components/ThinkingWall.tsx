@@ -25,6 +25,8 @@ const fallbackCards: FallbackCard[] = [
   { id: "6", title: "Case Studies", category: "Deep Dive", card_type: "diagram", summary: "In-depth product case studies with problem → process → outcome structure.", color: "hsl(200 15% 94%)", slug: "case-studies" },
 ];
 
+const rotations = [-1.5, 0.5, -0.8, 1.2, -0.3, 0.8, -1, 0.6, -0.5, 1.5];
+
 const ThinkingWall = () => {
   const { studies, loading } = useCaseStudies();
 
@@ -44,7 +46,7 @@ const ThinkingWall = () => {
     <section className="py-16 md:py-24">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
-        <span className="dimension-label">Thinking</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Thinking</span>
       </div>
 
       <div className="px-6 md:px-16 mb-10">
@@ -56,43 +58,79 @@ const ThinkingWall = () => {
         </p>
       </div>
 
-      {/* Clean panel grid */}
-      <div className="rounded-lg mx-4 md:mx-12 relative">
+      {/* Corkboard / pinboard */}
+      <div className="whiteboard-bg rounded-lg mx-4 md:mx-12 relative">
+        {/* Grid pattern */}
+        <div className="absolute inset-0 rounded-lg opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(hsl(var(--card-foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--card-foreground)) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+
+        {/* Vertical scrollable area */}
         <ScrollArea className="h-[520px] w-full relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 md:p-10">
-            {cards.map((card, i) => (
-              <Link
-                key={card.id}
-                to={`/case-studies/${card.slug}`}
-                className="block"
-              >
-                <motion.div
-                  className="relative rounded-md p-5 select-none border border-border/60 bg-card/80"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, duration: 0.4 }}
-                  whileHover={{
-                    y: -4,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                    transition: { duration: 0.2 },
-                  }}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6 md:p-10">
+            {cards.map((card, i) => {
+              const rotation = rotations[i % rotations.length];
+              const isSticky = card.card_type === "sticky";
+              const isFramework = card.card_type === "framework";
+
+              return (
+                <Link
+                  key={card.id}
+                  to={`/case-studies/${card.slug}`}
+                  className="block"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <span className="dimension-label">
-                      {card.category}
-                    </span>
-                  </div>
+                  <motion.div
+                    className={`relative rounded-md p-5 select-none ${
+                      isSticky ? "shadow-md border-0" : isFramework ? "shadow-sm border border-border" : "shadow-sm border border-primary/10"
+                    }`}
+                    style={{ backgroundColor: card.color, rotate: `${rotation}deg` }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.06, duration: 0.4 }}
+                    whileHover={{
+                      y: -6,
+                      rotate: 0,
+                      boxShadow: "0 12px 32px rgba(0,0,0,0.14)",
+                      transition: { duration: 0.2 },
+                    }}
+                  >
+                    {/* Pin decoration */}
+                    {isSticky && (
+                      <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-card-foreground/20 shadow-sm" />
+                    )}
 
-                  <h4 className="font-display text-sm font-semibold text-card-foreground/90 mb-2">{card.title}</h4>
-                  <p className="text-xs text-card-foreground/50 font-body leading-relaxed line-clamp-3">{card.summary}</p>
+                    {/* Tape decoration */}
+                    {card.card_type === "diagram" && (
+                      <div className="absolute -top-2 left-4 right-4 h-4 bg-card-foreground/5 rounded-sm" style={{ transform: "rotate(-0.5deg)" }} />
+                    )}
 
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-mono text-card-foreground/30">
-                    Read more <ArrowRight className="w-3 h-3" />
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-[9px] tracking-[0.2em] uppercase font-mono text-card-foreground/40">
+                        {card.category}
+                      </span>
+                      {isFramework && (
+                        <div className="flex gap-0.5">
+                          {[...Array(3)].map((_, j) => (
+                            <div key={j} className="w-1.5 h-1.5 rounded-full bg-card-foreground/10" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <h4 className="font-display text-sm font-semibold text-card-foreground/90 mb-2">{card.title}</h4>
+                    <p className="text-xs text-card-foreground/50 font-body leading-relaxed line-clamp-3">{card.summary}</p>
+
+                    <div className="mt-3 flex items-center gap-1 text-[10px] font-mono text-card-foreground/30">
+                      Read more <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </motion.div>
+                </Link>
+              );
+            })}
           </div>
           <ScrollBar orientation="vertical" className="w-2 bg-transparent [&>div]:bg-card-foreground/15 [&>div]:rounded-full hover:[&>div]:bg-card-foreground/25" />
         </ScrollArea>

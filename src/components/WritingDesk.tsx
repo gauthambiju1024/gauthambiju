@@ -54,7 +54,7 @@ const WritingDesk = () => {
     <section className="py-16 md:py-24">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
-        <span className="dimension-label">Writing</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Writing</span>
       </div>
 
       <div className="px-6 md:px-16 mb-10">
@@ -78,17 +78,17 @@ const WritingDesk = () => {
           >
             <Link
               to={featured.slug !== "#" ? `/blog/${featured.slug}` : "/blog"}
-              className="group block rounded-md border border-border/50 bg-card/40 p-6 md:p-8 hover:bg-card/60 transition-all duration-300"
+              className="group block rounded-lg border border-border bg-card/50 p-6 md:p-8 hover:bg-card/80 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="dimension-label">
+                <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-mono bg-primary/5 text-primary border border-primary/10 rounded-sm">
                   {featured.category}
                 </span>
                 <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {featured.readTime}
                 </span>
               </div>
-              <h3 className="font-serif-display text-xl md:text-2xl text-card-foreground leading-tight mb-3 group-hover:text-primary transition-colors">
+              <h3 className="font-serif-display text-xl md:text-2xl text-card-foreground group-hover:text-primary transition-colors leading-tight mb-3">
                 {featured.title}
               </h3>
               <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-2xl">
@@ -100,9 +100,6 @@ const WritingDesk = () => {
             </Link>
           </motion.div>
         )}
-
-        {/* Divider */}
-        <div className="h-px bg-border/30 mb-8" />
 
         {/* Article grid */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -116,7 +113,7 @@ const WritingDesk = () => {
             >
               <Link
                 to={article.slug !== "#" ? `/blog/${article.slug}` : "/blog"}
-                className="group block rounded-md border border-border/30 bg-card/20 p-5 hover:bg-card/40 hover:border-border/50 transition-all duration-300 h-full"
+                className="group block rounded-lg border border-border bg-card/30 p-5 hover:bg-card/60 hover:border-border transition-all duration-300 h-full"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-[9px] tracking-[0.15em] uppercase font-mono text-muted-foreground">
@@ -125,7 +122,7 @@ const WritingDesk = () => {
                   <span className="text-muted-foreground/30">·</span>
                   <span className="text-[10px] font-mono text-muted-foreground">{article.readTime}</span>
                 </div>
-                <h4 className="font-display text-sm font-semibold text-card-foreground leading-snug mb-2 group-hover:text-primary transition-colors">
+                <h4 className="font-display text-sm font-semibold text-card-foreground group-hover:text-primary transition-colors leading-snug mb-2">
                   {article.title}
                 </h4>
                 <p className="text-xs text-muted-foreground/70 font-body leading-relaxed line-clamp-2">

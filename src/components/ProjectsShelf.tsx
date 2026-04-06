@@ -18,6 +18,14 @@ const SPINE_COLORS = [
 
 type Project = Tables<"projects">;
 
+const linenTexture = (base: string) => ({
+  backgroundColor: base,
+  backgroundImage: `
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)
+  `,
+});
+
 const truncateWords = (text: string, max: number) => {
   const words = text.split(" ");
   return words.length <= max ? text : words.slice(0, max).join(" ") + "…";
@@ -47,25 +55,27 @@ const ProjectsShelf = () => {
     : "";
 
   return (
-    <section className="py-6 md:py-8" style={{ borderRadius: "8px" }}>
-      {/* Section header */}
+    <section className="py-6 md:py-8" style={{ background: "hsl(220 10% 8%)", borderRadius: "8px" }}>
+      {/* Section header — consistent with other sections */}
       <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
-        <div className="h-px flex-1 bg-border/30" />
-        <span className="dimension-label">Projects</span>
+        <div className="h-px flex-1" style={{ background: "hsl(var(--border))" }} />
+        <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
+          Projects
+        </span>
       </div>
 
       {/* Section title */}
       <div className="px-6 md:px-10 mb-3">
-        <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground">
+        <h2 className="font-serif-display text-2xl md:text-3xl" style={{ color: "hsl(var(--card-foreground))" }}>
           Project Library
         </h2>
-        <p className="mt-2 font-body text-sm text-muted-foreground">
+        <p className="mt-2 font-body text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
           Case Studies · Products · Builds
         </p>
       </div>
 
       {categories.length === 0 && (
-        <p className="text-center font-body text-sm py-10 text-muted-foreground">
+        <p className="text-center font-body text-sm py-10" style={{ color: "hsl(var(--muted-foreground))" }}>
           No projects yet — add some from the admin panel.
         </p>
       )}
@@ -74,15 +84,27 @@ const ProjectsShelf = () => {
         <div key={category} className="mb-2">
           {categories.length > 1 && (
             <div className="px-6 md:px-10 flex items-center gap-3 mb-2">
-              <span className="text-[9px] tracking-[0.25em] uppercase font-mono text-muted-foreground">
+              <span className="text-[9px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
                 {category}
               </span>
-              <div className="h-px flex-1 bg-border/20" />
+              <div className="h-px flex-1" style={{ background: "hsl(var(--border) / 0.5)" }} />
             </div>
           )}
 
-          {/* Shelf — clean dark background */}
-          <div className="p-3 md:p-4 relative overflow-hidden">
+          {/* Shelf */}
+          <div
+            className="p-3 md:p-4 relative overflow-hidden"
+            style={{
+              background: "hsl(220 10% 8%)",
+              backgroundImage: `
+                radial-gradient(ellipse at 50% 0%, rgba(180,130,70,0.06) 0%, transparent 70%),
+                repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.008) 120px, rgba(255,255,255,0.008) 121px)
+              `,
+            }}
+          >
+            {/* Bottom recessed shadow */}
+            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/15 to-transparent z-[1] pointer-events-none" />
+
             <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
                 const isSelected = selectedId === project.id;
@@ -93,8 +115,9 @@ const ProjectsShelf = () => {
                     key={project.id}
                     onClick={() => setSelectedId(isSelected ? null : project.id)}
                     className="relative flex-shrink-0 cursor-pointer group"
+                    style={{ perspective: "800px" }}
                     animate={{ y: isSelected ? -14 : 0 }}
-                    whileHover={{ y: isSelected ? -14 : -6 }}
+                    whileHover={{ y: isSelected ? -14 : -8 }}
                     transition={{ type: "spring", stiffness: 350, damping: 28 }}
                   >
                     <motion.div
@@ -102,24 +125,30 @@ const ProjectsShelf = () => {
                       style={{
                         width: "85px",
                         height: "240px",
-                        backgroundColor: spineColor,
+                        ...linenTexture(spineColor),
                       }}
+                      whileHover={{ rotateY: -3 }}
                       animate={{
                         boxShadow: isSelected
-                          ? `0 0 20px 4px ${spineColor}15, 2px 4px 16px rgba(0,0,0,0.4)`
-                          : "2px 4px 12px rgba(0,0,0,0.3)",
+                          ? `0 0 24px 6px ${spineColor}18, 4px 4px 16px rgba(0,0,0,0.4)`
+                          : "4px 4px 12px rgba(0,0,0,0.35)",
                       }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
                     >
                       {/* Left edge highlight */}
                       <div
-                        className="absolute left-0 top-0 bottom-0 w-[3px]"
-                        style={{ background: "linear-gradient(to right, rgba(255,255,255,0.12), transparent)" }}
+                        className="absolute left-0 top-0 bottom-0 w-[4px]"
+                        style={{ background: "linear-gradient(to right, rgba(255,255,255,0.18), rgba(255,255,255,0.04))" }}
+                      />
+                      {/* Right edge shadow */}
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-[3px]"
+                        style={{ background: "linear-gradient(to left, rgba(0,0,0,0.2), transparent)" }}
                       />
 
                       {/* Year top */}
                       <div className="absolute top-3 left-0 right-0 flex justify-center">
-                        <span className="text-white/25 text-[8px] font-mono tracking-wider" style={{ writingMode: "vertical-lr" }}>
+                        <span className="text-white/30 text-[8px] font-mono tracking-wider" style={{ writingMode: "vertical-lr" }}>
                           {project.year}
                         </span>
                       </div>
@@ -127,35 +156,35 @@ const ProjectsShelf = () => {
                       {/* Vertical title */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span
-                          className="text-white/85 text-[13px] font-serif-display font-semibold tracking-[0.2em] uppercase"
+                          className="text-white/90 text-[13px] font-serif-display font-semibold tracking-[0.2em] uppercase"
                           style={{ writingMode: "vertical-lr", textOrientation: "mixed" }}
                         >
                           {project.title}
                         </span>
                       </div>
 
-                      {/* Bottom subtitle */}
-                      <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-2.5 pt-6" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.3), transparent)" }}>
-                        <div className="w-full h-px bg-white/10 mb-1.5" />
-                        <p className="text-white/40 text-[8px] font-body leading-tight text-center">
+                      {/* Bottom horizontal subtitle */}
+                      <div className="absolute bottom-0 left-0 right-0 px-1.5 pb-2.5 pt-6" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.35), transparent)" }}>
+                        <div className="w-full h-px bg-white/15 mb-1.5" />
+                        <p className="text-white/50 text-[8px] font-body leading-tight text-center" style={{ lineHeight: "1.3" }}>
                           {project.subtitle ? truncateWords(project.subtitle, 5) : (project.tags ?? [])[0] ?? ""}
                         </p>
                       </div>
                     </motion.div>
 
-                    {/* Book shadow */}
-                    <div className="h-1 mx-1 bg-black/20 rounded-b-sm blur-[2px]" />
+                    {/* Book shadow on shelf */}
+                    <div className="h-1 mx-1 bg-black/25 rounded-b-sm blur-[2px]" />
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Shelf ledge — subtle */}
+            {/* Shelf ledge */}
             <div
-              className="mt-1 h-[4px] rounded-b-sm"
+              className="mt-1 h-[6px] rounded-b-sm"
               style={{
-                background: "linear-gradient(to top, hsl(220 10% 6%), hsl(220 10% 10%))",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.3)",
+                background: "linear-gradient(to top, hsl(220 10% 8%), hsl(220 10% 10%))",
+                boxShadow: "0 8px 30px rgba(180,130,70,0.15), 0 4px 15px rgba(180,130,70,0.1), 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             />
           </div>
@@ -170,9 +199,11 @@ const ProjectsShelf = () => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 25 }}
               >
-                <div className="bg-card rounded-lg border border-border/50 p-5 md:p-6 shadow-lg relative overflow-hidden">
-                  {/* Top accent line */}
-                  <div className="absolute top-0 left-0 right-0 h-px" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
+                <div
+                  className="bg-card rounded-lg border border-border p-5 md:p-6 shadow-xl relative overflow-hidden"
+                >
+                  {/* Top color accent bar */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
 
                   <button
                     onClick={() => setSelectedId(null)}
@@ -182,7 +213,7 @@ const ProjectsShelf = () => {
                   </button>
 
                   <div className="flex items-start gap-3 mb-4 mt-1">
-                    <div className="w-0.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
+                    <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: selectedProject.color || SPINE_COLORS[0] }} />
                     <div>
                       <h3 className="font-serif-display text-xl md:text-2xl text-card-foreground">{selectedProject.title}</h3>
                       {selectedProject.subtitle && (
@@ -194,27 +225,27 @@ const ProjectsShelf = () => {
                   <div className="space-y-3 font-body text-sm">
                     {selectedProject.problem && (
                       <div>
-                        <span className="dimension-label">Problem</span>
+                        <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Problem</span>
                         <p className="mt-1 text-card-foreground/80">{selectedProject.problem}</p>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-4">
                       {selectedProject.role && (
                         <div>
-                          <span className="dimension-label">Role</span>
+                          <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Role</span>
                           <p className="mt-1 text-card-foreground/80">{selectedProject.role}</p>
                         </div>
                       )}
                       {selectedProject.stack && (
                         <div>
-                          <span className="dimension-label">Stack</span>
+                          <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Stack</span>
                           <p className="mt-1 text-card-foreground/80">{selectedProject.stack}</p>
                         </div>
                       )}
                     </div>
                     {selectedProject.impact && (
                       <div>
-                        <span className="dimension-label">Impact</span>
+                        <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Impact</span>
                         <p className="mt-1 text-card-foreground/80">{selectedProject.impact}</p>
                       </div>
                     )}
@@ -223,7 +254,7 @@ const ProjectsShelf = () => {
                   <div className="mt-4 flex items-center gap-3 flex-wrap">
                     <div className="flex gap-2">
                       {(selectedProject.tags ?? []).map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 text-[10px] font-mono border border-border/50 rounded-sm text-muted-foreground">
+                        <span key={tag} className="px-2 py-0.5 text-[10px] font-mono border border-border rounded-sm text-muted-foreground">
                           {tag}
                         </span>
                       ))}
@@ -248,7 +279,7 @@ const ProjectsShelf = () => {
 
       {yearRange && (
         <div className="text-center mt-2">
-          <span className="text-[10px] tracking-[0.3em] uppercase font-mono text-muted-foreground">
+          <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
             Curated Work · {yearRange}
           </span>
         </div>
