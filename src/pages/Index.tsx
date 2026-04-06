@@ -8,6 +8,7 @@ import SkillsToolbox from "@/components/SkillsToolbox";
 import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
+import ScrollDoodles from "@/components/ScrollDoodles";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
