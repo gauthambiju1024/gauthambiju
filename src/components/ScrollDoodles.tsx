@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { MotionValue } from 'framer-motion';
 
 interface ScrollDoodlesProps {
@@ -10,48 +10,38 @@ function sRng(s: number) {
   return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
 }
 
-// ── Color helpers — read CSS vars once, build palette ──
+// ── Color helpers ──
 function getPalette() {
   const s = getComputedStyle(document.documentElement);
-  const primary = s.getPropertyValue('--primary').trim();   // HSL values
+  const primary = s.getPropertyValue('--primary').trim();
   const gold = s.getPropertyValue('--gold').trim();
   const h = (raw: string, a: number) => `hsla(${raw}, ${a})`;
   return {
-    gold04: h(gold, 0.4),
-    gold035: h(gold, 0.35),
-    gold03: h(gold, 0.3),
-    gold025: h(gold, 0.25),
-    gold02: h(gold, 0.2),
-    gold015: h(gold, 0.15),
-    gold01: h(gold, 0.1),
-    gold006: h(gold, 0.06),
-    gold045: h(gold, 0.45),
-    gold055: h(gold, 0.55),
-    gold05: h(gold, 0.5),
-    prim045: h(primary, 0.45),
-    prim04: h(primary, 0.4),
-    prim03: h(primary, 0.3),
-    prim025: h(primary, 0.25),
-    prim02: h(primary, 0.2),
-    prim05: h(primary, 0.5),
-    prim01: h(primary, 0.1),
-    prim008: h(primary, 0.08),
-    green04: 'rgba(52,211,153,0.4)',
-    green045: 'rgba(52,211,153,0.45)',
-    green025: 'rgba(52,211,153,0.25)',
-    green035: 'rgba(52,211,153,0.35)',
-    green02: 'rgba(52,211,153,0.2)',
-    green018: 'rgba(52,211,153,0.18)',
-    green006: 'rgba(52,211,153,0.06)',
-    green008: 'rgba(52,211,153,0.08)',
-    red05: 'rgba(239,100,97,0.5)',
-    red035: 'rgba(239,100,97,0.35)',
-    red025: 'rgba(239,100,97,0.25)',
-    red015: 'rgba(239,100,97,0.15)',
+    gold04: h(gold, 0.4), gold035: h(gold, 0.35), gold03: h(gold, 0.3),
+    gold025: h(gold, 0.25), gold02: h(gold, 0.2), gold015: h(gold, 0.15),
+    gold01: h(gold, 0.1), gold006: h(gold, 0.06), gold045: h(gold, 0.45),
+    gold055: h(gold, 0.55), gold05: h(gold, 0.5),
+    prim045: h(primary, 0.45), prim04: h(primary, 0.4), prim03: h(primary, 0.3),
+    prim025: h(primary, 0.25), prim02: h(primary, 0.2), prim05: h(primary, 0.5),
+    prim01: h(primary, 0.1), prim008: h(primary, 0.08),
+    green04: 'rgba(52,211,153,0.4)', green045: 'rgba(52,211,153,0.45)',
+    green025: 'rgba(52,211,153,0.25)', green035: 'rgba(52,211,153,0.35)',
+    green02: 'rgba(52,211,153,0.2)', green018: 'rgba(52,211,153,0.18)',
+    green006: 'rgba(52,211,153,0.06)', green008: 'rgba(52,211,153,0.08)',
+    red05: 'rgba(239,100,97,0.5)', red035: 'rgba(239,100,97,0.35)',
+    red025: 'rgba(239,100,97,0.25)', red015: 'rgba(239,100,97,0.15)',
     red06: 'rgba(239,100,97,0.6)',
   };
 }
 type Pal = ReturnType<typeof getPalette>;
+
+// ── Responsive border width ──
+function getBorderWidth() {
+  const vw = window.innerWidth;
+  if (vw < 1280) return 80;
+  if (vw < 1536) return 100;
+  return 120;
+}
 
 // ── Hand-drawn primitives ──
 function wLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, w = 1.2) {
@@ -358,8 +348,91 @@ function drawServerRack(ctx: CanvasRenderingContext2D, x: number, y: number, s: 
   }
 }
 
+// ── New doodle types ──
+function drawWrench(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 1;
+  wLine(ctx, x - s * 0.05, y - s * 0.3, x + s * 0.05, y + s * 0.15, 0.5);
+  wArc(ctx, x, y - s * 0.35, s * 0.12, -Math.PI * 0.3, Math.PI * 1.3, 0.4);
+  wLine(ctx, x - s * 0.08, y + s * 0.15, x + s * 0.12, y + s * 0.25, 0.4);
+  wLine(ctx, x + s * 0.12, y + s * 0.25, x + s * 0.08, y + s * 0.35, 0.4);
+  wLine(ctx, x + s * 0.08, y + s * 0.35, x - s * 0.04, y + s * 0.25, 0.4);
+}
+
+function drawRuler(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold035; ctx.lineWidth = 0.8;
+  wRect(ctx, x - s * 0.35, y - s * 0.06, s * 0.7, s * 0.12, 0.4);
+  for (let i = 0; i < 10; i++) {
+    const tx = x - s * 0.32 + i * s * 0.07;
+    const th = i % 5 === 0 ? s * 0.08 : s * 0.04;
+    wLine(ctx, tx, y - s * 0.06, tx, y - s * 0.06 + th, 0.2);
+  }
+  ctx.font = `${Math.max(3, s * 0.06)}px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = C.gold025;
+  ctx.fillText('cm', x + s * 0.2, y + s * 0.04);
+}
+
+function drawCompass(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.gold04; ctx.lineWidth = 0.8;
+  wLine(ctx, x, y - s * 0.4, x - s * 0.15, y + s * 0.3, 0.5);
+  wLine(ctx, x, y - s * 0.4, x + s * 0.2, y + s * 0.25, 0.5);
+  wCircle(ctx, x, y - s * 0.4, s * 0.03, 0.2);
+  wArc(ctx, x + s * 0.05, y + s * 0.3, s * 0.2, Math.PI * 0.3, Math.PI * 1.2, 0.4);
+}
+
+function drawTerminal(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.green04; ctx.lineWidth = 0.8;
+  wRect(ctx, x - s * 0.3, y - s * 0.2, s * 0.6, s * 0.4, 0.5);
+  wLine(ctx, x - s * 0.3, y - s * 0.13, x + s * 0.3, y - s * 0.13, 0.3);
+  ctx.fillStyle = C.red025;
+  ctx.beginPath(); ctx.arc(x - s * 0.23, y - s * 0.165, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.gold025;
+  ctx.beginPath(); ctx.arc(x - s * 0.17, y - s * 0.165, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.green025;
+  ctx.beginPath(); ctx.arc(x - s * 0.11, y - s * 0.165, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.font = `${Math.max(3, s * 0.08)}px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = C.green035;
+  ctx.fillText('$ _', x - s * 0.22, y + s * 0.02);
+}
+
+function drawDonut(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  const r = s * 0.3, inner = s * 0.15;
+  ctx.lineWidth = 1;
+  const slices = [0.4, 0.3, 0.3];
+  const colors = [C.gold025, C.prim02, C.green02];
+  let startA = -Math.PI / 2;
+  slices.forEach((sl, i) => {
+    const endA = startA + sl * Math.PI * 2;
+    ctx.fillStyle = colors[i];
+    ctx.beginPath(); ctx.arc(x, y, r, startA, endA); ctx.arc(x, y, inner, endA, startA, true); ctx.closePath(); ctx.fill();
+    startA = endA;
+  });
+  ctx.strokeStyle = C.gold04;
+  wCircle(ctx, x, y, r, 0.4);
+  wCircle(ctx, x, y, inner, 0.3);
+}
+
+function drawCircuitTrace(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, C: Pal) {
+  ctx.strokeStyle = C.prim03; ctx.lineWidth = 0.8;
+  wLine(ctx, x - s * 0.3, y, x - s * 0.1, y, 0.3);
+  wLine(ctx, x - s * 0.1, y, x - s * 0.1, y - s * 0.15, 0.3);
+  wLine(ctx, x - s * 0.1, y - s * 0.15, x + s * 0.1, y - s * 0.15, 0.3);
+  wLine(ctx, x + s * 0.1, y - s * 0.15, x + s * 0.1, y + s * 0.1, 0.3);
+  wLine(ctx, x + s * 0.1, y + s * 0.1, x + s * 0.3, y + s * 0.1, 0.3);
+  ctx.fillStyle = C.prim04;
+  ctx.beginPath(); ctx.arc(x - s * 0.3, y, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + s * 0.3, y + s * 0.1, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - s * 0.1, y - s * 0.15, 1.5, 0, Math.PI * 2); ctx.fill();
+}
+
 // ── Doodle dispatcher ──
 interface DoodleData { type: string; x: number; yPct: number; size: number; seed: number; yScreen: number; }
+
+const ALL_TYPES = [
+  'gear', 'bulb', 'rocket', 'coffee', 'barChart', 'pie', 'wifi', 'brackets', 'code',
+  'flowchart', 'battery', 'star', 'arrow', 'checkbox', 'cloud', 'magnifier', 'plane',
+  'formula', 'bird', 'target', 'kanban', 'server',
+  'wrench', 'ruler', 'compass', 'terminal', 'donut', 'circuit'
+];
 
 function drawDoodle(ctx: CanvasRenderingContext2D, d: DoodleData, alpha: number, time: number, scrollP: number, C: Pal) {
   ctx.globalAlpha = alpha;
@@ -388,6 +461,12 @@ function drawDoodle(ctx: CanvasRenderingContext2D, d: DoodleData, alpha: number,
     case 'target': drawTarget(ctx, x, y, s * 0.25, C); break;
     case 'kanban': drawKanban(ctx, x, y, s, C); break;
     case 'server': drawServerRack(ctx, x, y, s, C); break;
+    case 'wrench': drawWrench(ctx, x, y, s, C); break;
+    case 'ruler': drawRuler(ctx, x, y, s, C); break;
+    case 'compass': drawCompass(ctx, x, y, s, C); break;
+    case 'terminal': drawTerminal(ctx, x, y, s, C); break;
+    case 'donut': drawDonut(ctx, x, y, s, C); break;
+    case 'circuit': drawCircuitTrace(ctx, x, y, s, C); break;
   }
   ctx.globalAlpha = 1;
 }
@@ -417,12 +496,29 @@ function genBuildings(seed: number, cw: number, ch: number): Bld[] {
 
 function genDoodles(seed: number, cw: number, ch: number): DoodleData[] {
   const r = sRng(seed); const doodles: DoodleData[] = [];
-  const types = ['gear', 'bulb', 'rocket', 'coffee', 'barChart', 'pie', 'wifi', 'brackets', 'code',
-    'flowchart', 'battery', 'star', 'arrow', 'checkbox', 'cloud', 'magnifier', 'plane', 'formula', 'bird', 'target', 'kanban', 'server'];
-  const count = 28 + Math.floor(r() * 12);
+  const sizeScale = cw / 110; // scale relative to base 110px width
+  const count = 40 + Math.floor(r() * 15);
+  const minSpacing = 28 * sizeScale;
+  const placedY: number[] = [];
+
   for (let i = 0; i < count; i++) {
-    doodles.push({ type: types[Math.floor(r() * types.length)], x: 8 + r() * (cw - 16),
-      yPct: i / count, size: 20 + r() * 28, seed: Math.floor(r() * 9999), yScreen: 0 });
+    const yPct = 0.05 + (i / (count - 1)) * 0.9; // uniform from 0.05 to 0.95
+    const yAbs = (1 - yPct) * ch; // bottom = 0, top = ch
+    
+    // collision check
+    const tooClose = placedY.some(py => Math.abs(py - yAbs) < minSpacing);
+    if (tooClose) continue;
+
+    const size = (14 + r() * 16) * sizeScale;
+    doodles.push({
+      type: ALL_TYPES[Math.floor(r() * ALL_TYPES.length)],
+      x: 6 + r() * Math.max(4, cw - 12),
+      yPct,
+      size,
+      seed: Math.floor(r() * 9999),
+      yScreen: 0
+    });
+    placedY.push(yAbs);
   }
   doodles.sort((a, b) => a.yPct - b.yPct);
   return doodles;
@@ -522,12 +618,14 @@ function drawGround(ctx: CanvasRenderingContext2D, w: number, h: number, C: Pal)
 }
 
 function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, C: Pal) {
-  if (p < 0.03) return;
-  const gP = Math.min(1, p * 2.5);
+  // Always show grid at base opacity, intensify with scroll
+  const baseAlpha = 0.03;
+  const gP = Math.min(1, baseAlpha + p * 2.5);
   ctx.strokeStyle = C.gold006; ctx.lineWidth = 0.5;
+  ctx.globalAlpha = gP;
   for (let x = 10; x < w; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-  const gH = h * gP;
-  for (let y = h; y > h - gH; y -= 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  for (let y = 0; y < h; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.globalAlpha = 1;
 }
 
 function drawConnections(ctx: CanvasRenderingContext2D, blds: Bld[], w: number, h: number, p: number, time: number, C: Pal) {
@@ -565,6 +663,8 @@ const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
+  const borderWRef = useRef(getBorderWidth());
+  const [borderW, setBorderW] = useState(getBorderWidth);
   const dataRef = useRef<{
     lBlds: Bld[]; rBlds: Bld[]; lDoodles: DoodleData[]; rDoodles: DoodleData[];
     palette: Pal | null;
@@ -592,15 +692,15 @@ const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
     const xL = lCanvas.getContext('2d')!, xR = rCanvas.getContext('2d')!;
     xL.clearRect(0, 0, w, h); xR.clearRect(0, 0, w, h);
 
-    // Draw both sides
     const drawSide = (ctx: CanvasRenderingContext2D, blds: Bld[], doodles: DoodleData[]) => {
       drawGrid(ctx, w, h, sp, C);
       drawGround(ctx, w, h, C);
       blds.forEach((b, i) => drawBld(ctx, b, elP(i, blds.length, sp), time, C));
 
       doodles.forEach((d, i) => {
-        const dStart = (i / doodles.length) * 0.9;
-        const dEnd = dStart + (1 / doodles.length) * 1.6;
+        // Start revealing doodles from scroll 0 (not delayed)
+        const dStart = (i / doodles.length) * 0.85;
+        const dEnd = dStart + (1 / doodles.length) * 1.8;
         const dP = Math.max(0, Math.min(1, (sp - dStart) / (dEnd - dStart)));
         if (dP <= 0) return;
         d.yScreen = h - 10 - d.yPct * h * 0.85;
@@ -618,6 +718,10 @@ const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
 
   useEffect(() => {
     const resize = () => {
+      const newBW = getBorderWidth();
+      borderWRef.current = newBW;
+      setBorderW(newBW);
+      
       const dpr = window.devicePixelRatio || 1;
       [leftCanvasRef.current, rightCanvasRef.current].forEach(c => {
         if (!c) return;
@@ -632,7 +736,6 @@ const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
     resize();
     window.addEventListener('resize', resize);
 
-    // Continuous animation loop for time-based effects (gears, smoke, signals)
     let running = true;
     const loop = () => {
       if (!running) return;
@@ -650,15 +753,13 @@ const ScrollDoodles = ({ scrollYProgress }: ScrollDoodlesProps) => {
 
   return (
     <div className="hidden lg:block fixed inset-0 pointer-events-none z-10">
-      {/* Left fade overlay */}
       <div className="absolute left-0 top-0 h-full pointer-events-none z-[11]"
-        style={{ width: 110, background: 'linear-gradient(to right, transparent 50%, hsl(var(--background)) 100%)' }} />
-      {/* Right fade overlay */}
+        style={{ width: borderW, background: 'linear-gradient(to right, transparent 50%, hsl(var(--background)) 100%)' }} />
       <div className="absolute right-0 top-0 h-full pointer-events-none z-[11]"
-        style={{ width: 110, background: 'linear-gradient(to left, transparent 50%, hsl(var(--background)) 100%)' }} />
+        style={{ width: borderW, background: 'linear-gradient(to left, transparent 50%, hsl(var(--background)) 100%)' }} />
 
-      <canvas ref={leftCanvasRef} className="absolute left-0 top-0 h-full" style={{ width: 110 }} />
-      <canvas ref={rightCanvasRef} className="absolute right-0 top-0 h-full" style={{ width: 110 }} />
+      <canvas ref={leftCanvasRef} className="absolute left-0 top-0 h-full" style={{ width: borderW }} />
+      <canvas ref={rightCanvasRef} className="absolute right-0 top-0 h-full" style={{ width: borderW }} />
     </div>
   );
 };
