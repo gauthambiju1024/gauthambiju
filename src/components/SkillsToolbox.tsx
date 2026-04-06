@@ -55,7 +55,7 @@ const SkillsToolbox = () => {
   const [activeSkill, setActiveSkill] = useState<{ group: number; skill: number } | null>(null);
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24 toolbox-latch">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Skills</span>
@@ -74,7 +74,7 @@ const SkillsToolbox = () => {
         {skillGroups.map((group, gi) => (
           <motion.div
             key={group.title}
-            className="rounded-lg border border-border bg-card p-6 relative overflow-hidden"
+            className="rounded-lg border border-border bg-card p-6 relative overflow-hidden brass-bracket"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

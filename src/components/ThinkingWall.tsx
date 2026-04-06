@@ -98,14 +98,14 @@ const ThinkingWall = () => {
                       transition: { duration: 0.2 },
                     }}
                   >
-                    {/* Pin decoration */}
+                    {/* Pushpin decoration */}
                     {isSticky && (
-                      <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-card-foreground/20 shadow-sm" />
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 pushpin z-10" />
                     )}
 
                     {/* Tape decoration */}
                     {card.card_type === "diagram" && (
-                      <div className="absolute -top-2 left-4 right-4 h-4 bg-card-foreground/5 rounded-sm" style={{ transform: "rotate(-0.5deg)" }} />
+                      <div className="absolute -top-2 left-6 right-6 h-5 tape-realistic rounded-sm" style={{ transform: "rotate(-0.5deg)" }} />
                     )}
 
                     <div className="flex items-start justify-between mb-2">
