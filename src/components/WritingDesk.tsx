@@ -51,7 +51,7 @@ const WritingDesk = () => {
   const rest = articles.slice(1);
 
   return (
-    <section className="py-16 md:py-24 drafting-grid relative">
+    <section className="py-16 md:py-24">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Writing</span>
@@ -78,7 +78,7 @@ const WritingDesk = () => {
           >
             <Link
               to={featured.slug !== "#" ? `/blog/${featured.slug}` : "/blog"}
-              className="group block rounded-lg border border-border bg-card/50 p-6 md:p-8 hover:bg-card/80 transition-all duration-300 photo-mount relative"
+              className="group block rounded-lg border border-border bg-card/50 p-6 md:p-8 hover:bg-card/80 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4">
                 <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-mono bg-primary/5 text-primary border border-primary/10 rounded-sm">
@@ -113,7 +113,7 @@ const WritingDesk = () => {
             >
               <Link
                 to={article.slug !== "#" ? `/blog/${article.slug}` : "/blog"}
-                className="group block rounded-lg border border-border bg-card/30 p-5 hover:bg-card/60 hover:border-border transition-all duration-300 h-full photo-mount relative"
+                className="group block rounded-lg border border-border bg-card/30 p-5 hover:bg-card/60 hover:border-border transition-all duration-300 h-full"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-[9px] tracking-[0.15em] uppercase font-mono text-muted-foreground">

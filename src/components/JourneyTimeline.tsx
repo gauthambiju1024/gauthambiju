@@ -44,7 +44,7 @@ const JourneyTimeline = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden aged-paper">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* Globe background - desktop only */}
       <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none">
         <Globe className="w-[500px] h-[500px]" />
@@ -67,8 +67,8 @@ const JourneyTimeline = () => {
       {/* Timeline */}
       <div className="px-6 md:px-16 relative z-10">
         <div className="relative max-w-2xl mx-auto">
-          {/* Vertical ink line */}
-          <div className="absolute left-4 md:left-6 top-0 bottom-0 w-[2px] ink-line rounded-full" />
+          {/* Vertical line */}
+          <div className="absolute left-4 md:left-6 top-0 bottom-0 w-px bg-border" />
 
           {milestones.map((m, i) => (
             <motion.div
@@ -79,15 +79,15 @@ const JourneyTimeline = () => {
               viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
             >
-              {/* Wax seal node */}
-              <div className="absolute left-4 md:left-6 top-0 -translate-x-1/2">
+              {/* Station node */}
+              <div className="absolute left-4 md:left-6 top-1 -translate-x-1/2">
                 {m.isCurrent ? (
                   <div className="relative">
-                    <div className="wax-seal shadow-[0_0_14px_hsl(0_60%_40%/0.3)]">GB</div>
-                    <div className="absolute inset-0 w-[22px] h-[22px] rounded-full bg-red-500/20 animate-ping" />
+                    <div className="w-4 h-4 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary)/0.4)]" />
+                    <div className="absolute inset-0 w-4 h-4 rounded-full bg-primary/30 animate-ping" />
                   </div>
                 ) : (
-                  <div className="wax-seal text-transparent hover:scale-110 transition-transform">·</div>
+                  <div className="w-3 h-3 rounded-full bg-card border-2 border-border hover:border-primary/50 transition-colors" />
                 )}
               </div>
 

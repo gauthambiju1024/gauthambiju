@@ -46,7 +46,7 @@ const Index = () => {
 
       {/* Notebook: Hero + About */}
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 pt-2 md:pt-4">
-        <div className="notebook notebook-grid relative stitched-border">
+        <div className="notebook notebook-grid relative">
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
           <div className="notebook-holes hidden md:block">

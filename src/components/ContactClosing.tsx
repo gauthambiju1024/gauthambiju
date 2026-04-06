@@ -20,7 +20,7 @@ const ContactClosing = () => {
     : defaultLinks;
 
   return (
-    <section className="py-20 md:py-32 envelope-flap">
+    <section className="py-20 md:py-32">
       <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">End Notes</span>
@@ -80,7 +80,7 @@ const ContactClosing = () => {
           transition={{ delay: 0.4, duration: 0.8 }}
         >
           <div className="inline-block">
-            <p className="font-handwritten text-2xl text-card-foreground/30 mb-1 ink-splatter">— GB</p>
+            <p className="font-handwritten text-2xl text-card-foreground/30 mb-1">— GB</p>
             <div className="h-px w-16 mx-auto bg-gradient-to-r from-transparent via-border to-transparent" />
           </div>
         </motion.div>
