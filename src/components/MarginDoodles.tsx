@@ -47,8 +47,8 @@ const MarginDoodles = () => {
 
   const layoutDoodles = useCallback((container: HTMLDivElement | null, doodles: HTMLDivElement[]) => {
     if (!container || doodles.length === 0) return;
-    const topPad = 28;
-    const bottomPad = 28;
+    const topPad = 6;
+    const bottomPad = 6;
     const availableHeight = window.innerHeight - topPad - bottomPad;
     const containerWidth = container.offsetWidth;
 
