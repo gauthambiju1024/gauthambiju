@@ -516,15 +516,15 @@
     position: absolute;
     width: 16px;
     height: 16px;
-    border-color: hsl(0 0% 100% / 0.15);
+    border-color: hsl(0 0% 100% / 0.35);
     pointer-events: none;
     z-index: 3;
   }
 
-  .margin-corner--tl { top: 8px; left: 4px; border-top: 1px solid; border-left: 1px solid; }
-  .margin-corner--tr { top: 8px; right: 4px; border-top: 1px solid; border-right: 1px solid; }
-  .margin-corner--bl { bottom: 8px; left: 4px; border-bottom: 1px solid; border-left: 1px solid; }
-  .margin-corner--br { bottom: 8px; right: 4px; border-bottom: 1px solid; border-right: 1px solid; }
+  .margin-corner--tl { top: 8px; left: 4px; border-top: 1.5px solid; border-left: 1.5px solid; }
+  .margin-corner--tr { top: 8px; right: 4px; border-top: 1.5px solid; border-right: 1.5px solid; }
+  .margin-corner--bl { bottom: 8px; left: 4px; border-bottom: 1.5px solid; border-left: 1.5px solid; }
+  .margin-corner--br { bottom: 8px; right: 4px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
 
   .margin-content-wrapper {
     position: relative;
@@ -533,8 +533,8 @@
 
   @media (min-width: 800px) {
     .margin-content-wrapper {
-      padding-left: calc(var(--margin-col-width, 60px) - 10px);
-      padding-right: calc(var(--margin-col-width, 60px) - 10px);
+      padding-left: calc(var(--margin-col-width, 60px) - 18px);
+      padding-right: calc(var(--margin-col-width, 60px) - 18px);
     }
   }
 
@@ -555,13 +555,8 @@
     position: absolute;
     left: 0;
     right: 0;
-    padding: 1px 0;
+    padding: 0;
   }
-
-  .doodle:nth-child(2n) { transform: rotate(-0.7deg); }
-  .doodle:nth-child(3n) { transform: rotate(0.9deg); }
-  .doodle:nth-child(5n) { transform: rotate(-1.2deg) translateX(2px); }
-  .doodle:nth-child(7n) { transform: rotate(1.1deg) translateX(-2px); }
 
   .doodle svg {
     width: 100%;
