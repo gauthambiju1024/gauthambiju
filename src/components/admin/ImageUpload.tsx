@@ -21,6 +21,13 @@ export default function ImageUpload({ value, onChange, folder = 'images', classN
     if (!file) return;
 
     setUploading(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error('Session expired. Please log in again.');
+      setUploading(false);
+      return;
+    }
     const ext = file.name.split('.').pop();
     const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
