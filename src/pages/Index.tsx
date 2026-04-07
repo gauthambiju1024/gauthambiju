@@ -26,7 +26,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen desk-pattern" style={{ background: 'hsl(var(--background))' }}>
-      
+      <ScrollDoodles />
+
 
       {/* Progress bar */}
       <motion.div
