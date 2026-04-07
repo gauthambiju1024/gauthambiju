@@ -532,10 +532,10 @@
     position: fixed;
     top: 0;
     bottom: 0;
-    width: var(--margin-col-width, 220px);
+    width: var(--margin-col-width, 110px);
     z-index: 1;
     pointer-events: none;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .margin-doodles--left { left: 0; }
