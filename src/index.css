@@ -472,6 +472,7 @@
   }
 }
 
+@layer components {
   /* ─── MARGIN DOODLE SYSTEM ─── */
   .margin-bg {
     position: fixed;
