@@ -1,12 +1,19 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const BorderLineSvg = () => (
-  <svg className="margin-border-svg" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
-    <path className="draw" d="M4 4 L96 4" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-    <path className="draw" d="M4 96 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-    <path className="draw" d="M4 4 L4 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-    <path className="draw" d="M96 4 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-  </svg>
+const TopLineDoodle = () => (
+  <div className="doodle">
+    <svg viewBox="0 0 200 12" fill="none">
+      <path className="draw" d="M8 6 Q30 3 60 7 Q100 4 140 7 Q170 3 192 6" stroke="hsl(36, 37%, 96%)" strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
+const BottomLineDoodle = () => (
+  <div className="doodle">
+    <svg viewBox="0 0 200 12" fill="none">
+      <path className="draw" d="M8 6 Q40 9 70 5 Q110 8 150 5 Q180 9 192 6" stroke="hsl(36, 37%, 96%)" strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  </div>
 );
 
 const MarginDoodles = () => {
@@ -128,19 +135,6 @@ const MarginDoodles = () => {
     const leftData = setupDoodles(leftRef.current);
     const rightData = setupDoodles(rightRef.current);
 
-    // Setup border line animations
-    const borderSvgs = document.querySelectorAll('.margin-border-svg');
-    const borderPaths: { path: SVGPathElement; len: number }[] = [];
-    borderSvgs.forEach(svg => {
-      svg.querySelectorAll('.draw').forEach((p) => {
-        const path = p as SVGPathElement;
-        let len = 100;
-        try { len = path.getTotalLength() || 100; } catch(e) { /* fallback */ }
-        path.style.strokeDasharray = String(len);
-        path.style.strokeDashoffset = String(len);
-        borderPaths.push({ path, len });
-      });
-    });
 
     const relayout = () => {
       layoutDoodles(leftData.container, leftData.doodles);
@@ -151,13 +145,6 @@ const MarginDoodles = () => {
       if (!tickingRef.current) {
         requestAnimationFrame(() => {
           updateDoodles(leftData, rightData);
-          // Animate border lines in first 5% of scroll
-          const docH = document.documentElement.scrollHeight - window.innerHeight;
-          const progress = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
-          const borderProgress = Math.min(1, progress / 0.05);
-          borderPaths.forEach(({ path, len }) => {
-            path.style.strokeDashoffset = String(len * (1 - borderProgress));
-          });
           tickingRef.current = false;
         });
         tickingRef.current = true;
@@ -171,8 +158,6 @@ const MarginDoodles = () => {
 
     relayout();
     updateDoodles(leftData, rightData);
-    // Trigger initial border state
-    onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
@@ -187,17 +172,10 @@ const MarginDoodles = () => {
 
   return (
     <>
-      {/* Fixed blueprint backgrounds */}
-      <div className="margin-bg margin-bg--left hidden min-[800px]:block">
-        <BorderLineSvg />
-      </div>
-      <div className="margin-bg margin-bg--right hidden min-[800px]:block">
-        <BorderLineSvg />
-      </div>
-
       {/* Fixed doodle layers */}
       <div ref={leftRef} className="margin-doodles margin-doodles--left hidden min-[800px]:block">
 
+  <TopLineDoodle />
   <div className="doodle">
     <svg viewBox="0 0 200 80" fill="none">
       <text x="6" y="18" fontSize="14" fill="hsl(36, 37%, 96%)" className="fade">Newton II</text>
@@ -509,9 +487,11 @@ const MarginDoodles = () => {
       <text x="6" y="74" fontSize="11" fill="hsl(0, 84%, 60%)" className="fade label">Re &gt; 4000 → turbulent</text>
     </svg>
   </div>
+  <BottomLineDoodle />
       </div>
       <div ref={rightRef} className="margin-doodles margin-doodles--right hidden min-[800px]:block">
 
+  <TopLineDoodle />
   <div className="doodle">
     <svg viewBox="0 0 200 80" fill="none">
       <text x="6" y="18" fontSize="14" fill="hsl(36, 37%, 96%)" className="fade">NPV</text>
@@ -810,6 +790,7 @@ const MarginDoodles = () => {
       <text x="138" y="106" fontSize="14" fill="hsl(0, 84%, 60%)" className="fade">T</text>
     </svg>
   </div>
+  <BottomLineDoodle />
       </div>
     </>
   );
