@@ -1,5 +1,14 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+const BorderLineSvg = () => (
+  <svg className="margin-border-svg" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+    <path className="draw" d="M4 4 L96 4" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M4 96 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M4 4 L4 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M96 4 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+  </svg>
+);
+
 const MarginDoodles = () => {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
