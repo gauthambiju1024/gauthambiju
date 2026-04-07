@@ -1,15 +1,20 @@
 
 
-## Plan: Reduce Top/Bottom Padding in Margin Doodle Layout
+## Plan: Scale Doodles to Fill Full Viewport Height
 
 ### Problem
-The `layoutDoodles` function uses `topPad = 28` and `bottomPad = 28`, creating excessive empty space above and below the doodle stack in each margin.
+The `layoutDoodles` function only scales doodles **down** when they exceed viewport height, but never scales **up** when they're shorter. This leaves a large empty gap at the bottom.
 
-### Changes
+### Change
 
-**`src/components/MarginDoodles.tsx`**
-- Reduce `topPad` from `28` to `6` and `bottomPad` from `28` to `6` in the `layoutDoodles` function (lines 50-52)
-- This brings the doodle stack (including the top/bottom hand-drawn lines) much closer to the viewport edges
+**`src/components/MarginDoodles.tsx`** (line 71)
+- Remove the conditional `totalNatural > availableHeight` check — always apply the scale factor so doodles stretch to fill the full viewport height
+- Change: `const scaleFactor = totalNatural > availableHeight ? availableHeight / totalNatural : 1;`
+- To: `const scaleFactor = availableHeight / totalNatural;`
+- Also always apply the transform (remove the `if (scaleFactor < 1)` guard on lines 86-89)
+
+### Result
+Doodles will always scale to exactly fill the viewport height, whether they need to grow or shrink.
 
 ### Files: 1
 
