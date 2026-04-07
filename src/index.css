@@ -486,11 +486,11 @@
   }
 
   .margin-bg--left {
-    left: 0;
+    left: 2px;
   }
 
   .margin-bg--right {
-    right: 0;
+    right: 2px;
   }
 
   .margin-bg::before {
@@ -538,8 +538,8 @@
     align-items: center;
   }
 
-  .margin-doodles--left { left: 0; }
-  .margin-doodles--right { right: 0; }
+  .margin-doodles--left { left: 2px; }
+  .margin-doodles--right { right: 2px; }
 
   .doodle {
     position: absolute;
