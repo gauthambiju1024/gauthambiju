@@ -1,35 +1,29 @@
 
 
-## Plan: Tighter Doodle Spacing + Subtle Blueprint Background
+## Plan: Shrink Margins & Doodles to Fit All 22 Per Side
 
-### Problem
-1. The layout currently fits all 22 doodles per side into one viewport height. With narrow columns (110px), the SVGs are tiny and spaced unpredictably — many may not be visible.
-2. The blueprint background was fully removed (`display: none` on `::before`/`::after`), losing the subtle engineering aesthetic.
+### Analysis
+
+Each side has 22 SVGs with viewBox width 200 and combined viewBox heights ~2330. At the current 110px column width (102px effective after padding), rendered total height ≈ 1190px + gaps = ~1280px — far exceeds the 769px viewport.
+
+To fit all 22 in one viewport height without panning, the column width must shrink so the proportionally-scaled SVG heights sum to less than ~750px.
+
+At **60px** column width (52px effective): total rendered height ≈ 606px + 84px gaps = ~690px. This fits.
 
 ### Changes
 
-**1. `src/components/MarginDoodles.tsx` — Allow doodles to extend beyond viewport**
+**`src/index.css`** — Reduce margin widths:
+- Default: `--margin-col-width: 60px` (was 110px)
+- `≤1280px`: `50px` (was 85px)  
+- `≤1100px`: `28px` (was 40px)
+- Adjust `.doodle` padding to `1px 2px` for tighter fit
+- Keep the subtle blueprint grid as-is (already merged with background)
 
-The `layoutDoodles` function currently constrains all doodles to `window.innerHeight`. Instead:
-- Remove the viewport-height constraint; let doodles stack naturally with a small fixed gap (e.g., 4px)
-- The fixed container should use `overflow: visible` so doodles below the fold are still rendered
-- The scroll-progress mapping (`updateDoodles`) already maps doodle index to global scroll progress, so doodles beyond the viewport will still draw correctly as the user scrolls
-
-Key change in `layoutDoodles`:
-```
-gap = 4px (fixed, tight)
-y starts at 10px (reduced top padding)
-```
-
-**2. `src/index.css` — Reintroduce subtle blueprint grid**
-
-Re-enable `.margin-bg::before` with a very faint grid:
-- Thin grid lines at `rgba(255,255,255, 0.03)` for small grid, `rgba(255,255,255, 0.05)` for large grid
-- Use a soft radial mask (`mask-image: radial-gradient(...)`) to fade edges so there are no hard borders
-- Remove `border-right`/`border-left` if any remain
-- Keep the background itself transparent — the grid floats over the dark desk background
+**`src/components/MarginDoodles.tsx`** — Update layout to fit viewport:
+- In `layoutDoodles`, use `gap = 2` (was 4) and `topPad = 6` (was 10) for tighter stacking
+- Use `left: 2px; right: 2px` instead of `4px` to maximize SVG width within the narrower column
 
 ### Files: 2
-1. `src/components/MarginDoodles.tsx` — Update `layoutDoodles` to use tight fixed gap instead of viewport-constrained spacing
-2. `src/index.css` — Re-enable `.margin-bg::before` with subtle grid + radial fade mask
+1. `src/index.css` — Halve margin column widths again
+2. `src/components/MarginDoodles.tsx` — Tighten gap and padding in layout function
 
