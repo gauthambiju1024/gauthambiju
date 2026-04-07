@@ -1,46 +1,28 @@
 
 
-## Plan: Remove Panel Animations, Add Background Systems
+## Fix: Make Particles and Gradient Spotlight Visible
 
-### What changes
+### Root Causes
 
-**Remove** all scroll-triggered panel animations (AnimatedPanel wrapper, entrance springs, dynamic shadows, parallax, panel-entrance-glow). Panels render statically with simple CSS shadows.
+1. **Particles** are drawn at opacity 0.05–0.12 with blue hues (220/214) at 50% lightness on a dark background (`hsl(220 15% 12%)`). This is essentially invisible — blue-on-near-black at 5-12% opacity.
 
-**Add** three layered background systems behind the panels:
+2. **Gradient spotlight** uses `hsl(var(--primary) / 0.06)` — only 6% opacity. On the dark background, this produces zero perceptible glow.
 
-### 1. Continuous Thread Line (new `src/components/ScrollThread.tsx`)
-A single SVG `<path>` that runs the full page height behind all panels. It uses `stroke-dashoffset` driven by scroll progress to draw itself as you scroll down. The path weaves left-right in an organic S-curve. Rendered as a fixed/absolute SVG behind the content with `z-index: 1`. Stroke color matches `--primary` at low opacity (~0.15). Uses `useScroll` + `useTransform` to animate dashoffset.
+### Fixes
 
-### 2. Ambient Particle Field (new `src/components/ParticleField.tsx`)
-A canvas element fixed behind all content rendering ~40-60 small dots/circles that drift slowly. On each animation frame:
-- Particles move with slight sine-wave drift (no mouse interaction needed)
-- Scroll position shifts particle Y positions slightly (parallax feel)
-- Particles are drawn at very low opacity (0.05-0.12) in primary/accent colors
-- Canvas covers full viewport, `position: fixed`, `z-index: 0`
+#### `src/components/ParticleField.tsx`
+- Increase particle opacity range from `0.05–0.12` to `0.15–0.45`
+- Increase particle radius from `0.5–2.5` to `1.5–4`
+- Increase particle count from 50 to 70
+- Shift lightness from 50% to 70% so particles are lighter against the dark bg
+- Add a mix of warm hues (gold ~38) alongside the blue for variety
 
-Uses `requestAnimationFrame` loop with cleanup on unmount. Respects `prefers-reduced-motion`.
+#### `src/index.css` — `.page-spotlight::before`
+- Increase gradient opacity from `0.06` to `0.15–0.2`
+- Increase radius from 800px to 1000px for a broader, more noticeable glow
+- Add a second gradient layer with a warm tone (gold/amber) for richer color
 
-### 3. Gradient Light Sweep (CSS in `src/index.css`)
-A radial gradient "spotlight" that follows scroll position. Implemented as a `::before` pseudo-element on the page container, using a CSS custom property `--scroll-y` updated by a small scroll listener in Index.tsx. The gradient is a soft warm circle (~400px radius) at low opacity that translates vertically with scroll.
-
-### Changes to `src/pages/Index.tsx`
-- Remove `AnimatedPanel` component entirely
-- Remove `useRef`, `useTransform` for shadows/parallax
-- Keep `useScroll`/`useSpring` only for the top progress bar
-- Remove `motion.div` wrappers from About section (keep static)
-- Remove `whileInView`/`initial` from hero and about wrappers — use plain `<div>`
-- Render panels as plain `<div>` wrappers (no animation)
-- Add `<ScrollThread />`, `<ParticleField />` components
-- Add scroll listener to set `--scroll-y` CSS variable on the container
-
-### Changes to `src/index.css`
-- Remove `.panel-entrance-glow` and its `::before` + `@keyframes glowFadeIn`
-- Add `.page-spotlight` — the gradient light sweep pseudo-element
-- Restore static `box-shadow` on `.section-panel`
-
-### Files: 4
-1. `src/components/ScrollThread.tsx` (new, ~60 lines)
-2. `src/components/ParticleField.tsx` (new, ~80 lines)
-3. `src/pages/Index.tsx` (simplified, ~50 lines)
-4. `src/index.css` (remove glow, add spotlight)
+### Files: 2
+1. `src/components/ParticleField.tsx` — boost opacity, size, lightness, count
+2. `src/index.css` — boost spotlight gradient opacity and radius
 
