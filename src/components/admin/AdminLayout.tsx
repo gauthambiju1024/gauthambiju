@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, FolderOpen, FileText, Type, Link2, Layers, Lightbulb } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, FileText, Type, Link2, Layers, Lightbulb, LogIn, LogOut } from 'lucide-react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -12,6 +16,22 @@ const navItems = [
 ];
 
 export default function AdminLayout() {
+  const { user, loading, signIn, signOut } = useAdminAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSigningIn(true);
+    setError('');
+    const { error: err } = await signIn(email, password);
+    if (err) setError(err.message);
+    else { setEmail(''); setPassword(''); }
+    setSigningIn(false);
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
@@ -37,6 +57,42 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
+        <div className="p-4 border-t border-border">
+          {loading ? (
+            <p className="text-xs text-muted-foreground">Loading...</p>
+          ) : user ? (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
+                <LogOut className="h-3 w-3 mr-2" /> Sign Out
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSignIn} className="space-y-2">
+              <p className="text-xs text-muted-foreground">Sign in for uploads</p>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="h-8 text-xs"
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="h-8 text-xs"
+                required
+              />
+              {error && <p className="text-xs text-destructive">{error}</p>}
+              <Button type="submit" size="sm" className="w-full" disabled={signingIn}>
+                <LogIn className="h-3 w-3 mr-2" /> {signingIn ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          )}
+        </div>
       </aside>
       <main className="flex-1 overflow-auto">
         <div className="p-8 max-w-5xl">
