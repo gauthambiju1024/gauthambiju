@@ -23,8 +23,8 @@ const Index = () => {
       <MarginDoodles />
 
       <div className="margin-content-wrapper relative z-[2]">
-        <div className="px-0 md:px-1">
-          <div id="home" className="blueprint-surface min-h-screen">
+        <div className="px-0 md:px-1 pt-2 md:pt-4">
+          <div id="home" className="blueprint-surface">
             <HeroSection />
           </div>
         </div>
