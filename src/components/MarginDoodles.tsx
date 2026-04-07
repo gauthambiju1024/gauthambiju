@@ -128,6 +128,20 @@ const MarginDoodles = () => {
     const leftData = setupDoodles(leftRef.current);
     const rightData = setupDoodles(rightRef.current);
 
+    // Setup border line animations
+    const borderSvgs = document.querySelectorAll('.margin-border-svg');
+    const borderPaths: { path: SVGPathElement; len: number }[] = [];
+    borderSvgs.forEach(svg => {
+      svg.querySelectorAll('.draw').forEach((p) => {
+        const path = p as SVGPathElement;
+        let len = 100;
+        try { len = path.getTotalLength() || 100; } catch(e) { /* fallback */ }
+        path.style.strokeDasharray = String(len);
+        path.style.strokeDashoffset = String(len);
+        borderPaths.push({ path, len });
+      });
+    });
+
     const relayout = () => {
       layoutDoodles(leftData.container, leftData.doodles);
       layoutDoodles(rightData.container, rightData.doodles);
@@ -137,6 +151,13 @@ const MarginDoodles = () => {
       if (!tickingRef.current) {
         requestAnimationFrame(() => {
           updateDoodles(leftData, rightData);
+          // Animate border lines in first 5% of scroll
+          const docH = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
+          const borderProgress = Math.min(1, progress / 0.05);
+          borderPaths.forEach(({ path, len }) => {
+            path.style.strokeDashoffset = String(len * (1 - borderProgress));
+          });
           tickingRef.current = false;
         });
         tickingRef.current = true;
@@ -150,6 +171,8 @@ const MarginDoodles = () => {
 
     relayout();
     updateDoodles(leftData, rightData);
+    // Trigger initial border state
+    onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
