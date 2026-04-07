@@ -166,12 +166,10 @@ const MarginDoodles = () => {
     <>
       {/* Fixed blueprint backgrounds */}
       <div className="margin-bg margin-bg--left hidden min-[800px]:block">
-        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
-        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
+        <BorderLineSvg />
       </div>
       <div className="margin-bg margin-bg--right hidden min-[800px]:block">
-        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
-        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
+        <BorderLineSvg />
       </div>
 
       {/* Fixed doodle layers */}
