@@ -403,20 +403,6 @@
     overflow: hidden;
   }
 
-  /* Desk connector — gap element between panels */
-  .desk-connector {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    pointer-events: none;
-    position: relative;
-    z-index: 1;
-  }
-
-  .desk-connector-svg {
-    filter: drop-shadow(0 2px 4px hsl(0 0% 0% / 0.2));
-  }
 
   /* Panel entrance glow — subtle top-edge highlight */
   .panel-entrance-glow {
