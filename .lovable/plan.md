@@ -1,76 +1,46 @@
 
 
-## Plan: World-Class Panel Transitions & Connections
+## Plan: Remove Panel Animations, Add Background Systems
 
-### Concept
-Each panel on the desk is a different physical object. As you scroll, the experience should feel like your eyes are traveling across a real desk — objects catch light, cast shadows, have depth, and small items lie between them. Four systems working together:
+### What changes
 
-### System 1: Scroll-Triggered Entrances (Index.tsx)
-Each panel enters with a staggered reveal:
-- Scale from 0.96 → 1.0
-- Opacity 0 → 1
-- Slight Y translation (30px → 0)
-- Each panel uses `whileInView` with `viewport={{ once: true, amount: 0.15 }}`
-- Transition uses a spring with `stiffness: 80, damping: 20` for a natural deceleration
+**Remove** all scroll-triggered panel animations (AnimatedPanel wrapper, entrance springs, dynamic shadows, parallax, panel-entrance-glow). Panels render statically with simple CSS shadows.
 
-The Hero and About panels get a slightly different entrance — Hero fades in immediately on load, About slides up with a notebook "placed down" feel (tiny rotateX perspective tilt, 2deg → 0).
+**Add** three layered background systems behind the panels:
 
-### System 2: Dynamic Shadow & Glow (index.css + Index.tsx)
-As each panel scrolls through the viewport, its shadow shifts based on scroll position:
-- When entering from below: shadow casts upward (as if light is from above)
-- When centered in viewport: maximum shadow depth and spread
-- When exiting above: shadow softens and fades
+### 1. Continuous Thread Line (new `src/components/ScrollThread.tsx`)
+A single SVG `<path>` that runs the full page height behind all panels. It uses `stroke-dashoffset` driven by scroll progress to draw itself as you scroll down. The path weaves left-right in an organic S-curve. Rendered as a fixed/absolute SVG behind the content with `z-index: 1`. Stroke color matches `--primary` at low opacity (~0.15). Uses `useScroll` + `useTransform` to animate dashoffset.
 
-Implemented via `useTransform` on each panel's `scrollYProgress`, mapping to a `boxShadow` motion value. This creates the "desk lamp sweeping" effect.
+### 2. Ambient Particle Field (new `src/components/ParticleField.tsx`)
+A canvas element fixed behind all content rendering ~40-60 small dots/circles that drift slowly. On each animation frame:
+- Particles move with slight sine-wave drift (no mouse interaction needed)
+- Scroll position shifts particle Y positions slightly (parallax feel)
+- Particles are drawn at very low opacity (0.05-0.12) in primary/accent colors
+- Canvas covers full viewport, `position: fixed`, `z-index: 0`
 
-Additionally, panels get a subtle border-glow on their top edge as they enter — a thin 1px gradient highlight that fades after the entrance animation completes.
+Uses `requestAnimationFrame` loop with cleanup on unmount. Respects `prefers-reduced-motion`.
 
-### System 3: Contextual Desk Connectors (new DeskConnectors.tsx)
-SVG objects placed in the gaps between panels, each contextually relevant to the two surfaces they bridge:
+### 3. Gradient Light Sweep (CSS in `src/index.css`)
+A radial gradient "spotlight" that follows scroll position. Implemented as a `::before` pseudo-element on the page container, using a CSS custom property `--scroll-y` updated by a small scroll listener in Index.tsx. The gradient is a soft warm circle (~400px radius) at low opacity that translates vertically with scroll.
 
-| Gap | Connector | Why |
-|-----|-----------|-----|
-| Blueprint → Notebook | Technical pencil + faint sketch lines | Drafting to notes |
-| Notebook → Shelf | Paperclip holding a small note | Clipping research to projects |
-| Shelf → Whiteboard | Dry-erase marker lying across | From archives to brainstorming |
-| Whiteboard → Toolbox | Small wrench/gear icon | From ideas to building |
-| Toolbox → Journey | Compass rose | From tools to navigation |
-| Journey → Writing | Fountain pen with ink dot | From experience to reflection |
-| Writing → Contact | Paper airplane, slightly tilted | From writing to sending |
+### Changes to `src/pages/Index.tsx`
+- Remove `AnimatedPanel` component entirely
+- Remove `useRef`, `useTransform` for shadows/parallax
+- Keep `useScroll`/`useSpring` only for the top progress bar
+- Remove `motion.div` wrappers from About section (keep static)
+- Remove `whileInView`/`initial` from hero and about wrappers — use plain `<div>`
+- Render panels as plain `<div>` wrappers (no animation)
+- Add `<ScrollThread />`, `<ParticleField />` components
+- Add scroll listener to set `--scroll-y` CSS variable on the container
 
-Each connector:
-- Has subtle parallax (moves at 0.5x scroll speed via `useTransform`)
-- Fades in as the gap enters viewport
-- Is rendered as a simple SVG with the handwritten Caveat font for any labels
-- Positioned centrally in the gap, ~40px tall
+### Changes to `src/index.css`
+- Remove `.panel-entrance-glow` and its `::before` + `@keyframes glowFadeIn`
+- Add `.page-spotlight` — the gradient light sweep pseudo-element
+- Restore static `box-shadow` on `.section-panel`
 
-### System 4: Depth & Parallax Layering (Index.tsx)
-Panels move at very slightly different scroll speeds to create a parallax stacking feel:
-- Odd panels: translateY moves at 1.0x (normal)
-- Even panels: translateY has a tiny parallax offset (~5-10px range) via `useTransform`
-- This is extremely subtle — just enough to feel like stacked objects at different heights on a desk
-
-### Files
-
-1. **`src/components/DeskConnectors.tsx`** (new, ~120 lines)
-   - Array of connector configs (SVG element, parallax speed, label)
-   - Each connector is a small component with `useParallax` for scroll-linked motion
-   - Simple, hand-drawn-style SVGs (stroke-based, matching margin doodle aesthetic)
-
-2. **`src/pages/Index.tsx`** (~40 lines changed)
-   - Wrap each panel in `motion.div` with `whileInView` entrance animations
-   - Insert `<DeskConnector>` components between panels
-   - Add per-panel `useScroll`/`useTransform` for dynamic shadow values
-   - Add subtle parallax offset to alternating panels
-
-3. **`src/index.css`** (~30 lines added)
-   - `.desk-connector` styles (centered, pointer-events-none, z-index between panels)
-   - `.panel-entrance-glow` keyframe for the border highlight on entry
-   - Remove the static `box-shadow` from `.section-panel` (replaced by dynamic motion shadow)
-
-### Performance
-- All animations use `transform` and `opacity` only (GPU-composited)
-- `will-change: transform` on animated panels
-- `viewport={{ once: true }}` on entrances so they don't re-trigger
-- Connectors are lightweight SVGs with no JS animation loops
+### Files: 4
+1. `src/components/ScrollThread.tsx` (new, ~60 lines)
+2. `src/components/ParticleField.tsx` (new, ~80 lines)
+3. `src/pages/Index.tsx` (simplified, ~50 lines)
+4. `src/index.css` (remove glow, add spotlight)
 
