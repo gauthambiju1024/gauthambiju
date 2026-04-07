@@ -36,14 +36,14 @@ const Index = () => {
       />
 
       {/* Hero — Blueprint panel */}
-      <div className="max-w-7xl mx-auto px-1 md:px-2 lg:px-4 pt-2 md:pt-4">
+      <div className="max-w-7xl mx-auto px-0 md:px-1 pt-2 md:pt-4">
         <div id="home" className="blueprint-surface">
           <HeroSection />
         </div>
       </div>
 
       {/* About — Notebook panel */}
-      <div className="max-w-7xl mx-auto px-1 md:px-2 lg:px-4 my-6 md:my-8">
+      <div className="max-w-7xl mx-auto px-0 md:px-1 my-6 md:my-8">
         <div id="about" className="notebook notebook-grid relative">
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
@@ -62,7 +62,7 @@ const Index = () => {
 
       {/* Floating section panels */}
       {panelSections.map(({ key, Component, bg, border }) => (
-        <div key={key} className="max-w-7xl mx-auto px-1 md:px-2 lg:px-4 my-6 md:my-8">
+        <div key={key} className="max-w-7xl mx-auto px-0 md:px-1 my-6 md:my-8">
           <div
             id={key}
             className={`section-panel ${bg} ${border}`}
