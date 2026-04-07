@@ -479,7 +479,7 @@
     top: 0;
     bottom: 0;
     width: var(--margin-col-width, 220px);
-    background: radial-gradient(ellipse at center, hsl(220 55% 24%) 0%, hsl(220 60% 16%) 100%);
+    background: transparent;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
@@ -487,12 +487,10 @@
 
   .margin-bg--left {
     left: 0;
-    border-right: 1px solid hsl(0 0% 100% / 0.12);
   }
 
   .margin-bg--right {
     right: 0;
-    border-left: 1px solid hsl(0 0% 100% / 0.12);
   }
 
   .margin-bg::before {
@@ -500,10 +498,10 @@
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(hsl(0 0% 100% / 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.08) 1px, transparent 1px),
-      linear-gradient(hsl(0 0% 100% / 0.18) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.18) 1px, transparent 1px);
+      linear-gradient(hsl(0 0% 100% / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.03) 1px, transparent 1px),
+      linear-gradient(hsl(0 0% 100% / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.06) 1px, transparent 1px);
     background-size: 14px 14px, 14px 14px, 70px 70px, 70px 70px;
     pointer-events: none;
   }
@@ -534,7 +532,7 @@
     top: 0;
     bottom: 0;
     width: var(--margin-col-width, 220px);
-    z-index: 2;
+    z-index: 1;
     pointer-events: none;
     overflow: hidden;
   }
