@@ -27,6 +27,8 @@ const Index = () => {
     <div className="min-h-screen desk-pattern" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
+      <div className="margin-content-wrapper">
+
       {/* Progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-primary origin-left z-[100]"
@@ -69,6 +71,7 @@ const Index = () => {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 };
