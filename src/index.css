@@ -594,40 +594,6 @@
   }
 }
 
-/* ─── CONSTRUCT REVEAL SYSTEM ─── */
-.construct {
-  border-style: dashed !important;
-  border-color: hsl(0 0% 100% / 0.25) !important;
-  opacity: 0.55;
-  transition: border-style 0s 0.5s, border-color 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.construct.constructed {
-  border-style: solid !important;
-  border-color: var(--construct-border-color, hsl(var(--border))) !important;
-  opacity: 1;
-  transition: border-color 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.construct-text {
-  color: transparent !important;
-  -webkit-text-stroke: 1.5px hsl(0 0% 100% / 0.35);
-  transition: color 0.9s cubic-bezier(0.22, 1, 0.36, 1), -webkit-text-stroke 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.construct-text.constructed,
-.constructed .construct-text {
-  color: var(--construct-color, hsl(var(--ink))) !important;
-  -webkit-text-stroke: 0px transparent;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .construct,
-  .construct-text {
-    transition: none !important;
-  }
-}
-
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }

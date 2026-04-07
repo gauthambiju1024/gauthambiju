@@ -63,7 +63,7 @@ const HeroSection = () => {
           </motion.div>
 
           <div className="mb-2">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] construct-text" style={{ '--construct-color': 'hsl(40 30% 85% / 0.5)' } as React.CSSProperties}>
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1]" style={{ color: 'hsl(40 30% 85% / 0.5)' }}>
               I'm learning to build
             </h1>
           </div>
@@ -84,7 +84,7 @@ const HeroSection = () => {
           </div>
 
           <div className="mb-10">
-            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1] construct-text" style={{ '--construct-color': 'hsl(40 30% 85% / 0.5)' } as React.CSSProperties}>
+            <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1]" style={{ color: 'hsl(40 30% 85% / 0.5)' }}>
               for problems worth solving.
             </h1>
           </div>

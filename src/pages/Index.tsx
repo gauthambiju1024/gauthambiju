@@ -7,7 +7,6 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
-import { useConstructReveal } from "@/hooks/useConstructReveal";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -19,21 +18,19 @@ const panelSections = [
 ];
 
 const Index = () => {
-  useConstructReveal();
-
   return (
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
       <div className="margin-content-wrapper relative z-[2]">
         <div className="px-0 md:px-1 pt-2 md:pt-4">
-          <div id="home" className="blueprint-surface construct">
+          <div id="home" className="blueprint-surface">
             <HeroSection />
           </div>
         </div>
 
         <div className="px-0 md:px-1 my-6 md:my-8">
-          <div id="about" className="notebook notebook-grid relative construct">
+          <div id="about" className="notebook notebook-grid relative">
             <div className="notebook-spine hidden md:block" />
             <div className="notebook-margin hidden md:block" />
             <div className="notebook-holes hidden md:block">
@@ -51,7 +48,7 @@ const Index = () => {
 
         {panelSections.map(({ key, Component, bg, border }) => (
           <div key={key} className="px-0 md:px-1 my-6 md:my-8">
-            <div id={key} className={`section-panel construct ${bg} ${border}`}>
+            <div id={key} className={`section-panel ${bg} ${border}`}>
               <Component />
             </div>
           </div>
