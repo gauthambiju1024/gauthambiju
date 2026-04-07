@@ -24,7 +24,7 @@ export default function ImageUpload({ value, onChange, folder = 'images', classN
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      toast.error('Session expired. Please log in again.');
+      toast.error('Please sign in via the sidebar to upload images.');
       setUploading(false);
       return;
     }
