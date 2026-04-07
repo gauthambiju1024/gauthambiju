@@ -30,15 +30,15 @@ const ParticleField = () => {
     resize();
     window.addEventListener('resize', resize);
 
-    const count = 50;
+    const count = 70;
     const particles: Particle[] = Array.from({ length: count }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      r: Math.random() * 2 + 0.5,
+      r: Math.random() * 2.5 + 1.5,
       speed: Math.random() * 0.3 + 0.1,
       phase: Math.random() * Math.PI * 2,
-      opacity: Math.random() * 0.07 + 0.05,
-      hue: Math.random() > 0.5 ? 220 : 214, // primary or accent
+      opacity: Math.random() * 0.3 + 0.15,
+      hue: Math.random() > 0.6 ? 38 : Math.random() > 0.5 ? 220 : 214,
     }));
 
     let scrollY = window.scrollY;
@@ -64,7 +64,7 @@ const ParticleField = () => {
 
         ctx.beginPath();
         ctx.arc(px, py, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${p.hue}, 60%, 50%, ${p.opacity})`;
+        ctx.fillStyle = `hsla(${p.hue}, 60%, 70%, ${p.opacity})`;
         ctx.fill();
       }
 
