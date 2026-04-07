@@ -493,7 +493,21 @@
     right: 0;
   }
 
-  .margin-bg::before,
+  .margin-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255, 0.03) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 80%);
+    pointer-events: none;
+  }
+
   .margin-bg::after {
     display: none;
   }
