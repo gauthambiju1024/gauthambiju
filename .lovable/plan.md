@@ -1,27 +1,19 @@
 
 
-## Plan: Remove All Background Effects
-
-Remove the three background systems (particle field, scroll thread, gradient spotlight) and clean up related code.
+## Plan: Make Hero Section Full Viewport Height
 
 ### Changes
 
-1. **`src/pages/Index.tsx`**
-   - Remove imports for `ParticleField`, `ScrollThread`
-   - Remove `<ParticleField />` and `<ScrollThread />` from JSX
-   - Remove the `useScroll`/`useSpring` progress bar and its `motion.div`
-   - Remove the scroll listener that sets `--scroll-y`
-   - Remove `page-spotlight` class from container
-   - Simplify to a plain container with static panels
+#### `src/pages/Index.tsx`
+- Add `min-h-screen` to the hero wrapper div (line 27) so the blueprint surface fills the viewport
+- Remove top padding (`pt-2 md:pt-4`) on the hero outer wrapper so it sits flush
 
-2. **`src/index.css`**
-   - Remove `.page-spotlight::before` block (gradient sweep)
-   - Remove `.desk-pattern` if no longer needed
+#### `src/components/HeroSection.tsx`
+- Add `min-h-screen` and `flex flex-col` to the `<section>` element
+- Add `flex-1` to the main content area so it stretches to fill available space
+- Keep the navigation bar pinned at the bottom via the flex layout
 
-3. **Delete files**
-   - `src/components/ParticleField.tsx`
-   - `src/components/ScrollThread.tsx`
-
-### Result
-Clean static layout — dark background with panels, no animated background layers.
+### Files: 2
+1. `src/pages/Index.tsx` — add `min-h-screen` to hero container
+2. `src/components/HeroSection.tsx` — flex layout to fill height
 
