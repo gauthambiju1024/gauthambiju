@@ -1,27 +1,39 @@
 
 
-## Plan: Remove All Background Effects
+## Plan: Fix Hero Image Upload RLS Error
 
-Remove the three background systems (particle field, scroll thread, gradient spotlight) and clean up related code.
+### Root Cause
 
-### Changes
+The storage upload request is being sent with the **anon key** instead of the authenticated user's JWT token. This causes `auth.uid()` to return null, and the storage INSERT policy (`has_role(auth.uid(), 'admin')`) rejects the upload with a 403 error.
 
-1. **`src/pages/Index.tsx`**
-   - Remove imports for `ParticleField`, `ScrollThread`
-   - Remove `<ParticleField />` and `<ScrollThread />` from JSX
-   - Remove the `useScroll`/`useSpring` progress bar and its `motion.div`
-   - Remove the scroll listener that sets `--scroll-y`
-   - Remove `page-spotlight` class from container
-   - Simplify to a plain container with static panels
+This happens because the `ImageUpload` component doesn't verify there's an active session before uploading. If the session token has expired or isn't refreshed, the Supabase client falls back to the anon key.
 
-2. **`src/index.css`**
-   - Remove `.page-spotlight::before` block (gradient sweep)
-   - Remove `.desk-pattern` if no longer needed
+### Fix
 
-3. **Delete files**
-   - `src/components/ParticleField.tsx`
-   - `src/components/ScrollThread.tsx`
+#### `src/components/admin/ImageUpload.tsx`
+- Before uploading, call `supabase.auth.getSession()` to ensure a valid session exists
+- If no session, show an error toast telling the user to re-login
+- This forces a token refresh if the session is stale, ensuring the upload request carries the correct JWT
 
-### Result
-Clean static layout — dark background with panels, no animated background layers.
+```typescript
+const handleUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  setUploading(true);
+
+  // Ensure we have a valid session before uploading
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    toast.error('Session expired. Please log in again.');
+    setUploading(false);
+    return;
+  }
+
+  // ... rest of upload logic
+};
+```
+
+### Files: 1
+1. `src/components/admin/ImageUpload.tsx` — add session check before storage upload
 
