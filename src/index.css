@@ -520,8 +520,8 @@
 
   @media (min-width: 800px) {
     .margin-content-wrapper {
-      padding-left: calc(var(--margin-col-width, 60px) - 30px);
-      padding-right: calc(var(--margin-col-width, 60px) - 30px);
+      padding-left: calc(var(--margin-col-width, 60px) + 4px);
+      padding-right: calc(var(--margin-col-width, 60px) + 4px);
     }
   }
 
