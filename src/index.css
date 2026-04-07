@@ -516,16 +516,20 @@
   }
 
   .margin-corner {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border: 1px solid hsl(0 0% 100% / 0.3);
+    display: none;
   }
 
-  .margin-corner.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
-  .margin-corner.tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
-  .margin-corner.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
-  .margin-corner.br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+  .margin-content-wrapper {
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (min-width: 800px) {
+    .margin-content-wrapper {
+      padding-left: var(--margin-col-width, 220px);
+      padding-right: var(--margin-col-width, 220px);
+    }
+  }
 
   .margin-doodles {
     position: fixed;
