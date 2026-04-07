@@ -45,8 +45,8 @@ const MarginDoodles = () => {
     let y = topPad;
     doodles.forEach((d, i) => {
       d.style.position = 'absolute';
-      d.style.left = '2px';
-      d.style.right = '2px';
+      d.style.left = '0';
+      d.style.right = '0';
       d.style.top = y + 'px';
       y += heights[i] + gap;
     });
@@ -136,12 +136,12 @@ const MarginDoodles = () => {
     <>
       {/* Fixed blueprint backgrounds */}
       <div className="margin-bg margin-bg--left hidden min-[800px]:block">
-        <span className="margin-corner tl" /><span className="margin-corner tr" />
-        <span className="margin-corner bl" /><span className="margin-corner br" />
+        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
+        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
       </div>
       <div className="margin-bg margin-bg--right hidden min-[800px]:block">
-        <span className="margin-corner tl" /><span className="margin-corner tr" />
-        <span className="margin-corner bl" /><span className="margin-corner br" />
+        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
+        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
       </div>
 
       {/* Fixed doodle layers */}
@@ -550,10 +550,10 @@ const MarginDoodles = () => {
       <text x="110" y="44" fontSize="13" fill="hsl(38, 60%, 52%)" className="fade">big bets ★</text>
       <text x="40" y="92" fontSize="12" fill="hsl(36, 12%, 60%)" className="fade">fill-in</text>
       <text x="116" y="92" fontSize="12" fill="hsl(0, 84%, 60%)" className="fade">avoid</text>
-      <path className="draw" d="M58 38 Q62 36 64 40 Q62 44 58 42 Q56 40 58 38 Z" stroke="hsl(190, 40%, 65%)" strokeWidth="1" fill="hsl(190, 40%, 65%)"/>
-      <path className="draw" d="M68 48 Q72 46 73 50 Q71 53 68 51 Q66 50 68 48 Z" stroke="hsl(190, 40%, 65%)" strokeWidth="1" fill="hsl(190, 40%, 65%)"/>
-      <path className="draw" d="M130 36 Q135 34 137 39 Q135 44 130 42 Q127 40 130 36 Z" stroke="hsl(38, 60%, 52%)" strokeWidth="1.2" fill="hsl(38, 60%, 52%)"/>
-      <path className="draw" d="M145 80 Q148 78 150 82 Q148 85 145 83 Q143 82 145 80 Z" stroke="hsl(0, 84%, 60%)" strokeWidth="1" fill="hsl(0, 84%, 60%)"/>
+      <circle cx="61" cy="40" r="3" className="fade" fill="hsl(190, 40%, 65%)" opacity="0"/>
+      <circle cx="70" cy="50" r="3" className="fade" fill="hsl(190, 40%, 65%)" opacity="0"/>
+      <circle cx="133" cy="39" r="4" className="fade" fill="hsl(38, 60%, 52%)" opacity="0"/>
+      <circle cx="147" cy="82" r="3" className="fade" fill="hsl(0, 84%, 60%)" opacity="0"/>
     </svg>
   </div>
   <div className="doodle">
