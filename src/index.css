@@ -493,26 +493,9 @@
     right: 0;
   }
 
-  .margin-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(hsl(0 0% 100% / 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.03) 1px, transparent 1px),
-      linear-gradient(hsl(0 0% 100% / 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.06) 1px, transparent 1px);
-    background-size: 14px 14px, 14px 14px, 70px 70px, 70px 70px;
-    pointer-events: none;
-  }
-
+  .margin-bg::before,
   .margin-bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='3' type='fractalNoise' seed='7'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
-    pointer-events: none;
-    mix-blend-mode: overlay;
+    display: none;
   }
 
   .margin-corner {
