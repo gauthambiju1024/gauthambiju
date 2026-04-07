@@ -412,10 +412,12 @@
     position: fixed;
     left: 50%;
     top: 0;
-    width: 800px;
-    height: 800px;
+    width: 1000px;
+    height: 1000px;
     border-radius: 50%;
-    background: radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%);
+    background:
+      radial-gradient(circle, hsl(var(--primary) / 0.18) 0%, transparent 70%),
+      radial-gradient(circle at 40% 50%, hsl(var(--gold) / 0.12) 0%, transparent 60%);
     transform: translate(-50%, calc(var(--scroll-y, 0) * 100vh - 400px));
     pointer-events: none;
     z-index: 0;
