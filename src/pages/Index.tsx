@@ -43,7 +43,7 @@ const Index = () => {
       </div>
 
       {/* About — Notebook panel */}
-      <div className="max-w-7xl mx-auto px-0 md:px-1 my-6 md:my-8">
+      <div className="px-0 md:px-1 my-6 md:my-8">
         <div id="about" className="notebook notebook-grid relative">
           <div className="notebook-spine hidden md:block" />
           <div className="notebook-margin hidden md:block" />
