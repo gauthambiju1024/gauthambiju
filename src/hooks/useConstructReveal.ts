@@ -11,16 +11,24 @@ export function useConstructReveal() {
       return;
     }
 
+    // Small initial delay so even above-fold elements show the ghost state briefly
+    const startDelay = 600;
+    let staggerIndex = 0;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("constructed");
+            const delay = startDelay + staggerIndex * 150;
+            staggerIndex++;
+            setTimeout(() => {
+              entry.target.classList.add("constructed");
+            }, delay);
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
 
     elements.forEach((el) => observer.observe(el));
