@@ -529,9 +529,9 @@
 
   .doodle {
     position: absolute;
-    left: 8px;
-    right: 8px;
-    padding: 4px 6px;
+    left: 4px;
+    right: 4px;
+    padding: 2px 3px;
   }
 
   .doodle:nth-child(2n) { transform: rotate(-0.7deg); }
@@ -572,16 +572,16 @@
 }
 
 :root {
-  --margin-col-width: 220px;
+  --margin-col-width: 110px;
 }
 
 @media (max-width: 1280px) {
-  :root { --margin-col-width: 170px; }
+  :root { --margin-col-width: 85px; }
 }
 
 @media (max-width: 1100px) {
-  :root { --margin-col-width: 80px; }
-  .doodle { padding: 2px 2px; left: 3px; right: 3px; }
+  :root { --margin-col-width: 40px; }
+  .doodle { padding: 1px 1px; left: 2px; right: 2px; }
 }
 
 @layer utilities {
