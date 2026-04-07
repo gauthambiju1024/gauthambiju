@@ -401,38 +401,25 @@
     padding: 1px;
     position: relative;
     overflow: hidden;
+    box-shadow:
+      0 12px 40px -8px hsl(0 0% 0% / 0.35),
+      0 4px 12px -2px hsl(0 0% 0% / 0.2);
   }
 
-
-  /* Panel entrance glow — subtle top-edge highlight */
-  .panel-entrance-glow {
-    position: relative;
-  }
-
-  .panel-entrance-glow::before {
+  /* Gradient light sweep — follows scroll */
+  .page-spotlight::before {
     content: '';
-    position: absolute;
+    position: fixed;
+    left: 50%;
     top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--primary) / 0.3) 30%,
-      hsl(var(--primary) / 0.5) 50%,
-      hsl(var(--primary) / 0.3) 70%,
-      transparent 100%
-    );
-    z-index: 10;
-    opacity: 0;
-    animation: glowFadeIn 1.2s ease-out 0.3s forwards;
-  }
-
-  @keyframes glowFadeIn {
-    0% { opacity: 0; transform: scaleX(0.5); }
-    60% { opacity: 1; transform: scaleX(1); }
-    100% { opacity: 0; transform: scaleX(1.1); }
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%);
+    transform: translate(-50%, calc(var(--scroll-y, 0) * 100vh - 400px));
+    pointer-events: none;
+    z-index: 0;
+    transition: transform 0.1s linear;
   }
 
   /* Blueprint surface — dark green with grid */
