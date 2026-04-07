@@ -31,25 +31,41 @@ const MarginDoodles = () => {
 
   const layoutDoodles = useCallback((container: HTMLDivElement | null, doodles: HTMLDivElement[]) => {
     if (!container || doodles.length === 0) return;
-    const gap = 2;
-    const topPad = 6;
+    const topPad = 28;
+    const bottomPad = 28;
+    const availableHeight = window.innerHeight - topPad - bottomPad;
 
+    // Reset to measure natural heights
+    container.style.transform = '';
+    container.style.transformOrigin = '';
     doodles.forEach(d => {
       d.style.position = 'static';
       d.style.left = '';
       d.style.top = '';
+      d.style.transform = '';
     });
 
     const heights = doodles.map(d => d.offsetHeight);
+    const totalNatural = heights.reduce((a, b) => a + b, 0);
 
+    // Calculate scale factor if needed
+    const scaleFactor = totalNatural > availableHeight ? availableHeight / totalNatural : 1;
+
+    // Stack with zero gap (scaling handles fit)
     let y = topPad;
     doodles.forEach((d, i) => {
       d.style.position = 'absolute';
       d.style.left = '0';
       d.style.right = '0';
       d.style.top = y + 'px';
-      y += heights[i] + gap;
+      y += heights[i];
     });
+
+    // Apply scale to container if needed
+    if (scaleFactor < 1) {
+      container.style.transform = `scaleY(${scaleFactor})`;
+      container.style.transformOrigin = 'top center';
+    }
   }, []);
 
   const updateDoodles = useCallback((leftData: ReturnType<typeof setupDoodles>, rightData: ReturnType<typeof setupDoodles>) => {
