@@ -9,7 +9,6 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
-import DeskConnector from "@/components/DeskConnectors";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -20,7 +19,6 @@ const panelSections = [
   { key: 'contact', Component: ContactClosing, bg: '', border: 'border-transparent' },
 ];
 
-/* Animated panel wrapper with dynamic shadow based on scroll position */
 const AnimatedPanel = ({ children, index }: { children: React.ReactNode; index: number }) => {
   const ref = useRef<HTMLDivElement>(null!);
   const { scrollYProgress } = useScroll({
@@ -28,12 +26,9 @@ const AnimatedPanel = ({ children, index }: { children: React.ReactNode; index: 
     offset: ['start end', 'end start'],
   });
 
-  // Dynamic shadow: intensifies when centered in viewport
   const shadowOpacity = useTransform(scrollYProgress, [0, 0.3, 0.5, 0.7, 1], [0.15, 0.35, 0.5, 0.35, 0.15]);
   const shadowY = useTransform(scrollYProgress, [0, 0.5, 1], [8, 25, 8]);
   const shadowBlur = useTransform(scrollYProgress, [0, 0.5, 1], [24, 80, 24]);
-
-  // Subtle parallax for even panels
   const parallaxY = useTransform(scrollYProgress, [0, 1], index % 2 === 0 ? [0, 0] : [6, -6]);
 
   const boxShadow = useTransform(
@@ -69,13 +64,11 @@ const Index = () => {
 
       <div className="margin-content-wrapper">
 
-      {/* Progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-primary origin-left z-[100]"
         style={{ scaleX }}
       />
 
-      {/* Hero — Blueprint panel */}
       <motion.div
         className="px-0 md:px-1 pt-2 md:pt-4"
         initial={{ opacity: 0 }}
@@ -87,12 +80,8 @@ const Index = () => {
         </div>
       </motion.div>
 
-      {/* Connector: Blueprint → Notebook */}
-      <DeskConnector index={0} />
-
-      {/* About — Notebook panel with "placed down" entrance */}
       <motion.div
-        className="px-0 md:px-1 my-2 md:my-4"
+        className="px-0 md:px-1 my-6 md:my-8"
         initial={{ opacity: 0, y: 40, rotateX: 2 }}
         whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
         viewport={{ once: true, amount: 0.15 }}
@@ -115,22 +104,16 @@ const Index = () => {
         </div>
       </motion.div>
 
-      {/* Floating section panels with connectors between them */}
       {panelSections.map(({ key, Component, bg, border }, idx) => (
-        <div key={key}>
-          {/* Connector before each panel (first connector is Notebook→Shelf) */}
-          <DeskConnector index={idx + 1} />
-
-          <div className="px-0 md:px-1 my-2 md:my-4">
-            <AnimatedPanel index={idx}>
-              <div
-                id={key}
-                className={`section-panel ${bg} ${border} panel-entrance-glow`}
-              >
-                <Component />
-              </div>
-            </AnimatedPanel>
-          </div>
+        <div key={key} className="px-0 md:px-1 my-6 md:my-8">
+          <AnimatedPanel index={idx}>
+            <div
+              id={key}
+              className={`section-panel ${bg} ${border} panel-entrance-glow`}
+            >
+              <Component />
+            </div>
+          </AnimatedPanel>
         </div>
       ))}
       </div>
