@@ -1,39 +1,25 @@
 
 
-## Plan: Fix Hero Image Upload RLS Error
+## Plan: Add Login to Admin Panel for Authenticated Actions
 
-### Root Cause
+The admin panel currently has no login UI (auth guards were previously removed for open access). However, storage uploads require an authenticated session due to RLS policies. When the session expires or doesn't exist, there's no way to sign back in.
 
-The storage upload request is being sent with the **anon key** instead of the authenticated user's JWT token. This causes `auth.uid()` to return null, and the storage INSERT policy (`has_role(auth.uid(), 'admin')`) rejects the upload with a 403 error.
+### Solution
 
-This happens because the `ImageUpload` component doesn't verify there's an active session before uploading. If the session token has expired or isn't refreshed, the Supabase client falls back to the anon key.
+Add a lightweight login form that appears only when an upload fails due to missing session, plus a persistent sign-in option in the admin sidebar.
 
-### Fix
+### Changes
 
-#### `src/components/admin/ImageUpload.tsx`
-- Before uploading, call `supabase.auth.getSession()` to ensure a valid session exists
-- If no session, show an error toast telling the user to re-login
-- This forces a token refresh if the session is stale, ensuring the upload request carries the correct JWT
+#### 1. `src/components/admin/AdminLayout.tsx`
+- Import `useAdminAuth` hook
+- Add a sign-in/sign-out button in the sidebar footer showing current auth state
+- When not signed in, show a compact login form (email + password) inline in the sidebar
+- When signed in, show user email and a sign-out button
 
-```typescript
-const handleUpload = async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+#### 2. `src/components/admin/ImageUpload.tsx`
+- When session check fails, instead of just showing a toast, show a more helpful message directing the user to sign in via the sidebar
 
-  setUploading(true);
-
-  // Ensure we have a valid session before uploading
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    toast.error('Session expired. Please log in again.');
-    setUploading(false);
-    return;
-  }
-
-  // ... rest of upload logic
-};
-```
-
-### Files: 1
-1. `src/components/admin/ImageUpload.tsx` — add session check before storage upload
+### Files: 2
+1. `src/components/admin/AdminLayout.tsx` — add auth state display and login form in sidebar
+2. `src/components/admin/ImageUpload.tsx` — improve error message
 
