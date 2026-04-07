@@ -68,7 +68,7 @@ const MarginDoodles = () => {
     const totalNatural = heights.reduce((a, b) => a + b, 0);
 
     // Calculate scale factor if needed
-    const scaleFactor = totalNatural > availableHeight ? availableHeight / totalNatural : 1;
+    const scaleFactor = availableHeight / totalNatural;
 
     // Stack with zero gap (scaling handles fit)
     const doodleWidth = containerWidth * 0.8;
@@ -83,10 +83,8 @@ const MarginDoodles = () => {
     });
 
     // Apply scale to container if needed
-    if (scaleFactor < 1) {
-      container.style.transform = `scaleY(${scaleFactor})`;
-      container.style.transformOrigin = 'top center';
-    }
+    container.style.transform = `scaleY(${scaleFactor})`;
+    container.style.transformOrigin = 'top center';
   }, []);
 
   const updateDoodles = useCallback((leftData: ReturnType<typeof setupDoodles>, rightData: ReturnType<typeof setupDoodles>) => {
