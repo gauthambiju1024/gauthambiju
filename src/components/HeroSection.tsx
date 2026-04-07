@@ -16,7 +16,7 @@ const HeroSection = () => {
   const portraitSrc = hero?.portrait || heroPortrait;
 
   return (
-    <section className="relative px-6 md:px-12 pt-6 pb-0 overflow-hidden">
+    <section className="relative px-6 md:px-12 pt-6 pb-0 overflow-hidden min-h-screen flex flex-col">
       {/* Top bar */}
       <motion.div
         className="flex items-center justify-between mb-8"
@@ -49,7 +49,7 @@ const HeroSection = () => {
         </div>
       </motion.div>
 
-      <div className="flex items-start gap-8 md:gap-12">
+      <div className="flex items-start gap-8 md:gap-12 flex-1">
         {/* Left — Headline */}
         <div className="flex-1 relative z-10">
           {/* Dashed annotation arrow */}
@@ -151,7 +151,7 @@ const HeroSection = () => {
       </div>
 
       {/* Navigation at bottom */}
-      <div className="mt-4 border-t" style={{ borderColor: 'hsl(0 0% 100% / 0.08)' }}>
+      <div className="mt-auto border-t" style={{ borderColor: 'hsl(0 0% 100% / 0.08)' }}>
         <Navigation embedded />
       </div>
     </section>
