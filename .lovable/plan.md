@@ -1,28 +1,15 @@
 
 
-## Plan: Replace Border SVG with Simple Top/Bottom Line Doodles
+## Plan: Reduce Top/Bottom Padding in Margin Doodle Layout
 
-### What Changes
+### Problem
+The `layoutDoodles` function uses `topPad = 28` and `bottomPad = 28`, creating excessive empty space above and below the doodle stack in each margin.
 
-**1. `src/components/MarginDoodles.tsx`**
-- **Remove `BorderLineSvg` component** entirely (lines 3-10)
-- **Remove the two `margin-bg` divs** that render `BorderLineSvg` (lines 191-196)
-- **Remove border line animation logic** from the `useEffect` (lines 132-143 and 154-160) — no separate border animation needed
-- **Add a simple hand-drawn horizontal line doodle as the first doodle** (index 0) in each margin column — a wavy/imperfect single stroke near the top, using a `<path className="draw">` just like all other doodles. viewBox ~`0 0 200 12`, positioned close to the top edge
-- **Add a matching bottom line doodle as the last doodle** (index 23) in each column — same style, near the bottom edge
-- These two line doodles are treated as regular doodles in the scroll animation (the top line draws first, bottom line draws last) — no special handling needed
-- Total doodles per side becomes 24 (top line + 22 existing + bottom line)
+### Changes
 
-**2. `src/index.css`**
-- **Remove `.margin-border-svg`** styles (no longer needed)
-- **Remove `.margin-bg::before` blueprint grid** background since the border SVG container is gone — or keep `.margin-bg` divs purely for the faint grid if desired. Since the border lines are gone, simplify by removing the `.margin-bg` divs entirely and their styles
+**`src/components/MarginDoodles.tsx`**
+- Reduce `topPad` from `28` to `6` and `bottomPad` from `28` to `6` in the `layoutDoodles` function (lines 50-52)
+- This brings the doodle stack (including the top/bottom hand-drawn lines) much closer to the viewport edges
 
-### Result
-- Each margin has a simple hand-drawn line at the very top and very bottom, animated on scroll like every other doodle
-- No separate border/bracket system — just doodles
-- Doodles remain centred at 80% width with padding from edges
-
-### Files: 2
-1. `src/components/MarginDoodles.tsx` — Remove BorderLineSvg, add top/bottom line doodles, remove border animation logic
-2. `src/index.css` — Remove `.margin-border-svg` styles
+### Files: 1
 
