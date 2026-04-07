@@ -1,5 +1,14 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+const BorderLineSvg = () => (
+  <svg className="margin-border-svg" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+    <path className="draw" d="M4 4 L96 4" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M4 96 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M4 4 L4 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+    <path className="draw" d="M96 4 L96 96" stroke="hsl(0 0% 100% / 0.3)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+  </svg>
+);
+
 const MarginDoodles = () => {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -34,6 +43,7 @@ const MarginDoodles = () => {
     const topPad = 28;
     const bottomPad = 28;
     const availableHeight = window.innerHeight - topPad - bottomPad;
+    const containerWidth = container.offsetWidth;
 
     // Reset to measure natural heights
     container.style.transform = '';
@@ -43,6 +53,8 @@ const MarginDoodles = () => {
       d.style.left = '';
       d.style.top = '';
       d.style.transform = '';
+      d.style.width = '80%';
+      d.style.margin = '0 auto';
     });
 
     const heights = doodles.map(d => d.offsetHeight);
@@ -52,11 +64,13 @@ const MarginDoodles = () => {
     const scaleFactor = totalNatural > availableHeight ? availableHeight / totalNatural : 1;
 
     // Stack with zero gap (scaling handles fit)
+    const doodleWidth = containerWidth * 0.8;
+    const doodleLeft = (containerWidth - doodleWidth) / 2;
     let y = topPad;
     doodles.forEach((d, i) => {
       d.style.position = 'absolute';
-      d.style.left = '0';
-      d.style.right = '0';
+      d.style.left = doodleLeft + 'px';
+      d.style.width = '80%';
       d.style.top = y + 'px';
       y += heights[i];
     });
@@ -114,6 +128,20 @@ const MarginDoodles = () => {
     const leftData = setupDoodles(leftRef.current);
     const rightData = setupDoodles(rightRef.current);
 
+    // Setup border line animations
+    const borderSvgs = document.querySelectorAll('.margin-border-svg');
+    const borderPaths: { path: SVGPathElement; len: number }[] = [];
+    borderSvgs.forEach(svg => {
+      svg.querySelectorAll('.draw').forEach((p) => {
+        const path = p as SVGPathElement;
+        let len = 100;
+        try { len = path.getTotalLength() || 100; } catch(e) { /* fallback */ }
+        path.style.strokeDasharray = String(len);
+        path.style.strokeDashoffset = String(len);
+        borderPaths.push({ path, len });
+      });
+    });
+
     const relayout = () => {
       layoutDoodles(leftData.container, leftData.doodles);
       layoutDoodles(rightData.container, rightData.doodles);
@@ -123,6 +151,13 @@ const MarginDoodles = () => {
       if (!tickingRef.current) {
         requestAnimationFrame(() => {
           updateDoodles(leftData, rightData);
+          // Animate border lines in first 5% of scroll
+          const docH = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
+          const borderProgress = Math.min(1, progress / 0.05);
+          borderPaths.forEach(({ path, len }) => {
+            path.style.strokeDashoffset = String(len * (1 - borderProgress));
+          });
           tickingRef.current = false;
         });
         tickingRef.current = true;
@@ -136,6 +171,8 @@ const MarginDoodles = () => {
 
     relayout();
     updateDoodles(leftData, rightData);
+    // Trigger initial border state
+    onScroll();
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
@@ -152,12 +189,10 @@ const MarginDoodles = () => {
     <>
       {/* Fixed blueprint backgrounds */}
       <div className="margin-bg margin-bg--left hidden min-[800px]:block">
-        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
-        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
+        <BorderLineSvg />
       </div>
       <div className="margin-bg margin-bg--right hidden min-[800px]:block">
-        <span className="margin-corner margin-corner--tl" /><span className="margin-corner margin-corner--tr" />
-        <span className="margin-corner margin-corner--bl" /><span className="margin-corner margin-corner--br" />
+        <BorderLineSvg />
       </div>
 
       {/* Fixed doodle layers */}
