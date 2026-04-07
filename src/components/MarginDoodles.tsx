@@ -34,6 +34,7 @@ const MarginDoodles = () => {
     const topPad = 28;
     const bottomPad = 28;
     const availableHeight = window.innerHeight - topPad - bottomPad;
+    const containerWidth = container.offsetWidth;
 
     // Reset to measure natural heights
     container.style.transform = '';
@@ -43,6 +44,8 @@ const MarginDoodles = () => {
       d.style.left = '';
       d.style.top = '';
       d.style.transform = '';
+      d.style.width = '80%';
+      d.style.margin = '0 auto';
     });
 
     const heights = doodles.map(d => d.offsetHeight);
@@ -52,11 +55,13 @@ const MarginDoodles = () => {
     const scaleFactor = totalNatural > availableHeight ? availableHeight / totalNatural : 1;
 
     // Stack with zero gap (scaling handles fit)
+    const doodleWidth = containerWidth * 0.8;
+    const doodleLeft = (containerWidth - doodleWidth) / 2;
     let y = topPad;
     doodles.forEach((d, i) => {
       d.style.position = 'absolute';
-      d.style.left = '0';
-      d.style.right = '0';
+      d.style.left = doodleLeft + 'px';
+      d.style.width = '80%';
       d.style.top = y + 'px';
       y += heights[i];
     });
