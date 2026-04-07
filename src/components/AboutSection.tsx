@@ -32,7 +32,7 @@ const AboutSection = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground mb-8 leading-tight">
+          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground mb-8 leading-tight construct-text">
             Notes on How I Work
           </h2>
 

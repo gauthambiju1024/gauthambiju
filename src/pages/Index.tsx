@@ -7,6 +7,7 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
+import { useConstructReveal } from "@/hooks/useConstructReveal";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -48,7 +49,7 @@ const Index = () => {
 
         {panelSections.map(({ key, Component, bg, border }) => (
           <div key={key} className="px-0 md:px-1 my-6 md:my-8">
-            <div id={key} className={`section-panel ${bg} ${border}`}>
+            <div id={key} className={`section-panel construct ${bg} ${border}`}>
               <Component />
             </div>
           </div>
