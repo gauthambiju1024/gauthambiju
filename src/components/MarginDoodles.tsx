@@ -31,10 +31,8 @@ const MarginDoodles = () => {
 
   const layoutDoodles = useCallback((container: HTMLDivElement | null, doodles: HTMLDivElement[]) => {
     if (!container || doodles.length === 0) return;
-    const colHeight = window.innerHeight;
-    const topPad = 30;
-    const bottomPad = 30;
-    const usable = colHeight - topPad - bottomPad;
+    const gap = 4;
+    const topPad = 10;
 
     doodles.forEach(d => {
       d.style.position = 'static';
@@ -43,14 +41,12 @@ const MarginDoodles = () => {
     });
 
     const heights = doodles.map(d => d.offsetHeight);
-    const totalH = heights.reduce((a, b) => a + b, 0);
-    const gap = Math.max(2, (usable - totalH) / Math.max(1, doodles.length - 1));
 
     let y = topPad;
     doodles.forEach((d, i) => {
       d.style.position = 'absolute';
-      d.style.left = '8px';
-      d.style.right = '8px';
+      d.style.left = '4px';
+      d.style.right = '4px';
       d.style.top = y + 'px';
       y += heights[i] + gap;
     });
