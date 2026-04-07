@@ -1,30 +1,23 @@
 
 
-## Plan: Fix Margin Issues & Expand Panels
-
-### Issues Identified
-
-1. **Empty space on left margin**: Doodles have `left: 2px` offset leaving visible gap
-2. **Corner brackets missing**: The blueprint-style square brackets (from image-21) should frame the margin backgrounds at top-left, top-right, bottom-left, bottom-right corners
-3. **Colored dots visible at initial state**: The "impact/effort" doodle (right side, ~line 553-556) has small filled circles (`fill="hsl(...)"`) on `.draw` paths. Even though stroke is hidden via dashoffset, the `fill` renders immediately as colored dots
-4. **Too much space between margin and panels**: The `margin-content-wrapper` pads by `var(--margin-col-width)` on each side, plus panels have `px-2 md:px-4 lg:px-8` — combined creates excessive gap
+## Plan: Tighten Margin-Panel Gap, Bolder Brackets, Contained Doodles
 
 ### Changes
 
 **1. `src/index.css`**
-- Re-enable `.margin-corner` styles (currently `display: none`) as subtle bracket marks at all 4 corners of each margin background — thin 1px lines, low opacity white, ~16px size
-- Reduce `margin-content-wrapper` padding to use a smaller value than `--margin-col-width` (e.g., `calc(var(--margin-col-width) - 10px)`) so panels sit closer to margins
-- Tighten `.doodle` left/right to `0px` to eliminate empty space in margin column
+
+- **Reduce margin-to-panel spacing**: Change `margin-content-wrapper` padding from `calc(var(--margin-col-width) - 10px)` to `calc(var(--margin-col-width) - 18px)` — panels expand ~8px closer to margins on each side
+- **Bolder corner brackets**: Increase `.margin-corner` opacity from `0.15` to `0.35` and border width from `1px` to `1.5px`
+- **Remove doodle rotations**: The `nth-child` rotate/translate transforms on `.doodle` cause overlap in tight columns — remove all four rotation rules so doodles stack cleanly without overlapping
+- **Remove doodle padding**: Set `.doodle` padding to `0` to eliminate any vertical overflow
 
 **2. `src/components/MarginDoodles.tsx`**
-- On the "impact/effort" doodle (~line 553-556): remove the `fill` attribute from the 4 small dot paths (keep stroke only), so they only appear when drawn. Alternatively, add `fillOpacity="0"` initially and use the `.fade` class approach
-- Adjust doodle `left`/`right` in `layoutDoodles` to `0px`
 
-**3. `src/pages/Index.tsx`**
-- Reduce horizontal padding on panel wrappers: change `px-2 md:px-4 lg:px-8` to `px-1 md:px-2 lg:px-4` so panels expand closer to the margins
+- **Constrain doodles within brackets**: Adjust `layoutDoodles` to respect bracket insets — use `topPad = 28` (below top brackets) and cap total height to `viewportHeight - 56` (above bottom brackets)
+- **Scale gap dynamically**: After measuring all doodle heights, if total exceeds available space, reduce gap to 0 and scale SVGs down via a `transform: scale()` factor so everything fits without overlap
+- Logic: `availableHeight = window.innerHeight - 56; totalNatural = sum(heights); if totalNatural > availableHeight: scaleFactor = availableHeight / totalNatural` then apply to container
 
-### Files: 3
-1. `src/index.css` — Enable corner brackets, reduce content wrapper padding, tighten doodle positioning
-2. `src/components/MarginDoodles.tsx` — Fix colored dot fills, adjust doodle left/right to 0
-3. `src/pages/Index.tsx` — Reduce panel horizontal padding
+### Files: 2
+1. `src/index.css` — Tighter padding, bolder brackets, remove rotation transforms
+2. `src/components/MarginDoodles.tsx` — Constrain doodle stack within bracket bounds, scale to fit
 
