@@ -1,29 +1,53 @@
 
 
-## Plan: Fix Construction Marks Visibility
+## Plan: Integrate Build-Story Components (Builder Character, Schematic Callouts, Panel Bleeds)
 
-### Root Cause
+Three new decorative layers that make the panels feel like one continuous build document instead of isolated sections on a dark background.
 
-The `.ghost-grid` container has `opacity: 0.06`, which applies to **all children** including the SVG marks. So the marks' effective opacity is `0.06 × 0.3 = 1.8%` — virtually invisible. Even during flash it's only `0.18 × 1 = 18%` for elements drawn with `rgba(255,255,255,0.4)`, making them ~7% effective.
+### What Gets Added
 
-### Solution
+1. **BuilderCharacter** — A small line-drawn stick figure fixed in the left gutter that travels down with scroll and changes pose per section (drafting at Hero, writing at About, shelving at Projects, etc.). Desktop only.
 
-Separate the grid background and construction marks into **two sibling elements** so the marks aren't affected by the grid's low opacity. The grid background keeps its low opacity via its own element, while the marks SVG sits alongside it with independent opacity control.
+2. **SchematicCallout** — Architect-style dashed connectors between panels that draw themselves on scroll, with gold mono-font labels ("measured → written → shelved → pinned → equipped → walked → written up → sent"). Alternating left/right sides.
+
+3. **PanelBleed** — Static SVG "residue" at the bottom of each panel — pencil marks under blueprint, ink under notebook, sawdust under shelf, marker drips under whiteboard, etc.
 
 ### Changes
 
-#### 1. `src/components/GhostGrid.tsx`
-- Wrap everything in a plain container div (`position: fixed, inset: 0, z-index: 0, pointer-events: none`)
-- Render the grid background as one child div (`.ghost-grid-bg`) with the low opacity
-- Render the SVG marks as a sibling div (`.ghost-grid__marks`) with its own independent opacity
-- Both get the flash class toggled
+#### 1. New files: `src/components/build-story/`
+- `BuilderCharacter.tsx` — copied from upload
+- `SchematicCallout.tsx` — copied from upload
+- `PanelBleed.tsx` — copied from upload
+- `index.ts` — barrel export
 
-#### 2. `src/index.css`
-- Split `.ghost-grid` into a wrapper (no opacity) and `.ghost-grid-bg` (carries the background + low opacity)
-- `.ghost-grid__marks` becomes a direct child of the wrapper, not affected by background opacity
-- Base marks opacity: `0.15` (subtle but visible), flash: `0.5`
+#### 2. `src/pages/Index.tsx`
+- Import all three components
+- Add `<BuilderCharacter />` at the top level (fixed position, no layout impact)
+- Add `<SchematicCallout />` between each pair of panels with alternating sides and narrative labels
+- Add `<PanelBleed />` inside each panel wrapper with the correct variant
+- Refactor the panel loop to render callouts and bleeds inline (unroll the map or enrich the data array with bleed variant and callout labels)
 
-### Files: 2
-1. `src/components/GhostGrid.tsx` — restructure to sibling elements
-2. `src/index.css` — split styles for independent opacity control
+#### 3. Remove `<GhostGrid />` (replaced by these richer layers)
+- Remove import and usage from Index.tsx
+- Optionally keep `src/components/GhostGrid.tsx` and its CSS if you want to reuse later, or delete
+
+### Panel-to-Variant Mapping
+
+| Panel | Bleed Variant | Callout Before |
+|---|---|---|
+| Hero (blueprint) | `"blueprint"` | — |
+| About (notebook) | `"notebook"` | `"measured" → "written"` (left) |
+| Projects (shelf) | `"shelf"` | `"written" → "shelved"` (right) |
+| Thinking (whiteboard) | `"whiteboard"` | `"shelved" → "pinned"` (left) |
+| Skills (toolbox) | `"toolbox"` | `"pinned" → "equipped"` (right) |
+| Journey | `"journey"` | `"equipped" → "walked"` (left) |
+| Writing (editorial) | `"editorial"` | `"walked" → "written up"` (right) |
+| Contact | `"contact"` | `"written up" → "sent"` (left) |
+
+### Files: 5
+1. `src/components/build-story/BuilderCharacter.tsx` — new (from upload)
+2. `src/components/build-story/SchematicCallout.tsx` — new (from upload)
+3. `src/components/build-story/PanelBleed.tsx` — new (from upload)
+4. `src/components/build-story/index.ts` — new barrel export
+5. `src/pages/Index.tsx` — integrate all three components, remove GhostGrid
 
