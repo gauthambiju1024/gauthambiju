@@ -7,6 +7,7 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
+import { BuildGap } from "@/components/build-story/BuildGap";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -15,6 +16,15 @@ const panelSections = [
   { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-primary/20' },
   { key: 'writing', Component: WritingDesk, bg: 'editorial-bg', border: 'border-[hsl(var(--notebook-border)/0.3)]' },
   { key: 'contact', Component: ContactClosing, bg: '', border: 'border-transparent' },
+];
+
+const gapData = [
+  { refCode: "A.01 → B.02", label: "written → shelved" },
+  { refCode: "B.02 → C.03", label: "shelved → pinned" },
+  { refCode: "C.03 → D.04", label: "pinned → equipped" },
+  { refCode: "D.04 → E.05", label: "equipped → travelled" },
+  { refCode: "E.05 → F.06", label: "travelled → drafted" },
+  { refCode: "F.06 → G.07", label: "drafted → sent" },
 ];
 
 const Index = () => {
@@ -28,6 +38,8 @@ const Index = () => {
             <HeroSection />
           </div>
         </div>
+
+        <BuildGap refCode="GB.001 → A.01" label="measured → written" />
 
         <div className="px-0 md:px-1 my-6 md:my-8">
           <div id="about" className="notebook notebook-grid relative">
@@ -46,10 +58,15 @@ const Index = () => {
           </div>
         </div>
 
-        {panelSections.map(({ key, Component, bg, border }) => (
-          <div key={key} className="px-0 md:px-1 my-6 md:my-8">
-            <div id={key} className={`section-panel ${bg} ${border}`}>
-              <Component />
+        {panelSections.map(({ key, Component, bg, border }, index) => (
+          <div key={key}>
+            {index < gapData.length && (
+              <BuildGap refCode={gapData[index].refCode} label={gapData[index].label} />
+            )}
+            <div className="px-0 md:px-1 my-6 md:my-8">
+              <div id={key} className={`section-panel ${bg} ${border}`}>
+                <Component />
+              </div>
             </div>
           </div>
         ))}
