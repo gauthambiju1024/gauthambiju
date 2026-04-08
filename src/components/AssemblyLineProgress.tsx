@@ -49,8 +49,20 @@ const AssemblyLineProgress = () => {
       const px = margin + progress * travelW;
       product.setAttribute("transform", `translate(${px}, ${BELT_Y - 1})`);
 
-      // Show accumulated parts based on progress
-      const passedSections = Math.floor(progress * SECTIONS.length);
+      // Product starts as faint outline, solidifies with scroll
+      const baseRect = product.querySelector("rect");
+      const detailLine = product.querySelector("line");
+      if (baseRect) {
+        const fillOpacity = 0.05 + progress * 0.2;
+        baseRect.setAttribute("fill", `hsl(220 15% 35% / ${fillOpacity.toFixed(2)})`);
+        baseRect.setAttribute("stroke-dasharray", progress > 0.5 ? "none" : "2 1.5");
+      }
+      if (detailLine) {
+        detailLine.setAttribute("opacity", String(Math.min(1, progress * 2)));
+      }
+
+      // Show accumulated parts — require passing each section threshold
+      const passedSections = Math.max(0, Math.floor(progress * (SECTIONS.length + 1)) - 1);
       partsRef.current.forEach((g, i) => {
         if (g) g.style.opacity = i < passedSections ? "1" : "0";
       });

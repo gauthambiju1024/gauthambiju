@@ -7,7 +7,7 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
-import { BuildGap } from "@/components/build-story/BuildGap";
+import { DimensionAnnotation } from "@/components/build-story/DimensionAnnotation";
 import AssemblyLineProgress from "@/components/AssemblyLineProgress";
 import BlueprintBackground from "@/components/BlueprintBackground";
 import Navigation from "@/components/Navigation";
@@ -46,7 +46,7 @@ const Index = () => {
           </div>
         </div>
 
-        <BuildGap refCode="GB.001 → A.01" label="measured → written" />
+        <DimensionAnnotation refCode="GB.001 → A.01" label="measured → written" />
 
         <div className="px-0 md:px-1 my-6 md:my-8">
           <div id="about" className="notebook notebook-grid relative">
@@ -68,7 +68,7 @@ const Index = () => {
         {panelSections.map(({ key, Component, bg, border }, index) => (
           <div key={key}>
             {index < gapData.length && (
-              <BuildGap refCode={gapData[index].refCode} label={gapData[index].label} />
+              <DimensionAnnotation refCode={gapData[index].refCode} label={gapData[index].label} />
             )}
             <div className="px-0 md:px-1 my-6 md:my-8">
               <div id={key} className={`section-panel ${bg} ${border}`}>
