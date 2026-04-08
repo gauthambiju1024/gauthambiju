@@ -39,7 +39,7 @@ export function BuildGap({
     if (!host || !partsG || !sparksG || !rollersG || !throughputEl || !queueEl) return;
 
     const SVG_NS = "http://www.w3.org/2000/svg";
-    const BELT_Y = 149;
+    const BELT_Y = 67;
     const BELT_START_X = 60;
     const BELT_END_X = 840;
     const MID_X = 450;
