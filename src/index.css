@@ -588,6 +588,42 @@
   .doodle { padding: 0; left: 0; right: 0; }
 }
 
+  /* ─── GHOST GRID ─── */
+  .ghost-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px),
+      linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    transition: opacity 0.3s ease-in;
+  }
+
+  .ghost-grid--flash {
+    opacity: 0.09;
+    transition: opacity 0.15s ease-in;
+  }
+
+  .ghost-grid__marks {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: hsl(var(--primary) / 0.5);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .ghost-grid--flash .ghost-grid__marks {
+    opacity: 1;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
