@@ -1,31 +1,17 @@
 
 
-## Plan: Add BuildGap Conveyor Belt Connectors Between Sections
+## Plan: Fix Invisible BuildGap Animation
 
-### What It Does
-Places 7 animated conveyor-belt strips between the 8 main panels. Each strip has schematic dimension lines, a kinetic belt with spinning rollers and flowing parts, weld sparks on icon parts, and dense mono status labels. The narrative arc (measured → written → shelved → pinned → equipped → travelled → drafted → sent) ties the sections together as a continuous "build" story.
+### Root Cause
+The animated elements are positioned outside the visible SVG area. The viewBox is `0 0 900 120`, but `BELT_Y` is set to `149` — 29px below the bottom edge. Rollers, conveyor parts, and sparks all render at y=149, making them invisible. The static belt rectangle (y=48, height=38) is visible, but the animation plays beneath it off-screen.
 
-### Color Adaptation
-Shift the palette from warm amber (`hsl(38 ...)`) to your site's cool blue-gray system so the gaps feel native:
-- `INK` → `hsl(220 15% 45%)` (matches `--muted-foreground`)
-- `INK_BRIGHT` → `hsl(220 20% 55%)`
-- `ICON_STROKE` → `hsl(220 40% 60%)` (echoes `--primary`)
-- `ABSTRACT_STROKE` → `hsl(220 20% 52%)`
-- Belt background → `hsl(220 15% 8%)` (near your `--background`)
-- Spark fill → `hsl(220 50% 65%)` (blue spark instead of amber)
+### Fix
 
-### Changes
+#### `src/components/build-story/BuildGap.tsx`
+- Change `BELT_Y` from `149` to `67` (vertically centered within the belt rectangle at y=48, height=38)
+- This single constant change repositions all animated elements (rollers, parts, sparks) into the visible belt area
+- No other changes needed — every animated element references `BELT_Y`
 
-#### 1. `src/components/build-story/BuildGap.tsx` (new file)
-- Copy the uploaded component with the color palette adjusted to the cool blue-gray system described above
-- SVG marker IDs made unique per instance (append a random suffix) to avoid conflicts when 7 instances share the page
-
-#### 2. `src/pages/Index.tsx`
-- Import `BuildGap`
-- Insert 7 instances between the 8 panels (hero, about, projects, thinking, skills, journey, writing, contact)
-- Each with its narrative `refCode` and `label` pair
-
-### Files: 2
-1. `src/components/build-story/BuildGap.tsx` — new component (adapted colors)
-2. `src/pages/Index.tsx` — wire up 7 instances between panels
+### Files: 1
+1. `src/components/build-story/BuildGap.tsx` — change `BELT_Y` from 149 to 67
 
