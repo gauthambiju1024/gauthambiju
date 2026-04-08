@@ -1,71 +1,66 @@
 
 
-## Plan: Assembly Line Progress Bar, Floating Nav & Blueprint Background
+## Plan: Replace BuildGap with Dimension Annotations, Fix Margin Doodles & Progress Bar
 
-Keeps MarginDoodles untouched. Implements items 1, 2, and 4 from the previous plan.
+### Issues to Fix
 
----
-
-### 1. Assembly Line Scroll Progress Bar
-**New file: `src/components/AssemblyLineProgress.tsx`**
-
-Fixed bar at the very top of the viewport (~28px tall, z-50). Contains a miniature conveyor belt SVG that mirrors the BuildGap aesthetic (same muted `hsl(220 ...)` palette, thin strokes, mono labels).
-
-- A schematic "product" rectangle travels left-to-right based on `scrollY / maxScroll`
-- 8 tick marks along the belt for each section (Home, About, Projects, etc.) with tiny 5px mono labels
-- Product accumulates small detail marks as each section tick is passed
-- Faint roller marks animate via rAF, gated by `document.visibilityState`
-- Direct DOM mutation — no React re-renders during scroll
-- `backdrop-blur-sm bg-background/80` background
-
-### 2. Floating Navigation
-**Modify: `src/components/Navigation.tsx`**
-
-Convert the non-embedded nav to a fixed, always-visible header:
-- `fixed top-[28px]` (sits below the progress bar), full width, z-40
-- Always has `backdrop-blur-md bg-background/80` — remove the scroll-dependent compact toggle
-- Keep intersection observer for active section highlighting and spring indicator
-
-**Modify: `src/components/HeroSection.tsx`**
-- Remove the `<Navigation embedded />` block at the bottom of the hero section
-- The nav is now global, no longer needed inside hero
-
-**Modify: `src/pages/Index.tsx`**
-- Import and render `<AssemblyLineProgress />` and `<Navigation />` as fixed elements outside the scrolling content
-- Add top padding (~80px) to the content wrapper to offset the fixed header stack
-- Keep `<MarginDoodles />` exactly as-is
-
-### 3. Blueprint Background with Construction Flash
-**New file: `src/components/BlueprintBackground.tsx`**
-
-Fixed full-screen background layer (z-0, pointer-events-none):
-
-**Persistent faint grid:**
-- CSS background-image grid lines in faint cyan (`hsl(200 60% 50% / 0.03)`) — barely visible
-
-**Construction flash on panel boundaries:**
-- IntersectionObserver watches each section panel
-- When a panel boundary crosses the viewport center, a brief (~400ms) flash fires:
-  - Grid opacity pulses from 3% to ~15%
-  - Dimension arrows draw from corners via `strokeDashoffset` animation
-  - Centerline crosshair appears and fades
-  - Coordinate readouts tick in corners (mono text showing scrollY-derived values)
-  - Tolerance ring (thin circle) expands and fades from center
-  - Origin marks (small + signs) flash at nearby grid intersections
-  - Rotating radial sweep line (thin cyan, one rotation over 400ms)
-- All elements in faint cyan (`hsl(200 60% 50% / 0.08–0.15)`)
-- Direct DOM mutation, CSS transitions, no React re-renders
-- Coexists with MarginDoodles (lower z-index)
-
-**Modify: `src/pages/Index.tsx`**
-- Import and render `<BlueprintBackground />` as a fixed background layer (before MarginDoodles in DOM, z-[0])
+1. **Remove BuildGap conveyor belt animations** between panels — replace with static architect-style dimension annotations (draw-on-scroll)
+2. **Margin doodles not drawing from scroll start** — the `paddingTop: 72` offset shifts content down but the scroll progress calculation doesn't account for it, so early scroll produces 0 progress
+3. **Progress bar product looks fully built** — all parts start with `opacity: 0` but `Math.floor(progress * 8)` at even tiny scroll values shows parts; the real issue is the product base shape (rect + internal line) looks "complete" from the start, and parts appear too early
 
 ---
 
-### Files: 5
-1. `src/components/AssemblyLineProgress.tsx` — new scroll-driven conveyor progress bar
-2. `src/components/BlueprintBackground.tsx` — new fixed blueprint grid + construction flash
-3. `src/components/Navigation.tsx` — convert to fixed floating nav below progress bar
-4. `src/components/HeroSection.tsx` — remove embedded nav
-5. `src/pages/Index.tsx` — wire up new components, add top padding, keep MarginDoodles
+### 1. Replace BuildGap with DimensionAnnotation
+
+**Delete animation from:** `src/components/build-story/BuildGap.tsx`
+
+**New file:** `src/components/build-story/DimensionAnnotation.tsx`
+
+A purely static SVG that draws itself on scroll via IntersectionObserver + scroll progress:
+
+- **Dimension lines** with arrow-tipped extensions extending from top panel and bottom panel, meeting in the middle
+- **Tick counter** marks along the dimension line
+- **Leader line** with a bubble callout containing the `refCode` (e.g., "A.01 → B.02")
+- **Revision stamp** box (e.g., "REV 03")
+- **North arrow** icon (small compass arrow)
+- All lines use `strokeDashoffset` driven by scroll progress — they draw themselves as the gap scrolls into view
+- Muted `hsl(220 ...)` palette, 0.5–0.8px strokes, mono labels
+- Much shorter height than BuildGap (~60–80px vs ~120px)
+
+**Modify:** `src/pages/Index.tsx`
+- Replace `BuildGap` imports/usage with `DimensionAnnotation`
+- Keep the same `gapData` array for `refCode` and `label` props
+
+### 2. Fix Margin Doodles Scroll Start
+
+**Modify:** `src/components/MarginDoodles.tsx`
+
+The progress calculation on line 92 uses `window.scrollY / docH` which starts at 0. But the content has 72px top padding, so the first ~72px of scroll produces progress that's nearly 0 and no visible drawing happens.
+
+Fix: Adjust the progress calculation to start drawing immediately. Either:
+- Use a small negative offset so progress > 0 from the first scroll pixel
+- Or scale progress so the first doodle starts drawing at `scrollY = 0`
+
+Simplest fix: change progress formula to start slightly ahead, e.g. `Math.max(0, (scrollY + 72) / docH)` clamped to 1.
+
+### 3. Fix Progress Bar Product Starting "Built"
+
+**Modify:** `src/components/AssemblyLineProgress.tsx`
+
+Two issues:
+- The product's base shape (filled rect + internal detail line) is always visible, making it look complete from the start
+- Parts appear too early because `Math.floor(progress * 8)` shows part 0 at any scroll > 0
+
+Fixes:
+- Start the product as a faint outline only (lower fill opacity, dashed stroke) and progressively solidify it as scroll increases
+- Change parts threshold: use `Math.floor(progress * (SECTIONS.length + 1))` or require higher progress per part so part 0 only appears after passing the first section
+- Add a "build progress" visual: the product rect fill opacity interpolates from ~0.05 to 0.25 based on scroll progress
+
+---
+
+### Files: 4
+1. `src/components/build-story/DimensionAnnotation.tsx` — new architect-style dimension annotation with draw-on-scroll
+2. `src/pages/Index.tsx` — swap BuildGap for DimensionAnnotation
+3. `src/components/MarginDoodles.tsx` — fix progress offset so doodles draw from first scroll
+4. `src/components/AssemblyLineProgress.tsx` — fix product appearing fully built at start
 
