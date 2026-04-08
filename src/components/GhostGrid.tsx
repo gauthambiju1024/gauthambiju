@@ -42,9 +42,10 @@ const GhostGrid = () => {
   const dimColor = "rgba(255,255,255,0.4)";
 
   return (
-    <div className={`ghost-grid ${flash ? "ghost-grid--flash" : ""}`}>
+    <div className="ghost-grid-container">
+      <div className={`ghost-grid-bg ${flash ? "ghost-grid-bg--flash" : ""}`} />
       <svg
-        className="ghost-grid__marks"
+        className={`ghost-grid__marks ${flash ? "ghost-grid__marks--flash" : ""}`}
         viewBox="0 0 100 100"
         preserveAspectRatio="xMidYMid meet"
         xmlns="http://www.w3.org/2000/svg"
@@ -54,20 +55,17 @@ const GhostGrid = () => {
         <line x1="50" y1="48" x2="50" y2="52" stroke={markColor} strokeWidth="0.15" />
         <circle cx="50" cy="50" r="1.5" fill="none" stroke={markColor} strokeWidth="0.1" />
 
-        {/* Corner registration marks — top-left */}
+        {/* Corner registration marks */}
         <line x1="2" y1="2" x2="6" y2="2" stroke={dimColor} strokeWidth="0.12" />
         <line x1="2" y1="2" x2="2" y2="6" stroke={dimColor} strokeWidth="0.12" />
-        {/* top-right */}
         <line x1="94" y1="2" x2="98" y2="2" stroke={dimColor} strokeWidth="0.12" />
         <line x1="98" y1="2" x2="98" y2="6" stroke={dimColor} strokeWidth="0.12" />
-        {/* bottom-left */}
         <line x1="2" y1="94" x2="6" y2="94" stroke={dimColor} strokeWidth="0.12" />
         <line x1="2" y1="94" x2="2" y2="98" stroke={dimColor} strokeWidth="0.12" />
-        {/* bottom-right */}
         <line x1="94" y1="98" x2="98" y2="98" stroke={dimColor} strokeWidth="0.12" />
         <line x1="98" y1="94" x2="98" y2="98" stroke={dimColor} strokeWidth="0.12" />
 
-        {/* Horizontal dimension arrow — top */}
+        {/* Horizontal dimension arrow */}
         <line x1="20" y1="5" x2="80" y2="5" stroke={dimColor} strokeWidth="0.08" />
         <line x1="20" y1="4" x2="20" y2="6" stroke={dimColor} strokeWidth="0.12" />
         <line x1="80" y1="4" x2="80" y2="6" stroke={dimColor} strokeWidth="0.12" />
@@ -75,7 +73,7 @@ const GhostGrid = () => {
         <polygon points="80,5 78,4.3 78,5.7" fill={dimColor} />
         <text x="50" y="4" textAnchor="middle" fontSize="1.8" fill={markColor} fontFamily="var(--font-mono)">1200</text>
 
-        {/* Vertical dimension arrow — left */}
+        {/* Vertical dimension arrow */}
         <line x1="5" y1="20" x2="5" y2="80" stroke={dimColor} strokeWidth="0.08" />
         <line x1="4" y1="20" x2="6" y2="20" stroke={dimColor} strokeWidth="0.12" />
         <line x1="4" y1="80" x2="6" y2="80" stroke={dimColor} strokeWidth="0.12" />
@@ -103,7 +101,7 @@ const GhostGrid = () => {
           </g>
         ))}
 
-        {/* Small crosshairs at quarter points */}
+        {/* Quarter-point crosshairs */}
         {[25, 75].map((x) =>
           [25, 75].map((y) => (
             <g key={`qc-${x}-${y}`}>
