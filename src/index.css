@@ -588,6 +588,7 @@
   .doodle { padding: 0; left: 0; right: 0; }
 }
 
+@layer components {
   /* ─── GHOST GRID ─── */
   .ghost-grid {
     position: fixed;
