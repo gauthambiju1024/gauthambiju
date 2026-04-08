@@ -89,11 +89,14 @@ const MarginDoodles = () => {
 
   const updateDoodles = useCallback((leftData: ReturnType<typeof setupDoodles>, rightData: ReturnType<typeof setupDoodles>) => {
     const docH = document.documentElement.scrollHeight - window.innerHeight;
-    const offset = window.innerHeight * 0.4;
-    const progress = docH > 0 ? Math.max(0, Math.min(1, (window.scrollY + offset) / (docH + offset))) : 0;
+    const rawProgress = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
 
     function paintColumn(doodles: HTMLDivElement[]) {
       const n = doodles.length;
+      // Seed: first 1.5 doodles are partially drawn at scrollY=0
+      const baseReveal = 1.5 / n;
+      const progress = baseReveal + rawProgress * (1 - baseReveal);
+
       doodles.forEach((d, i) => {
         const start = i / n;
         const end = (i + 1) / n;
