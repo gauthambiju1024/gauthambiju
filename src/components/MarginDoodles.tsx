@@ -89,7 +89,7 @@ const MarginDoodles = () => {
 
   const updateDoodles = useCallback((leftData: ReturnType<typeof setupDoodles>, rightData: ReturnType<typeof setupDoodles>) => {
     const docH = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docH > 0 ? Math.max(0, Math.min(1, window.scrollY / docH)) : 0;
+    const progress = docH > 0 ? Math.max(0, Math.min(1, (window.scrollY + 72) / (docH + 72))) : 0;
 
     function paintColumn(doodles: HTMLDivElement[]) {
       const n = doodles.length;
