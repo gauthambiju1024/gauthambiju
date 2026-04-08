@@ -7,7 +7,7 @@ const GhostGrid = () => {
 
   const triggerFlash = useCallback(() => {
     const now = Date.now();
-    if (now - lastFlashRef.current < 800) return; // debounce
+    if (now - lastFlashRef.current < 800) return;
     lastFlashRef.current = now;
 
     setFlash(true);
@@ -38,50 +38,80 @@ const GhostGrid = () => {
     };
   }, [triggerFlash]);
 
+  const markColor = "rgba(255,255,255,0.7)";
+  const dimColor = "rgba(255,255,255,0.4)";
+
   return (
     <div className={`ghost-grid ${flash ? "ghost-grid--flash" : ""}`}>
-      {/* Construction lines SVG overlay */}
       <svg
         className="ghost-grid__marks"
-        viewBox="0 0 1920 1080"
-        preserveAspectRatio="none"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid meet"
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Center crosshair */}
-        <line x1="940" y1="520" x2="980" y2="520" stroke="currentColor" strokeWidth="0.8" />
-        <line x1="960" y1="500" x2="960" y2="540" stroke="currentColor" strokeWidth="0.8" />
-        <circle cx="960" cy="520" r="6" fill="none" stroke="currentColor" strokeWidth="0.5" />
+        <line x1="48" y1="50" x2="52" y2="50" stroke={markColor} strokeWidth="0.15" />
+        <line x1="50" y1="48" x2="50" y2="52" stroke={markColor} strokeWidth="0.15" />
+        <circle cx="50" cy="50" r="1.5" fill="none" stroke={markColor} strokeWidth="0.1" />
 
-        {/* Horizontal dimension arrow — top center */}
-        <line x1="660" y1="40" x2="1260" y2="40" stroke="currentColor" strokeWidth="0.5" />
-        <line x1="660" y1="34" x2="660" y2="46" stroke="currentColor" strokeWidth="0.7" />
-        <line x1="1260" y1="34" x2="1260" y2="46" stroke="currentColor" strokeWidth="0.7" />
-        {/* Arrowheads */}
-        <polygon points="660,40 670,37 670,43" fill="currentColor" />
-        <polygon points="1260,40 1250,37 1250,43" fill="currentColor" />
-        <text x="960" y="36" textAnchor="middle" fontSize="9" fill="currentColor" fontFamily="var(--font-mono)">600</text>
+        {/* Corner registration marks — top-left */}
+        <line x1="2" y1="2" x2="6" y2="2" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="2" y1="2" x2="2" y2="6" stroke={dimColor} strokeWidth="0.12" />
+        {/* top-right */}
+        <line x1="94" y1="2" x2="98" y2="2" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="98" y1="2" x2="98" y2="6" stroke={dimColor} strokeWidth="0.12" />
+        {/* bottom-left */}
+        <line x1="2" y1="94" x2="6" y2="94" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="2" y1="94" x2="2" y2="98" stroke={dimColor} strokeWidth="0.12" />
+        {/* bottom-right */}
+        <line x1="94" y1="98" x2="98" y2="98" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="98" y1="94" x2="98" y2="98" stroke={dimColor} strokeWidth="0.12" />
+
+        {/* Horizontal dimension arrow — top */}
+        <line x1="20" y1="5" x2="80" y2="5" stroke={dimColor} strokeWidth="0.08" />
+        <line x1="20" y1="4" x2="20" y2="6" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="80" y1="4" x2="80" y2="6" stroke={dimColor} strokeWidth="0.12" />
+        <polygon points="20,5 22,4.3 22,5.7" fill={dimColor} />
+        <polygon points="80,5 78,4.3 78,5.7" fill={dimColor} />
+        <text x="50" y="4" textAnchor="middle" fontSize="1.8" fill={markColor} fontFamily="var(--font-mono)">1200</text>
 
         {/* Vertical dimension arrow — left */}
-        <line x1="40" y1="200" x2="40" y2="880" stroke="currentColor" strokeWidth="0.5" />
-        <line x1="34" y1="200" x2="46" y2="200" stroke="currentColor" strokeWidth="0.7" />
-        <line x1="34" y1="880" x2="46" y2="880" stroke="currentColor" strokeWidth="0.7" />
-        <polygon points="40,200 37,210 43,210" fill="currentColor" />
-        <polygon points="40,880 37,870 43,870" fill="currentColor" />
-        <text x="36" y="545" textAnchor="middle" fontSize="9" fill="currentColor" fontFamily="var(--font-mono)" transform="rotate(-90, 36, 545)">680</text>
+        <line x1="5" y1="20" x2="5" y2="80" stroke={dimColor} strokeWidth="0.08" />
+        <line x1="4" y1="20" x2="6" y2="20" stroke={dimColor} strokeWidth="0.12" />
+        <line x1="4" y1="80" x2="6" y2="80" stroke={dimColor} strokeWidth="0.12" />
+        <polygon points="5,20 4.3,22 5.7,22" fill={dimColor} />
+        <polygon points="5,80 4.3,78 5.7,78" fill={dimColor} />
+        <text x="4.5" y="51" textAnchor="middle" fontSize="1.8" fill={markColor} fontFamily="var(--font-mono)" transform="rotate(-90, 4.5, 51)">800</text>
 
-        {/* Corner tick marks */}
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <g key={`tick-h-${i}`}>
-            <line x1={320 * i} y1="0" x2={320 * i} y2="8" stroke="currentColor" strokeWidth="0.4" />
-            <text x={320 * i + 2} y="16" fontSize="7" fill="currentColor" fontFamily="var(--font-mono)" opacity="0.7">{320 * i}</text>
+        {/* Tick marks along top */}
+        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((i) => (
+          <g key={`th-${i}`}>
+            <line x1={i} y1="0" x2={i} y2="1.2" stroke={dimColor} strokeWidth="0.06" />
+            {i % 20 === 0 && (
+              <text x={i + 0.5} y="2.8" fontSize="1.2" fill={dimColor} fontFamily="var(--font-mono)">{i}</text>
+            )}
           </g>
         ))}
-        {[0, 1, 2, 3].map((i) => (
-          <g key={`tick-v-${i}`}>
-            <line x1="0" y1={360 * i} x2="8" y2={360 * i} stroke="currentColor" strokeWidth="0.4" />
-            <text x="12" y={360 * i + 4} fontSize="7" fill="currentColor" fontFamily="var(--font-mono)" opacity="0.7">{360 * i}</text>
+
+        {/* Tick marks along left */}
+        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((i) => (
+          <g key={`tv-${i}`}>
+            <line x1="0" y1={i} x2="1.2" y2={i} stroke={dimColor} strokeWidth="0.06" />
+            {i % 20 === 0 && (
+              <text x="1.8" y={i + 0.5} fontSize="1.2" fill={dimColor} fontFamily="var(--font-mono)">{i}</text>
+            )}
           </g>
         ))}
+
+        {/* Small crosshairs at quarter points */}
+        {[25, 75].map((x) =>
+          [25, 75].map((y) => (
+            <g key={`qc-${x}-${y}`}>
+              <line x1={x - 0.8} y1={y} x2={x + 0.8} y2={y} stroke={dimColor} strokeWidth="0.06" />
+              <line x1={x} y1={y - 0.8} x2={x} y2={y + 0.8} stroke={dimColor} strokeWidth="0.06" />
+            </g>
+          ))
+        )}
       </svg>
     </div>
   );
