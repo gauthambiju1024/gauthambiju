@@ -23,8 +23,6 @@ const Index = () => {
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
-      {/* Fixed mask behind header to hide content scrolling through */}
-      <div className="fixed top-0 h-[160px] z-[49] pointer-events-none" style={{ background: 'hsl(var(--background))', left: 'calc(var(--margin-col-width, 0px) + 4px)', right: 'calc(var(--margin-col-width, 0px) + 4px)', maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
 
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />

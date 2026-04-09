@@ -588,6 +588,12 @@
   .doodle { padding: 0; left: 0; right: 0; }
 }
 
+@layer base {
+  [id] {
+    scroll-margin-top: 180px;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
