@@ -7,6 +7,7 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
+import AssemblyHeader from "@/components/AssemblyHeader";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -23,6 +24,7 @@ const Index = () => {
       <MarginDoodles />
 
       <div className="margin-content-wrapper relative z-[2]">
+        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         <div className="px-0 md:px-1 pt-2 md:pt-4">
           <div id="home" className="blueprint-surface">
             <HeroSection />
