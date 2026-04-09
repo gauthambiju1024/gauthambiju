@@ -150,10 +150,6 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Navigation at bottom */}
-      <div className="mt-4 border-t" style={{ borderColor: 'hsl(0 0% 100% / 0.08)' }}>
-        <Navigation embedded />
-      </div>
     </section>
   );
 };
