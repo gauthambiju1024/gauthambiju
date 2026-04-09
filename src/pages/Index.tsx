@@ -20,22 +20,12 @@ const panelSections = [
 
 const Index = () => {
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'hsl(var(--background))' }}>
+    <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
-      {/* Header — non-scrolling flex child */}
-      <div className="shrink-0">
+      <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-      </div>
-
-      {/* Gap */}
-      <div className="shrink-0 h-2" />
-
-      {/* Scrollable content container */}
-      <div
-        className="flex-1 overflow-y-auto margin-content-wrapper"
-      >
-        <div className="px-0 md:px-1">
+        <div className="px-0 md:px-1 pt-2 md:pt-4">
           <div id="home" className="blueprint-surface">
             <HeroSection />
           </div>

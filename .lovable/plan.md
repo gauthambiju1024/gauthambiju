@@ -1,29 +1,21 @@
 
 
-## Plan: Show Margin Doodles & Hide Container Styling
+## Plan: Make Assembly Header Transparent
 
-### Problems
-1. **Margin doodles hidden**: The scroll container has `z-[2]`, `background: hsl(var(--background))`, and the `margin-content-wrapper` class (which sets `z-index: 2`). This opaque layer covers the fixed-position doodles at z-1.
-2. **Container visually distinct**: The `rounded-t-2xl` corners and `border-t border-border/20` make the scroll container visible as a separate element.
+### Change
 
-### Solution
-
-#### `src/pages/Index.tsx`
-- Remove `rounded-t-2xl`, `border-t border-border/20` from the scroll container — no visible container edges
-- Remove inline `background` style — let it be transparent so doodles show through
-- Remove `relative z-[2]` — don't stack above the doodles
-- Keep `margin-content-wrapper` for side padding alignment (but it won't block doodles since no background)
-- Move the page background (`hsl(var(--background))`) to the outermost div only (already there)
+#### `src/components/AssemblyHeader.tsx` (line 531)
+- Remove the opaque `background: 'hsl(160 20% 14%)'` inline style
+- Add a transparent/translucent background instead, e.g. `background: 'transparent'` or a subtle `backdrop-filter: blur()` for readability
 
 ```tsx
 // Before
-<div className="flex-1 overflow-y-auto rounded-t-2xl border-t border-border/20 margin-content-wrapper relative z-[2]"
-  style={{ background: 'hsl(var(--background))' }}>
+<div className="sticky top-0 z-50" style={{ background: 'hsl(160 20% 14%)' }}>
 
 // After
-<div className="flex-1 overflow-y-auto margin-content-wrapper">
+<div className="sticky top-0 z-50" style={{ background: 'transparent' }}>
 ```
 
 ### Files: 1
-- `src/pages/Index.tsx` — remove container styling, let doodles show through
+- `src/components/AssemblyHeader.tsx` — set background to transparent
 

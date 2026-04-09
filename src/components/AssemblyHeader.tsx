@@ -528,7 +528,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="relative z-50 margin-content-wrapper" style={{ background: 'transparent' }}>
+    <div className="sticky top-0 z-50" style={{ background: 'transparent' }}>
       <div className="relative">
         <svg
           viewBox="0 0 1400 180"
