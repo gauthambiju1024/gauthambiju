@@ -176,6 +176,7 @@ type Props = {
 export function AssemblyHeader({ panelIds }: Props) {
   const prodRef = useRef<SVGGElement>(null);
   const previewRef = useRef<SVGGElement>(null);
+  const previewSmallRef = useRef<SVGGElement>(null);
   const rollersRef = useRef<SVGGElement>(null);
   const armsRef = useRef<SVGGElement>(null);
   const sparksRef = useRef<SVGGElement>(null);
@@ -771,7 +772,7 @@ export function AssemblyHeader({ panelIds }: Props) {
                   }}
                 >
                   <svg width="100%" height="100%" viewBox="0 0 200 90">
-                    <g ref={previewRef} />
+                    <g ref={previewSmallRef} />
                   </svg>
                 </div>
                 <div className="flex gap-2">
