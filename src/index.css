@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Paper background #F8F5F1 → hsl(36, 37%, 96%) */
-    --background: 220 15% 12%;
+    --background: 220 15% 11%;
     --foreground: 220 25% 20%;
 
     /* Paper surface #F8F5F1 */
