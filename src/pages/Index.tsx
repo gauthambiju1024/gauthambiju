@@ -23,9 +23,12 @@ const Index = () => {
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
+      {/* Fixed mask behind header to hide content scrolling through */}
+      <div className="fixed top-0 left-0 right-0 h-[160px] z-[49] pointer-events-none" style={{ background: 'hsl(var(--background))' }} />
+
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-        <div style={{ clipPath: 'inset(0 -100% -100% -100%)' }}>
+        <div>
           <div className="px-0 md:px-1 pt-2 md:pt-4">
             <div id="home" className="blueprint-surface">
               <HeroSection />
