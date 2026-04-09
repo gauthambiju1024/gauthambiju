@@ -20,44 +20,41 @@ const panelSections = [
 
 const Index = () => {
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ background: 'hsl(var(--background))' }}>
+    <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
-      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="margin-content-wrapper relative z-[2]">
-          <div className="px-0 md:px-1">
-            <div id="home" className="blueprint-surface">
-              <HeroSection />
-            </div>
+      <div className="margin-content-wrapper relative z-[2]">
+        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+        <div className="px-0 md:px-1 pt-[13vw] md:pt-[10vw]">
+          <div id="home" className="blueprint-surface">
+            <HeroSection />
           </div>
-
-          <div className="px-0 md:px-1 my-6 md:my-8">
-            <div id="about" className="notebook notebook-grid relative">
-              <div className="notebook-spine hidden md:block" />
-              <div className="notebook-margin hidden md:block" />
-              <div className="notebook-holes hidden md:block">
-                <div className="notebook-hole" style={{ top: '80px' }} />
-                <div className="notebook-hole" style={{ top: '33%' }} />
-                <div className="notebook-hole" style={{ top: '66%' }} />
-                <div className="notebook-hole" style={{ bottom: '80px' }} />
-              </div>
-              <div className="page-fold" />
-              <div className="relative z-[1]">
-                <AboutSection />
-              </div>
-            </div>
-          </div>
-
-          {panelSections.map(({ key, Component, bg, border }) => (
-            <div key={key} className="px-0 md:px-1 my-6 md:my-8">
-              <div id={key} className={`section-panel ${bg} ${border}`}>
-                <Component />
-              </div>
-            </div>
-          ))}
         </div>
+
+        <div className="px-0 md:px-1 my-6 md:my-8">
+          <div id="about" className="notebook notebook-grid relative">
+            <div className="notebook-spine hidden md:block" />
+            <div className="notebook-margin hidden md:block" />
+            <div className="notebook-holes hidden md:block">
+              <div className="notebook-hole" style={{ top: '80px' }} />
+              <div className="notebook-hole" style={{ top: '33%' }} />
+              <div className="notebook-hole" style={{ top: '66%' }} />
+              <div className="notebook-hole" style={{ bottom: '80px' }} />
+            </div>
+            <div className="page-fold" />
+            <div className="relative z-[1]">
+              <AboutSection />
+            </div>
+          </div>
+        </div>
+
+        {panelSections.map(({ key, Component, bg, border }) => (
+          <div key={key} className="px-0 md:px-1 my-6 md:my-8">
+            <div id={key} className={`section-panel ${bg} ${border}`}>
+              <Component />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
