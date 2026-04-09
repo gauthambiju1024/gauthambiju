@@ -7,28 +7,24 @@ import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
-import { AssemblyHeader } from "@/components/build-story/AssemblyHeader";
-
-const PANEL_IDS = ["hero", "about", "work", "think", "skill", "path", "write", "send"];
 
 const panelSections = [
-  { key: 'work', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
-  { key: 'think', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/40' },
-  { key: 'skill', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-border/30' },
-  { key: 'path', Component: JourneyTimeline, bg: '', border: 'border-primary/20' },
-  { key: 'write', Component: WritingDesk, bg: 'editorial-bg', border: 'border-[hsl(var(--notebook-border)/0.3)]' },
-  { key: 'send', Component: ContactClosing, bg: '', border: 'border-transparent' },
+  { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
+  { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/40' },
+  { key: 'skills', Component: SkillsToolbox, bg: 'toolbox-bg', border: 'border-border/30' },
+  { key: 'journey', Component: JourneyTimeline, bg: '', border: 'border-primary/20' },
+  { key: 'writing', Component: WritingDesk, bg: 'editorial-bg', border: 'border-[hsl(var(--notebook-border)/0.3)]' },
+  { key: 'contact', Component: ContactClosing, bg: '', border: 'border-transparent' },
 ];
 
 const Index = () => {
   return (
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
-      <AssemblyHeader panelIds={PANEL_IDS} />
       <MarginDoodles />
 
-      <div className="margin-content-wrapper relative z-[2] pt-[108px]">
+      <div className="margin-content-wrapper relative z-[2]">
         <div className="px-0 md:px-1 pt-2 md:pt-4">
-          <div id="hero" className="blueprint-surface">
+          <div id="home" className="blueprint-surface">
             <HeroSection />
           </div>
         </div>
