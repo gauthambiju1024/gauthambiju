@@ -1,46 +1,29 @@
 
 
-## Plan: Fixed Header + Rounded Scroll Container
+## Plan: Show Margin Doodles & Hide Container Styling
 
-### Layout Concept
+### Problems
+1. **Margin doodles hidden**: The scroll container has `z-[2]`, `background: hsl(var(--background))`, and the `margin-content-wrapper` class (which sets `z-index: 2`). This opaque layer covers the fixed-position doodles at z-1.
+2. **Container visually distinct**: The `rounded-t-2xl` corners and `border-t border-border/20` make the scroll container visible as a separate element.
 
-```text
-┌─────────────────────────────────────────────┐
-│  Assembly Header (fixed, transparent bg)     │  ← locked at top, never moves
-├─────────────────────────────────────────────┤
-│  ~8px gap                                    │
-├─────────────────────────────────────────────┤
-│ ╭─────────────────────────────────────────╮ │
-│ │  Scrollable content container           │ │  ← rounded corners, own scroll
-│ │  (Hero, About, Projects, etc.)          │ │     fills remaining viewport
-│ │  ...                                    │ │
-│ ╰─────────────────────────────────────────╯ │
-│                                             │
-│  ◄── margin doodles untouched ──►           │  ← sit behind everything as before
-└─────────────────────────────────────────────┘
+### Solution
+
+#### `src/pages/Index.tsx`
+- Remove `rounded-t-2xl`, `border-t border-border/20` from the scroll container — no visible container edges
+- Remove inline `background` style — let it be transparent so doodles show through
+- Remove `relative z-[2]` — don't stack above the doodles
+- Keep `margin-content-wrapper` for side padding alignment (but it won't block doodles since no background)
+- Move the page background (`hsl(var(--background))`) to the outermost div only (already there)
+
+```tsx
+// Before
+<div className="flex-1 overflow-y-auto rounded-t-2xl border-t border-border/20 margin-content-wrapper relative z-[2]"
+  style={{ background: 'hsl(var(--background))' }}>
+
+// After
+<div className="flex-1 overflow-y-auto margin-content-wrapper">
 ```
 
-### Changes
-
-#### 1. `src/pages/Index.tsx`
-- Make the outermost div a full-viewport flex column (`h-screen flex flex-col overflow-hidden`)
-- Keep `MarginDoodles` as-is (fixed, z-1, untouched)
-- Move `AssemblyHeader` **outside** the `margin-content-wrapper`, as a direct flex child (non-scrolling, shrink-0)
-- Add an 8px spacer below the header
-- Wrap all content (hero + about + panels) in a new scrollable container: `flex-1 overflow-y-auto` with `rounded-2xl` top corners, the page background color, and the `margin-content-wrapper` side padding
-- Remove the old `pt-[13vw]` top padding (no longer needed)
-
-#### 2. `src/components/AssemblyHeader.tsx` (line 531)
-- Change from `fixed top-0 left-0 right-0 z-50` to `relative z-50` (it no longer needs fixed positioning since it's a flex child that never scrolls)
-- Keep `margin-content-wrapper` class for gutter alignment
-- Keep `background: 'transparent'`
-
-### Key Details
-- The scroll container gets `rounded-t-2xl` (rounded top corners only) and a subtle border/shadow to look like an integrated panel
-- Margin doodles remain `position: fixed` at z-1 — completely unaffected since we're not changing their markup or CSS
-- The scroll container uses `overflow-y-auto` so only content inside it scrolls; the header stays put naturally
-
-### Files: 2
-1. `src/components/AssemblyHeader.tsx` — remove fixed positioning, use relative
-2. `src/pages/Index.tsx` — flex column layout with rounded scroll container
+### Files: 1
+- `src/pages/Index.tsx` — remove container styling, let doodles show through
 
