@@ -1,30 +1,26 @@
 
 
-## Change Entropy to Top/Bottom Split with Gradient Ordering
+## Scroll-Responsive Entropy: Chaos → Order on Scroll
 
-### What changes
-Switch from left/right order-chaos split to **top/bottom**: chaos at the top, gradually becoming more ordered as you scroll down. Make everything more subtle.
+### Concept
+The canvas is fixed (viewport-sized), but a scroll listener dynamically updates each particle's `orderStrength` based on the current scroll position. At the top of the page (scroll = 0), all particles are fully chaotic. As the user scrolls down, particles progressively snap to their grid positions. The total scrollable height of the page defines the full chaos→order range.
 
 ### Changes — `src/components/ui/entropy.tsx`
 
-#### 1. Top-down gradient split
-- Instead of `order = x < w/2`, use `order = y > h/2` — top half is chaos, bottom half is order
-- Rather than a hard binary split, use a **gradient**: each particle's "order strength" is based on its vertical position (`y / h`). Particles near the top (y ≈ 0) are fully chaotic; particles near the bottom (y ≈ h) are fully ordered. Mid-screen particles blend both behaviors.
+1. **Add scroll tracking**: Listen to `window.scroll` events. Compute a global `scrollProgress` value from `0` (top) to `1` (bottom of page) using `scrollY / (document.body.scrollHeight - window.innerHeight)`.
 
-#### 2. Subtler visuals
-- Reduce particle size from `2` to `1.5`
-- Lower particle alpha: ordered ~0.3, chaos ~0.35
-- Lower connection line alpha from `0.18` to `0.10`, reduce connection distance from `50` to `40`
-- Remove the dashed divider line entirely (no hard boundary — it's a gradient)
+2. **Dynamic orderStrength**: Instead of static `orderStrength = y / h`, update every particle each frame: `orderStrength = scrollProgress`. All particles share the same order level — the entire field transitions together based on scroll position.
 
-#### 3. Chaos boundary clamping
-- Chaos particles constrained to top half (`y < h/2`) instead of right half
-- Boundary checks updated: `if (this.y > h/2) this.velocity.y *= -1` for chaos particles, and x spans full width
+3. **Much more subtle visuals**:
+   - Particle size: `1px`
+   - Particle alpha: `0.06–0.10`
+   - Connection line alpha: `0.03`, distance threshold: `30px`
+   - These values make it a barely-visible texture behind content
 
-#### 4. Gradient blending logic
-- Each particle stores an `orderStrength` value (0 = full chaos, 1 = full order) based on `1 - (originalY / h)` inverted so bottom = ordered
-- In `update()`: blend between grid-return force and random velocity using `orderStrength`
-- This creates a smooth visual transition rather than a hard line
+4. **Stronger behavior contrast**:
+   - At scroll=0 (chaos): high random velocity (`* 3`), no grid-return force
+   - At scroll=1 (order): strong grid-return (`0.12`), zero random velocity
+   - This makes the transition unmistakable despite low opacity
 
 ### Files: 1
 - `src/components/ui/entropy.tsx`
