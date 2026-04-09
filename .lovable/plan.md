@@ -1,25 +1,23 @@
 
 
-## Plan: Improve Header Menu Visibility & Fix Design Input Position
+## Plan: Fix Design Input Button Position — Anchor Inside Header
 
-### Issues
-1. **DESIGN.INPUT popover button** is positioned `absolute right-3 top-7` inside the header but may be clipped or hard to find — needs to be clearly visible on the right side of the header.
-2. **Station labels** currently show abbreviated codes (`HERO`, `ABOUT`, `WORK`, `THINK`, `SKILL`, `PATH`, `WRITE`, `SEND`) — user wants full readable names: `Home`, `About`, `Projects`, `Thinking`, `Skills`, `Journey`, `Writing`, `Contact`. They should also be more visually prominent and obviously clickable.
+### Problem
+The `SketchPopover` wrapper `<div className="relative">` sits after the `<svg>` in DOM flow, so its `absolute` positioned button renders below the header instead of inside it.
 
-### Changes
+### Fix
 
-#### 1. `src/components/build-story/AssemblyHeader.tsx`
-- Update `STATION_NAMES` from `["HERO","ABOUT","WORK",...]` to `["HOME","ABOUT","PROJECTS","THINKING","SKILLS","JOURNEY","WRITING","CONTACT"]`
-- Increase station label font size from `5.5` to `7` for better readability
-- Add hover styling: change cursor to pointer (already done), add underline or brighter fill on hover via mouseover/mouseout event listeners in the setup effect
-- Increase the clickable hit area by adding invisible rects behind each label
-- Remove the small index numbers and PRT codes flanking the labels to reduce clutter and let the names breathe
+#### `src/components/build-story/AssemblyHeader.tsx` (line ~431)
+- Remove `<SketchPopover />` from its current position (after the SVG, inside the inner `relative` div)
+- Move it **before** the SVG, still inside the `relative` wrapper div
+- Change the `SketchPopover` wrapper from `<div className="relative">` to a simple fragment or remove the extra relative wrapper
 
-#### 2. `src/components/build-story/SketchPopover.tsx`
-- Adjust positioning: ensure the button sits within the visible header area at `right-3 top-1` (or similar) so it doesn't overflow on smaller viewports
-- Ensure the popover dropdown (`top: 92`) clears the header properly
+#### `src/components/build-story/SketchPopover.tsx` (line ~256-259)
+- Change the outer wrapper from `<div className="relative">` to `<div className="absolute right-3 top-[4px] z-50">` — this positions the entire popover component in the top-right corner of the header's `relative` container
+- Remove `absolute right-3 top-1` from the button itself; make it `relative` with its current width/height
+- Adjust the popover dropdown `top` value from `92` to `62` (or similar) so it opens just below the button
 
 ### Files: 2
-1. `src/components/build-story/AssemblyHeader.tsx` — update station names, enlarge labels, add hover effects, clean up label clutter
-2. `src/components/build-story/SketchPopover.tsx` — adjust button positioning for visibility
+1. `src/components/build-story/SketchPopover.tsx` — fix positioning to absolute within header container
+2. `src/components/build-story/AssemblyHeader.tsx` — no structural change needed (already inside relative div)
 
