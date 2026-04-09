@@ -1,27 +1,42 @@
 
 
-## Soften Header Edges (Subtle 2-4px Smoothness)
+## Full-Viewport Panels with Internal Scrolling & Margins
 
-### Problem
-The header has sharp rectangular edges — a hard border-bottom line and crisp left/right boundaries.
+### What You'll Get
+Each section panel fills exactly one screen height, with breathing room above (below the header) and below (above the viewport bottom). Only one panel is visible at a time. Content taller than the panel scrolls internally.
 
-### Solution
-Apply a very subtle softening — just 2-4px of feathering — around the bottom, left, and right edges using a CSS mask gradient. Keep the top edge fully solid (it's flush with the viewport top). Remove the hard `borderBottom`.
+### Layout Math
+- Header height: ~160px (CSS variable `--header-height`)
+- Top gap (header → panel): 16px
+- Bottom gap (panel → viewport edge): 16px
+- Panel height: `calc(100vh - var(--header-height, 160px) - 32px)`
 
 ### Changes
 
-#### `src/components/AssemblyHeader.tsx` (line 531)
-Update the sticky header's inline style:
-- Remove `borderBottom: '1px solid hsla(220, 15%, 20%, 0.3)'`
-- Add mask gradients that create a ~3px soft fade on the bottom, left, and right edges:
-  ```
-  maskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)'
-  maskComposite: 'intersect'
-  WebkitMaskComposite: 'source-in'
-  ```
+#### `src/index.css`
+Add new utility class and CSS variable:
+```css
+:root {
+  --header-height: 160px;
+}
 
-This keeps the effect minimal — just enough to remove the pixel-sharp boundary without making the header feel blurry or faded.
+.viewport-panel {
+  height: calc(100vh - var(--header-height, 160px) - 32px);
+  overflow-y: auto;
+  margin-top: 16px;
+  /* Reuse existing notebook scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--notebook-border) / 0.3) transparent;
+}
+```
 
-### Files: 1
-- `src/components/AssemblyHeader.tsx`
+#### `src/pages/Index.tsx`
+- Remove vertical margins (`my-6 md:my-8`) and top padding from section wrappers
+- Add `viewport-panel` class to each section's outer wrapper (home, about, and all panelSections)
+- Move the `id` attribute to the outer wrapper so scroll-snap targets the full panel
+- The inner panel/notebook/blueprint div gets `h-full overflow-y: auto` to enable internal scrolling while keeping its visual styling
+
+### Files: 2
+- `src/index.css`
+- `src/pages/Index.tsx`
 
