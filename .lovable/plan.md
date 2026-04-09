@@ -1,29 +1,13 @@
 
 
-## Gradual Chaos-to-Order with Late Convergence
+## Replace PRESETS Array in AssemblyHeader.tsx
 
-### Concept
-Instead of a hard cutoff or power curve, use a smooth easing that starts reducing chaos immediately from the first scroll pixel, but keeps most of the chaos through the middle of the page and only reaches perfect order at the very bottom. A quadratic ease-in (`sp * sp`) achieves this naturally:
+### What
+Replace the existing 5 preset sketches (drone, lamp, phone, chair, rocket) with the user's new 5 presets: drone.v4, rocket.v2, plane.v1, phone.v2, satellite.
 
-- At 25% scroll → only 6% ordered
-- At 50% scroll → 25% ordered  
-- At 75% scroll → 56% ordered
-- At 100% scroll → 100% ordered
+### Changes — 1 file
 
-This feels gradual throughout, always progressing, but chaos lingers longer.
-
-### Changes — `src/components/ui/entropy.tsx`
-
-In both `update()` and `draw()`, replace the raw `sp` with `sp * sp`:
-
-```typescript
-const sp = scrollProgressRef.current;
-const easedSp = sp * sp; // gentle quadratic: chaos lingers, order arrives late
-const chaos = 1 - easedSp;
-```
-
-Use `easedSp` for grid-return force and `chaos` for velocity, and `easedSp` for alpha calculation.
-
-### Files: 1
-- `src/components/ui/entropy.tsx`
+**`src/components/AssemblyHeader.tsx`**
+- Find the `const PRESETS: Sketch[] = [` block and replace the entire array contents through the closing `];` with the user-provided preset data.
+- No other changes needed — the popover grid and header preview read from this array automatically.
 
