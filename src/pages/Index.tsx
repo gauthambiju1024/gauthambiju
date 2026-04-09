@@ -27,14 +27,14 @@ const Index = () => {
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         <div>
-          <div id="home" className="px-0 md:px-1 viewport-panel">
-            <div className="blueprint-surface h-full overflow-y-auto">
+          <div className="px-0 md:px-1 pt-2 md:pt-4">
+            <div id="home" className="blueprint-surface">
               <HeroSection />
             </div>
           </div>
 
-          <div id="about" className="px-0 md:px-1 viewport-panel">
-            <div className="notebook notebook-grid relative h-full overflow-y-auto">
+          <div className="px-0 md:px-1 my-6 md:my-8">
+            <div id="about" className="notebook notebook-grid relative">
               <div className="notebook-spine hidden md:block" />
               <div className="notebook-margin hidden md:block" />
               <div className="notebook-holes hidden md:block">
@@ -51,8 +51,8 @@ const Index = () => {
           </div>
 
           {panelSections.map(({ key, Component, bg, border }) => (
-            <div key={key} id={key} className="px-0 md:px-1 viewport-panel">
-              <div className={`section-panel ${bg} ${border} h-full overflow-y-auto`}>
+            <div key={key} className="px-0 md:px-1 my-6 md:my-8">
+              <div id={key} className={`section-panel ${bg} ${border}`}>
                 <Component />
               </div>
             </div>
