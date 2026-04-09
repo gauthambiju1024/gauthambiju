@@ -52,14 +52,14 @@ export function Entropy() {
         const dy = this.originalY - this.y
 
         // Chaos: random drift
-        this.velocity.x += (Math.random() - 0.5) * 1.5 * chaos
-        this.velocity.y += (Math.random() - 0.5) * 1.5 * chaos
-        this.velocity.x *= 0.95
-        this.velocity.y *= 0.95
+        this.velocity.x += (Math.random() - 0.5) * 0.5 * chaos
+        this.velocity.y += (Math.random() - 0.5) * 0.5 * chaos
+        this.velocity.x *= 0.92
+        this.velocity.y *= 0.92
 
         // Blend: grid-return (order) vs random drift (chaos)
-        this.x += dx * 0.12 * sp + this.velocity.x * 3 * chaos
-        this.y += dy * 0.12 * sp + this.velocity.y * 3 * chaos
+        this.x += dx * 0.12 * sp + this.velocity.x * 1 * chaos
+        this.y += dy * 0.12 * sp + this.velocity.y * 1 * chaos
 
         // Boundary checks
         if (this.x < 0 || this.x > w) this.velocity.x *= -1
