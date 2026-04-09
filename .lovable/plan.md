@@ -1,34 +1,27 @@
 
 
-## Add Entropy Particle Animation as Full-Page Background
+## Make Order vs Chaos Clearly Visible
 
-### Overview
-Create the `Entropy` component adapted as a fixed, full-viewport background canvas behind all page content. The animation shows order-vs-chaos particles with connecting lines — no text, no divider line, scaled to fill the entire window.
+### Problem
+Currently the order/chaos distinction is hard to see because:
+1. The order region is defined by distance from center (`dist < min(w,h) * 0.35`) — a circular blob — rather than a clear left/right split
+2. Particle opacity is very low (0.35–0.4) making everything look uniformly faint
+3. Chaos particles roam the entire viewport instead of staying on one side
+4. Connection line opacity is only 0.12, too subtle to see structure
+5. No visual divider separates the two zones
 
-### Changes
+### Changes — `src/components/ui/entropy.tsx`
 
-#### 1. Create `src/components/ui/entropy.tsx`
-- Copy the Entropy component, modified for full-viewport use:
-  - Remove `size` prop; use `window.innerWidth` / `window.innerHeight` instead
-  - Remove the divider line and text drawing from the `animate()` function
-  - Add a `resize` event listener to re-initialize on window resize
-  - Use `position: fixed; inset: 0; z-index: 0` so it sits behind everything
-  - Remove `'use client'` directive (not needed in Vite/React)
-  - Reduce particle opacity slightly so content remains readable (e.g. alpha 0.4–0.5 instead of 0.8)
-  - Adjust `gridSize` based on viewport to keep particle density reasonable
-  - Boundary checks use full width/height instead of `size`
-  - Remove the left-half/right-half order split — use a center-based or random split so it looks natural across the full viewport
+1. **Restore left/right split**: Order = left half (`x < w/2`), chaos = right half. This is the original design's core visual metaphor — a clear vertical boundary between structured grid and chaotic movement.
 
-#### 2. Update `src/pages/Index.tsx`
-- Import and render `<Entropy />` as the first child inside the outer `div`, before `<MarginDoodles />`
-- It renders as a fixed background layer at `z-index: 0`
-- Existing content already has `z-[2]` so it layers correctly
+2. **Add subtle vertical divider line**: Draw a thin dashed line at `x = w/2` each frame (like the original component) with low opacity (~0.15) so the boundary is visible but not harsh.
 
-#### 3. No Tailwind or CSS changes needed
-- The existing project already has all required Tailwind config and CSS
-- The component uses inline canvas drawing, no extra styles required
+3. **Constrain chaos particles to right half**: Boundary checks clamp chaos particles to `[w/2, w]` instead of `[0, w]`, keeping chaos visually separated.
 
-### Files: 2
-- `src/components/ui/entropy.tsx` — new component (full-viewport particle canvas)
-- `src/pages/Index.tsx` — add `<Entropy />` as background layer
+4. **Increase particle visibility**: Bump ordered particle alpha from 0.35 to ~0.5, chaos alpha from 0.4 to ~0.55. Increase particle size from 1.5 to 2. Still subtle enough as a background but now clearly visible.
+
+5. **Increase connection line alpha**: From 0.12 to ~0.18, and connection distance from 40 to 50, so the grid structure on the left and the tangled web on the right are both apparent.
+
+### Files: 1
+- `src/components/ui/entropy.tsx`
 
