@@ -176,6 +176,7 @@ type Props = {
 export function AssemblyHeader({ panelIds }: Props) {
   const prodRef = useRef<SVGGElement>(null);
   const previewRef = useRef<SVGGElement>(null);
+  const previewSmallRef = useRef<SVGGElement>(null);
   const rollersRef = useRef<SVGGElement>(null);
   const armsRef = useRef<SVGGElement>(null);
   const sparksRef = useRef<SVGGElement>(null);
@@ -208,6 +209,19 @@ export function AssemblyHeader({ panelIds }: Props) {
     partsLargeRef.current = strokesToParts(currentSketch.strokes, 34);
     if (srcRef.current) {
       srcRef.current.textContent = currentSketch.name.toUpperCase().replace(".", "-");
+    }
+    // Update popover small preview
+    if (previewSmallRef.current) {
+      const parts = partsLargeRef.current;
+      let html = "";
+      for (const group of parts) {
+        html += `<g opacity="0.95">`;
+        for (const seg of group) {
+          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.9" stroke-linecap="round"/>`;
+        }
+        html += `</g>`;
+      }
+      previewSmallRef.current.innerHTML = html;
     }
   }, [currentSketch]);
 
@@ -771,7 +785,7 @@ export function AssemblyHeader({ panelIds }: Props) {
                   }}
                 >
                   <svg width="100%" height="100%" viewBox="0 0 200 90">
-                    <g ref={previewRef} />
+                    <g ref={previewSmallRef} />
                   </svg>
                 </div>
                 <div className="flex gap-2">
