@@ -551,7 +551,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="pointer-events-none fixed top-0 z-50 inset-x-0 min-[800px]:inset-x-auto" style={{ left: undefined, right: undefined }} ref={(el) => { if (el) { const mq = window.matchMedia('(min-width: 800px)'); const apply = () => { if (mq.matches) { el.style.left = 'calc(var(--margin-col-width, 60px) + 6px)'; el.style.right = 'calc(var(--margin-col-width, 60px) + 6px)'; } else { el.style.left = '0'; el.style.right = '0'; } }; apply(); mq.addEventListener('change', apply); } }}>
+    <div className="pointer-events-none fixed top-0 z-50 left-0 right-0 min-[800px]:left-[calc(var(--margin-col-width,60px)+6px)] min-[800px]:right-[calc(var(--margin-col-width,60px)+6px)]">
       <div className="relative">
         <svg
           viewBox="0 0 1400 90"
