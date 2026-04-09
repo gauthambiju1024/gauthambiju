@@ -1,5 +1,41 @@
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * AssemblyHeader (v7) — compact
+ * -----------------------------
+ * Half the height of v6 (90px instead of 180). Achieved by:
+ *
+ *   - Removing the bottom metadata strip (BOARD·REV / date / CAL / DUTY / msg).
+ *   - Removing per-station sub-labels (01 · HOME, 02 · ABOUT, ...).
+ *   - Removing per-station progress bars.
+ *   - Tightening vertical spacing throughout.
+ *   - Shrinking the design box on the right from 132px tall to 72px.
+ *
+ * Kept:
+ *   - Overall progress spine (far left), now narrower (3px) and shorter.
+ *   - Top instrumentation strip (all labels preserved, tighter kerning).
+ *   - Serif nav row above the belt.
+ *   - The belt itself with rollers, bearings, end rails, direction ports.
+ *   - Intake/dispatch labels.
+ *   - Compact design box on the right with live preview + click-to-change CTA.
+ *   - Popover for preset picking and custom drawing.
+ *
+ * Layout map (y coordinates):
+ *   0..12   top instrumentation
+ *   14..35  serif nav row
+ *   36..40  station ticks
+ *   40..64  belt channel
+ *   65..80  intake/dispatch
+ *   10..80  overall progress spine (x=10, width=3)
+ *
+ * Integration unchanged:
+ *
+ *   <AssemblyHeader panelIds={PANEL_IDS} />
+ *   <main className="pt-[98px]">...</main>
+ *
+ * pt-[98px] reserves 90px header + 8px breathing room.
+ */
+
 type Stroke = Array<[number, number]>;
 type Sketch = { name: string; strokes: Stroke[] };
 type Segment = [[number, number], [number, number]];
@@ -10,10 +46,9 @@ const INK_BRIGHT = "hsl(38 55% 65%)";
 const INK_HOT = "hsl(38 85% 72%)";
 const INK_DIM = "hsl(38 35% 52%)";
 const INK_BG = "hsl(38 45% 55%)";
-const INK_FAINT = "hsl(38 30% 35%)";
 const METAL = "hsl(38 45% 50%)";
-const BELT_DARK = "hsl(160 22% 11%)";
-const BELT_DARKER = "hsl(160 22% 9%)";
+const BELT_DARK = "hsl(160 22% 10%)";
+const BELT_DARKER = "hsl(160 22% 8%)";
 const BORDER_DASH = "hsl(38 40% 45%)";
 
 const PRESETS: Sketch[] = [
@@ -66,12 +101,12 @@ const PRESETS: Sketch[] = [
 const NAV = [
   { key: "home", label: "Home" },
   { key: "about", label: "About" },
-  { key: "projects", label: "Projects" },
-  { key: "thinking", label: "Thinking" },
-  { key: "skills", label: "Skills" },
-  { key: "journey", label: "Journey" },
-  { key: "writing", label: "Writing" },
-  { key: "contact", label: "Contact" },
+  { key: "work", label: "Work" },
+  { key: "think", label: "Think" },
+  { key: "skill", label: "Skill" },
+  { key: "path", label: "Path" },
+  { key: "write", label: "Write" },
+  { key: "send", label: "Send" },
 ];
 
 function bbox(strokes: Stroke[]) {
@@ -145,24 +180,22 @@ export function AssemblyHeader({ panelIds }: Props) {
   const armsRef = useRef<SVGGElement>(null);
   const sparksRef = useRef<SVGGElement>(null);
   const stationsRef = useRef<SVGGElement>(null);
-  const barsRef = useRef<SVGGElement>(null);
 
   const overallFillRef = useRef<SVGRectElement>(null);
+  const overallChipRef = useRef<SVGRectElement>(null);
   const overallPctRef = useRef<SVGTextElement>(null);
+  const intakeDotRef = useRef<SVGCircleElement>(null);
+  const dispatchDotRef = useRef<SVGCircleElement>(null);
   const clockRef = useRef<SVGTSpanElement>(null);
   const etaRef = useRef<SVGTextElement>(null);
-  const dutyRef = useRef<SVGTSpanElement>(null);
   const dispRef = useRef<SVGTSpanElement>(null);
-  const msgRef = useRef<SVGTextElement>(null);
   const srcRef = useRef<SVGTSpanElement>(null);
   const prtRef = useRef<SVGTSpanElement>(null);
-  const previewNameRef = useRef<SVGTextElement>(null);
-  const previewCountRef = useRef<SVGTextElement>(null);
 
   const progressRef = useRef(0);
   const [currentSketch, setCurrentSketch] = useState<Sketch>(PRESETS[0]);
-  const partsSmallRef = useRef<PartSegments>(strokesToParts(PRESETS[0].strokes, 26));
-  const partsLargeRef = useRef<PartSegments>(strokesToParts(PRESETS[0].strokes, 52));
+  const partsSmallRef = useRef<PartSegments>(strokesToParts(PRESETS[0].strokes, 18));
+  const partsLargeRef = useRef<PartSegments>(strokesToParts(PRESETS[0].strokes, 34));
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -171,14 +204,10 @@ export function AssemblyHeader({ panelIds }: Props) {
   const currentStrokeRef = useRef<Stroke | null>(null);
 
   useEffect(() => {
-    partsSmallRef.current = strokesToParts(currentSketch.strokes, 26);
-    partsLargeRef.current = strokesToParts(currentSketch.strokes, 52);
+    partsSmallRef.current = strokesToParts(currentSketch.strokes, 18);
+    partsLargeRef.current = strokesToParts(currentSketch.strokes, 34);
     if (srcRef.current) {
       srcRef.current.textContent = currentSketch.name.toUpperCase().replace(".", "-");
-    }
-    if (previewNameRef.current) {
-      const totalVtx = currentSketch.strokes.reduce((a, s) => a + s.length, 0);
-      previewNameRef.current.textContent = `${currentSketch.name.toUpperCase().replace(".", "-")} · ${totalVtx} vtx`;
     }
   }, [currentSketch]);
 
@@ -203,41 +232,33 @@ export function AssemblyHeader({ panelIds }: Props) {
     const arms = armsRef.current;
     const sparks = sparksRef.current;
     const stations = stationsRef.current;
-    const bars = barsRef.current;
-    if (!prod || !preview || !rollers || !arms || !sparks || !stations || !bars) return;
+    if (!prod || !preview || !rollers || !arms || !sparks || !stations) return;
 
     const SVG_NS = "http://www.w3.org/2000/svg";
-    const BS = 40;
+    const BS = 30;
     const BE = 1140;
     const BL = BE - BS;
-    const Y = 80;
+    const Y = 52;
 
     let rollersHtml = "";
-    for (let rx = BS + 20; rx < BE; rx += 14) {
-      rollersHtml += `<circle cx="${rx}" cy="${Y}" r="2.2" fill="${BELT_DARKER}" stroke="${METAL}" stroke-width="0.4"/>`;
-      rollersHtml += `<circle cx="${rx}" cy="${Y}" r="0.8" fill="none" stroke="hsl(38 40% 48%)" stroke-width="0.3"/>`;
-      rollersHtml += `<line class="h6-rm" data-cx="${rx}" x1="${rx}" y1="${Y - 1.6}" x2="${rx}" y2="${Y}" stroke="${INK_BRIGHT}" stroke-width="0.4"/>`;
+    for (let rx = BS + 14; rx < BE; rx += 12) {
+      rollersHtml += `<circle cx="${rx}" cy="${Y}" r="1.6" fill="${BELT_DARKER}" stroke="${METAL}" stroke-width="0.3"/>`;
+      rollersHtml += `<circle cx="${rx}" cy="${Y}" r="0.5" fill="none" stroke="hsl(38 40% 48%)" stroke-width="0.25"/>`;
+      rollersHtml += `<line class="h7-rm" data-cx="${rx}" x1="${rx}" y1="${Y - 1.2}" x2="${rx}" y2="${Y}" stroke="${INK_BRIGHT}" stroke-width="0.3"/>`;
     }
     rollers.innerHTML = rollersHtml;
-    const rMarks = rollers.querySelectorAll<SVGLineElement>(".h6-rm");
+    const rMarks = rollers.querySelectorAll<SVGLineElement>(".h7-rm");
 
     let stationsHtml = "";
-    let barsHtml = "";
     for (let i = 0; i < 8; i++) {
-      const x = BS + 50 + (i / 7) * (BL - 100);
-      stationsHtml += `<line x1="${x}" y1="58" x2="${x}" y2="62" stroke="${INK_BG}" stroke-width="0.4" opacity="0.6"/>`;
-      stationsHtml += `<line x1="${x}" y1="98" x2="${x}" y2="104" stroke="${INK_BG}" stroke-width="0.4" opacity="0.6"/>`;
-      stationsHtml += `<circle class="h6-sd" data-i="${i}" cx="${x}" cy="108" r="1.4" fill="none" stroke="${INK_DIM}" stroke-width="0.5"/>`;
-      stationsHtml += `<text class="h6-nv" data-i="${i}" data-jump="${i}" x="${x}" y="52" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="15" fill="${INK}" style="cursor:pointer">${NAV[i].label}</text>`;
-      stationsHtml += `<text x="${x}" y="140" text-anchor="middle" font-family="monospace" font-size="5" fill="${INK_FAINT}" letter-spacing="0.8" opacity="0.85">0${i + 1} · ${NAV[i].key.toUpperCase()}</text>`;
-      barsHtml += `<rect x="${x - 22}" y="128" width="44" height="1" fill="hsl(38 30% 32%)" opacity="0.6"/>`;
-      barsHtml += `<rect class="h6-bar" data-i="${i}" x="${x - 22}" y="128" width="0" height="1" fill="${INK_BRIGHT}"/>`;
+      const x = BS + 45 + (i / 7) * (BL - 90);
+      stationsHtml += `<line x1="${x}" y1="36" x2="${x}" y2="40" stroke="${INK_BG}" stroke-width="0.35" opacity="0.6"/>`;
+      stationsHtml += `<text class="h7-nv" data-i="${i}" data-jump="${i}" x="${x}" y="32" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="16" letter-spacing="0.3" fill="${INK}" style="cursor:pointer">${NAV[i].label}</text>`;
+      stationsHtml += `<line class="h7-nu" data-i="${i}" x1="${x - 16}" y1="35" x2="${x + 16}" y2="35" stroke="${INK_BRIGHT}" stroke-width="0.6" opacity="0"/>`;
     }
     stations.innerHTML = stationsHtml;
-    bars.innerHTML = barsHtml;
-    const sDots = stations.querySelectorAll<SVGCircleElement>(".h6-sd");
-    const navEls = stations.querySelectorAll<SVGTextElement>(".h6-nv");
-    const barEls = bars.querySelectorAll<SVGRectElement>(".h6-bar");
+    const navEls = stations.querySelectorAll<SVGTextElement>(".h7-nv");
+    const navUnderlines = stations.querySelectorAll<SVGLineElement>(".h7-nu");
 
     const clickHandlers: Array<() => void> = [];
     navEls.forEach((el) => {
@@ -251,18 +272,20 @@ export function AssemblyHeader({ panelIds }: Props) {
     });
 
     let armsHtml = "";
-    for (let i = 0; i < 8; i++) {
-      const x = BS + 50 + (i / 7) * (BL - 100);
-      armsHtml += `<g class="h6-arm" data-x="${x}">`;
-      armsHtml += `<line x1="${x}" y1="22" x2="${x}" y2="58" stroke="hsl(38 35% 40%)" stroke-width="0.3" opacity="0.35"/>`;
-      armsHtml += `<line class="h6-s1" x1="${x}" y1="58" x2="${x}" y2="64" stroke="${INK}" stroke-width="0.8"/>`;
-      armsHtml += `<circle class="h6-j" cx="${x}" cy="64" r="0.8" fill="hsl(38 35% 38%)" stroke="${INK_BRIGHT}" stroke-width="0.3"/>`;
-      armsHtml += `<line class="h6-s2" x1="${x}" y1="64" x2="${x}" y2="70" stroke="${INK}" stroke-width="0.7"/>`;
-      armsHtml += `<circle class="h6-t" cx="${x}" cy="70" r="0.9" fill="none" stroke="${INK_BRIGHT}" stroke-width="0.5"/>`;
+    const stationSpacing = (BL - 90) / 7;
+    for (let i = 0; i < 7; i++) {
+      const x = BS + 45 + (i / 7) * (BL - 90) + stationSpacing / 2;
+      armsHtml += `<g class="h7-arm" data-x="${x}">`;
+      armsHtml += `<line x1="${x - 3}" y1="18" x2="${x + 3}" y2="18" stroke="${METAL}" stroke-width="0.8" opacity="0.7"/>`;
+      armsHtml += `<line x1="${x}" y1="18" x2="${x}" y2="36" stroke="${INK}" stroke-width="0.3" stroke-dasharray="1 1" opacity="0.35"/>`;
+      armsHtml += `<line class="h7-s1" x1="${x}" y1="36" x2="${x}" y2="40" stroke="${INK}" stroke-width="1.1"/>`;
+      armsHtml += `<circle class="h7-j" cx="${x}" cy="40" r="0.9" fill="${BELT_DARKER}" stroke="${INK_BRIGHT}" stroke-width="0.4"/>`;
+      armsHtml += `<line class="h7-s2" x1="${x}" y1="40" x2="${x}" y2="44" stroke="${INK}" stroke-width="0.9"/>`;
+      armsHtml += `<circle class="h7-t" cx="${x}" cy="44" r="1.1" fill="none" stroke="${INK_BRIGHT}" stroke-width="0.5"/>`;
       armsHtml += `</g>`;
     }
     arms.innerHTML = armsHtml;
-    const armEls = arms.querySelectorAll<SVGGElement>(".h6-arm");
+    const armEls = arms.querySelectorAll<SVGGElement>(".h7-arm");
 
     function renderProduct(stage: number, stageProg: number) {
       const parts = partsSmallRef.current;
@@ -272,7 +295,7 @@ export function AssemblyHeader({ panelIds }: Props) {
         const op = i < stage ? 1 : Math.min(1, stageProg);
         html += `<g opacity="${op.toFixed(2)}">`;
         for (const seg of parts[i]) {
-          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.9" stroke-linecap="round"/>`;
+          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.8" stroke-linecap="round"/>`;
         }
         html += `</g>`;
       }
@@ -287,7 +310,7 @@ export function AssemblyHeader({ panelIds }: Props) {
         const op = i < stage ? 0.95 : Math.min(0.95, stageProg);
         html += `<g opacity="${op.toFixed(2)}">`;
         for (const seg of parts[i]) {
-          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="1.1" stroke-linecap="round"/>`;
+          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.9" stroke-linecap="round"/>`;
         }
         html += `</g>`;
       }
@@ -300,14 +323,14 @@ export function AssemblyHeader({ panelIds }: Props) {
     function emitSpark(x: number, y: number) {
       for (let i = 0; i < 3; i++) {
         const a = Math.random() * Math.PI * 2;
-        const s = 0.5 + Math.random() * 0.8;
+        const s = 0.4 + Math.random() * 0.7;
         const c = document.createElementNS(SVG_NS, "circle");
         c.setAttribute("cx", String(x));
         c.setAttribute("cy", String(y));
-        c.setAttribute("r", "0.3");
+        c.setAttribute("r", "0.5");
         c.setAttribute("fill", INK_HOT);
         sparks!.appendChild(c);
-        sparkList.push({ el: c, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 0.2, life: 12 });
+        sparkList.push({ el: c, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 0.15, life: 10 });
       }
     }
 
@@ -321,18 +344,22 @@ export function AssemblyHeader({ panelIds }: Props) {
       for (let i = 0; i < rMarks.length; i++) {
         const cx = parseFloat(rMarks[i].getAttribute("data-cx") || "0");
         const a = (t * 0.3 + i * 0.4) % (Math.PI * 2);
-        rMarks[i].setAttribute("x2", String(cx + Math.sin(a) * 1.6));
-        rMarks[i].setAttribute("y2", String(Y + Math.cos(a) * 1.6));
+        rMarks[i].setAttribute("x2", String(cx + Math.sin(a) * 1.2));
+        rMarks[i].setAttribute("y2", String(Y + Math.cos(a) * 1.2));
       }
 
       if (overallFillRef.current) {
-        overallFillRef.current.setAttribute("height", String(140 * p));
+        overallFillRef.current.setAttribute("height", String(70 * p));
+      }
+      if (overallChipRef.current) {
+        overallChipRef.current.setAttribute("y", String(12 + 70 * p - 2.5));
       }
       if (overallPctRef.current) {
         overallPctRef.current.textContent = String(Math.round(p * 100)).padStart(2, "0");
+        overallPctRef.current.setAttribute("y", String(14 + 70 * p));
       }
 
-      const prodX = BS + 50 + p * (BL - 100);
+      const prodX = BS + 45 + p * (BL - 90);
       prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
 
       const stage = Math.min(7, Math.floor(p * 8));
@@ -344,58 +371,45 @@ export function AssemblyHeader({ panelIds }: Props) {
         const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
         prtRef.current.textContent = String(partCount).padStart(2, "0");
       }
-      if (previewCountRef.current) {
-        const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
-        previewCountRef.current.textContent = `${partCount} / 8 installed`;
-      }
 
-      for (let i = 0; i < sDots.length; i++) {
-        const si = parseInt(sDots[i].getAttribute("data-i") || "0");
-        if (si < stage) {
-          sDots[i].setAttribute("fill", INK_BRIGHT);
-          sDots[i].setAttribute("stroke", INK_BRIGHT);
-          barEls[si].setAttribute("width", "44");
-        } else if (si === stage) {
-          sDots[i].setAttribute("fill", INK_BRIGHT);
-          sDots[i].setAttribute("stroke", INK_BRIGHT);
-          barEls[si].setAttribute("width", String(44 * stageProg));
+      for (let i = 0; i < navEls.length; i++) {
+        if (i === stage) {
+          navEls[i].setAttribute("fill", "hsl(38 65% 74%)");
+          navEls[i].setAttribute("font-weight", "500");
+          navUnderlines[i].setAttribute("opacity", "0.9");
+          navUnderlines[i].setAttribute("stroke", "hsl(38 65% 74%)");
+        } else if (i < stage) {
+          navEls[i].setAttribute("fill", "hsl(38 52% 62%)");
+          navEls[i].setAttribute("font-weight", "400");
+          navUnderlines[i].setAttribute("opacity", "0.55");
+          navUnderlines[i].setAttribute("stroke", "hsl(38 52% 62%)");
         } else {
-          sDots[i].setAttribute("fill", "none");
-          sDots[i].setAttribute("stroke", INK_DIM);
-          barEls[si].setAttribute("width", "0");
-        }
-        if (si === stage) {
-          navEls[si].setAttribute("fill", "hsl(38 60% 72%)");
-          navEls[si].setAttribute("font-weight", "500");
-        } else if (si < stage) {
-          navEls[si].setAttribute("fill", "hsl(38 50% 60%)");
-          navEls[si].setAttribute("font-weight", "400");
-        } else {
-          navEls[si].setAttribute("fill", INK);
-          navEls[si].setAttribute("font-weight", "400");
+          navEls[i].setAttribute("fill", INK);
+          navEls[i].setAttribute("font-weight", "400");
+          navUnderlines[i].setAttribute("opacity", "0");
         }
       }
 
       for (let i = 0; i < armEls.length; i++) {
         const ax = parseFloat(armEls[i].getAttribute("data-x") || "0");
         const dist = Math.abs(ax - prodX);
-        const close = dist < 30;
-        const engage = dist < 6;
-        const ext = close ? Math.max(0, 1 - dist / 30) : 0;
+        const close = dist < 40;
+        const engage = dist < 12;
+        const ext = close ? Math.max(0, 1 - dist / 40) : 0;
         const jit = engage ? Math.sin(t * 0.6) * 0.5 : 0;
-        const s1 = armEls[i].querySelector(".h6-s1") as SVGLineElement;
-        const s2 = armEls[i].querySelector(".h6-s2") as SVGLineElement;
-        const j = armEls[i].querySelector(".h6-j") as SVGCircleElement;
-        const tp = armEls[i].querySelector(".h6-t") as SVGCircleElement;
-        const jY = 64 + ext * 3;
-        const tY = 70 + ext * 4 + jit;
+        const s1 = armEls[i].querySelector(".h7-s1") as SVGLineElement;
+        const s2 = armEls[i].querySelector(".h7-s2") as SVGLineElement;
+        const j = armEls[i].querySelector(".h7-j") as SVGCircleElement;
+        const tp = armEls[i].querySelector(".h7-t") as SVGCircleElement;
+        const jY = 40 + ext * 2;
+        const tY = 44 + ext * 8 + jit;
         s1.setAttribute("y2", String(jY));
         j.setAttribute("cy", String(jY));
         s2.setAttribute("y1", String(jY));
         s2.setAttribute("y2", String(tY));
         tp.setAttribute("cy", String(tY));
         tp.setAttribute("stroke", engage ? INK_HOT : INK_BRIGHT);
-        if (engage && t % 5 === 0) emitSpark(ax, tY);
+        if (engage && t % 4 === 0) emitSpark(ax, tY);
       }
 
       for (let i = sparkList.length - 1; i >= 0; i--) {
@@ -406,7 +420,7 @@ export function AssemblyHeader({ panelIds }: Props) {
         s.life--;
         s.el.setAttribute("cx", String(s.x));
         s.el.setAttribute("cy", String(s.y));
-        s.el.setAttribute("opacity", String(s.life / 12));
+        s.el.setAttribute("opacity", String(s.life / 10));
         if (s.life <= 0) {
           sparks!.removeChild(s.el);
           sparkList.splice(i, 1);
@@ -418,8 +432,23 @@ export function AssemblyHeader({ panelIds }: Props) {
         clockRef.current.textContent =
           String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
       }
-      if (dutyRef.current) dutyRef.current.textContent = String(Math.round(p * 100)).padStart(2, "0");
       if (etaRef.current) etaRef.current.textContent = `ETA ${(3.2 * (1 - p)).toFixed(1)}s`;
+      if (intakeDotRef.current) {
+        const pulse = 0.4 + Math.abs(Math.sin(t * 0.15)) * 0.6;
+        intakeDotRef.current.setAttribute("opacity", String(pulse));
+      }
+      if (dispatchDotRef.current) {
+        if (p >= 0.99) {
+          dispatchDotRef.current.setAttribute("fill", "hsl(120 50% 55%)");
+          dispatchDotRef.current.setAttribute("opacity", "1");
+          dispatchDotRef.current.setAttribute("r", "1.3");
+        } else {
+          const fillAmount = stage / 8;
+          dispatchDotRef.current.setAttribute("fill", INK_BRIGHT);
+          dispatchDotRef.current.setAttribute("opacity", String(0.3 + fillAmount * 0.6));
+          dispatchDotRef.current.setAttribute("r", String(0.8 + fillAmount * 0.5));
+        }
+      }
       if (dispRef.current) {
         if (p >= 0.99) {
           dispRef.current.textContent = "ok";
@@ -428,12 +457,6 @@ export function AssemblyHeader({ panelIds }: Props) {
           dispRef.current.textContent = "--";
           dispRef.current.setAttribute("fill", INK_DIM);
         }
-      }
-      if (msgRef.current) {
-        msgRef.current.textContent =
-          p >= 0.99
-            ? "complete · delivered"
-            : `building your ${currentSketch.name.split(".")[0]}`;
       }
 
       rafId = requestAnimationFrame(frame);
@@ -528,183 +551,138 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="sticky top-0 z-50" style={{ background: 'hsla(220, 15%, 12%, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'source-in' as any }}>
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
       <div className="relative">
         <svg
-          viewBox="0 0 1400 180"
+          viewBox="0 0 1400 90"
           preserveAspectRatio="xMidYMid meet"
-          className="block w-full"
-          style={{ height: 'auto' }}
+          className="pointer-events-auto block h-[90px] w-full"
         >
-          {/* OVERALL PROGRESS SPINE */}
+          {/* OVERALL PROGRESS SPINE (left, narrower) */}
           <g>
-            <rect x="12" y="20" width="4" height="140" fill="none" stroke={INK_DIM} strokeWidth="0.4" />
-            <rect x="12" y="20" width="4" height="140" fill="hsl(38 25% 20%)" opacity="0.5" />
-            <rect ref={overallFillRef} x="12" y="20" width="4" height="0" fill={INK_BRIGHT} opacity="0.75" />
-            <line x1="10" y1="20" x2="18" y2="20" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="10" y1="55" x2="16" y2="55" stroke={INK_DIM} strokeWidth="0.3" opacity="0.6" />
-            <line x1="10" y1="90" x2="18" y2="90" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="10" y1="125" x2="16" y2="125" stroke={INK_DIM} strokeWidth="0.3" opacity="0.6" />
-            <line x1="10" y1="160" x2="18" y2="160" stroke={INK_DIM} strokeWidth="0.4" />
-            <text x="22" y="23" fontFamily="monospace" fontSize="4" fill={INK}>100</text>
-            <text x="22" y="92" fontFamily="monospace" fontSize="4" fill={INK}>50</text>
-            <text x="22" y="163" fontFamily="monospace" fontSize="4" fill={INK}>00</text>
-            <rect x="8" y="67" width="12" height="6" fill="hsl(160 20% 14%)" stroke={INK_BRIGHT} strokeWidth="0.5" />
+            <rect x="10" y="10" width="3" height="70" fill="hsl(38 25% 20%)" opacity="0.5" />
+            <rect x="10" y="10" width="3" height="70" fill="none" stroke={INK_DIM} strokeWidth="0.3" />
+            <rect ref={overallFillRef} x="10" y="10" width="3" height="0" fill={INK_BRIGHT} opacity="0.75" />
+            <line x1="8" y1="10" x2="15" y2="10" stroke={INK_DIM} strokeWidth="0.3" />
+            <line x1="8" y1="45" x2="15" y2="45" stroke={INK_DIM} strokeWidth="0.3" />
+            <line x1="8" y1="80" x2="15" y2="80" stroke={INK_DIM} strokeWidth="0.3" />
+            <text x="17" y="13" fontFamily="monospace" fontSize="3.5" fill={INK}>100</text>
+            <text x="17" y="82" fontFamily="monospace" fontSize="3.5" fill={INK}>00</text>
+            <rect ref={overallChipRef} x="6" y="32" width="11" height="5" fill="hsl(160 20% 14%)" stroke={INK_BRIGHT} strokeWidth="0.4" />
             <text
               ref={overallPctRef}
-              x="14"
-              y="72"
+              x="11.5"
+              y="36"
               fontFamily="monospace"
-              fontSize="4.5"
+              fontSize="3.8"
               fill="hsl(38 65% 70%)"
               textAnchor="middle"
               fontWeight="500"
             >
               00
             </text>
-            <text x="14" y="175" fontFamily="monospace" fontSize="3.5" fill={INK_DIM} textAnchor="middle" letterSpacing="0.5">
-              OVR
-            </text>
           </g>
 
-          {/* Top/bottom dashed boundaries */}
-          <line x1="40" y1="20" x2="1140" y2="20" stroke={INK} strokeWidth="0.4" strokeDasharray="1 3" opacity="0.6" />
-          <line x1="40" y1="160" x2="1140" y2="160" stroke={INK} strokeWidth="0.4" strokeDasharray="1 3" opacity="0.6" />
+          {/* Top dashed boundary */}
+          <line x1="30" y1="12" x2="1140" y2="12" stroke={INK} strokeWidth="0.3" strokeDasharray="1 3" opacity="0.5" />
 
-          {/* Top instrumentation */}
-          <g fontFamily="monospace" fontSize="6" fill={INK_DIM} letterSpacing="1.2" opacity="0.85">
-            <text x="40" y="13">GB · BUILD.OS</text>
-            <text x="118" y="13" fill={INK_BRIGHT}>● LIVE</text>
-            <text x="160" y="13">v4.6.2</text>
-            <text x="202" y="13">TRQ·94</text>
-            <text x="244" y="13">PWR·100</text>
-            <text x="294" y="13">
+          {/* Top instrumentation — single strip */}
+          <g fontFamily="monospace" fontSize="5" fill={INK} letterSpacing="1" opacity="0.85">
+            <text x="30" y="8">GB · BUILD.OS</text>
+            <text x="95" y="8" fill={INK_BRIGHT}>● LIVE</text>
+            <text x="130" y="8">v4.6.2</text>
+            <text x="165" y="8">TRQ·94</text>
+            <text x="202" y="8">PWR·100</text>
+            <text x="246" y="8">
               SRC·<tspan ref={srcRef} fill={INK_BRIGHT}>DRONE-V1</tspan>
             </text>
-            <text x="374" y="13">
+            <text x="317" y="8">
               PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
             </text>
-            <text x="1140" y="13" textAnchor="end">
+            <text x="1140" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>
             </text>
-            <text ref={etaRef} x="1070" y="13" textAnchor="end">ETA 3.2s</text>
-            <text x="1014" y="13" textAnchor="end">OP·A7/B3/C1</text>
+            <text ref={etaRef} x="1082" y="8" textAnchor="end">ETA 3.2s</text>
+            <text x="1035" y="8" textAnchor="end">OP·A7/B3/C1</text>
           </g>
 
-          {/* BELT STRUCTURE */}
+          {/* Station ticks + serif nav */}
+          <g ref={stationsRef} />
+
+          {/* BELT STRUCTURE — compact */}
           <g>
-            <rect x="40" y="62" width="1100" height="36" fill={BELT_DARK} stroke={METAL} strokeWidth="0.5" opacity="0.9" />
-            <line x1="40" y1="68" x2="1140" y2="68" stroke={INK_BG} strokeWidth="0.6" opacity="0.7" />
-            <line x1="40" y1="92" x2="1140" y2="92" stroke={INK_BG} strokeWidth="0.6" opacity="0.7" />
-            <line x1="40" y1="72" x2="1140" y2="72" stroke="hsl(38 35% 38%)" strokeWidth="0.3" opacity="0.5" strokeDasharray="6 4" />
-            <line x1="40" y1="88" x2="1140" y2="88" stroke="hsl(38 35% 38%)" strokeWidth="0.3" opacity="0.5" strokeDasharray="6 4" />
+            <rect x="30" y="40" width="1110" height="24" fill={BELT_DARK} stroke={METAL} strokeWidth="0.4" opacity="0.9" />
+            <line x1="30" y1="44" x2="1140" y2="44" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="60" x2="1140" y2="60" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="47" x2="1140" y2="47" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
+            <line x1="30" y1="57" x2="1140" y2="57" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
 
             <g ref={rollersRef} />
 
-            {/* End rails */}
-            <line x1="40" y1="62" x2="40" y2="98" stroke={INK} strokeWidth="0.7" />
-            <line x1="1140" y1="62" x2="1140" y2="98" stroke={INK} strokeWidth="0.7" />
+            <line x1="30" y1="40" x2="30" y2="64" stroke={INK} strokeWidth="0.6" />
+            <line x1="1140" y1="40" x2="1140" y2="64" stroke={INK} strokeWidth="0.6" />
 
-            {/* Roller-bearing housings */}
-            <g transform="translate(40, 80)">
-              <rect x="-4" y="-8" width="8" height="16" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.5" />
-              <line x1="-3" y1="-5" x2="3" y2="-5" stroke={METAL} strokeWidth="0.3" />
-              <line x1="-3" y1="0" x2="3" y2="0" stroke={METAL} strokeWidth="0.3" />
-              <line x1="-3" y1="5" x2="3" y2="5" stroke={METAL} strokeWidth="0.3" />
+            <g transform="translate(30, 52)">
+              <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
+              <line x1="-2" y1="-3" x2="2" y2="-3" stroke={METAL} strokeWidth="0.3" />
+              <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
+              <line x1="-2" y1="3" x2="2" y2="3" stroke={METAL} strokeWidth="0.3" />
             </g>
-            <g transform="translate(1140, 80)">
-              <rect x="-4" y="-8" width="8" height="16" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.5" />
-              <line x1="-3" y1="-5" x2="3" y2="-5" stroke={METAL} strokeWidth="0.3" />
-              <line x1="-3" y1="0" x2="3" y2="0" stroke={METAL} strokeWidth="0.3" />
-              <line x1="-3" y1="5" x2="3" y2="5" stroke={METAL} strokeWidth="0.3" />
-            </g>
-
-            {/* Direction arrows */}
-            <g fontFamily="monospace" fontSize="4" fill={INK_BG} opacity="0.6">
-              <text x="20" y="80" textAnchor="middle" letterSpacing="0.4">IN</text>
-              <text x="20" y="87" textAnchor="middle">◀</text>
-            </g>
-            <g fontFamily="monospace" fontSize="4" fill={INK_BG} opacity="0.6">
-              <text x="1160" y="80" textAnchor="middle" letterSpacing="0.4">OUT</text>
-              <text x="1160" y="87" textAnchor="middle">▶</text>
-            </g>
-
-            {/* Floor-mount bolts */}
-            <g opacity="0.5">
-              {[60, 400, 780, 1120].map((bx) => (
-                <g key={bx}>
-                  <circle cx={bx} cy={102} r={1} fill="none" stroke="hsl(38 35% 42%)" strokeWidth="0.4" />
-                  <circle cx={bx} cy={102} r={0.3} fill="hsl(38 35% 42%)" />
-                </g>
-              ))}
+            <g transform="translate(1140, 52)">
+              <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
+              <line x1="-2" y1="-3" x2="2" y2="-3" stroke={METAL} strokeWidth="0.3" />
+              <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
+              <line x1="-2" y1="3" x2="2" y2="3" stroke={METAL} strokeWidth="0.3" />
             </g>
           </g>
 
-          <g ref={stationsRef} />
-          <g ref={prodRef} transform="translate(300, 80)" />
+          <g ref={prodRef} transform="translate(300, 52)" />
           <g ref={armsRef} />
           <g ref={sparksRef} />
-          <g ref={barsRef} />
 
-          {/* Intake / dispatch labels */}
-          <g fontFamily="monospace" fontSize="5" fill={INK_DIM} letterSpacing="0.6" opacity="0.8">
-            <text x="40" y="116">─── INTAKE</text>
-            <text x="100" y="116" fill={INK_BRIGHT}>user·sketch</text>
-            <text x="1140" y="116" textAnchor="end">
+          {/* Intake / dispatch labels with indicator dots */}
+          <g fontFamily="monospace" fontSize="4" fill={INK} letterSpacing="0.5" opacity="0.8">
+            <text x="30" y="76">─── INTAKE</text>
+            <text x="73" y="76" fill={INK_BRIGHT}>user·sketch</text>
+            <circle ref={intakeDotRef} cx="107" cy="74.5" r="1" fill={INK_BRIGHT} opacity="0.4" />
+            <circle ref={dispatchDotRef} cx="1063" cy="74.5" r="1" fill={INK_DIM} opacity="0.6" />
+            <text x="1140" y="76" textAnchor="end">
               dispatch·<tspan ref={dispRef} fill={INK_DIM}>--</tspan> ───
             </text>
-            <text x="1040" y="116" textAnchor="end">field ready</text>
+            <text x="1060" y="76" textAnchor="end">field ready</text>
           </g>
 
-          {/* Bottom metadata */}
-          <g fontFamily="monospace" fontSize="5" fill={INK_FAINT} letterSpacing="0.5" opacity="0.75">
-            <text x="40" y="175">ref GB.001 · rev 03</text>
-            <text x="160" y="175">2026.04.09</text>
-            <text x="230" y="175">cal·ok</text>
-            <text x="270" y="175">
-              duty·<tspan ref={dutyRef} fill={INK_BRIGHT}>00</tspan>%
-            </text>
-            <text ref={msgRef} x="1140" y="175" textAnchor="end">building your drone</text>
-          </g>
-
-          {/* COMPACT DESIGN BOX */}
+          {/* COMPACT DESIGN BOX — 72px tall */}
           <g
             style={{ cursor: "pointer" }}
             onClick={() => setPopoverOpen((o) => !o)}
           >
-            <rect x="1160" y="24" width="228" height="132" fill="none" stroke={INK_BRIGHT} strokeWidth="0.6" />
-            <rect x="1162" y="26" width="224" height="128" fill="none" stroke={BORDER_DASH} strokeWidth="0.3" strokeDasharray="2 2" />
+            <rect x="1160" y="10" width="228" height="72" fill="none" stroke={INK_BRIGHT} strokeWidth="0.6" />
+            <rect x="1162" y="12" width="224" height="68" fill="none" stroke={BORDER_DASH} strokeWidth="0.3" strokeDasharray="2 2" />
 
-            <text x="1170" y="38" fontFamily="monospace" fontSize="6" fill={INK_BRIGHT} letterSpacing="1.2">
+            <text x="1168" y="20" fontFamily="monospace" fontSize="5" fill={INK_BRIGHT} letterSpacing="1">
               ─── YOUR PRODUCT
             </text>
 
-            <g ref={previewRef} transform="translate(1274, 88)" />
+            <g ref={previewRef} transform="translate(1274, 46)" />
 
-            {/* Corner crop marks */}
-            <line x1="1232" y1="58" x2="1236" y2="58" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1232" y1="58" x2="1232" y2="62" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1316" y1="58" x2="1312" y2="58" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1316" y1="58" x2="1316" y2="62" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1232" y1="118" x2="1236" y2="118" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1232" y1="118" x2="1232" y2="114" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1316" y1="118" x2="1312" y2="118" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1316" y1="118" x2="1316" y2="114" stroke={INK_DIM} strokeWidth="0.4" />
+            {/* Corner crop marks (shrunk) */}
+            <line x1="1238" y1="25" x2="1241" y2="25" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1238" y1="25" x2="1238" y2="28" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1310" y1="25" x2="1307" y2="25" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1310" y1="25" x2="1310" y2="28" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1238" y1="67" x2="1241" y2="67" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1238" y1="67" x2="1238" y2="64" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1310" y1="67" x2="1307" y2="67" stroke={INK_DIM} strokeWidth="0.4" />
+            <line x1="1310" y1="67" x2="1310" y2="64" stroke={INK_DIM} strokeWidth="0.4" />
 
-            <text ref={previewNameRef} x="1170" y="132" fontFamily="monospace" fontSize="4" fill={INK_DIM}>
-              DRONE-V1 · 16 vtx
-            </text>
-            <text ref={previewCountRef} x="1378" y="132" fontFamily="monospace" fontSize="4" fill={INK_DIM} textAnchor="end">
-              0 / 8 installed
-            </text>
-
-            <rect x="1170" y="138" width="208" height="11" fill={BELT_DARKER} stroke={INK} strokeWidth="0.4" />
+            <rect x="1168" y="72" width="212" height="7" fill={BELT_DARK} stroke={INK} strokeWidth="0.3" />
             <text
               x="1274"
-              y="146"
+              y="77.5"
               fontFamily="Playfair Display, Georgia, serif"
               fontStyle="italic"
-              fontSize="8"
+              fontSize="5.5"
               fill="hsl(38 60% 68%)"
               textAnchor="middle"
             >
@@ -715,9 +693,9 @@ export function AssemblyHeader({ panelIds }: Props) {
 
         {popoverOpen && (
           <div
-            className="absolute right-4 z-[60] rounded-md p-4"
+            className="pointer-events-auto absolute right-4 z-[60] rounded-md p-4"
             style={{
-              top: '100%',
+              top: 88,
               width: 640,
               background: "hsl(160 22% 11%)",
               border: `0.5px solid ${BORDER_DASH}`,
@@ -856,22 +834,9 @@ export function AssemblyHeader({ panelIds }: Props) {
                 Build this →
               </button>
             </div>
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                color: INK_FAINT,
-                marginTop: 8,
-                letterSpacing: "0.5px",
-              }}
-            >
-              draw in 1-8 strokes · stroke order defines assembly sequence
-            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-export default AssemblyHeader;
