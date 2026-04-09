@@ -31,7 +31,7 @@ const MUTED_DIM = "hsl(220 10% 32%)";
 const GRID = "hsl(220 10% 26%)";
 const METAL = "hsl(220 10% 50%)";
 
-const STATION_NAMES = ["HERO", "ABOUT", "WORK", "THINK", "SKILL", "PATH", "WRITE", "SEND"];
+const STATION_NAMES = ["HOME", "ABOUT", "PROJECTS", "THINKING", "SKILLS", "JOURNEY", "WRITING", "CONTACT"];
 const STATION_CODES = ["A7", "B3", "C1", "D4", "E9", "F2", "G6", "H0"];
 
 type Props = {
@@ -161,23 +161,34 @@ export function AssemblyHeader({
     let labelsHtml = "";
     for (let i = 0; i < 8; i++) {
       const x = BS + (i / 7) * BL;
-      labelsHtml += `<text x="${x - 28}" y="33" text-anchor="start" font-size="4.5" fill="${MUTED_DIM}">${String(i + 1).padStart(2, "0")}</text>`;
-      labelsHtml += `<text class="ah4-name" data-i="${i}" x="${x}" y="33" text-anchor="middle" font-size="5.5" fill="${MUTED}" style="cursor:pointer" data-jump="${i}">${stationNames[i]}</text>`;
-      labelsHtml += `<text x="${x + 28}" y="33" text-anchor="end" font-size="4.5" fill="${MUTED_DIM}">·${stationCodes[i]}</text>`;
-      labelsHtml += `<text x="${x}" y="40" text-anchor="middle" font-size="4" fill="${MUTED_DIM}">PRT.0${i + 1}</text>`;
+      // Invisible hit-area rect for easier clicking
+      labelsHtml += `<rect class="ah4-hit" data-jump="${i}" x="${x - 32}" y="24" width="64" height="20" fill="transparent" style="cursor:pointer"/>`;
+      labelsHtml += `<text class="ah4-name" data-i="${i}" x="${x}" y="35" text-anchor="middle" font-size="7.5" font-weight="500" fill="${MUTED}" style="cursor:pointer;transition:fill 0.15s" data-jump="${i}">${stationNames[i]}</text>`;
     }
     labels.innerHTML = labelsHtml;
     const nameEls = labels.querySelectorAll<SVGTextElement>(".ah4-name");
+    const hitEls = labels.querySelectorAll<SVGRectElement>(".ah4-hit");
 
-    const clickHandlers: Array<() => void> = [];
-    nameEls.forEach((el) => {
+    const clickHandlers: Array<{ el: Element; handler: () => void }> = [];
+    const allClickable = [...Array.from(nameEls), ...Array.from(hitEls)];
+    allClickable.forEach((el) => {
       const i = parseInt(el.getAttribute("data-jump") || "0");
       const handler = () => {
         const target = document.getElementById(panelIds[i]);
         if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
       };
       el.addEventListener("click", handler);
-      clickHandlers.push(handler);
+      clickHandlers.push({ el, handler });
+    });
+
+    // Hover effects for labels
+    nameEls.forEach((el) => {
+      el.addEventListener("mouseenter", () => el.setAttribute("fill", INK_BRIGHT));
+      el.addEventListener("mouseleave", () => {
+        const i = parseInt(el.getAttribute("data-i") || "0");
+        const stage = Math.min(7, Math.floor(progressRef.current * 8));
+        el.setAttribute("fill", i <= stage ? INK : MUTED);
+      });
     });
 
     function renderProduct(stage: number, stageProg: number) {
@@ -327,7 +338,7 @@ export function AssemblyHeader({
     rafId = requestAnimationFrame(frame);
     return () => {
       cancelAnimationFrame(rafId);
-      nameEls.forEach((el, idx) => el.removeEventListener("click", clickHandlers[idx]));
+      clickHandlers.forEach(({ el, handler }) => el.removeEventListener("click", handler));
     };
   }, [panelIds, stationNames, stationCodes]);
 

@@ -256,7 +256,7 @@ export function SketchPopover({ onChange, initialPreset = "drone.v1" }: Props) {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="absolute right-3 top-7 flex flex-col items-stretch overflow-hidden rounded-sm transition-colors"
+        className="absolute right-3 top-1 flex flex-col items-stretch overflow-hidden rounded-sm transition-colors"
         style={{
           background: "hsl(220 15% 11%)",
           border: `0.5px solid ${BORDER_HOT}`,
