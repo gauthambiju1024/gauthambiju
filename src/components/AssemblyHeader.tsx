@@ -528,7 +528,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="sticky top-0 z-50" style={{ background: 'hsla(220, 15%, 12%, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%), linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'source-in' as any }}>
+    <div className="sticky top-0 z-50" style={{ background: 'hsla(220, 15%, 12%, 0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', marginLeft: '-60px', marginRight: '-60px', paddingLeft: '60px', paddingRight: '60px', marginBottom: '-40px', paddingBottom: '40px', maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)' }}>
       <div className="relative">
         <svg
           viewBox="0 0 1400 180"
