@@ -1,23 +1,37 @@
 
 
-## Plan: Fix Design Input Button Position — Anchor Inside Header
+## Plan: Embed DESIGN.INPUT Inside the SVG Header
 
 ### Problem
-The `SketchPopover` wrapper `<div className="relative">` sits after the `<svg>` in DOM flow, so its `absolute` positioned button renders below the header instead of inside it.
+The DESIGN.INPUT button is an HTML element (`absolute` positioned div) floating on top of the SVG header. It doesn't feel integrated — it sits outside the SVG coordinate system and can misalign or overlap awkwardly.
 
-### Fix
+### Solution
+Render the DESIGN.INPUT button area as part of the SVG itself (right side of the viewBox), then use a `foreignObject` only for the popover dropdown when opened. This makes the button visually integrated with the header's grid/lines/aesthetic.
 
-#### `src/components/build-story/AssemblyHeader.tsx` (line ~431)
-- Remove `<SketchPopover />` from its current position (after the SVG, inside the inner `relative` div)
-- Move it **before** the SVG, still inside the `relative` wrapper div
-- Change the `SketchPopover` wrapper from `<div className="relative">` to a simple fragment or remove the extra relative wrapper
+### Changes
 
-#### `src/components/build-story/SketchPopover.tsx` (line ~256-259)
-- Change the outer wrapper from `<div className="relative">` to `<div className="absolute right-3 top-[4px] z-50">` — this positions the entire popover component in the top-right corner of the header's `relative` container
-- Remove `absolute right-3 top-1` from the button itself; make it `relative` with its current width/height
-- Adjust the popover dropdown `top` value from `92` to `62` (or similar) so it opens just below the button
+#### `src/components/build-story/AssemblyHeader.tsx`
+- Add an SVG group in the right portion of the viewBox (around x=1200–1386) that renders:
+  - A bordered rect matching the header style (`hsl(220 15% 11%)` fill, `BORDER_HOT` stroke)
+  - `▸ DESIGN.INPUT` text label
+  - `click to define product` subtext
+  - A small thumbnail preview area with the current sketch rendered as SVG paths (using the existing `strokesToSvgPaths` helper or inline path rendering)
+  - Sketch name and vtx/str stats text
+- Add a click handler on this SVG group to toggle the popover open state
+- Add refs for the sketch thumbnail and name so they update when `handleSketchChange` fires
+
+#### `src/components/build-story/SketchPopover.tsx`
+- Remove the button portion entirely — the button is now rendered by AssemblyHeader's SVG
+- Export only the popover panel (presets grid + canvas + buttons) as a controlled component
+- Accept `open` and `onToggle` props instead of managing open state internally
+- The popover panel remains HTML (needs canvas for drawing), positioned absolutely below the header
+
+#### Integration
+- AssemblyHeader owns the `open` state for the popover
+- AssemblyHeader renders the SVG button + calls `<SketchPopover open={open} onToggle={setOpen} onChange={handleSketchChange} />` for just the dropdown panel
+- The dropdown panel uses `absolute right-0 top-[100px]` to appear directly below the header
 
 ### Files: 2
-1. `src/components/build-story/SketchPopover.tsx` — fix positioning to absolute within header container
-2. `src/components/build-story/AssemblyHeader.tsx` — no structural change needed (already inside relative div)
+1. `src/components/build-story/AssemblyHeader.tsx` — add SVG button group, own popover open state, pass to SketchPopover
+2. `src/components/build-story/SketchPopover.tsx` — convert to controlled popover panel only (no button)
 
