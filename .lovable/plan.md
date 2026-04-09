@@ -1,27 +1,25 @@
 
 
-## Soften Header Edges (Subtle 2-4px Smoothness)
+## Replace AssemblyHeader with Uploaded v7 (Compact)
 
-### Problem
-The header has sharp rectangular edges — a hard border-bottom line and crisp left/right boundaries.
+### What Changes
+Replace the current `src/components/AssemblyHeader.tsx` with the uploaded file. This is a compact version (90px tall instead of ~180px) that removes bottom metadata, per-station sub-labels, and per-station progress bars while keeping the belt, nav, progress spine, and design box.
 
-### Solution
-Apply a very subtle softening — just 2-4px of feathering — around the bottom, left, and right edges using a CSS mask gradient. Keep the top edge fully solid (it's flush with the viewport top). Remove the hard `borderBottom`.
+### Adjustments Needed
 
-### Changes
+#### `src/components/AssemblyHeader.tsx`
+- Replace entire file contents with the uploaded `AssemblyHeader-3.tsx`
+- Add `export default AssemblyHeader;` at the end (the uploaded file only has a named export)
+- Remove the frosted-glass background styles and mask styles from the previous version (the new version uses `pointer-events-none fixed inset-x-0 top-0 z-50` with a transparent background — no frosted glass needed)
 
-#### `src/components/AssemblyHeader.tsx` (line 531)
-Update the sticky header's inline style:
-- Remove `borderBottom: '1px solid hsla(220, 15%, 20%, 0.3)'`
-- Add mask gradients that create a ~3px soft fade on the bottom, left, and right edges:
-  ```
-  maskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)'
-  maskComposite: 'intersect'
-  WebkitMaskComposite: 'source-in'
-  ```
+#### `src/pages/Index.tsx`
+- Update top padding on the content area to account for the new 90px header height (the file comments suggest `pt-[98px]`)
 
-This keeps the effect minimal — just enough to remove the pixel-sharp boundary without making the header feel blurry or faded.
+#### `src/index.css`
+- Update `scroll-margin-top` from `180px` to ~`100px` to match the new compact header height
 
-### Files: 1
-- `src/components/AssemblyHeader.tsx`
+### Files: 3
+- `src/components/AssemblyHeader.tsx` — full replacement
+- `src/pages/Index.tsx` — adjust content padding
+- `src/index.css` — adjust scroll-margin-top
 
