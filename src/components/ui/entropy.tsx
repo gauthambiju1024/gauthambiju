@@ -46,7 +46,8 @@ export function Entropy() {
 
       update() {
         const sp = scrollProgressRef.current
-        const chaos = 1 - sp
+        const easedSp = sp * sp
+        const chaos = 1 - easedSp
 
         const dx = this.originalX - this.x
         const dy = this.originalY - this.y
@@ -58,8 +59,8 @@ export function Entropy() {
         this.velocity.y *= 0.92
 
         // Blend: grid-return (order) vs random drift (chaos)
-        this.x += dx * 0.12 * sp + this.velocity.x * 1 * chaos
-        this.y += dy * 0.12 * sp + this.velocity.y * 1 * chaos
+        this.x += dx * 0.12 * easedSp + this.velocity.x * 1 * chaos
+        this.y += dy * 0.12 * easedSp + this.velocity.y * 1 * chaos
 
         // Boundary checks
         if (this.x < 0 || this.x > w) this.velocity.x *= -1
@@ -69,8 +70,8 @@ export function Entropy() {
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        const sp = scrollProgressRef.current
-        const alpha = 0.06 + sp * 0.04
+        const easedSp = scrollProgressRef.current ** 2
+        const alpha = 0.06 + easedSp * 0.04
         ctx.fillStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.pSize, 0, Math.PI * 2)
