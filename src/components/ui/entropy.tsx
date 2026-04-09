@@ -25,62 +25,67 @@ export function Entropy() {
       x: number
       y: number
       pSize: number
-      order: boolean
+      orderStrength: number
       velocity: { x: number; y: number }
       originalX: number
       originalY: number
       influence: number
       neighbors: Particle[]
 
-      constructor(x: number, y: number, order: boolean) {
+      constructor(x: number, y: number) {
         this.x = x
         this.y = y
         this.originalX = x
         this.originalY = y
-        this.pSize = 2
-        this.order = order
+        this.pSize = 1.5
+        // 0 = full chaos (top), 1 = full order (bottom)
+        this.orderStrength = y / h
         this.velocity = {
-          x: (Math.random() - 0.5) * 2,
-          y: (Math.random() - 0.5) * 2
+          x: (Math.random() - 0.5) * 2 * (1 - this.orderStrength),
+          y: (Math.random() - 0.5) * 2 * (1 - this.orderStrength)
         }
         this.influence = 0
         this.neighbors = []
       }
 
       update() {
-        if (this.order) {
-          const dx = this.originalX - this.x
-          const dy = this.originalY - this.y
-          const chaosInfluence = { x: 0, y: 0 }
-          this.neighbors.forEach(neighbor => {
-            if (!neighbor.order) {
-              const distance = Math.hypot(this.x - neighbor.x, this.y - neighbor.y)
-              const strength = Math.max(0, 1 - distance / 100)
-              chaosInfluence.x += neighbor.velocity.x * strength
-              chaosInfluence.y += neighbor.velocity.y * strength
-              this.influence = Math.max(this.influence, strength)
-            }
-          })
-          this.x += dx * 0.05 * (1 - this.influence) + chaosInfluence.x * this.influence
-          this.y += dy * 0.05 * (1 - this.influence) + chaosInfluence.y * this.influence
-          this.influence *= 0.99
-        } else {
-          this.velocity.x += (Math.random() - 0.5) * 0.5
-          this.velocity.y += (Math.random() - 0.5) * 0.5
-          this.velocity.x *= 0.95
-          this.velocity.y *= 0.95
-          this.x += this.velocity.x
-          this.y += this.velocity.y
-          // Constrain chaos to right half
-          if (this.x < w / 2 || this.x > w) this.velocity.x *= -1
-          if (this.y < 0 || this.y > h) this.velocity.y *= -1
-          this.x = Math.max(w / 2, Math.min(w, this.x))
-          this.y = Math.max(0, Math.min(h, this.y))
-        }
+        const os = this.orderStrength
+        const chaos = 1 - os
+
+        // Order: return to grid
+        const dx = this.originalX - this.x
+        const dy = this.originalY - this.y
+
+        // Chaos: random drift
+        this.velocity.x += (Math.random() - 0.5) * 0.5 * chaos
+        this.velocity.y += (Math.random() - 0.5) * 0.5 * chaos
+        this.velocity.x *= 0.95
+        this.velocity.y *= 0.95
+
+        // Neighbor influence (chaos neighbors pull ordered particles)
+        const chaosInfluence = { x: 0, y: 0 }
+        this.neighbors.forEach(neighbor => {
+          if (neighbor.orderStrength < this.orderStrength) {
+            const distance = Math.hypot(this.x - neighbor.x, this.y - neighbor.y)
+            const strength = Math.max(0, 1 - distance / 100) * chaos
+            chaosInfluence.x += neighbor.velocity.x * strength
+            chaosInfluence.y += neighbor.velocity.y * strength
+          }
+        })
+
+        // Blend: ordered particles snap to grid, chaotic ones drift
+        this.x += dx * 0.05 * os + (this.velocity.x + chaosInfluence.x) * chaos
+        this.y += dy * 0.05 * os + (this.velocity.y + chaosInfluence.y) * chaos
+
+        // Boundary checks
+        if (this.x < 0 || this.x > w) this.velocity.x *= -1
+        if (this.y < 0 || this.y > h) this.velocity.y *= -1
+        this.x = Math.max(0, Math.min(w, this.x))
+        this.y = Math.max(0, Math.min(h, this.y))
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        const alpha = this.order ? 0.5 - this.influence * 0.3 : 0.55
+        const alpha = 0.25 + this.orderStrength * 0.1
         ctx.fillStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.pSize, 0, Math.PI * 2)
@@ -99,9 +104,7 @@ export function Entropy() {
       for (let j = 0; j < rows; j++) {
         const x = spacingX * i + spacingX / 2
         const y = spacingY * j + spacingY / 2
-        // Left half = order, right half = chaos
-        const order = x < w / 2
-        particles.push(new Particle(x, y, order))
+        particles.push(new Particle(x, y))
       }
     }
 
@@ -128,8 +131,8 @@ export function Entropy() {
 
         particle.neighbors.forEach(neighbor => {
           const distance = Math.hypot(particle.x - neighbor.x, particle.y - neighbor.y)
-          if (distance < 50) {
-            const alpha = 0.18 * (1 - distance / 50)
+          if (distance < 40) {
+            const alpha = 0.10 * (1 - distance / 40)
             ctx.strokeStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
             ctx.beginPath()
             ctx.moveTo(particle.x, particle.y)
@@ -138,16 +141,6 @@ export function Entropy() {
           }
         })
       })
-
-      // Subtle vertical divider at center
-      ctx.strokeStyle = `${particleColor}26`
-      ctx.lineWidth = 0.5
-      ctx.setLineDash([4, 8])
-      ctx.beginPath()
-      ctx.moveTo(w / 2, 0)
-      ctx.lineTo(w / 2, h)
-      ctx.stroke()
-      ctx.setLineDash([])
 
       time++
       animationId = requestAnimationFrame(animate)
