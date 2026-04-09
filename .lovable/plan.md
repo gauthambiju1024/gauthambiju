@@ -1,25 +1,31 @@
 
 
-## Remove All Hard Edges from Header
+## Remove All Hard Edges by Extending Header Beyond Viewport
 
 ### Problem
-The sticky header has sharp rectangular boundaries on all sides — bottom, left, and right — creating an unnatural box shape against the page content.
+The header's left and right edges are visible as hard boundaries, obscuring the margin doodles. The current mask-based fade approach shrinks the visible header area inward.
 
-### Solution
-Apply a radial or combined gradient mask to the header element so the frosted-glass background fades out smoothly on the bottom, left, and right edges. The top edge stays solid (it's at the viewport top).
+### Approach
+Extend the header element physically beyond the viewport on the left, right, and bottom using negative margins, then compensate with equal padding so internal content stays unchanged. The left/right edges go off-screen (invisible), and only the bottom gets a gentle gradient fade.
 
 ### Changes
 
-#### `src/components/AssemblyHeader.tsx`
-On the sticky header container:
-- Remove `borderBottom`
-- Apply a mask that fades all edges except the top:
+#### `src/components/AssemblyHeader.tsx` (line 531)
+Replace the current style object on the sticky header `<div>`:
+- Remove all `maskImage`, `maskComposite`, `WebkitMaskImage`, `WebkitMaskComposite` properties
+- Add:
   ```
-  maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%),
-              linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)'
-  maskComposite: 'intersect'
+  marginLeft: '-60px',
+  marginRight: '-60px',
+  paddingLeft: '60px',
+  paddingRight: '60px',
+  marginBottom: '-40px',
+  paddingBottom: '40px',
+  maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+  WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
   ```
-  This creates a soft vignette: left/right edges fade in the outer 5%, bottom fades in the last 40%.
+- The 60px extension matches the margin doodle column width, pushing the frosted-glass edges behind the doodle columns so doodles remain fully visible
+- Only the bottom edge needs a gradient fade; left/right are simply off-screen
 
 ### Files: 1
 - `src/components/AssemblyHeader.tsx`
