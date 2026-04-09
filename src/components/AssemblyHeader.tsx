@@ -210,6 +210,19 @@ export function AssemblyHeader({ panelIds }: Props) {
     if (srcRef.current) {
       srcRef.current.textContent = currentSketch.name.toUpperCase().replace(".", "-");
     }
+    // Update popover small preview
+    if (previewSmallRef.current) {
+      const parts = partsLargeRef.current;
+      let html = "";
+      for (const group of parts) {
+        html += `<g opacity="0.95">`;
+        for (const seg of group) {
+          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.9" stroke-linecap="round"/>`;
+        }
+        html += `</g>`;
+      }
+      previewSmallRef.current.innerHTML = html;
+    }
   }, [currentSketch]);
 
   useEffect(() => {
