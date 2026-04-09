@@ -1,27 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * SketchPopover
- * -------------
- * A compact button that lives in the right side of the assembly header. When
- * clicked, it opens a popover with:
- *
- *   1. Five preset sketches as quick-pick chips (drone, lamp, phone, chair, rocket)
- *   2. A custom drawing canvas below
- *   3. Clear / Build action buttons
- *
- * The button itself displays a live thumbnail preview of whatever sketch is
- * currently loaded, plus the sketch name. So even when the popover is
- * collapsed, the visitor can see "their thing" being assembled.
- *
- * Lifts state up via `onChange` — the parent owns the partsData and passes
- * it to the AssemblyHeader.
- *
- * Usage (inside AssemblyHeader):
- *
- *   <SketchPopover onChange={setUserParts} initialPreset="drone.v1" />
- */
-
 export type Stroke = Array<[number, number]>;
 export type Sketch = { name: string; strokes: Stroke[] };
 export type Segment = [[number, number], [number, number]];
@@ -87,7 +65,7 @@ export const PRESETS: Sketch[] = [
   },
 ];
 
-function bbox(strokes: Stroke[]) {
+export function bbox(strokes: Stroke[]) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const s of strokes) {
     for (const p of s) {
@@ -100,7 +78,7 @@ function bbox(strokes: Stroke[]) {
   return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
 }
 
-function strokesToSvgPaths(strokes: Stroke[], scale: number, color: string, sw: number): string {
+export function strokesToSvgPaths(strokes: Stroke[], scale: number, color: string, sw: number): string {
   if (!strokes.length) return "";
   const bb = bbox(strokes);
   if (!isFinite(bb.minX)) return "";
@@ -150,13 +128,15 @@ export function strokesToParts(strokes: Stroke[], scale = 22): PartSegments {
   return parts;
 }
 
+/** Controlled popover panel — button is rendered in the SVG by AssemblyHeader */
 type Props = {
+  open: boolean;
+  onToggle: (open: boolean) => void;
   onChange: (parts: PartSegments | null, sketchName: string) => void;
   initialPreset?: string;
 };
 
-export function SketchPopover({ onChange, initialPreset = "drone.v1" }: Props) {
-  const [open, setOpen] = useState(false);
+export function SketchPopover({ open, onToggle, onChange, initialPreset = "drone.v1" }: Props) {
   const [current, setCurrent] = useState<Sketch>(
     () => PRESETS.find((p) => p.name === initialPreset) ?? PRESETS[0]
   );
@@ -249,249 +229,167 @@ export function SketchPopover({ onChange, initialPreset = "drone.v1" }: Props) {
     setStatus("BUILT");
   }
 
-  const totalVtx = current.strokes.reduce((acc, s) => acc + s.length, 0);
-  const thumbHtml = strokesToSvgPaths(current.strokes, 16, INK_DIM, 0.5);
+  if (!open) return null;
 
   return (
-    <div className="absolute right-3 top-[4px] z-50">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="relative flex flex-col items-stretch overflow-hidden rounded-sm transition-colors"
+    <div
+      className="absolute right-0 z-[60] rounded-md p-3"
+      style={{
+        top: 100,
+        width: 460,
+        background: BG_DARK,
+        border: `0.5px solid hsl(220 10% 28%)`,
+      }}
+    >
+      <div className="mb-2.5 flex items-center justify-between">
+        <div
+          style={{
+            fontFamily: "monospace",
+            fontSize: 9,
+            color: "hsl(220 10% 50%)",
+            letterSpacing: "1.5px",
+          }}
+        >
+          DESIGN.INPUT · what should I build?
+        </div>
+        <button
+          onClick={() => onToggle(false)}
+          style={{
+            fontFamily: "monospace",
+            fontSize: 9,
+            padding: "2px 8px",
+            background: "transparent",
+            border: `0.5px solid ${BORDER}`,
+            color: MUTED,
+            cursor: "pointer",
+          }}
+        >
+          close ✕
+        </button>
+      </div>
+
+      <div
         style={{
-          background: "hsl(220 15% 11%)",
-          border: `0.5px solid ${BORDER_HOT}`,
-          width: 200,
-          height: 56,
-          padding: 0,
+          fontFamily: "monospace",
+          fontSize: 8,
+          color: MUTED_DIM,
+          marginBottom: 6,
+          letterSpacing: "0.8px",
         }}
       >
-        <div style={{ padding: "6px 8px 0 8px", textAlign: "left" }}>
-          <div
+        QUICK·PICK · 5 presets
+      </div>
+      <div className="mb-3 grid grid-cols-5 gap-1.5">
+        {PRESETS.map((p) => (
+          <button
+            key={p.name}
+            onClick={() => {
+              setCurrent(p);
+              setStatus("LOADED");
+            }}
+            className="flex flex-col items-center gap-1 rounded-sm transition-colors"
             style={{
-              fontFamily: "monospace",
-              fontSize: 9,
-              color: "hsl(38 50% 62%)",
-              letterSpacing: "1.2px",
+              background: BG_DARKER,
+              border: `0.5px solid ${current.name === p.name ? BORDER_HOT : BORDER}`,
+              padding: 6,
+              cursor: "pointer",
             }}
           >
-            ▸ DESIGN.INPUT
-          </div>
-          <div
-            style={{
-              fontFamily: "monospace",
-              fontSize: 8,
-              color: MUTED,
-              marginTop: 1,
-            }}
-          >
-            click to define product
-          </div>
-        </div>
+            <svg
+              viewBox="-25 -25 50 50"
+              width="100%"
+              height={40}
+              dangerouslySetInnerHTML={{
+                __html: strokesToSvgPaths(p.strokes, 36, "hsl(38 50% 60%)", 1.2),
+              }}
+            />
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: 8,
+                color: "hsl(220 10% 48%)",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {p.name}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{
+          fontFamily: "monospace",
+          fontSize: 8,
+          color: MUTED_DIM,
+          marginBottom: 6,
+          letterSpacing: "0.8px",
+        }}
+      >
+        CUSTOM · draw your own
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={436}
+        height={120}
+        className="block w-full"
+        style={{
+          height: 120,
+          background: BG_DARKER,
+          border: `0.5px dashed ${BORDER}`,
+          borderRadius: 3,
+          cursor: "crosshair",
+          touchAction: "none",
+        }}
+      />
+
+      <div className="mt-2 flex gap-1.5">
+        <button
+          onClick={handleClear}
+          style={{
+            fontFamily: "monospace",
+            fontSize: 9,
+            flex: 1,
+            background: "transparent",
+            border: `0.5px solid ${BORDER}`,
+            color: MUTED,
+            padding: "4px 8px",
+            cursor: "pointer",
+          }}
+        >
+          Clear
+        </button>
+        <button
+          onClick={handleBuild}
+          style={{
+            fontFamily: "monospace",
+            fontSize: 9,
+            flex: 2,
+            background: "transparent",
+            border: `0.5px solid ${BORDER_HOT}`,
+            color: INK_DIM,
+            padding: "4px 8px",
+            cursor: "pointer",
+          }}
+        >
+          Build →
+        </button>
         <div
           style={{
-            margin: "2px 8px 4px 8px",
+            fontFamily: "monospace",
+            fontSize: 9,
+            color: INK_DIM,
+            padding: "4px 10px",
             background: BG_DARKER,
             border: `0.5px solid ${BORDER}`,
-            borderRadius: 1,
-            height: 22,
-            position: "relative",
+            borderRadius: 3,
+            minWidth: 80,
+            textAlign: "center",
           }}
         >
-          <svg
-            viewBox="-25 -12 50 24"
-            width="100%"
-            height="22"
-            style={{ display: "block" }}
-            dangerouslySetInnerHTML={{ __html: thumbHtml }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              left: 4,
-              bottom: 2,
-              fontFamily: "monospace",
-              fontSize: 7,
-              color: MUTED_DIM,
-            }}
-          >
-            {current.name}
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              right: 4,
-              bottom: 2,
-              fontFamily: "monospace",
-              fontSize: 7,
-              color: MUTED_DIM,
-            }}
-          >
-            {totalVtx}vtx · {current.strokes.length}str
-          </div>
+          {status}
         </div>
-      </button>
-
-      {open && (
-        <div
-          className="absolute right-0 z-[60] rounded-md p-3"
-          style={{
-            top: 62,
-            width: 460,
-            background: BG_DARK,
-            border: `0.5px solid hsl(220 10% 28%)`,
-          }}
-        >
-          <div className="mb-2.5 flex items-center justify-between">
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                color: "hsl(220 10% 50%)",
-                letterSpacing: "1.5px",
-              }}
-            >
-              DESIGN.INPUT · what should I build?
-            </div>
-            <button
-              onClick={() => setOpen(false)}
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                padding: "2px 8px",
-                background: "transparent",
-                border: `0.5px solid ${BORDER}`,
-                color: MUTED,
-                cursor: "pointer",
-              }}
-            >
-              close ✕
-            </button>
-          </div>
-
-          <div
-            style={{
-              fontFamily: "monospace",
-              fontSize: 8,
-              color: MUTED_DIM,
-              marginBottom: 6,
-              letterSpacing: "0.8px",
-            }}
-          >
-            QUICK·PICK · 5 presets
-          </div>
-          <div className="mb-3 grid grid-cols-5 gap-1.5">
-            {PRESETS.map((p) => (
-              <button
-                key={p.name}
-                onClick={() => {
-                  setCurrent(p);
-                  setStatus("LOADED");
-                }}
-                className="flex flex-col items-center gap-1 rounded-sm transition-colors"
-                style={{
-                  background: BG_DARKER,
-                  border: `0.5px solid ${current.name === p.name ? BORDER_HOT : BORDER}`,
-                  padding: 6,
-                  cursor: "pointer",
-                }}
-              >
-                <svg
-                  viewBox="-25 -25 50 50"
-                  width="100%"
-                  height={40}
-                  dangerouslySetInnerHTML={{
-                    __html: strokesToSvgPaths(p.strokes, 36, "hsl(38 50% 60%)", 1.2),
-                  }}
-                />
-                <div
-                  style={{
-                    fontFamily: "monospace",
-                    fontSize: 8,
-                    color: "hsl(220 10% 48%)",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  {p.name}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div
-            style={{
-              fontFamily: "monospace",
-              fontSize: 8,
-              color: MUTED_DIM,
-              marginBottom: 6,
-              letterSpacing: "0.8px",
-            }}
-          >
-            CUSTOM · draw your own
-          </div>
-          <canvas
-            ref={canvasRef}
-            width={436}
-            height={120}
-            className="block w-full"
-            style={{
-              height: 120,
-              background: BG_DARKER,
-              border: `0.5px dashed ${BORDER}`,
-              borderRadius: 3,
-              cursor: "crosshair",
-              touchAction: "none",
-            }}
-          />
-
-          <div className="mt-2 flex gap-1.5">
-            <button
-              onClick={handleClear}
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                flex: 1,
-                background: "transparent",
-                border: `0.5px solid ${BORDER}`,
-                color: MUTED,
-                padding: "4px 8px",
-                cursor: "pointer",
-              }}
-            >
-              Clear
-            </button>
-            <button
-              onClick={handleBuild}
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                flex: 2,
-                background: "transparent",
-                border: `0.5px solid ${BORDER_HOT}`,
-                color: INK_DIM,
-                padding: "4px 8px",
-                cursor: "pointer",
-              }}
-            >
-              Build →
-            </button>
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: 9,
-                color: INK_DIM,
-                padding: "4px 10px",
-                background: BG_DARKER,
-                border: `0.5px solid ${BORDER}`,
-                borderRadius: 3,
-                minWidth: 80,
-                textAlign: "center",
-              }}
-            >
-              {status}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
