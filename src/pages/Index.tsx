@@ -41,7 +41,7 @@ const Index = () => {
   useEffect(() => {
     const header = document.querySelector('[data-header-bg]') as HTMLElement | null;
     if (!header || !pageRef.current) return;
-    const bg = header.style.background || header.style.backgroundColor || '';
+    const bg = header.getAttribute('data-header-bg-value') || '';
     const parsed = parseHSLA(bg);
     if (!parsed) return;
     const [h, s, l, a] = parsed;
