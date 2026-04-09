@@ -176,7 +176,7 @@ type Props = {
 export function AssemblyHeader({ panelIds }: Props) {
   const prodRef = useRef<SVGGElement>(null);
   const previewRef = useRef<SVGGElement>(null);
-  const previewSmallRef = useRef<SVGGElement>(null);
+  
   const rollersRef = useRef<SVGGElement>(null);
   const armsRef = useRef<SVGGElement>(null);
   const sparksRef = useRef<SVGGElement>(null);
@@ -209,19 +209,6 @@ export function AssemblyHeader({ panelIds }: Props) {
     partsLargeRef.current = strokesToParts(currentSketch.strokes, 34);
     if (srcRef.current) {
       srcRef.current.textContent = currentSketch.name.toUpperCase().replace(".", "-");
-    }
-    // Update popover small preview
-    if (previewSmallRef.current) {
-      const parts = partsLargeRef.current;
-      let html = "";
-      for (const group of parts) {
-        html += `<g opacity="0.95">`;
-        for (const seg of group) {
-          html += `<line x1="${seg[0][0].toFixed(1)}" y1="${seg[0][1].toFixed(1)}" x2="${seg[1][0].toFixed(1)}" y2="${seg[1][1].toFixed(1)}" stroke="${INK_BRIGHT}" stroke-width="0.9" stroke-linecap="round"/>`;
-        }
-        html += `</g>`;
-      }
-      previewSmallRef.current.innerHTML = html;
     }
   }, [currentSketch]);
 
@@ -725,98 +712,136 @@ export function AssemblyHeader({ panelIds }: Props) {
             }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <span
-                className="font-mono text-xs tracking-wide"
-                style={{ color: INK_BRIGHT }}
+              <div
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: 10,
+                  color: INK,
+                  letterSpacing: "1.5px",
+                }}
               >
-                ▸ PRODUCT DESIGN BOX
-              </span>
+                ─── DESIGN YOUR PRODUCT ·{" "}
+                <span style={{ color: INK_DIM }}>pick a preset or draw your own</span>
+              </div>
               <button
-                className="font-mono text-xs"
-                style={{ color: INK_DIM }}
                 onClick={() => setPopoverOpen(false)}
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: 10,
+                  padding: "2px 10px",
+                  background: "transparent",
+                  border: `0.5px solid ${BORDER_DASH}`,
+                  color: INK_DIM,
+                  cursor: "pointer",
+                }}
               >
-                ✕ close
+                close ✕
               </button>
             </div>
 
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: 8,
+                color: INK_DIM,
+                letterSpacing: "0.8px",
+                marginBottom: 6,
+              }}
+            >
+              QUICK·PICK
+            </div>
+            <div className="mb-3 grid grid-cols-5 gap-2">
               {PRESETS.map((p) => (
                 <button
                   key={p.name}
                   onClick={() => handlePickPreset(p)}
-                  className="rounded border px-2 py-1 font-mono text-[10px] transition-colors"
+                  className="flex flex-col items-center gap-1.5 transition-colors"
                   style={{
-                    borderColor: BORDER_DASH,
-                    color: INK_DIM,
-                    background: "transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLElement).style.borderColor = INK_BRIGHT;
-                    (e.target as HTMLElement).style.color = INK_BRIGHT;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLElement).style.borderColor = BORDER_DASH;
-                    (e.target as HTMLElement).style.color = INK_DIM;
+                    background: "hsl(160 22% 8%)",
+                    border: `0.5px dashed ${currentSketch.name === p.name ? INK_BRIGHT : BORDER_DASH}`,
+                    padding: 8,
+                    cursor: "pointer",
                   }}
                 >
-                  {p.name}
+                  <svg
+                    viewBox="-25 -25 50 50"
+                    width="100%"
+                    height={50}
+                    dangerouslySetInnerHTML={{
+                      __html: renderPathsSvg(p.strokes, 40, INK_BRIGHT, 1.4),
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: 9,
+                      color: INK,
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {p.name}
+                  </div>
                 </button>
               ))}
             </div>
 
-            <div className="mb-3 flex gap-3">
-              <canvas
-                ref={canvasRef}
-                width={280}
-                height={140}
-                className="cursor-crosshair rounded"
-                style={{ background: "#0d1a14", border: `0.5px solid ${BORDER_DASH}` }}
-              />
-              <div className="flex flex-1 flex-col gap-2">
-                <div
-                  className="flex-1 rounded"
-                  style={{
-                    background: "#0d1a14",
-                    border: `0.5px solid ${BORDER_DASH}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="100%" height="100%" viewBox="0 0 200 90">
-                    <g ref={previewSmallRef} />
-                  </svg>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleClearCanvas}
-                    className="flex-1 rounded border px-2 py-1 font-mono text-[10px]"
-                    style={{ borderColor: BORDER_DASH, color: INK_DIM }}
-                  >
-                    clear
-                  </button>
-                  <button
-                    onClick={handleBuildCustom}
-                    className="flex-1 rounded border px-2 py-1 font-mono text-[10px]"
-                    style={{ borderColor: INK_BRIGHT, color: INK_BRIGHT }}
-                  >
-                    build ▸
-                  </button>
-                </div>
-              </div>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: 8,
+                color: INK_DIM,
+                letterSpacing: "0.8px",
+                marginBottom: 6,
+              }}
+            >
+              OR DRAW YOUR OWN
             </div>
+            <canvas
+              ref={canvasRef}
+              width={900}
+              height={400}
+              style={{
+                display: "block",
+                width: "100%",
+                height: 180,
+                background: "hsl(160 22% 8%)",
+                border: `0.5px dashed ${BORDER_DASH}`,
+                borderRadius: 3,
+                cursor: "crosshair",
+                touchAction: "none",
+              }}
+            />
 
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px]" style={{ color: INK_DIM }}>
-                draw a shape or pick a preset above
-              </span>
+            <div className="mt-2.5 flex gap-2">
               <button
-                onClick={() => setPopoverOpen(false)}
-                className="rounded border px-3 py-1 font-mono text-[10px]"
-                style={{ borderColor: BORDER_DASH, color: INK_DIM }}
+                onClick={handleClearCanvas}
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: 10,
+                  flex: 1,
+                  background: "transparent",
+                  border: `0.5px solid ${BORDER_DASH}`,
+                  color: INK_DIM,
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                }}
               >
-                dismiss
+                Clear
+              </button>
+              <button
+                onClick={handleBuildCustom}
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: 10,
+                  flex: 2,
+                  background: "transparent",
+                  border: `0.5px solid ${INK}`,
+                  color: INK_BRIGHT,
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                }}
+              >
+                Build this →
               </button>
             </div>
           </div>
