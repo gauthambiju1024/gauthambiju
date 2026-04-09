@@ -33,8 +33,7 @@ const Index = () => {
 
       {/* Scrollable content container */}
       <div
-        className="flex-1 overflow-y-auto rounded-t-2xl border-t border-border/20 margin-content-wrapper relative z-[2]"
-        style={{ background: 'hsl(var(--background))' }}
+        className="flex-1 overflow-y-auto margin-content-wrapper"
       >
         <div className="px-0 md:px-1">
           <div id="home" className="blueprint-surface">
