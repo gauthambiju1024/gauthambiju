@@ -253,10 +253,10 @@ export function SketchPopover({ onChange, initialPreset = "drone.v1" }: Props) {
   const thumbHtml = strokesToSvgPaths(current.strokes, 16, INK_DIM, 0.5);
 
   return (
-    <div className="relative">
+    <div className="absolute right-3 top-[4px] z-50">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="absolute right-3 top-1 flex flex-col items-stretch overflow-hidden rounded-sm transition-colors"
+        className="relative flex flex-col items-stretch overflow-hidden rounded-sm transition-colors"
         style={{
           background: "hsl(220 15% 11%)",
           border: `0.5px solid ${BORDER_HOT}`,
@@ -333,9 +333,9 @@ export function SketchPopover({ onChange, initialPreset = "drone.v1" }: Props) {
 
       {open && (
         <div
-          className="absolute right-3 z-[60] rounded-md p-3"
+          className="absolute right-0 z-[60] rounded-md p-3"
           style={{
-            top: 92,
+            top: 62,
             width: 460,
             background: BG_DARK,
             border: `0.5px solid hsl(220 10% 28%)`,
