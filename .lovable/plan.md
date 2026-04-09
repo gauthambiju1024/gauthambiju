@@ -1,30 +1,30 @@
 
 
-## Plan: Fix Assembly Header to Top
+## Plan: Header Fixed at Top, Content Scrolls Independently Below
 
-Change the header from `sticky` to `fixed` positioning so it stays locked at the top while content scrolls beneath it. Add top padding to the content so it's not hidden behind the header.
+### Problem
+Content currently scrolls behind/through the transparent header. The user wants a clear separation: the header is locked at the top, and the scrollable content area lives entirely **below** it — never overlapping.
+
+### Approach
+Use a flex column layout: the header takes its natural height at the top, the remaining viewport is a scrollable content area. No fixed/sticky positioning needed — the header simply never scrolls because it's outside the scroll container.
 
 ### Changes
 
-#### 1. `src/components/AssemblyHeader.tsx` (line 531)
-- Change `sticky top-0` to `fixed top-0 left-0 right-0`
-- Keep `z-50` and transparent background
-- Add margin-content-wrapper padding so it aligns with the panels (matching `padding-left` and `padding-right` from the `.margin-content-wrapper` CSS)
+#### 1. `src/pages/Index.tsx`
+- Wrap the page in a `flex flex-col h-screen overflow-hidden` container
+- Place `AssemblyHeader` as a non-scrolling flex child at the top (outside `margin-content-wrapper`)
+- Wrap all content (hero, about, panels) in a `flex-1 overflow-y-auto` scrollable div
+- Remove the `pt-[13vw] md:pt-[10vw]` top padding (no longer needed since content starts below the header naturally)
 
-```tsx
-// Before
-<div className="sticky top-0 z-50" style={{ background: 'transparent' }}>
+#### 2. `src/components/AssemblyHeader.tsx` (line 531)
+- Remove `fixed top-0 left-0 right-0 z-50` — the header no longer needs fixed positioning
+- Keep `margin-content-wrapper` for gutter alignment and `background: 'transparent'`
+- Change to a simple `relative z-50` div
 
-// After
-<div className="fixed top-0 left-0 right-0 z-50 margin-content-wrapper" style={{ background: 'transparent' }}>
-```
-
-Note: Reusing the `margin-content-wrapper` class on the fixed header ensures its left/right padding matches the page content gutters (after the margin doodles).
-
-#### 2. `src/pages/Index.tsx`
-- Add top padding to the content below the header so it doesn't get hidden behind the fixed element (~180px scaled to viewport, roughly `pt-[13vw]` or a fixed pixel value)
+### Result
+The header sits at the very top of the viewport and never moves. All page content scrolls within the remaining space below the header, never overlapping or appearing behind it.
 
 ### Files: 2
-1. `src/components/AssemblyHeader.tsx` — fixed positioning with margin alignment
-2. `src/pages/Index.tsx` — add top spacing for content below header
+1. `src/components/AssemblyHeader.tsx` — remove fixed positioning
+2. `src/pages/Index.tsx` — flex layout with separate scroll container
 
