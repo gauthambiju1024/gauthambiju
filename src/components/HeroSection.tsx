@@ -3,7 +3,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
 import { ArrowUpRight } from "lucide-react";
-import Navigation from "./Navigation";
+
 
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
