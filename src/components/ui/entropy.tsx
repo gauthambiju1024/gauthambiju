@@ -37,7 +37,7 @@ export function Entropy() {
         this.y = y
         this.originalX = x
         this.originalY = y
-        this.pSize = 1.5
+        this.pSize = 2
         this.order = order
         this.velocity = {
           x: (Math.random() - 0.5) * 2,
@@ -71,15 +71,16 @@ export function Entropy() {
           this.velocity.y *= 0.95
           this.x += this.velocity.x
           this.y += this.velocity.y
-          if (this.x < 0 || this.x > w) this.velocity.x *= -1
+          // Constrain chaos to right half
+          if (this.x < w / 2 || this.x > w) this.velocity.x *= -1
           if (this.y < 0 || this.y > h) this.velocity.y *= -1
-          this.x = Math.max(0, Math.min(w, this.x))
+          this.x = Math.max(w / 2, Math.min(w, this.x))
           this.y = Math.max(0, Math.min(h, this.y))
         }
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        const alpha = this.order ? 0.35 - this.influence * 0.2 : 0.4
+        const alpha = this.order ? 0.5 - this.influence * 0.3 : 0.55
         ctx.fillStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.pSize, 0, Math.PI * 2)
@@ -88,8 +89,7 @@ export function Entropy() {
     }
 
     const particles: Particle[] = []
-    const area = w * h
-    const gridSize = Math.round(Math.sqrt(area) / 25)
+    const gridSize = Math.round(Math.sqrt(w * h) / 25)
     const cols = Math.ceil(w / (w / gridSize))
     const rows = Math.ceil(h / (h / gridSize))
     const spacingX = w / cols
@@ -99,9 +99,8 @@ export function Entropy() {
       for (let j = 0; j < rows; j++) {
         const x = spacingX * i + spacingX / 2
         const y = spacingY * j + spacingY / 2
-        const cx = w / 2, cy = h / 2
-        const dist = Math.hypot(x - cx, y - cy)
-        const order = dist < Math.min(w, h) * 0.35
+        // Left half = order, right half = chaos
+        const order = x < w / 2
         particles.push(new Particle(x, y, order))
       }
     }
@@ -110,7 +109,7 @@ export function Entropy() {
       particles.forEach(particle => {
         particle.neighbors = particles.filter(other => {
           if (other === particle) return false
-          return Math.hypot(particle.x - other.x, particle.y - other.y) < 80
+          return Math.hypot(particle.x - other.x, particle.y - other.y) < 100
         })
       })
     }
@@ -129,8 +128,8 @@ export function Entropy() {
 
         particle.neighbors.forEach(neighbor => {
           const distance = Math.hypot(particle.x - neighbor.x, particle.y - neighbor.y)
-          if (distance < 40) {
-            const alpha = 0.12 * (1 - distance / 40)
+          if (distance < 50) {
+            const alpha = 0.18 * (1 - distance / 50)
             ctx.strokeStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
             ctx.beginPath()
             ctx.moveTo(particle.x, particle.y)
@@ -139,6 +138,16 @@ export function Entropy() {
           }
         })
       })
+
+      // Subtle vertical divider at center
+      ctx.strokeStyle = `${particleColor}26`
+      ctx.lineWidth = 0.5
+      ctx.setLineDash([4, 8])
+      ctx.beginPath()
+      ctx.moveTo(w / 2, 0)
+      ctx.lineTo(w / 2, h)
+      ctx.stroke()
+      ctx.setLineDash([])
 
       time++
       animationId = requestAnimationFrame(animate)
