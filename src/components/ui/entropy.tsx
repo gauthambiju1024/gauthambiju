@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 
 export function Entropy() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const scrollProgressRef = useRef(0)
 
   const init = useCallback(() => {
     const canvas = canvasRef.current
@@ -25,11 +26,9 @@ export function Entropy() {
       x: number
       y: number
       pSize: number
-      orderStrength: number
       velocity: { x: number; y: number }
       originalX: number
       originalY: number
-      influence: number
       neighbors: Particle[]
 
       constructor(x: number, y: number) {
@@ -37,45 +36,30 @@ export function Entropy() {
         this.y = y
         this.originalX = x
         this.originalY = y
-        this.pSize = 1.5
-        // 0 = full chaos (top), 1 = full order (bottom)
-        this.orderStrength = y / h
+        this.pSize = 1
         this.velocity = {
-          x: (Math.random() - 0.5) * 2 * (1 - this.orderStrength),
-          y: (Math.random() - 0.5) * 2 * (1 - this.orderStrength)
+          x: (Math.random() - 0.5) * 4,
+          y: (Math.random() - 0.5) * 4
         }
-        this.influence = 0
         this.neighbors = []
       }
 
       update() {
-        const os = this.orderStrength
-        const chaos = 1 - os
+        const sp = scrollProgressRef.current
+        const chaos = 1 - sp
 
-        // Order: return to grid
         const dx = this.originalX - this.x
         const dy = this.originalY - this.y
 
         // Chaos: random drift
-        this.velocity.x += (Math.random() - 0.5) * 0.5 * chaos
-        this.velocity.y += (Math.random() - 0.5) * 0.5 * chaos
+        this.velocity.x += (Math.random() - 0.5) * 1.5 * chaos
+        this.velocity.y += (Math.random() - 0.5) * 1.5 * chaos
         this.velocity.x *= 0.95
         this.velocity.y *= 0.95
 
-        // Neighbor influence (chaos neighbors pull ordered particles)
-        const chaosInfluence = { x: 0, y: 0 }
-        this.neighbors.forEach(neighbor => {
-          if (neighbor.orderStrength < this.orderStrength) {
-            const distance = Math.hypot(this.x - neighbor.x, this.y - neighbor.y)
-            const strength = Math.max(0, 1 - distance / 100) * chaos
-            chaosInfluence.x += neighbor.velocity.x * strength
-            chaosInfluence.y += neighbor.velocity.y * strength
-          }
-        })
-
-        // Blend: ordered particles snap to grid, chaotic ones drift
-        this.x += dx * 0.05 * os + (this.velocity.x + chaosInfluence.x) * chaos
-        this.y += dy * 0.05 * os + (this.velocity.y + chaosInfluence.y) * chaos
+        // Blend: grid-return (order) vs random drift (chaos)
+        this.x += dx * 0.12 * sp + this.velocity.x * 3 * chaos
+        this.y += dy * 0.12 * sp + this.velocity.y * 3 * chaos
 
         // Boundary checks
         if (this.x < 0 || this.x > w) this.velocity.x *= -1
@@ -85,7 +69,8 @@ export function Entropy() {
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        const alpha = 0.25 + this.orderStrength * 0.1
+        const sp = scrollProgressRef.current
+        const alpha = 0.06 + sp * 0.04
         ctx.fillStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
         ctx.beginPath()
         ctx.arc(this.x, this.y, this.pSize, 0, Math.PI * 2)
@@ -112,7 +97,7 @@ export function Entropy() {
       particles.forEach(particle => {
         particle.neighbors = particles.filter(other => {
           if (other === particle) return false
-          return Math.hypot(particle.x - other.x, particle.y - other.y) < 100
+          return Math.hypot(particle.x - other.x, particle.y - other.y) < 60
         })
       })
     }
@@ -131,8 +116,8 @@ export function Entropy() {
 
         particle.neighbors.forEach(neighbor => {
           const distance = Math.hypot(particle.x - neighbor.x, particle.y - neighbor.y)
-          if (distance < 40) {
-            const alpha = 0.10 * (1 - distance / 40)
+          if (distance < 30) {
+            const alpha = 0.03 * (1 - distance / 30)
             ctx.strokeStyle = `${particleColor}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
             ctx.beginPath()
             ctx.moveTo(particle.x, particle.y)
@@ -154,14 +139,23 @@ export function Entropy() {
   useEffect(() => {
     const cleanup = init()
 
+    const handleScroll = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      scrollProgressRef.current = maxScroll > 0 ? Math.min(1, window.scrollY / maxScroll) : 0
+    }
+
     const handleResize = () => {
       cleanup?.()
       init()
     }
 
+    window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleResize)
+    handleScroll()
+
     return () => {
       cleanup?.()
+      window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleResize)
     }
   }, [init])
