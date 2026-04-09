@@ -551,7 +551,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50">
+    <div className="pointer-events-none fixed top-0 z-50 left-0 right-0 min-[800px]:left-[calc(var(--margin-col-width,60px)+6px)] min-[800px]:right-[calc(var(--margin-col-width,60px)+6px)]">
       <div className="relative">
         <svg
           viewBox="0 0 1400 90"

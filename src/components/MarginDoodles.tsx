@@ -170,6 +170,9 @@ const MarginDoodles = () => {
 
   return (
     <>
+      {/* Translucent margin backgrounds */}
+      <div className="margin-bg margin-bg--left hidden min-[800px]:block" />
+      <div className="margin-bg margin-bg--right hidden min-[800px]:block" />
       {/* Fixed doodle layers */}
       <div ref={leftRef} className="margin-doodles margin-doodles--left hidden min-[800px]:block">
 
