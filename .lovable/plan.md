@@ -1,31 +1,33 @@
 
 
-## Plan: Prevent Panels from Scrolling Behind Header
+## Fix: Prevent Panels from Scrolling Behind Transparent Header
 
-The header is `sticky top-0` with a transparent background, so content scrolls visibly behind it. The fix: use `clip-path` or `overflow: clip` on the header wrapper won't work with transparent bg. Instead, the content below needs to be clipped so it doesn't render in the header's space.
+### Problem
+The current `clip-path: inset(0 -100% -100% -100%)` on the content wrapper doesn't work because `clip-path` clips relative to the element's own border box, which scrolls with the content. It doesn't create a viewport-relative clipping boundary.
 
-### Approach
+### Solution
+The `clip-path` approach needs to be on a container that **contains both** the sticky header and the content — i.e., the `margin-content-wrapper` div. When `clip-path: inset(0)` is applied to this outer wrapper, it creates a clipping context. The sticky header sticks within this context, and content that scrolls past the top of this container gets clipped. But the header itself also gets clipped at the same boundary, so it remains visible since it's sticky at `top: 0`.
 
-Use CSS `clip-path` on the scrollable content area to clip anything that enters the header zone. Alternatively, simpler: wrap the content below the header in a container that establishes its own stacking context and clips at the top.
+However, the real fix is simpler: since the header is transparent and sticky, content naturally renders behind it because the header has no background to occlude it. The `clip-path` on the content container won't help because the content is still within its own bounds as it scrolls.
 
-The cleanest solution: add `clip-path: inset(0 0 0 0)` on the sticky header div. This creates a clipping boundary — content scrolling behind the transparent header will be hidden because the header's clip-path prevents anything underneath from showing through its bounding box... but that clips the header itself, not content behind it.
+**Correct approach**: Change the header from `sticky` to using `position: sticky` with the content container having `overflow: clip` (not `hidden`, which breaks sticky). Actually, the cleanest fix:
 
-**Correct approach**: The content sections need to be clipped so they don't visually overlap the header. Apply `clip-path: inset(0)` on the **content container** below the header, which will clip content at its own edges. But since sticky takes space in flow, content doesn't actually overlap unless we use negative margins.
+Move the `clip-path` from the content div to the **outer wrapper** (`margin-content-wrapper`), using `clip-path: inset(0)`. This makes the wrapper a clip root — the sticky header stays visible at `top: 0` within it, and any content that scrolls above the wrapper's top edge gets clipped. Since the sticky header sits at the very top, content scrolling behind it will be clipped at the wrapper boundary before it reaches the header.
 
-**Simplest fix**: Since the header is transparent and sticky, content naturally scrolls behind it. To prevent this, change the header from `sticky` to `relative` (non-sticky) so it just sits at the top and scrolls away. But the user likely wants it to stay visible.
+Wait — this still won't work because the wrapper itself scrolls with the page. The wrapper's top edge scrolls off screen too.
 
-**Best fix**: Keep sticky, but clip content that passes behind it. Add a pseudo-element or a clip wrapper. The most reliable method: on the content wrapper div (the sibling content after the header), set `clip-path: inset(0 -100% -100% -100%)` — this clips only the top edge, preventing content from rendering above its container's top boundary. But since the content div starts right after the header in flow, it won't overlap unless scrolled.
+**Actually correct approach**: The issue is that `clip-path` on a scrolling element clips relative to that element's box, which moves. We need a **fixed-position masking layer** or to make the **body/viewport** the clip context.
 
-Actually the real issue is simple: with `sticky top-0`, the header occupies space in the document flow AND sticks. Content below it in the DOM scrolls up and **behind** it because `z-50` puts the header on top. Content is visible through the transparent background.
-
-**Solution**: Give the header an opaque mask that hides content behind it, but the user wants transparency. The alternative: use `backdrop-filter` with a clip, or simply set `overflow: clip` combined with containing the scroll.
-
-**Practical solution**: Wrap the content sections in a div with `clip-path: inset(0 0 0 0)`. This creates a clipping context — as the content scrolls up, anything that goes above the container's visual boundary (i.e., behind the header) gets clipped.
+**Simplest reliable fix**: Add a pseudo-element or real div that acts as a **mask** — a `position: fixed; top: 0; height: [header-height]; z-index: 49` div with the page background color, sitting just behind the header. This effectively "paints over" any content that scrolls behind the transparent header area, using the page background color to match.
 
 ### Changes
 
-#### `src/pages/Index.tsx`
-- Wrap all content after `<AssemblyHeader>` in a `<div style={{ clipPath: 'inset(0 0 0 0)' }}>` — this clips content at the div's boundary, so as sections scroll behind the sticky header, they disappear instead of showing through the transparent header.
+#### 1. `src/pages/Index.tsx`
+- Remove the non-working `clip-path` from the content wrapper
+- Add a fixed mask div before the `AssemblyHeader`: a `position: fixed; top: 0; left: 0; right: 0; height: ~160px; z-index: 49` div with `background: hsl(var(--background))` — this sits behind the header (z-49) but above content (z < 49), painting over any content that scrolls into the header zone
+- The header at z-50 renders on top of this mask, keeping its transparent look while the mask hides content behind it
+
+This approach is clean — the mask uses the same background color as the page, so it's invisible but blocks content from showing through the header.
 
 ### Files: 1
 - `src/pages/Index.tsx`
