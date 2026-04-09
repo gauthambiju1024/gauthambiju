@@ -22,6 +22,7 @@ const panelSections = [
 const Index = () => {
   return (
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
+      <Entropy />
       <MarginDoodles />
 
 
