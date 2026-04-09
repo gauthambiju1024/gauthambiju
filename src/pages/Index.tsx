@@ -8,6 +8,7 @@ import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
+import { Entropy } from "@/components/ui/entropy";
 
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
@@ -21,6 +22,7 @@ const panelSections = [
 const Index = () => {
   return (
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
+      <Entropy />
       <MarginDoodles />
 
 
