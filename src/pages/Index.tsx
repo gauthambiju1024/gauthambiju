@@ -25,7 +25,7 @@ const Index = () => {
 
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-        <div className="px-0 md:px-1 pt-2 md:pt-4">
+        <div className="px-0 md:px-1 pt-[13vw] md:pt-[10vw]">
           <div id="home" className="blueprint-surface">
             <HeroSection />
           </div>
