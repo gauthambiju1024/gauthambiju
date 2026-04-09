@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import ProjectsShelf from "@/components/ProjectsShelf";
@@ -9,6 +10,22 @@ import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
 import AssemblyHeader from "@/components/AssemblyHeader";
 
+/** Parse hsla(h, s%, l%, a) → [h, s, l, a] */
+function parseHSLA(str: string): [number, number, number, number] | null {
+  const m = str.match(/hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+))?\s*\)/);
+  if (!m) return null;
+  return [+m[1], +m[2], +m[3], m[4] != null ? +m[4] : 1];
+}
+
+/** Convert HSL → RGB (0-255) */
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  s /= 100; l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+
 const panelSections = [
   { key: 'projects', Component: ProjectsShelf, bg: 'shelf-bg', border: 'border-[hsl(var(--shelf-wood-light)/0.3)]' },
   { key: 'thinking', Component: ThinkingWall, bg: 'whiteboard-bg', border: 'border-border/40' },
@@ -19,8 +36,25 @@ const panelSections = [
 ];
 
 const Index = () => {
+  const pageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const header = document.querySelector('[data-header-bg]') as HTMLElement | null;
+    if (!header || !pageRef.current) return;
+    const bg = header.style.background || header.style.backgroundColor || '';
+    const parsed = parseHSLA(bg);
+    if (!parsed) return;
+    const [h, s, l, a] = parsed;
+    // Alpha-composite the header color over black (rgb 0,0,0)
+    const [r, g, b] = hslToRgb(h, s, l);
+    const solidR = Math.round(r * a);
+    const solidG = Math.round(g * a);
+    const solidB = Math.round(b * a);
+    pageRef.current.style.background = `rgb(${solidR}, ${solidG}, ${solidB})`;
+  }, []);
+
   return (
-    <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
+    <div ref={pageRef} className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <MarginDoodles />
 
 
