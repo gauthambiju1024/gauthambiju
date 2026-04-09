@@ -25,36 +25,38 @@ const Index = () => {
 
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-        <div className="px-0 md:px-1 pt-2 md:pt-4">
-          <div id="home" className="blueprint-surface">
-            <HeroSection />
+        <div style={{ clipPath: 'inset(0 -100% -100% -100%)' }}>
+          <div className="px-0 md:px-1 pt-2 md:pt-4">
+            <div id="home" className="blueprint-surface">
+              <HeroSection />
+            </div>
           </div>
-        </div>
 
-        <div className="px-0 md:px-1 my-6 md:my-8">
-          <div id="about" className="notebook notebook-grid relative">
-            <div className="notebook-spine hidden md:block" />
-            <div className="notebook-margin hidden md:block" />
-            <div className="notebook-holes hidden md:block">
-              <div className="notebook-hole" style={{ top: '80px' }} />
-              <div className="notebook-hole" style={{ top: '33%' }} />
-              <div className="notebook-hole" style={{ top: '66%' }} />
-              <div className="notebook-hole" style={{ bottom: '80px' }} />
-            </div>
-            <div className="page-fold" />
-            <div className="relative z-[1]">
-              <AboutSection />
+          <div className="px-0 md:px-1 my-6 md:my-8">
+            <div id="about" className="notebook notebook-grid relative">
+              <div className="notebook-spine hidden md:block" />
+              <div className="notebook-margin hidden md:block" />
+              <div className="notebook-holes hidden md:block">
+                <div className="notebook-hole" style={{ top: '80px' }} />
+                <div className="notebook-hole" style={{ top: '33%' }} />
+                <div className="notebook-hole" style={{ top: '66%' }} />
+                <div className="notebook-hole" style={{ bottom: '80px' }} />
+              </div>
+              <div className="page-fold" />
+              <div className="relative z-[1]">
+                <AboutSection />
+              </div>
             </div>
           </div>
-        </div>
 
-        {panelSections.map(({ key, Component, bg, border }) => (
-          <div key={key} className="px-0 md:px-1 my-6 md:my-8">
-            <div id={key} className={`section-panel ${bg} ${border}`}>
-              <Component />
+          {panelSections.map(({ key, Component, bg, border }) => (
+            <div key={key} className="px-0 md:px-1 my-6 md:my-8">
+              <div id={key} className={`section-panel ${bg} ${border}`}>
+                <Component />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
