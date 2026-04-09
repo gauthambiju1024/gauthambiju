@@ -1,36 +1,19 @@
 
 
-## Fix: Popover Clipped by Header Mask
+## Restore Original Popover Design
 
 ### Problem
-The popover panel (line 702-845) renders inside the `<div>` that has `maskImage` with a bottom fade (line 555-563). Since the mask fades to transparent at the bottom, the popover — which sits below the header at `top: 88px` — is completely masked out and invisible.
+When the popover was moved outside the masked container, its internal references were incorrectly changed:
+1. `previewSmallRef` was replaced with `previewRef` — but `previewRef` is already used by the header SVG (line 675), so the popover's small preview doesn't work (React can only attach one ref to one DOM node)
+2. Canvas pointer handlers (`onPointerDown`, `onPointerMove`, `onPointerUp`) were removed from the `<canvas>` element — the `useEffect` approach may not be attaching them correctly
 
 ### Solution
-Move the popover **outside** the masked div but still inside the outer fixed container. This way the frosted-glass mask only applies to the header SVG, not the popover.
 
-### Change: `src/components/AssemblyHeader.tsx`
-
-Current structure:
-```
-<div fixed outer>          ← line 554
-  <div masked frosted>     ← line 555
-    <svg header />         ← line 564
-    {popover}              ← line 702  ← PROBLEM: inside mask
-  </div>
-</div>
-```
-
-New structure:
-```
-<div fixed outer>          ← line 554
-  <div masked frosted>     ← line 555
-    <svg header />         ← line 564
-  </div>                   ← close masked div before popover
-  {popover}                ← moved outside mask
-</div>
-```
-
-Move the `{popoverOpen && (...)}` block (lines 702-845) to after the closing `</div>` of the masked container (after line 700's `</svg>` closing, move the popover after the masked div's closing tag). No other changes needed — positioning stays the same since the popover uses `absolute` relative to the outer fixed container.
+#### `src/components/AssemblyHeader.tsx`
+1. **Add back `previewSmallRef`** — create a separate `useRef<SVGGElement>` for the popover's small preview SVG, restoring the original separation
+2. **Restore canvas pointer handlers** — add `onPointerDown={handleCanvasPointerDown}`, `onPointerMove={handleCanvasPointerMove}`, `onPointerUp={handleCanvasPointerUp}` back to the `<canvas>` element (verify these handler functions exist; if not, they're managed via `useEffect` and we leave as-is)
+3. **Update the popover's preview `<g>` ref** from `previewRef` to `previewSmallRef` (line 774)
+4. **Ensure `previewSmallRef` is used** in the animation/update logic wherever the small preview needs updating (check the `useEffect` that draws into the preview)
 
 ### Files: 1
 - `src/components/AssemblyHeader.tsx`
