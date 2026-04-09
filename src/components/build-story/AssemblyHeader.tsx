@@ -1,27 +1,5 @@
-import { useEffect, useRef } from "react";
-import { SketchPopover, type PartSegments } from "./SketchPopover";
-
-/**
- * AssemblyHeader (v4)
- * -------------------
- * Integrates the SketchPopover on the right edge. The popover owns the
- * sketch state internally — no need to lift it to App.tsx anymore. The
- * header receives parts data via the onChange callback from the popover.
- *
- * Layout:
- *   100px tall fixed header
- *   left:    instrumentation strip
- *   middle:  belt + product + arms + station labels
- *   right:   SketchPopover button (200px wide, slot from x=1188 to x=1388)
- *   bottom:  metadata strip
- *
- * Integration:
- *
- *   <AssemblyHeader panelIds={PANEL_IDS} />
- *   <main className="pt-[108px]">...</main>
- *
- * That's it. No state lift, no external props beyond panelIds.
- */
+import { useCallback, useEffect, useRef, useState } from "react";
+import { SketchPopover, strokesToSvgPaths, strokesToParts, PRESETS, type PartSegments, type Sketch } from "./SketchPopover";
 
 const INK = "hsl(38 48% 58%)";
 const INK_BRIGHT = "hsl(38 55% 66%)";
@@ -30,6 +8,7 @@ const MUTED = "hsl(220 10% 42%)";
 const MUTED_DIM = "hsl(220 10% 32%)";
 const GRID = "hsl(220 10% 26%)";
 const METAL = "hsl(220 10% 50%)";
+const BORDER_HOT = "hsl(38 50% 55%)";
 
 const STATION_NAMES = ["HOME", "ABOUT", "PROJECTS", "THINKING", "SKILLS", "JOURNEY", "WRITING", "CONTACT"];
 const STATION_CODES = ["A7", "B3", "C1", "D4", "E9", "F2", "G6", "H0"];
@@ -53,6 +32,8 @@ export function AssemblyHeader({
   const stationDotsRef = useRef<SVGGElement>(null);
   const stationBarsRef = useRef<SVGGElement>(null);
   const labelsRef = useRef<SVGGElement>(null);
+  const sketchThumbRef = useRef<SVGGElement>(null);
+  const sketchNameRef2 = useRef<SVGTextElement>(null);
 
   const clockRef = useRef<SVGTSpanElement>(null);
   const queueRef = useRef<SVGTSpanElement>(null);
@@ -69,7 +50,12 @@ export function AssemblyHeader({
   const userPartsRef = useRef<PartSegments | null>(null);
   const sketchNameRef = useRef<string>("none");
 
-  const handleSketchChange = (parts: PartSegments | null, name: string) => {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [currentSketch, setCurrentSketch] = useState<Sketch>(
+    () => PRESETS.find((p) => p.name === "drone.v1") ?? PRESETS[0]
+  );
+
+  const handleSketchChange = useCallback((parts: PartSegments | null, name: string) => {
     userPartsRef.current = parts;
     sketchNameRef.current = name;
     if (sourceLabelRef.current) {
@@ -83,7 +69,16 @@ export function AssemblyHeader({
     if (segRef.current) {
       segRef.current.textContent = String(parts ? parts.length : 0).padStart(2, "0");
     }
-  };
+    // Update SVG thumbnail
+    if (sketchThumbRef.current) {
+      const preset = PRESETS.find((p) => p.name === name);
+      const strokes = preset ? preset.strokes : [];
+      sketchThumbRef.current.innerHTML = strokesToSvgPaths(strokes, 28, INK_BRIGHT, 0.8);
+    }
+    if (sketchNameRef2.current) {
+      sketchNameRef2.current.textContent = name.toUpperCase();
+    }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -161,7 +156,6 @@ export function AssemblyHeader({
     let labelsHtml = "";
     for (let i = 0; i < 8; i++) {
       const x = BS + (i / 7) * BL;
-      // Invisible hit-area rect for easier clicking
       labelsHtml += `<rect class="ah4-hit" data-jump="${i}" x="${x - 32}" y="24" width="64" height="20" fill="transparent" style="cursor:pointer"/>`;
       labelsHtml += `<text class="ah4-name" data-i="${i}" x="${x}" y="35" text-anchor="middle" font-size="7.5" font-weight="500" fill="${MUTED}" style="cursor:pointer;transition:fill 0.15s" data-jump="${i}">${stationNames[i]}</text>`;
     }
@@ -181,7 +175,6 @@ export function AssemblyHeader({
       clickHandlers.push({ el, handler });
     });
 
-    // Hover effects for labels
     nameEls.forEach((el) => {
       el.addEventListener("mouseenter", () => el.setAttribute("fill", INK_BRIGHT));
       el.addEventListener("mouseleave", () => {
@@ -342,6 +335,17 @@ export function AssemblyHeader({
     };
   }, [panelIds, stationNames, stationCodes]);
 
+  // Initial thumbnail
+  useEffect(() => {
+    if (sketchThumbRef.current) {
+      const preset = PRESETS.find((p) => p.name === "drone.v1") ?? PRESETS[0];
+      sketchThumbRef.current.innerHTML = strokesToSvgPaths(preset.strokes, 28, INK_BRIGHT, 0.8);
+    }
+    if (sketchNameRef2.current) {
+      sketchNameRef2.current.textContent = "DRONE-V1";
+    }
+  }, []);
+
   return (
     <div
       className="fixed inset-x-0 top-0 z-50"
@@ -406,6 +410,48 @@ export function AssemblyHeader({
           <g ref={labelsRef} fontFamily="monospace" letterSpacing="1" />
           <g ref={stationBarsRef} />
 
+          {/* DESIGN.INPUT button — integrated into SVG */}
+          <g
+            className="cursor-pointer"
+            onClick={() => setPopoverOpen((o) => !o)}
+          >
+            {/* Background panel */}
+            <rect x="1200" y="4" width="186" height="72" rx="2" fill="hsl(220 15% 11%)" stroke={popoverOpen ? INK_BRIGHT : BORDER_HOT} strokeWidth="0.6" />
+            {/* Grid overlay for texture */}
+            <rect x="1200" y="4" width="186" height="72" rx="2" fill="url(#ah4-grid)" opacity="0.3" />
+            
+            {/* Title */}
+            <text x="1212" y="18" fontFamily="monospace" fontSize="7" fill={popoverOpen ? INK_BRIGHT : "hsl(38 50% 62%)"} letterSpacing="1.2">
+              ▸ DESIGN.INPUT
+            </text>
+            {/* Subtitle */}
+            <text x="1212" y="27" fontFamily="monospace" fontSize="5" fill={MUTED_DIM} letterSpacing="0.6">
+              click to define product
+            </text>
+
+            {/* Thumbnail preview area */}
+            <rect x="1208" y="32" width="80" height="38" rx="1" fill="hsl(220 15% 7%)" stroke="hsl(220 10% 22%)" strokeWidth="0.4" />
+            <g ref={sketchThumbRef} transform="translate(1248, 51)" />
+
+            {/* Sketch name */}
+            <text ref={sketchNameRef2} x="1296" y="44" fontFamily="monospace" fontSize="6" fill={INK} letterSpacing="0.8" textAnchor="start">
+              DRONE-V1
+            </text>
+            {/* Stats */}
+            <text x="1296" y="53" fontFamily="monospace" fontSize="5" fill={MUTED_DIM} letterSpacing="0.5">
+              VTX·<tspan ref={vtxRef} fill={INK}>000</tspan>
+            </text>
+            <text x="1296" y="61" fontFamily="monospace" fontSize="5" fill={MUTED_DIM} letterSpacing="0.5">
+              SEG·<tspan ref={segRef} fill={INK}>00</tspan>
+            </text>
+            <text x="1296" y="69" fontFamily="monospace" fontSize="5" fill={MUTED_DIM} letterSpacing="0.5">
+              {popoverOpen ? "▾ OPEN" : "▸ CLICK"}
+            </text>
+
+            {/* Decorative connector line to belt */}
+            <line x1="1200" y1="55" x2="1190" y2="55" stroke={BORDER_HOT} strokeWidth="0.4" strokeDasharray="2 2" />
+          </g>
+
           <line x1="0" y1="88" x2="1400" y2="88" stroke="hsl(220 10% 16%)" strokeWidth="0.3" strokeDasharray="1 3" />
 
           <g fontFamily="monospace" fontSize="5" fill={MUTED_DIM} letterSpacing="0.6">
@@ -417,10 +463,10 @@ export function AssemblyHeader({
               DUTY·<tspan ref={dutyRef} fill={INK}>00</tspan>%
             </text>
             <text x="296" y="96">
-              VTX·<tspan ref={vtxRef} fill={INK}>000</tspan>
+              VTX·<tspan fill={INK}>000</tspan>
             </text>
             <text x="356" y="96">
-              SEG·<tspan ref={segRef} fill={INK}>00</tspan>
+              SEG·<tspan fill={INK}>00</tspan>
             </text>
             <text x="1386" y="96" textAnchor="end">
               ⊿ 0 <tspan ref={fmsgRef}>AWAITING INPUT</tspan>
@@ -428,7 +474,13 @@ export function AssemblyHeader({
           </g>
         </svg>
 
-        <SketchPopover onChange={handleSketchChange} initialPreset="drone.v1" />
+        {/* Popover panel (HTML, positioned absolutely below header) */}
+        <SketchPopover
+          open={popoverOpen}
+          onToggle={setPopoverOpen}
+          onChange={handleSketchChange}
+          initialPreset="drone.v1"
+        />
       </div>
     </div>
   );
