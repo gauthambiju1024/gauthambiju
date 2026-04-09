@@ -528,7 +528,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="sticky top-0 z-50" style={{ background: 'hsl(var(--blueprint-bg, 160 20% 14%))' }}>
+    <div className="sticky top-0 z-50" style={{ background: 'hsl(160 20% 14%)' }}>
       <div className="relative">
         <svg
           viewBox="0 0 1400 180"
