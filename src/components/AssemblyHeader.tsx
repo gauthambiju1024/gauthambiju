@@ -713,13 +713,13 @@ export function AssemblyHeader({ panelIds }: Props) {
             <div className="mb-3 flex items-center justify-between">
               <span
                 className="font-mono text-xs tracking-wide"
-                style={{ color: ACCENT }}
+                style={{ color: INK_BRIGHT }}
               >
                 ▸ PRODUCT DESIGN BOX
               </span>
               <button
                 className="font-mono text-xs"
-                style={{ color: DIM }}
+                style={{ color: INK_DIM }}
                 onClick={() => setPopoverOpen(false)}
               >
                 ✕ close
@@ -734,16 +734,16 @@ export function AssemblyHeader({ panelIds }: Props) {
                   className="rounded border px-2 py-1 font-mono text-[10px] transition-colors"
                   style={{
                     borderColor: BORDER_DASH,
-                    color: DIM,
+                    color: INK_DIM,
                     background: "transparent",
                   }}
                   onMouseEnter={(e) => {
-                    (e.target as HTMLElement).style.borderColor = ACCENT;
-                    (e.target as HTMLElement).style.color = ACCENT;
+                    (e.target as HTMLElement).style.borderColor = INK_BRIGHT;
+                    (e.target as HTMLElement).style.color = INK_BRIGHT;
                   }}
                   onMouseLeave={(e) => {
                     (e.target as HTMLElement).style.borderColor = BORDER_DASH;
-                    (e.target as HTMLElement).style.color = DIM;
+                    (e.target as HTMLElement).style.color = INK_DIM;
                   }}
                 >
                   {p.name}
@@ -758,9 +758,6 @@ export function AssemblyHeader({ panelIds }: Props) {
                 height={140}
                 className="cursor-crosshair rounded"
                 style={{ background: "#0d1a14", border: `0.5px solid ${BORDER_DASH}` }}
-                onPointerDown={handleCanvasPointerDown}
-                onPointerMove={handleCanvasPointerMove}
-                onPointerUp={handleCanvasPointerUp}
               />
               <div className="flex flex-1 flex-col gap-2">
                 <div
@@ -774,21 +771,21 @@ export function AssemblyHeader({ panelIds }: Props) {
                   }}
                 >
                   <svg width="100%" height="100%" viewBox="0 0 200 90">
-                    <g ref={previewSmallRef} />
+                    <g ref={previewRef} />
                   </svg>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={handleClearCanvas}
                     className="flex-1 rounded border px-2 py-1 font-mono text-[10px]"
-                    style={{ borderColor: BORDER_DASH, color: DIM }}
+                    style={{ borderColor: BORDER_DASH, color: INK_DIM }}
                   >
                     clear
                   </button>
                   <button
                     onClick={handleBuildCustom}
                     className="flex-1 rounded border px-2 py-1 font-mono text-[10px]"
-                    style={{ borderColor: ACCENT, color: ACCENT }}
+                    style={{ borderColor: INK_BRIGHT, color: INK_BRIGHT }}
                   >
                     build ▸
                   </button>
@@ -797,13 +794,13 @@ export function AssemblyHeader({ panelIds }: Props) {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px]" style={{ color: DIM }}>
+              <span className="font-mono text-[10px]" style={{ color: INK_DIM }}>
                 draw a shape or pick a preset above
               </span>
               <button
                 onClick={() => setPopoverOpen(false)}
                 className="rounded border px-3 py-1 font-mono text-[10px]"
-                style={{ borderColor: BORDER_DASH, color: DIM }}
+                style={{ borderColor: BORDER_DASH, color: INK_DIM }}
               >
                 dismiss
               </button>
