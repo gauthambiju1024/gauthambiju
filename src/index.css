@@ -475,7 +475,7 @@
     top: 0;
     bottom: 0;
     width: var(--margin-col-width, 220px);
-    background: hsla(220, 15%, 10%, 0.4);
+    background: transparent;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;

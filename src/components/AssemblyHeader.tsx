@@ -552,7 +552,15 @@ export function AssemblyHeader({ panelIds }: Props) {
 
   return (
     <div className="pointer-events-none fixed top-0 z-50 left-0 right-0 min-[800px]:left-[calc(var(--margin-col-width,60px)+6px)] min-[800px]:right-[calc(var(--margin-col-width,60px)+6px)]">
-      <div className="relative">
+      <div className="relative" style={{
+        background: 'hsla(220, 15%, 12%, 0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        maskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 4px), transparent 100%), linear-gradient(to right, transparent 0px, black 3px, black calc(100% - 3px), transparent 100%)',
+        maskComposite: 'intersect',
+        WebkitMaskComposite: 'source-in' as any,
+      }}>
         <svg
           viewBox="0 0 1400 90"
           preserveAspectRatio="xMidYMid meet"
