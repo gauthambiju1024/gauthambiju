@@ -761,6 +761,56 @@
   border-radius: 4px;
 }
 
+/* 3D PROPS on the desk */
+.prop-3d {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(8deg);
+  transition: transform 280ms cubic-bezier(.22,1,.36,1);
+}
+.desk-slot:hover .prop-3d {
+  transform: rotateX(0deg) translateZ(14px);
+}
+.prop-face {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(var(--prop-depth, 4px));
+  backface-visibility: hidden;
+}
+.prop-side-bottom {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--prop-depth, 4px) * 2);
+  background: linear-gradient(180deg, hsl(0 0% 0% / 0.55), hsl(0 0% 0% / 0.85));
+  transform: rotateX(-90deg);
+  transform-origin: bottom;
+}
+.prop-side-top {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: calc(var(--prop-depth, 4px) * 2);
+  background: linear-gradient(180deg, hsl(40 30% 80% / 0.4), hsl(40 30% 60% / 0.15));
+  transform: rotateX(90deg);
+  transform-origin: top;
+}
+.prop-side-left {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: calc(var(--prop-depth, 4px) * 2);
+  background: linear-gradient(90deg, hsl(0 0% 0% / 0.7), hsl(0 0% 0% / 0.4));
+  transform: rotateY(90deg);
+  transform-origin: left;
+}
+.prop-side-right {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: calc(var(--prop-depth, 4px) * 2);
+  background: linear-gradient(270deg, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.2));
+  transform: rotateY(-90deg);
+  transform-origin: right;
+}
+
 /* STAGE */
 .stage-light {
   background:
@@ -780,26 +830,56 @@
 }
 
 /* FRAMES — skeuomorphic shells */
+
+/* HOME — green self-healing CUTTING MAT */
 .frame-blueprint {
   background:
-    linear-gradient(180deg, hsl(195 50% 26%), hsl(195 55% 20%));
+    radial-gradient(ellipse at 50% 40%, hsl(160 22% 19%), hsl(160 25% 13%) 80%);
   box-shadow:
-    inset 0 0 0 1px hsl(40 30% 80% / 0.18),
+    inset 0 0 0 2px hsl(0 0% 0% / 0.55),
+    inset 0 0 0 3px hsl(160 30% 30% / 0.6),
+    inset 0 1px 0 hsl(160 30% 45% / 0.25),
     0 30px 60px -20px hsl(0 0% 0% / 0.7);
+  border-radius: 6px;
 }
 .frame-blueprint::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 14px;
   background-image:
-    linear-gradient(hsl(40 30% 80% / 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(40 30% 80% / 0.12) 1px, transparent 1px);
-  background-size: 24px 24px;
+    /* major 1cm grid */
+    linear-gradient(hsl(0 0% 100% / 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.10) 1px, transparent 1px),
+    /* minor 2mm grid */
+    linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 12px 12px, 12px 12px;
   pointer-events: none;
+  border-radius: 2px;
+}
+.frame-blueprint::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  background-image:
+    /* corner 45° angle marks */
+    linear-gradient(45deg, transparent 49.5%, hsl(0 0% 100% / 0.18) 50%, transparent 50.5%),
+    linear-gradient(-45deg, transparent 49.5%, hsl(0 0% 100% / 0.18) 50%, transparent 50.5%);
+  background-size: 36px 36px, 36px 36px;
+  background-position: 0 0, 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 .frame-blueprint-curl {
-  background: linear-gradient(270deg, hsl(195 60% 35%), transparent);
-  box-shadow: inset -4px 0 8px hsl(0 0% 0% / 0.3);
+  /* repurposed: rubber-edge highlight */
+  background: linear-gradient(180deg,
+    hsl(160 30% 35% / 0.4) 0%,
+    transparent 12%,
+    transparent 88%,
+    hsl(0 0% 0% / 0.35) 100%);
+  pointer-events: none;
+  border-radius: 6px;
 }
 
 .frame-card {
