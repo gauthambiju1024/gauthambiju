@@ -10,7 +10,9 @@ const BookshelfFrame = ({ children }: FrameProps) => {
       exit={{ y: 60, rotateX: 12, opacity: 0 }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="absolute inset-0 overflow-auto">{children}</div>
+      <div className="absolute inset-0 stage-fit">
+        <div className="stage-scroll">{children}</div>
+      </div>
     </motion.div>
   );
 };

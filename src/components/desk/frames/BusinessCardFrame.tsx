@@ -11,9 +11,10 @@ const BusinessCardFrame = ({ children }: FrameProps) => {
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       style={{ transformStyle: "preserve-3d", backfaceVisibility: "hidden" }}
     >
-      {/* gold foil corner */}
       <div className="absolute top-0 right-0 w-20 h-20 frame-card-foil pointer-events-none" />
-      <div className="absolute inset-0 overflow-auto">{children}</div>
+      <div className="absolute inset-0 stage-fit">
+        <div className="stage-scroll">{children}</div>
+      </div>
     </motion.div>
   );
 };

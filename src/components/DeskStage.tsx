@@ -95,16 +95,15 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       {/* Sticky viewport: stage on top, desk on bottom */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* STAGE */}
-        <div className="stage-area absolute inset-x-0 top-0" style={{ height: "68vh" }}>
+        <div className="stage-area absolute inset-x-0 top-0" style={{ height: "78vh" }}>
           <div className="stage-light absolute inset-0 pointer-events-none" />
-          <div className="absolute inset-0 flex items-center justify-center px-4 md:px-12 pt-[110px] pb-6">
+          <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8 pt-[96px] pb-2">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
                 style={{ opacity: stageOpacity, y: stageY, perspective: 1500 }}
-                className="relative w-full max-w-6xl h-full"
+                className="relative w-full max-w-7xl h-full"
               >
-                {/* idle bob wrapper */}
                 <motion.div
                   className="w-full h-full stage-float"
                   style={{ transformStyle: "preserve-3d" }}
@@ -113,20 +112,22 @@ const DeskStage = ({ sections }: DeskStageProps) => {
                     <ActiveSection />
                   </ActiveFrame>
                 </motion.div>
-                {/* ground shadow */}
                 <div className="stage-ground-shadow absolute left-1/2 -translate-x-1/2 -bottom-2 w-[80%] h-6 pointer-events-none" />
               </motion.div>
             </AnimatePresence>
           </div>
+          <div className="desk-horizon absolute inset-x-0 bottom-0 h-10" />
         </div>
 
-        {/* DESK */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: "32vh" }}>
-          <Desk
-            slots={sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }))}
-            activeId={active.id}
-            onSlotClick={handleJump}
-          />
+        {/* DESK — 3D tilted */}
+        <div className="absolute inset-x-0 bottom-0 desk-3d" style={{ height: "22vh" }}>
+          <div className="desk-tilt">
+            <Desk
+              slots={sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }))}
+              activeId={active.id}
+              onSlotClick={handleJump}
+            />
+          </div>
         </div>
       </div>
     </div>

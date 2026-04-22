@@ -10,9 +10,10 @@ const ToolboxFrame = ({ children }: FrameProps) => {
       exit={{ y: 50, opacity: 0 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* hinged lid line */}
       <div className="absolute top-0 left-0 right-0 h-2 frame-toolbox-lid pointer-events-none" />
-      <div className="absolute inset-0 pt-2 overflow-auto">{children}</div>
+      <div className="absolute inset-0 pt-2 stage-fit">
+        <div className="stage-scroll">{children}</div>
+      </div>
     </motion.div>
   );
 };
