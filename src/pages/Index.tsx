@@ -19,65 +19,65 @@ import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 
-// Realistic spatial arrangement on the desk.
-// top/left are % of the desk box (32vh tall band at the bottom of the central column).
-// Back row sits high (~25% top), mid row middle (~55%), front row low (~80%).
+// Realistic spatial arrangement on the (foreshortened) desk.
+// Back row sits higher (small top values), front row near camera (large top).
+// Sizes bumped slightly so back-row props remain readable through the 38° tilt.
 const sections: SectionConfig[] = [
   {
     id: "home",
     label: "Home",
     Frame: BlueprintFrame,
     Section: HeroSection,
-    slot: { top: "28%", left: "16%", width: 130, height: 84, rotate: -4, zone: "back", shape: "blueprint" },
+    slot: { top: "22%", left: "16%", width: 145, height: 92, rotate: -4, zone: "back", shape: "blueprint" },
   },
   {
     id: "thinking",
     label: "Thinking",
     Frame: CorkboardFrame,
     Section: ThinkingWall,
-    slot: { top: "26%", left: "44%", width: 140, height: 86, rotate: 1, zone: "back", shape: "cork" },
+    slot: { top: "20%", left: "44%", width: 154, height: 94, rotate: 1, zone: "back", shape: "cork" },
   },
   {
     id: "projects",
     label: "Projects",
     Frame: BookshelfFrame,
     Section: ProjectsShelf,
-    slot: { top: "28%", left: "78%", width: 150, height: 74, rotate: 3, zone: "back", shape: "shelf" },
+    slot: { top: "22%", left: "78%", width: 165, height: 82, rotate: 3, zone: "back", shape: "shelf" },
   },
   {
     id: "about",
     label: "About",
     Frame: BusinessCardFrame,
     Section: AboutSection,
-    slot: { top: "55%", left: "22%", width: 110, height: 64, rotate: -8, zone: "mid", shape: "card" },
+    slot: { top: "52%", left: "22%", width: 122, height: 70, rotate: -8, zone: "mid", shape: "card" },
   },
   {
     id: "writing",
     label: "Writing",
     Frame: NotebookFrame,
     Section: WritingDesk,
-    slot: { top: "58%", left: "50%", width: 150, height: 90, rotate: -3, zone: "mid", shape: "notebook" },
+    slot: { top: "55%", left: "50%", width: 165, height: 100, rotate: -3, zone: "mid", shape: "notebook" },
   },
   {
     id: "skills",
     label: "Skills",
     Frame: ToolboxFrame,
     Section: SkillsToolbox,
-    slot: { top: "55%", left: "78%", width: 120, height: 70, rotate: 5, zone: "mid", shape: "toolbox" },
+    slot: { top: "52%", left: "78%", width: 132, height: 76, rotate: 5, zone: "mid", shape: "toolbox" },
   },
   {
     id: "journey",
     label: "Journey",
     Frame: ScrollFrame,
     Section: JourneyTimeline,
-    slot: { top: "82%", left: "28%", width: 150, height: 26, rotate: -10, zone: "front", shape: "scroll" },
+    slot: { top: "85%", left: "28%", width: 165, height: 30, rotate: -10, zone: "front", shape: "scroll" },
   },
   {
     id: "contact",
     label: "Contact",
     Frame: LetterFrame,
     Section: ContactClosing,
-    slot: { top: "82%", left: "70%", width: 110, height: 70, rotate: 8, zone: "front", shape: "letter" },
+    slot: { top: "85%", left: "70%", width: 122, height: 78, rotate: 8, zone: "front", shape: "letter" },
   },
 ];
 
