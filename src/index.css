@@ -636,6 +636,50 @@
    DESK STAGE — skeuomorphic desk + floating stage
    ============================================ */
 
+/* 3D DESK PERSPECTIVE WRAPPER */
+.desk-3d {
+  perspective: 1400px;
+  perspective-origin: 50% 0%;
+}
+.desk-3d > .desk-tilt {
+  transform: rotateX(38deg);
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
+}
+
+/* horizon line where stage meets desk */
+.desk-horizon {
+  background: linear-gradient(180deg,
+    transparent 0%,
+    hsl(38 70% 55% / 0.08) 40%,
+    hsl(22 30% 6% / 0.6) 100%);
+  pointer-events: none;
+}
+
+/* fit content inside a frame without page scroll */
+.stage-fit {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.stage-fit > * { flex: 1 1 auto; min-height: 0; }
+.stage-scroll {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(220 10% 50% / 0.4) transparent;
+}
+.stage-scroll::-webkit-scrollbar { width: 6px; }
+.stage-scroll::-webkit-scrollbar-thumb {
+  background: hsl(220 10% 50% / 0.4);
+  border-radius: 3px;
+}
+
 /* DESK SURFACE — walnut wood */
 .desk-surface {
   background:
