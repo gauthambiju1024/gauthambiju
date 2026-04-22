@@ -631,3 +631,108 @@
 .notebook-scroll-area::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--notebook-border) / 0.5);
 }
+
+/* ===== Section 2: Business Card on Desk ===== */
+.desk-card-panel {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 30%, hsl(25 15% 14%) 0%, hsl(20 18% 7%) 75%),
+    hsl(20 18% 7%);
+  border: 1px solid hsl(25 12% 22% / 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 120px hsl(0 0% 0% / 0.5);
+}
+.desk-card-panel::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(92deg,
+      transparent 0px, transparent 3px,
+      hsl(25 20% 10% / 0.45) 3px, hsl(25 20% 10% / 0.45) 4px),
+    repeating-linear-gradient(0deg,
+      transparent 0px, transparent 60px,
+      hsl(25 25% 8% / 0.35) 60px, hsl(25 25% 8% / 0.35) 61px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.desk-card-panel::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, transparent 35%, hsl(0 0% 0% / 0.55) 100%);
+  pointer-events: none;
+}
+
+.business-card-stage {
+  position: relative;
+  width: min(720px, 92%);
+  aspect-ratio: 1.75 / 1;
+}
+
+.business-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.business-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background:
+    radial-gradient(ellipse at 20% 0%, hsl(36 35% 97%) 0%, hsl(36 30% 94%) 60%, hsl(36 24% 90%) 100%);
+  border: 1px solid hsl(36 18% 78%);
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.7) inset,
+    0 -1px 0 hsl(36 18% 70% / 0.4) inset,
+    0 18px 35px -10px hsl(0 0% 0% / 0.55),
+    0 40px 60px -25px hsl(0 0% 0% / 0.4);
+  overflow: hidden;
+}
+.business-card-face::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 20%, hsl(36 20% 82% / 0.18) 0%, transparent 50%),
+    repeating-linear-gradient(45deg,
+      transparent 0px, transparent 2px,
+      hsl(36 15% 70% / 0.06) 2px, hsl(36 15% 70% / 0.06) 3px);
+  pointer-events: none;
+}
+.business-card-back {
+  background:
+    radial-gradient(ellipse at 80% 100%, hsl(36 32% 95%) 0%, hsl(36 26% 91%) 60%, hsl(36 20% 86%) 100%);
+}
+
+.business-card-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -22px;
+  height: 30px;
+  background: radial-gradient(ellipse at center, hsl(0 0% 0% / 0.55) 0%, transparent 70%);
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.card-foil {
+  background: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(45 80% 70%) 50%, hsl(var(--gold)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.card-foil-text {
+  background: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(45 85% 65%) 50%, hsl(38 70% 45%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.card-foil-bg {
+  background: linear-gradient(90deg, hsl(var(--gold)), hsl(45 85% 65%), hsl(var(--gold)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .business-card-inner { transform: none !important; }
+}
