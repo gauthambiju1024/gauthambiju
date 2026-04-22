@@ -36,8 +36,19 @@ const Index = () => {
           </div>
 
           <div className="px-0 md:px-1 my-6 md:my-8">
-            <div id="about" className="desk-card-panel">
-              <AboutSection />
+            <div id="about" className="notebook notebook-grid relative">
+              <div className="notebook-spine hidden md:block" />
+              <div className="notebook-margin hidden md:block" />
+              <div className="notebook-holes hidden md:block">
+                <div className="notebook-hole" style={{ top: '80px' }} />
+                <div className="notebook-hole" style={{ top: '33%' }} />
+                <div className="notebook-hole" style={{ top: '66%' }} />
+                <div className="notebook-hole" style={{ bottom: '80px' }} />
+              </div>
+              <div className="page-fold" />
+              <div className="relative z-[1]">
+                <AboutSection />
+              </div>
             </div>
           </div>
 
