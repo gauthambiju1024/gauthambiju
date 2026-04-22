@@ -1,139 +1,194 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { MapPin, Mail, ArrowUpRight, RotateCw, RotateCcw } from "lucide-react";
 
 const strengths = [
-  { title: "Systems Thinking", desc: "I see connections between moving parts — business, product, user, tech — and design for the whole system, not just one surface." },
+  { title: "Systems Thinking", desc: "I see connections between moving parts — business, product, user, tech — and design for the whole, not just one surface." },
   { title: "Fast Learning", desc: "I ramp up quickly on new domains, tools, and frameworks. From AI workflows to healthcare ops — I learn by building." },
   { title: "Structured Problem Solving", desc: "I break ambiguity into frameworks, prioritize ruthlessly, and move from insight to action with clarity." },
 ];
 
-const focusAreas = [
-  "Product Thinking",
-  "AI-Enabled Workflows",
-  "Business × UX Intersection",
-];
+const focusAreas = ["Product Thinking", "AI-Enabled Workflows", "Business × UX"];
 
 const AboutSection = () => {
-  const [hoveredStrength, setHoveredStrength] = useState<number | null>(null);
+  const [flipped, setFlipped] = useState(false);
+  const reduce = useReducedMotion();
 
   return (
-    <section className="px-6 md:px-16 py-16 md:py-24">
+    <section className="px-6 md:px-16 py-20 md:py-28">
       {/* Section label */}
-      <div className="flex items-center gap-3 mb-12">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">About</span>
+      <div className="flex items-center gap-3 mb-14 max-w-5xl mx-auto">
+        <div className="h-px flex-1 bg-[hsl(var(--gold)/0.25)]" />
+        <span className="text-[10px] tracking-[0.3em] uppercase font-mono text-[hsl(var(--gold)/0.7)]">
+          The Card on the Desk
+        </span>
+        <div className="h-px flex-1 bg-[hsl(var(--gold)/0.25)]" />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12 md:gap-16">
-        {/* Left page — Narrative */}
+      {/* Card stage */}
+      <div className="business-card-stage mx-auto" style={{ perspective: "1800px" }}>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
+          className="business-card-inner"
+          animate={{ rotateY: flipped ? 180 : 0 }}
+          transition={{ type: "spring", stiffness: 120, damping: 18 }}
+          style={{ transformStyle: "preserve-3d" }}
+          whileHover={reduce ? undefined : { rotateZ: 0, y: -6 }}
+          initial={{ rotateZ: -1.8 }}
         >
-          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground mb-8 leading-tight">
-            Notes on How I Work
-          </h2>
-
-          <div className="space-y-4 font-body text-base leading-relaxed text-card-foreground/70">
-            <p>
-              I'm a product-minded builder who operates at the intersection of technology, business, and design.
-              I don't just want to ship features — I want to understand <em className="text-card-foreground/90 not-italic border-b border-primary/30">why</em> something
-              should exist before figuring out <em className="text-card-foreground/90 not-italic border-b border-primary/30">how</em> to build it.
-            </p>
-            <p>
-              My approach is rooted in structured thinking — breaking complex problems into clear frameworks,
-              validating assumptions early, and iterating with intent. I gravitate toward ambiguity because
-              that's where the most meaningful work lives.
-            </p>
-            <p>
-              I believe the best products emerge when you combine deep user empathy with systems-level thinking
-              and business acumen. That's the space I'm building my career in.
-            </p>
-          </div>
-
-          {/* Philosophy quote */}
-          <div className="mt-10 pl-4 border-l-2 border-primary/20">
-            <p className="font-handwritten text-xl text-card-foreground/50 italic">
-              "Build with intent. Document deeply. Ship what matters."
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Right page — Structured breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="space-y-10"
-        >
-          {/* Strengths */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Traits</span>
+          {/* FRONT */}
+          <div
+            className="business-card business-card-face"
+            style={{ backfaceVisibility: "hidden" }}
+            onClick={() => setFlipped(true)}
+          >
+            {/* Corner monogram */}
+            <div className="absolute top-6 right-7 flex items-center gap-2">
+              <span className="text-[9px] tracking-[0.3em] font-mono text-[hsl(var(--ink)/0.5)] uppercase">
+                Est. 2024
+              </span>
+              <div className="w-9 h-9 rounded-full border border-[hsl(var(--gold)/0.5)] flex items-center justify-center card-foil">
+                <span className="font-serif-display text-sm font-bold">GB</span>
+              </div>
             </div>
-            <div className="space-y-3">
-              {strengths.map((s, i) => (
-                <motion.div
-                  key={s.title}
-                  className="group p-4 rounded-lg border border-transparent hover:border-border hover:bg-card/50 transition-all duration-300 cursor-default"
-                  onHoverStart={() => setHoveredStrength(i)}
-                  onHoverEnd={() => setHoveredStrength(null)}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-mono text-primary/60 mt-0.5">0{i + 1}</span>
+
+            {/* Top-left punch holes (subtle) */}
+            <div className="absolute top-6 left-7 flex gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-[hsl(var(--ink)/0.25)]" />
+              <span className="w-1 h-1 rounded-full bg-[hsl(var(--ink)/0.25)]" />
+              <span className="w-1 h-1 rounded-full bg-[hsl(var(--ink)/0.25)]" />
+            </div>
+
+            <div className="h-full flex flex-col justify-center px-10 md:px-16 py-14">
+              <p className="text-[10px] tracking-[0.4em] uppercase font-mono text-[hsl(var(--ink)/0.55)] mb-4">
+                Builder · Operator · Designer
+              </p>
+              <h2 className="font-serif-display text-4xl md:text-6xl text-[hsl(var(--ink))] leading-[0.95] mb-5">
+                Gautham <span className="card-foil-text">Biju</span>
+              </h2>
+
+              <div className="flex items-center gap-3 mb-5">
+                <span className="block h-px w-14 card-foil-bg" />
+                <span className="text-[11px] tracking-[0.25em] uppercase font-mono text-[hsl(var(--ink)/0.7)]">
+                  Product · Strategy · Systems
+                </span>
+              </div>
+
+              <p className="font-handwritten text-2xl text-[hsl(var(--ink)/0.7)] italic mb-8 max-w-md">
+                "Build with intent. Ship what matters."
+              </p>
+
+              {/* Contact chips */}
+              <div className="flex flex-wrap gap-2">
+                <ContactChip icon={<MapPin className="w-3 h-3" />} label="India" />
+                <ContactChip icon={<Mail className="w-3 h-3" />} label="hello@gauthambiju.com" />
+                <ContactChip icon={<ArrowUpRight className="w-3 h-3" />} label="linkedin / gauthambiju" />
+              </div>
+            </div>
+
+            {/* Flip affordance */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setFlipped(true); }}
+              className="absolute bottom-5 right-6 flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase font-mono text-[hsl(var(--ink)/0.5)] hover:text-[hsl(var(--ink))] transition-colors"
+              aria-label="Flip card"
+            >
+              Flip <RotateCw className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* BACK */}
+          <div
+            className="business-card business-card-face business-card-back"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+            onClick={() => setFlipped(false)}
+          >
+            <div className="h-full flex flex-col px-8 md:px-12 py-10 overflow-hidden">
+              <div className="flex items-center justify-between mb-5">
+                <span className="text-[10px] tracking-[0.3em] uppercase font-mono text-[hsl(var(--ink)/0.55)]">
+                  How I Work
+                </span>
+                <div className="card-foil text-[10px] tracking-[0.25em] uppercase font-mono px-2 py-0.5 rounded-sm border border-[hsl(var(--gold)/0.5)]">
+                  Reverse
+                </div>
+              </div>
+
+              <p className="font-body text-[13px] leading-relaxed text-[hsl(var(--ink)/0.8)] mb-2">
+                I'm a product-minded builder at the intersection of technology, business, and design.
+                I want to understand <em className="not-italic border-b border-[hsl(var(--gold)/0.5)]">why</em> something
+                should exist before figuring out <em className="not-italic border-b border-[hsl(var(--gold)/0.5)]">how</em>.
+              </p>
+              <p className="font-body text-[13px] leading-relaxed text-[hsl(var(--ink)/0.65)] mb-5">
+                I gravitate toward ambiguity — that's where the most meaningful work lives.
+              </p>
+
+              {/* Traits */}
+              <div className="space-y-1.5 mb-5">
+                {strengths.map((s, i) => (
+                  <div key={s.title} className="flex items-start gap-3 group">
+                    <span className="text-[10px] font-mono card-foil-text mt-1">0{i + 1}</span>
                     <div>
-                      <h4 className="font-display text-sm font-semibold text-card-foreground">{s.title}</h4>
-                      <motion.p
-                        initial={false}
-                        animate={{ height: hoveredStrength === i ? "auto" : 0, opacity: hoveredStrength === i ? 1 : 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden text-xs text-muted-foreground font-body mt-1 leading-relaxed"
-                      >
-                        {s.desc}
-                      </motion.p>
+                      <h4 className="font-display text-[13px] font-semibold text-[hsl(var(--ink))]">{s.title}</h4>
+                      <p className="text-[11px] text-[hsl(var(--ink)/0.55)] leading-snug">{s.desc}</p>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
 
-          {/* Focus areas */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Focus</span>
+              {/* Focus pills + facts */}
+              <div className="mt-auto grid md:grid-cols-2 gap-5">
+                <div>
+                  <p className="text-[9px] tracking-[0.3em] uppercase font-mono text-[hsl(var(--ink)/0.5)] mb-2">Focus</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {focusAreas.map((a) => (
+                      <span key={a} className="px-2 py-0.5 text-[10px] font-mono tracking-wide text-[hsl(var(--ink)/0.75)] border border-[hsl(var(--ink)/0.2)] rounded-sm">
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[9px] tracking-[0.3em] uppercase font-mono text-[hsl(var(--ink)/0.5)] mb-2">Facts</p>
+                  <div className="grid grid-cols-2 gap-1 text-[10px] font-mono text-[hsl(var(--ink)/0.7)]">
+                    <div><span className="text-[hsl(var(--ink)/0.45)]">Based</span> India</div>
+                    <div><span className="text-[hsl(var(--ink)/0.45)]">Edu</span> IIM Indore</div>
+                    <div><span className="text-[hsl(var(--ink)/0.45)]">Field</span> Product</div>
+                    <div><span className="text-[hsl(var(--ink)/0.45)]">Now</span> Building</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {focusAreas.map((area) => (
-                <span
-                  key={area}
-                  className="px-3 py-1.5 text-xs font-mono tracking-wide bg-primary/5 text-primary border border-primary/10 rounded-sm"
-                >
-                  {area}
-                </span>
-              ))}
-            </div>
-          </div>
 
-          {/* Quick facts */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Quick Facts</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-muted-foreground">
-              <div><span className="text-card-foreground/50">Based in</span> India</div>
-              <div><span className="text-card-foreground/50">Education</span> IIM Indore</div>
-              <div><span className="text-card-foreground/50">Focus</span> Product · Strategy</div>
-              <div><span className="text-card-foreground/50">Currently</span> Building</div>
-            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+              className="absolute bottom-5 right-6 flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase font-mono text-[hsl(var(--ink)/0.5)] hover:text-[hsl(var(--ink))] transition-colors"
+              aria-label="Flip back"
+            >
+              <RotateCcw className="w-3 h-3" /> Flip back
+            </button>
           </div>
         </motion.div>
+
+        {/* Desk shadow under the card */}
+        <div className="business-card-shadow" />
       </div>
+
+      <p className="text-center mt-10 text-[10px] tracking-[0.3em] uppercase font-mono text-[hsl(var(--gold)/0.55)]">
+        Tap card to flip
+      </p>
     </section>
   );
 };
+
+const ContactChip = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
+  <span className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono text-[hsl(var(--ink)/0.75)] border border-[hsl(var(--ink)/0.18)] rounded-sm bg-[hsl(36_30%_92%)] hover:-translate-y-0.5 hover:border-[hsl(var(--gold)/0.6)] transition-all duration-200">
+    <span className="text-[hsl(var(--gold))]">{icon}</span>
+    <span className="relative">
+      {label}
+      <span className="absolute left-0 -bottom-0.5 h-px w-0 bg-[hsl(var(--gold))] group-hover:w-full transition-all duration-300" />
+    </span>
+  </span>
+);
 
 export default AboutSection;
