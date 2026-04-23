@@ -1,80 +1,74 @@
 
+## Fix Panel Order, Content Overflow, and Scroll-Linked Transitions
 
-## Replace Frame Designs with Original Panel Skins + Larger Panels + No Inner Scroll
+Four targeted fixes across section ordering, content density, and panel transitions.
 
-Two changes in one pass:
+### 1. Reorder sections (About before Library, Strategy after Library)
 
-### 1. Use the original panel designs (from Remix #65)
+The current section flow in `src/pages/Index.tsx` is:
+`Home → Thinking → Projects → About → Writing → Skills → Journey → Contact`
 
-The current Frame components (`BlueprintFrame`, `CorkboardFrame`, `BookshelfFrame`, etc.) use `.frame-*` skins. The reference project uses richer, already-defined skins in `src/index.css`:
+The header (`Navigation.tsx` / `AssemblyHeader`) declares this order:
+`Home → About → Projects → Thinking → Skills → Journey → Writing → Contact`
 
-| Section  | New skin (replacing `frame-*`) |
-|----------|--------------------------------|
-| Home     | `.blueprint-surface` (dark green + blueprint grid) |
-| About    | `.notebook` + `.notebook-grid` + spine + red margin + 4 hole punches + page-fold |
-| Projects | `.shelf-bg` (dark walnut, wood grain) |
-| Thinking | `.whiteboard-bg` |
-| Skills   | `.toolbox-bg` (brushed metal) |
-| Journey  | `.section-panel` (clean floating panel, primary border) |
-| Writing  | `.editorial-bg` (cream editorial paper) |
-| Contact  | `.section-panel` (transparent border) |
+Mapping to the requested vocabulary (Library = Projects, Strategy = Thinking):
+**New canonical order**:
+`Home → About → Projects (Library) → Thinking (Strategy) → Skills → Journey → Writing → Contact`
 
-Each frame becomes a thin wrapper (`relative w-full h-full overflow-hidden`) applying the corresponding class set. The About frame gets the full notebook chrome (spine, margin line, 4 hole punches, page-fold) exactly like the reference. Slide-L/R transition behavior in `DeskStage` stays unchanged.
+This satisfies "About before Library" and "Strategy after Library" and matches the header exactly.
 
-### 2. Larger panel + no inner scroll
+**File changed**: `src/pages/Index.tsx` — reorder the `sections` array entries (slot 3D positions stay attached to each section so the desk layout follows).
 
-In `src/components/DeskStage.tsx`:
-- **Panel height**: 82vh → **88vh**.
-- **Desk strip**: 18vh → **12vh** (compensate so total = 100vh).
-- **Padding**: reduce `pt-[96px] pb-2` → `pt-[88px] pb-1` and `px-4 md:px-8` → `px-3 md:px-6` to give content more room.
-- **Seam gradient**: reposition to `bottom: 12vh`.
+### 2. Sync header → panel navigation
 
-In `src/index.css`:
-- Update `.stage-scroll` to **`overflow: hidden`** (was scrollable). Remove the inner scrollbar entirely.
-- `.stage-fit` keeps `width:100%; height:100%`.
+Because `DeskStage` derives `activeIndex` from window scroll progress (each section = 100vh of vertical scroll), the existing `scrollIntoView` in `Navigation.tsx` already works **as long as section order in `Index.tsx` matches the nav `navItems` array**. After step 1, both lists are identical → header clicks land on the correct panel automatically.
 
-### 3. Resize section content to fit the larger, non-scrolling panel
+No code change needed in `Navigation.tsx`. Verify by clicking each nav item maps to the matching panel.
 
-Each section component's outer wrapper currently assumes a scrollable container. With no scroll, content must fit ~88vh. Apply uniform compaction:
+### 3. Compact overflowing panels (Writing + Projects/Library)
 
-- Reduce vertical padding: `py-12/py-16` → `py-6/py-8`; `pt-6 pb-0` (Hero) stays.
-- Reduce internal `mb-10`/`mb-12` rhythm by ~30% (`mb-6`/`mb-8`).
-- Use `clamp()` font sizes already present — no font-size changes needed for Hero.
-- For dense sections (`ProjectsShelf`, `ThinkingWall`, `WritingDesk`, `JourneyTimeline`): wrap their inner lists/grids in `max-h-full` containers, switch inner `overflow-y-auto` lists to **horizontal carousels or condensed grids** so nothing overflows vertically. Specifically:
-  - `ProjectsShelf` → 3-up horizontal book row (no vertical scroll).
-  - `ThinkingWall` → 3-column compact note grid (top N notes only).
-  - `WritingDesk` → 2-column post grid, latest 4 posts only.
-  - `JourneyTimeline` → horizontal timeline rail instead of vertical list.
-  - `SkillsToolbox` → compact 4-column tray.
-  - `ContactClosing` → centered, already fits.
-  - `AboutSection` → reduce paragraph max-height; use 2-column bio + beliefs row.
-- Hero: portrait scales `w-[180px] lg:w-[220px]` → `w-[160px] lg:w-[200px]`; gaps reduced.
+Two panels currently overflow the 88vh non-scroll container at 1178×769:
+
+**`src/components/WritingDesk.tsx`** — currently has `py-16 md:py-24`, large featured card, plus 3-card row + "View all" link. Changes:
+- Outer wrapper: `py-16 md:py-24` → `py-4`, `px-6 md:px-16` → `px-5 md:px-10`.
+- Header rail + title block: `mb-12` → `mb-3`, `mb-10` → `mb-3`; title `text-3xl md:text-4xl` → `text-xl md:text-2xl`; drop the descriptive `<p>` or shrink to `text-xs`.
+- Featured card: padding `p-4 md:p-5` → `p-3`; title `text-xl md:text-2xl` → `text-base md:text-lg`; excerpt `line-clamp-2`.
+- Article grid: gap `gap-4` → `gap-2.5`; card padding `p-5` → `p-3`; title `text-sm` → `text-xs`; excerpt → `line-clamp-2 text-[11px]`.
+- "View all" link: `mt-4` → `mt-2`, `text-xs` → `text-[11px]`.
+
+**`src/components/ProjectsShelf.tsx`** — review and apply the same compaction pattern: shrink section padding to `py-4`, header `mb-3`, card titles to `text-sm`, descriptions clamped to 2 lines, gaps reduced. Cap to 3 books in the horizontal row.
+
+Also do a quick pass on **`AboutSection.tsx`**, **`ThinkingWall.tsx`**, **`JourneyTimeline.tsx`**, **`SkillsToolbox.tsx`**, **`ContactClosing.tsx`** to confirm nothing clips at 769px viewport height; trim padding only where overflow exists.
+
+### 4. Scroll-linked alternating L/R transitions
+
+Currently `DeskStage` already uses `direction = +1` when scrolling forward (next panel), `-1` when scrolling back, and the `slideVariants` translate the entering panel from that side and exit the leaving panel to the opposite side. This **is** scroll-linked.
+
+Improvements to make it feel deliberately alternating and tighter:
+- **Alternation by index parity** (instead of pure forward/back): incoming panel slides from **left for even indices, right for odd indices**, regardless of scroll direction. This produces the visible left/right/left/right rhythm the user described. Outgoing panel exits to the opposite side.
+- Keep the easing `[0.7, 0, 0.3, 1]` but shorten duration `0.7 → 0.55` for a snappier, more scroll-coupled feel.
+- Remove the `boxShadow` leading-edge shadow (it implied a directional drag); replace with a 1.5vh-wide vertical seam gradient on the leading edge for a cleaner cut.
+
+**File changed**: `src/components/DeskStage.tsx` — update `slideVariants` to take parity instead of direction; pass `activeIndex % 2` as `custom`.
+
+```ts
+const slideVariants = {
+  enter: (parity: number) => ({ x: parity === 0 ? "-100%" : "100%" }),
+  center: { x: "0%" },
+  exit:  (parity: number) => ({ x: parity === 0 ? "100%"  : "-100%" }),
+};
+```
 
 ### Files to modify
 
-- `src/components/desk/frames/BlueprintFrame.tsx`
-- `src/components/desk/frames/BusinessCardFrame.tsx` → rename concept to NotebookFrame? No — keep filename, just swap to notebook skin since About now uses notebook in the reference.
-- `src/components/desk/frames/BookshelfFrame.tsx`
-- `src/components/desk/frames/CorkboardFrame.tsx`
-- `src/components/desk/frames/NotebookFrame.tsx` (Writing → editorial-bg)
-- `src/components/desk/frames/ToolboxFrame.tsx`
-- `src/components/desk/frames/ScrollFrame.tsx` (Journey → section-panel)
-- `src/components/desk/frames/LetterFrame.tsx` (Contact → section-panel)
-- `src/components/DeskStage.tsx` — 88/12 split + padding
-- `src/index.css` — `.stage-scroll { overflow: hidden }`; ensure `.notebook`, `.shelf-bg`, `.whiteboard-bg`, `.toolbox-bg`, `.editorial-bg`, `.section-panel`, `.blueprint-surface` are present (they already are)
-- `src/components/HeroSection.tsx` — minor portrait + spacing compaction
-- `src/components/AboutSection.tsx` — 2-col compact layout
-- `src/components/ProjectsShelf.tsx` — horizontal 3-up
-- `src/components/ThinkingWall.tsx` — 3-col compact grid, cap items
-- `src/components/SkillsToolbox.tsx` — 4-col compact tray
-- `src/components/JourneyTimeline.tsx` — horizontal timeline rail
-- `src/components/WritingDesk.tsx` — 2x2 grid, cap 4 posts
-- `src/components/ContactClosing.tsx` — vertical centering tweak
+- `src/pages/Index.tsx` — reorder `sections` array.
+- `src/components/DeskStage.tsx` — parity-based slide variants, shorter duration, remove boxShadow.
+- `src/components/WritingDesk.tsx` — full compaction pass.
+- `src/components/ProjectsShelf.tsx` — compaction pass, cap to 3 items.
+- `src/components/AboutSection.tsx`, `ThinkingWall.tsx`, `JourneyTimeline.tsx`, `SkillsToolbox.tsx`, `ContactClosing.tsx` — minor padding trims only if overflow detected.
 
-### Out of Scope
+### Out of scope
 
-- 3D desk strip props/lighting/decor — untouched (only height changes from 18vh→12vh).
-- Routing, header, doodles, entropy, backend, Supabase — untouched.
-- Slide L/R transition logic in `DeskStage` — untouched.
-- No new dependencies or assets.
-
+- 3D desk strip, props, lighting, decor — untouched (slot positions travel with each section in the reorder).
+- Header design, routing, backend, doodles, entropy — untouched.
+- No new dependencies, no new assets.
