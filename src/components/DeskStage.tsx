@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, ComponentType } from "react";
-import { AnimatePresence, motion, useScroll } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue, useMotionValue } from "framer-motion";
 import DeskScene, { SlotConfig3D } from "./desk3d/DeskScene";
 import { FrameId, FrameProps } from "./desk/frames/FrameTypes";
-import { MotionValue, useMotionValue } from "framer-motion";
 
 export interface SectionConfig {
   id: FrameId;
@@ -16,22 +15,71 @@ interface DeskStageProps {
   sections: SectionConfig[];
 }
 
-// Alternating L/R based on index parity, regardless of scroll direction.
-// Even index → enters from left; odd index → enters from right. Outgoing exits opposite side.
-const slideVariants = {
-  enter: (parity: number) => ({ x: parity === 0 ? "-100%" : "100%" }),
-  center: { x: "0%" },
-  exit: (parity: number) => ({ x: parity === 0 ? "100%" : "-100%" }),
+// Transition window — last X% of one slice crossfades into the next.
+const FADE_WINDOW = 0.18;
+
+interface PanelLayerProps {
+  section: SectionConfig;
+  index: number;
+  total: number;
+  scrollYProgress: MotionValue<number>;
+  tDummy: MotionValue<number>;
+}
+
+const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLayerProps) => {
+  // Each section "owns" the scroll range [index/total, (index+1)/total].
+  // It fades in over the last FADE_WINDOW of the previous slice,
+  // is fully visible across its slice, and fades out over the last FADE_WINDOW of its own slice.
+  const slice = 1 / total;
+  const start = index / total;
+  const end = (index + 1) / total;
+
+  const fadeInStart = Math.max(0, start - slice * FADE_WINDOW);
+  const fadeInEnd = start;
+  const fadeOutStart = end - slice * FADE_WINDOW;
+  const fadeOutEnd = end;
+
+  // For first section: visible from 0. For last: stays visible to 1.
+  const opacity = useTransform(
+    scrollYProgress,
+    index === 0
+      ? [fadeOutStart, fadeOutEnd, 1]
+      : index === total - 1
+      ? [0, fadeInStart, fadeInEnd]
+      : [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd],
+    index === 0
+      ? [1, 0, 0]
+      : index === total - 1
+      ? [0, 0, 1]
+      : [0, 1, 1, 0]
+  );
+
+  // Hide pointer events when nearly invisible (avoid blocking interactions).
+  const [interactive, setInteractive] = useState(index === 0);
+  useEffect(() => {
+    return opacity.on("change", (v) => setInteractive(v > 0.5));
+  }, [opacity]);
+
+  const Frame = section.Frame;
+  const Section = section.Section;
+
+  return (
+    <motion.div
+      className="absolute inset-0"
+      style={{ opacity, pointerEvents: interactive ? "auto" : "none" }}
+    >
+      <Frame t={tDummy} active={interactive}>
+        <Section />
+      </Frame>
+    </motion.div>
+  );
 };
 
 const DeskStage = ({ sections }: DeskStageProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const prevIndexRef = useRef(0);
+  const [activeId, setActiveId] = useState<FrameId>(sections[0].id);
   const [reducedMotion, setReducedMotion] = useState(false);
-  // Stable dummy MotionValue for frames that still expect `t`
   const tDummy = useMotionValue(0.5) as MotionValue<number>;
 
   useEffect(() => {
@@ -42,16 +90,14 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     return () => m.removeEventListener("change", h);
   }, []);
 
+  // Track active id (for desk strip highlight) — based on dominant section.
   useEffect(() => {
     return scrollYProgress.on("change", (v) => {
-      const i = Math.min(sections.length - 1, Math.max(0, Math.floor(v * sections.length + 0.0001)));
-      if (i !== prevIndexRef.current) {
-        setDirection(i > prevIndexRef.current ? 1 : -1);
-        prevIndexRef.current = i;
-        setActiveIndex(i);
-      }
+      const i = Math.min(sections.length - 1, Math.max(0, Math.floor(v * sections.length + 0.5)));
+      const id = sections[i].id;
+      setActiveId((prev) => (prev === id ? prev : id));
     });
-  }, [scrollYProgress, sections.length]);
+  }, [scrollYProgress, sections]);
 
   const handleJump = (id: FrameId) => {
     const idx = sections.findIndex((s) => s.id === id);
@@ -73,10 +119,6 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     );
   }
 
-  const active = sections[activeIndex];
-  const ActiveFrame = active.Frame;
-  const ActiveSection = active.Section;
-
   const slots3D: SlotConfig3D[] = sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }));
 
   return (
@@ -92,26 +134,20 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       ))}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* STAGE — active panel takes the upper 88vh */}
+        {/* STAGE — all panels stacked, opacity driven directly by scroll */}
         <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
           <div className="absolute inset-0 px-3 md:px-6 pt-[88px] pb-1 overflow-hidden">
             <div className="relative w-full h-full max-w-7xl mx-auto overflow-hidden">
-              <AnimatePresence mode="popLayout" custom={activeIndex % 2} initial={false}>
-                <motion.div
-                  key={active.id}
-                  custom={activeIndex % 2}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.55, ease: [0.7, 0, 0.3, 1] }}
-                  className="absolute inset-0"
-                >
-                  <ActiveFrame t={tDummy} active>
-                    <ActiveSection />
-                  </ActiveFrame>
-                </motion.div>
-              </AnimatePresence>
+              {sections.map((s, i) => (
+                <PanelLayer
+                  key={s.id}
+                  section={s}
+                  index={i}
+                  total={sections.length}
+                  scrollYProgress={scrollYProgress}
+                  tDummy={tDummy}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -129,7 +165,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
 
         {/* DESK — bottom 12vh strip */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: "12vh" }}>
-          <DeskScene slots={slots3D} activeId={active.id} onSelect={handleJump} />
+          <DeskScene slots={slots3D} activeId={activeId} onSelect={handleJump} />
         </div>
       </div>
     </div>
