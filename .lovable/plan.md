@@ -1,99 +1,80 @@
 
 
-## Seamless Panel Transitions — Slide L/R, No Fade, Restore Original Frame Designs
+## Replace Frame Designs with Original Panel Skins + Larger Panels + No Inner Scroll
 
-Replace the current crossfade + scale + opacity transitions between sections with **clean horizontal slide transitions** (incoming from one side, outgoing to the other), no opacity fade, no scale dip. Also restore each frame's **original detailed visual design** (the richer paper/cork/blueprint/etc. aesthetics) which were stripped down during recent iterations.
+Two changes in one pass:
 
-### 1. Transition Mechanics — `src/components/DeskStage.tsx`
+### 1. Use the original panel designs (from Remix #65)
 
-Replace the current `AnimatePresence mode="wait"` + opacity/y motion with a **direction-aware sliding panel** approach:
+The current Frame components (`BlueprintFrame`, `CorkboardFrame`, `BookshelfFrame`, etc.) use `.frame-*` skins. The reference project uses richer, already-defined skins in `src/index.css`:
 
-- Track previous active index → derive `direction` (+1 if scrolling forward, -1 if backward).
-- Use `AnimatePresence mode="popLayout"` (allows incoming + outgoing to coexist for seamless overlap, no gap frame).
-- Each panel:
-  - `initial`: `{ x: direction * 100% }` (off-screen on the side it enters from)
-  - `animate`: `{ x: 0 }`
-  - `exit`: `{ x: -direction * 100% }` (slides out the opposite side)
-  - **`opacity` stays at 1 the entire time** — no fade.
-  - Transition: `duration: 0.7, ease: [0.7, 0, 0.3, 1]` (smooth in/out cubic, matches a paper-being-pulled-across feel).
-- Remove the `stageOpacity` and `stageY` `useTransform` values — they cause the current "fading on scroll edges" look the user dislikes.
-- Keep the panel container `overflow-hidden` so off-screen panels are clipped cleanly.
-- Add a thin paper-shadow drop on the leading edge of the incoming panel for depth (`box-shadow: -20px 0 40px -20px rgba(0,0,0,0.6)` mirrored by direction) — sells the "sliding in over" feel.
+| Section  | New skin (replacing `frame-*`) |
+|----------|--------------------------------|
+| Home     | `.blueprint-surface` (dark green + blueprint grid) |
+| About    | `.notebook` + `.notebook-grid` + spine + red margin + 4 hole punches + page-fold |
+| Projects | `.shelf-bg` (dark walnut, wood grain) |
+| Thinking | `.whiteboard-bg` |
+| Skills   | `.toolbox-bg` (brushed metal) |
+| Journey  | `.section-panel` (clean floating panel, primary border) |
+| Writing  | `.editorial-bg` (cream editorial paper) |
+| Contact  | `.section-panel` (transparent border) |
 
-### 2. Remove faded scroll states
+Each frame becomes a thin wrapper (`relative w-full h-full overflow-hidden`) applying the corresponding class set. The About frame gets the full notebook chrome (spine, margin line, 4 hole punches, page-fold) exactly like the reference. Slide-L/R transition behavior in `DeskStage` stays unchanged.
 
-In `DeskStage.tsx`, drop the opacity falloff at section edges. Panels stay at full opacity through the entire scroll segment; only the slide handles entry/exit.
+### 2. Larger panel + no inner scroll
 
-### 3. Restore Original Frame Designs
+In `src/components/DeskStage.tsx`:
+- **Panel height**: 82vh → **88vh**.
+- **Desk strip**: 18vh → **12vh** (compensate so total = 100vh).
+- **Padding**: reduce `pt-[96px] pb-2` → `pt-[88px] pb-1` and `px-4 md:px-8` → `px-3 md:px-6` to give content more room.
+- **Seam gradient**: reposition to `bottom: 12vh`.
 
-Each `Frame` component currently has minimal motion + minimal visual chrome. Restore the rich originals:
+In `src/index.css`:
+- Update `.stage-scroll` to **`overflow: hidden`** (was scrollable). Remove the inner scrollbar entirely.
+- `.stage-fit` keeps `width:100%; height:100%`.
 
-- **`BlueprintFrame`** — full dark drafting-green surface, blueprint grid lines (CSS), title-block corner cartouche, technical corner brackets at all 4 corners, scale ruler along bottom edge.
-- **`CorkboardFrame`** — full cork texture background, wooden frame border, 4 pushpins (one each corner), subtle paper-note shadows inside.
-- **`BookshelfFrame`** — wooden shelf top/bottom planks, dark gallery back-wall, picture-light gradient at top.
-- **`BusinessCardFrame`** — embossed off-white card surface, gold foil corner accent, subtle inner stroke, soft drop shadow inside frame.
-- **`NotebookFrame`** — lined-paper texture, center spine binding, page-curl shadow near spine, top spiral-ring perforations.
-- **`ToolboxFrame`** — metal lid bar with rivets, two clasps, compartment dividers as faint inset lines.
-- **`ScrollFrame`** — wooden rod top + bottom (3D-ish gradient), parchment background with deckled edge, faint wax-stain marks.
-- **`LetterFrame`** — paper letter background, opened envelope flap silhouette behind, red wax seal in corner, faint folded crease lines.
+### 3. Resize section content to fit the larger, non-scrolling panel
 
-Each frame keeps its **own subtle entry flourish** (e.g. blueprint's left-edge unroll, notebook's spine-flip) but the flourish is now **layered on top of the global slide**, not replacing it. The frame's own motion runs only on its inner `frame-*` chrome elements (curl, foil, spine, seal) for ~0.5s after slide-in completes — gives each section a signature beat without interfering with the seamless slide.
+Each section component's outer wrapper currently assumes a scrollable container. With no scroll, content must fit ~88vh. Apply uniform compaction:
 
-### 4. CSS additions — `src/index.css`
+- Reduce vertical padding: `py-12/py-16` → `py-6/py-8`; `pt-6 pb-0` (Hero) stays.
+- Reduce internal `mb-10`/`mb-12` rhythm by ~30% (`mb-6`/`mb-8`).
+- Use `clamp()` font sizes already present — no font-size changes needed for Hero.
+- For dense sections (`ProjectsShelf`, `ThinkingWall`, `WritingDesk`, `JourneyTimeline`): wrap their inner lists/grids in `max-h-full` containers, switch inner `overflow-y-auto` lists to **horizontal carousels or condensed grids** so nothing overflows vertically. Specifically:
+  - `ProjectsShelf` → 3-up horizontal book row (no vertical scroll).
+  - `ThinkingWall` → 3-column compact note grid (top N notes only).
+  - `WritingDesk` → 2-column post grid, latest 4 posts only.
+  - `JourneyTimeline` → horizontal timeline rail instead of vertical list.
+  - `SkillsToolbox` → compact 4-column tray.
+  - `ContactClosing` → centered, already fits.
+  - `AboutSection` → reduce paragraph max-height; use 2-column bio + beliefs row.
+- Hero: portrait scales `w-[180px] lg:w-[220px]` → `w-[160px] lg:w-[200px]`; gaps reduced.
 
-Add/restore the styled classes referenced by the frames (these likely got minimized):
+### Files to modify
 
-- `.frame-blueprint` — dark green base + blueprint grid + corner brackets + title cartouche.
-- `.frame-cork` — cork SVG/noise background + wood border.
-- `.frame-shelf` — wood gradient planks + back wall.
-- `.frame-card` — embossed paper + gold foil corner.
-- `.frame-notebook` — lined paper + spine + ring perforations.
-- `.frame-toolbox` — brushed metal lid + rivets + clasps.
-- `.frame-scroll` — wood rods + parchment + deckle.
-- `.frame-letter` — letter paper + envelope flap + wax seal.
-
-All use CSS gradients, SVG data-URIs, and `box-shadow` — no new image assets.
-
-### 5. Direction Inference
-
-```text
-useEffect(scrollYProgress) → newIndex
-direction = newIndex > prevIndex ? 1 : -1
-prevIndex = newIndex
-```
-
-Pass `direction` into the motion variants via `custom` prop on `motion.div` + `AnimatePresence custom={direction}`.
-
-### 6. Visual Result
-
-```text
-Scroll forward:
-  [Outgoing panel ──► slides left out]
-  [Incoming panel ◄── slides in from right]
-  Both at full opacity. Edges meet seamlessly.
-  Desk prop below lifts as usual.
-
-Scroll backward: mirrored.
-```
-
-No fade, no shrink, no opacity dip. Every panel arrives fully formed and leaves fully formed — like flipping cards in a Rolodex, or sliding drawings across a drafting table.
-
-### Files Touched
-
-- `src/components/DeskStage.tsx` — direction tracking, slide variants, remove fade/scale.
 - `src/components/desk/frames/BlueprintFrame.tsx`
-- `src/components/desk/frames/CorkboardFrame.tsx`
+- `src/components/desk/frames/BusinessCardFrame.tsx` → rename concept to NotebookFrame? No — keep filename, just swap to notebook skin since About now uses notebook in the reference.
 - `src/components/desk/frames/BookshelfFrame.tsx`
-- `src/components/desk/frames/BusinessCardFrame.tsx`
-- `src/components/desk/frames/NotebookFrame.tsx`
+- `src/components/desk/frames/CorkboardFrame.tsx`
+- `src/components/desk/frames/NotebookFrame.tsx` (Writing → editorial-bg)
 - `src/components/desk/frames/ToolboxFrame.tsx`
-- `src/components/desk/frames/ScrollFrame.tsx`
-- `src/components/desk/frames/LetterFrame.tsx`
-- `src/index.css` — restore/expand `.frame-*` styling classes.
+- `src/components/desk/frames/ScrollFrame.tsx` (Journey → section-panel)
+- `src/components/desk/frames/LetterFrame.tsx` (Contact → section-panel)
+- `src/components/DeskStage.tsx` — 88/12 split + padding
+- `src/index.css` — `.stage-scroll { overflow: hidden }`; ensure `.notebook`, `.shelf-bg`, `.whiteboard-bg`, `.toolbox-bg`, `.editorial-bg`, `.section-panel`, `.blueprint-surface` are present (they already are)
+- `src/components/HeroSection.tsx` — minor portrait + spacing compaction
+- `src/components/AboutSection.tsx` — 2-col compact layout
+- `src/components/ProjectsShelf.tsx` — horizontal 3-up
+- `src/components/ThinkingWall.tsx` — 3-col compact grid, cap items
+- `src/components/SkillsToolbox.tsx` — 4-col compact tray
+- `src/components/JourneyTimeline.tsx` — horizontal timeline rail
+- `src/components/WritingDesk.tsx` — 2x2 grid, cap 4 posts
+- `src/components/ContactClosing.tsx` — vertical centering tweak
 
 ### Out of Scope
 
-- 3D desk strip, props, decor, lighting, layout split (82/18) — untouched.
-- Section content, header, doodles, entropy, routing, backend — untouched.
+- 3D desk strip props/lighting/decor — untouched (only height changes from 18vh→12vh).
+- Routing, header, doodles, entropy, backend, Supabase — untouched.
+- Slide L/R transition logic in `DeskStage` — untouched.
 - No new dependencies or assets.
 
