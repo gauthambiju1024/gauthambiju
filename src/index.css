@@ -829,3 +829,7 @@
 @media (prefers-reduced-motion: reduce) {
   .stage-float { animation: none !important; }
 }
+
+/* Console rail scrollbar hiding */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
