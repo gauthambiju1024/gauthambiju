@@ -146,7 +146,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       })}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
+        <div className="absolute inset-x-0 top-0" style={{ height: "91vh" }}>
           <div className="absolute inset-0 px-0 pt-[88px] pb-1 overflow-hidden">
             <div className="relative w-full h-full overflow-hidden">
               {sections.map((s, i) => (
