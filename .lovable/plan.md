@@ -1,39 +1,48 @@
 
 
-## Reorder: BUILD ▸ then live build at the far right
+## Add bottom padding to the panel stage so panels are centered between header and rail
 
-### Final rail layout
+### The issue
 
 ```text
-┌─────────────────────────────────────────────────────────────────────┐
-│ [section artifact]   contextual actions   [BUILD ▸]   [live build]  │
-└─────────────────────────────────────────────────────────────────────┘
-   left                  center                  right
+┌─────────────────────────────────────┐
+│      header (88px)                  │  ← top gap = 88px
+├─────────────────────────────────────┤
+│                                     │
+│         panel content               │
+│                                     │
+├─────────────────────────────────────┤
+│      pb-1 (4px)                     │  ← bottom gap = 4px (asymmetric!)
+├─────────────────────────────────────┤
+│      console rail (~72–96px)        │
+└─────────────────────────────────────┘
 ```
 
-- **Left zone** — `<ArtifactPreview activeId={activeId} />` (section-specific flat SVG: Blueprint / BookSpines / PinnedNotes / Caliper / MilestoneRail / NotebookTabs / LetterCard / Letterhead, original styling, AnimatePresence cross-fade).
-- **Center zone** — contextual action pills, unchanged.
-- **Right zone** — flex row, right-aligned: `<BYOPDock />` first, then a thin vertical divider (`w-px h-8 bg-white/[0.08]`), then `<LiveBuild />` pinned to the far right edge of the rail.
+The panel container in `DeskStage.tsx` uses `pt-[88px] pb-1`, leaving only 4px between the panel and the bottom console rail — while the header takes a full 88px above. Visually the panel sits flush against the rail, so the panel's vertical center is pushed below the visual center of the open space.
 
-The BYOP popover already opens upward (`bottom: calc(100% + 8px)`) so it isn't blocked by the live build sitting to its right.
+### Fix
 
-### Widths / responsive
+In `src/components/DeskStage.tsx`, line 150, change the panel inner wrapper's bottom padding to mirror the breathing room above the rail.
 
-`gridTemplateColumns: "minmax(160px, 22%) 1fr minmax(320px, 36%)"`.
+**Before:**
+```tsx
+<div className="absolute inset-0 px-0 pt-[88px] pb-1 overflow-hidden">
+```
 
-- `≥900px`: all three zones at full content.
-- `700–899px`: live build hides (`hidden min-[900px]:flex`); BUILD ▸ stays.
-- `<700px`: artifact hides; only actions + BUILD ▸ remain.
+**After:**
+```tsx
+<div className="absolute inset-0 px-0 pt-[88px] pb-3 overflow-hidden">
+```
 
-Rail remains fully transparent.
+`pb-3` = 12px. Combined with the rail's own internal top spacing, this gives a comfortable matching gap above the rail without shrinking panel real estate noticeably.
 
-### Internal alignment of BYOPDock
+### Result
 
-Currently `<BYOPDock>` pins itself to the right of its container with `justify-end pr-3`. Since it's no longer the rightmost element, switch its wrapper to `justify-start pl-2` so BUILD ▸ sits at the left of the shared right zone, and `<LiveBuild>` takes the `pr-3` so it hugs the rail's right edge.
+- Small consistent gutter both above (between header and panel) and below (between panel and rail).
+- Panel content's vertical center lines up with the visual center of the open viewport area.
+- No layout/responsive math changes — purely a padding tweak.
 
 ### Files
 
-- `src/components/console/ConsoleRail.tsx` — left zone → `<ArtifactPreview activeId={activeId} />`; right zone → flex row of `<BYOPDock />` + divider + `<LiveBuild />` in that order, justified end. Update grid template.
-- `src/components/console/BYOPDock.tsx` — wrapper changes from `justify-end pr-3 pl-2` to `justify-start pl-2`.
-- `src/components/console/LiveBuild.tsx` — add `pr-3` to wrapper so it hugs the right edge.
+- `src/components/DeskStage.tsx` — change `pb-1` → `pb-3` on the panel wrapper (1 line).
 
