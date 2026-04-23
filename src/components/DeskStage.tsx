@@ -151,15 +151,19 @@ const DeskStage = ({ sections }: DeskStageProps) => {
 
   return (
     <div ref={containerRef} className="relative" style={{ height: `${sections.length * 100}vh` }}>
-      {sections.map((s, i) => (
-        <span
-          key={s.id}
-          id={s.id}
-          className="absolute left-0 w-1 pointer-events-none"
-          style={{ top: `${i * 100}vh`, height: "100vh" }}
-          aria-hidden="true"
-        />
-      ))}
+      {sections.map((s, i) => {
+        const total = sections.length;
+        const topVh = ((i + 0.5) / total) * (total - 1) * 100;
+        return (
+          <span
+            key={s.id}
+            id={s.id}
+            className="absolute left-0 w-1 pointer-events-none"
+            style={{ top: `${topVh}vh`, height: "100vh" }}
+            aria-hidden="true"
+          />
+        );
+      })}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* STAGE — all panels stacked, opacity driven directly by scroll */}
