@@ -1,60 +1,57 @@
 
 
-## Center Panels on Menu Navigation + Add Inter-Panel Spacing
+## Fix: Menu Navigation Off-Center Bug
 
-Two small but impactful fixes to `src/components/DeskStage.tsx`.
+### Root Cause
 
-### Problem 1 — Menu jumps land off-center
+The anchor `<span>` math in `DeskStage.tsx` is correct, but a global CSS rule in `src/index.css` is silently breaking it:
 
-`scrollYProgress` is normalized over the container's scrollable range, which is `(N-1) * 100vh` (not `N * 100vh`). Panel `i` is centered visually when `progress = (i + 0.5) / N`. Today both the menu's `handleJump` and the anchor `<span>` markers (used by `Navigation.scrollIntoView`) target `i * 100vh`, which corresponds to `progress = i / (N-1)` — the **start** of a panel's slice, where the panel is entering from the right and only partly visible.
-
-**Fix:** compute the scroll offset that lands `progress` exactly at the panel's center.
-
-```ts
-// In handleJump (and mirrored on the anchor spans)
-const total = sections.length;
-const targetProgress = (idx + 0.5) / total;       // panel center
-const scrollable = (total - 1) * window.innerHeight;
-const top = el.offsetTop + targetProgress * scrollable;
-window.scrollTo({ top, behavior: "smooth" });
+```css
+[id] {
+  scroll-margin-top: 100px;
+}
 ```
 
-Anchor `<span>` markers (used by header nav `scrollIntoView`) get repositioned the same way:
+This rule applies to **every element with an `id`** — including the invisible anchor spans we use for navigation. When the header calls `target.scrollIntoView({ behavior: "smooth", block: "start" })`, the browser subtracts that 100px scroll-margin from the landing position.
 
-```tsx
-style={{ top: `calc(${((i + 0.5) / total) * (total - 1) * 100}vh - 50vh)`, height: "100vh" }}
-```
+Result: scroll lands ~100px **short** of each panel's center. Because horizontal `x` is linear in `scrollYProgress`, that vertical offset translates directly to a small horizontal misalignment — every menu jump leaves the panel slightly to the right of true center, and the opacity crossfade isn't fully resolved either.
 
-(The `- 50vh` keeps the span itself a viewport tall and aligned so `scrollIntoView({block: 'start'})` lands the viewport top at the right place.)
+### The Fix
 
-After this change, clicking any header item lands the panel perfectly centered (`x: 0%`, `opacity: 1`).
+Make the navigation use the same math-based jump that already exists in `DeskStage.handleJump`, instead of relying on `scrollIntoView` (which is at the mercy of CSS scroll-margin/scroll-padding).
 
-### Problem 2 — No breathing room between panels
+**Two small changes, one file: `src/components/AssemblyHeader.tsx`**
 
-Right now the outgoing panel reaches `x: -100%` exactly when the incoming panel reaches `x: 0%` — they kiss at the seam. Adding a small gap (per UI/UX best practice for slide transitions: ~8–12% of viewport width) gives a perceptible "panel break" without feeling sluggish.
+1. **Replace `scrollIntoView` with explicit scroll math** in the nav-click handler (around line 309–312). The container is `[data-stage-root]` (we'll add this attribute) — but simpler: compute the same target locally using the panel index.
 
-**Fix:** push exit/enter offsets slightly past 100%. Update `PanelLayer`'s `x` transform:
+   ```ts
+   const handler = () => {
+     const total = panelIds.length;
+     const targetEl = document.getElementById(panelIds[i]);
+     if (!targetEl) return;
+     // Find the scroll container (the DeskStage root). Walk up until we hit
+     // the element whose height = total * 100vh, or just use the span's own
+     // offsetTop — which already encodes the correct scroll target.
+     const top = targetEl.getBoundingClientRect().top + window.scrollY;
+     window.scrollTo({ top, behavior: "smooth" });
+   };
+   ```
 
-```ts
-const GAP = 0.10;  // 10% viewport-width gap between adjacent panels
-// ...
-isFirst
-  ? ["0%", "0%", `-${100 + GAP * 100}%`]
-  : isLast
-  ? [`${100 + GAP * 100}%`, "0%", "0%"]
-  : [`${100 + GAP * 100}%`, "0%", `-${100 + GAP * 100}%`]
-```
+   `getBoundingClientRect().top + window.scrollY` gives the span's true document-Y, ignoring any `scroll-margin-top`. This lands the viewport top exactly at the span's top → progress hits `(i + 0.5) / N` → panel renders perfectly centered (`x: 0%`, `opacity: 1`).
 
-Combined with the existing edge-only opacity crossfade (25% of a slice), the result reads as: outgoing panel slides off-stage → brief negative-space beat → incoming panel slides in. Smoothness and 1:1 scroll mapping are preserved (`x` is still linear in `scrollYProgress`).
+2. **No changes** to the anchor span positions, `handleJump`, the `x` transform, opacity, or the `GAP` — those are all correct. The `scroll-margin-top: 100px` CSS rule stays (it's needed for browser-native hash-link behavior elsewhere in the app, e.g. blog pages).
+
+### Why not just remove the CSS rule?
+
+The 100px scroll-margin is doing real work for direct anchor links (e.g. `/blog#section`) on pages where the fixed header would otherwise cover the heading. Removing it would break those. Bypassing it only for the homepage nav is the surgical fix.
 
 ### What stays the same
 
-- 1:1 vertical→horizontal scroll mapping, no hijacking.
-- Page height `N * 100vh`, sticky stage, edge-fade opacity.
-- Reduced-motion fallback, desk strip, 3D scene, full-width panels.
-- No new dependencies, no CSS changes, no other files touched.
+- `src/components/DeskStage.tsx` — untouched.
+- `src/index.css` — untouched.
+- All x / opacity / GAP behavior, reduced-motion fallback, desk strip, 3D scene — untouched.
 
 ### Files Modified
 
-- `src/components/DeskStage.tsx` — `handleJump`, anchor span `top`, and `PanelLayer` `x` output range.
+- `src/components/AssemblyHeader.tsx` — replace the `scrollIntoView` call inside the per-station click handler (around line 309–312) with an explicit `window.scrollTo` based on the anchor's true document position.
 
