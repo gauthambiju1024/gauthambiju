@@ -1,52 +1,48 @@
 
 
-## Fix the Workbench Strip — Straighten, Simplify, Re-skin
+## Mobile-friendly Assembly Header
 
-The 12vh strip is too short and the camera too far for the current 10 props to read. They look like blurry tilted blobs, in a palette that fights the site (orange terracotta, blue triangle, multicolor photos, brown books vs. dark green blueprint + brass + cream).
+The current `AssemblyHeader` is a single SVG drawn on a 1400-unit canvas (overall progress spine, instrumentation strip, 8 serif station labels on a conveyor belt, and a 228px "Your Product" design box on the right). On a phone the whole SVG just shrinks proportionally — the serif station labels become ~6px tall and the tap targets are smaller than a fingertip, the right-side design box gets pushed off / squeezed, and the instrumentation row becomes illegible noise.
 
-Three surgical fixes — no new components, no new interactions.
+We'll keep the desktop header exactly as it is and add a dedicated mobile variant that swaps in below ~800px (the same breakpoint the header already uses for its margin offsets).
 
-### 1. Straighten everything
+### What the mobile header looks like
 
-Every prop currently has a "casual" rotation that, at 12vh height, just reads as "broken / falling over". Lock all yaw/roll to 0 (or near-0) so objects sit square to the camera. Tiny, intentional ≤0.05 rad tilts on stickies/notebook only.
+A 56px tall fixed bar — same dark glass background, same brass ink palette, same "factory instrumentation" voice — with three elements:
 
-In `WorkbenchDecor.tsx` and the decor calls inside `DeskScene.tsx`:
-- `LaptopClosable` rotation `[0, 0.1, 0]` → `[0, 0, 0]`
-- `BookStack` rotation `[0, -0.3, 0]` → `[0, 0, 0]`, per-book `rot` 0.02/-0.03/0.015 → 0
-- `BlueprintTube` rotation `[0, 0.3, 0.25]` → `[0, 0, 0]` (stand it upright in a brass holder, not "leaning")
-- `DraftingTools` rotation `[-Math.PI/2, 0, 0.35]` → `[-Math.PI/2, 0, 0]` (lay flat, square)
-- `NotebookWithPen` rotation `[0, 0.12, 0]` → `[0, 0, 0]`; pen `[0, 0.7, 0]` → `[0, 0, 0]`
-- `PolaroidStack` rotation `[0, -0.35, 0]` → `[0, 0, 0]`, per-card rot → 0
-- `StickyNotes` per-note rotations → ≤0.04 rad (keep tiny human imperfection)
+```text
+┌──────────────────────────────────────────────────────┐
+│ ▓▓▓░░  GB · BUILD.OS    PARTS 03/08    ☰ Home      │
+└──────────────────────────────────────────────────────┘
+```
 
-### 2. Re-skin to match the site palette
+1. **Progress bar** (full-width, 2px, top edge of header) — same `progressRef` value that drives the desktop spine, rendered horizontally.
+2. **Status row** (single line, monospace, brass ink): `GB · BUILD.OS` on the left, `PARTS NN/08` in the middle, current section name + menu icon on the right. The current section name comes from the same `stage = floor(progress * 8)` logic the desktop header already computes — so the active station stays in sync with scroll.
+3. **Menu button** (☰, 44×44 tap target) opens a full-screen sheet listing all 8 stations as large serif italic links (`Home`, `About`, `Work`, `Think`, `Skill`, `Path`, `Write`, `Send`), styled the same as the desktop nav — active station highlighted in the brighter brass tone, completed stations dimmed, upcoming in the base ink color. Tapping a link smooth-scrolls to the panel (same `getBoundingClientRect + scrollTo` logic the desktop uses to bypass `scroll-margin-top`) and closes the sheet.
 
-Site palette: dark green blueprint `#1f3328`, walnut `#3a2618`, brass `#c79a45` / `#d4a73a`, cream `#efe4cf`, accent gold `hsl(43 74% 55%)`. Anything outside this gets pulled in.
+### What we drop on mobile (and why)
 
-- **BlueprintTube**: drop the orange/grey tube. New look: cream paper `#efe4cf` rolled tube with a brass cap `#c79a45` and a single gold gilt stripe — same palette as the books.
-- **DraftingTools triangle**: change from translucent blue `#3a5a6a` → translucent **brass-tinted amber** `#c79a45` opacity 0.45. Pencil stays gold.
-- **PolaroidStack**: replace the rainbow `hsl(30 + i*60, …)` photo tints with three monochrome cream/sepia tones (`#efe4cf`, `#d8c9a6`, `#b89968`). Reads as "old prints" not "kid's craft".
-- **BookStack**: keep three books but recolor to the site triad — walnut `#3a2618`, brass `#8a6a2a`, cream `#efe4cf` — instead of brown/tan/cream-with-random-tan.
-- **StickyNotes**: replace the three pastel colors with a single warm cream `#f4e38a` for all three (paper memo pad feel), keep tiny scribble.
-- **Laptop screen** emissive: change `#1a3328` blueprint glow → soft amber `#3a2a14` so it reads as "warm room light reflection" matching the lamp pool.
+- The conveyor belt animation, rollers, robot arms, sparks, and the live "product being assembled" graphic — pure decoration that doesn't fit and costs frames on a phone.
+- The right-hand "Your Product" design box and the preset/draw popover. These are a desktop delight; on mobile the canvas would be tiny and the popover would dominate the screen. The mobile sheet gets a small "Design your product →" link at the bottom that opens the same popover full-screen, so the feature stays reachable without crowding the bar.
+- The top instrumentation strip (TRQ/PWR/SRC/OP/UTC) — collapsed into the single status row above.
 
-### 3. Make them readable at 12vh
+### Reserved space
 
-The camera is at z=1.6 looking at a 2.4-deep desk; tiny props get crushed. Two cheap moves:
+`pt-[98px]` on `<main>` becomes `pt-[56px]` below 800px. We'll handle this by reading `useIsMobile()` in `Index.tsx` (or by switching to a Tailwind `pt-[56px] min-[800px]:pt-[98px]` utility on the wrapper) so panels still land correctly under the active bar.
 
-- **Camera**: in `DeskScene.tsx`, move camera in: `position [0, 0.42, 1.6]` → `[0, 0.55, 1.25]`, fov 48 → 42. Closer and tighter framing makes each prop ~30% bigger on screen without re-modeling.
-- **Scale the small props up ~25%** by wrapping each in `<group scale={1.25}>`: `BlueprintTube`, `DraftingTools`, `StickyNotes`, `NotebookWithPen`, `BrassPaperweight`. Laptop, books, mug, lamp, polaroids stay current size (already legible).
-- **Spread spacing**: with the closer camera, nudge `BookStack` from x=1.55 → 1.7, `PolaroidStack` 1.2 → 1.35, `BrassPaperweight` 1.95 → 2.1 so the right cluster doesn't collide.
+### Technical details
 
-### What stays the same
+- New file `src/components/AssemblyHeaderMobile.tsx` containing the 56px bar, the progress/stage/menu logic, and the bottom-sheet menu (built with the existing `Sheet` from `src/components/ui/sheet.tsx`, `side="top"`).
+- It reuses the same `NAV` array, `INK`/`INK_BRIGHT` constants, and the same scroll-progress/stage math by extracting them into `src/components/assemblyHeader/shared.ts` so both desktop and mobile stay in lock-step.
+- The existing `AssemblyHeader.tsx` keeps its current behavior unchanged, but its outer wrapper gets a `hidden min-[800px]:block`. The new mobile component gets `block min-[800px]:hidden`.
+- A small `<DesignDrawer>` extraction lets the preset-pick + draw-your-own popover be opened from either the desktop click target or the mobile sheet's "Design your product →" link, so we don't duplicate the canvas/preset code.
+- The 3D workbench strip at the bottom of the viewport is untouched.
 
-- Status light bar, EOD behavior, lamp, parallax, fog, shadows — untouched.
-- `AssemblyHeader`, `DeskStage` layout, "now building" tag — untouched.
-- No new files.
+### Files
 
-### Files modified
-
-- `src/components/desk3d/workbench/WorkbenchDecor.tsx` — rotations zeroed, palette swap, screen tint, default scales/positions.
-- `src/components/desk3d/decor/index.tsx` — `PolaroidStack` photo colors recolored to sepia triad; rotations zeroed.
-- `src/components/desk3d/DeskScene.tsx` — camera position + fov, position nudges for right cluster, scale wrappers on small props.
+- `src/components/AssemblyHeader.tsx` — wrap root in `hidden min-[800px]:block`, extract the design popover into `DesignDrawer`, import shared constants.
+- `src/components/AssemblyHeaderMobile.tsx` — new, 56px bar + sheet menu.
+- `src/components/assemblyHeader/shared.ts` — new, `NAV`, ink colors, `useScrollProgress` hook, `stageFromProgress` helper.
+- `src/components/assemblyHeader/DesignDrawer.tsx` — new, popover/sheet content (presets + canvas) used by both headers.
+- `src/pages/Index.tsx` — render both headers; the responsive `hidden`/`block` classes pick which one is visible. Adjust top padding on the content wrapper to `pt-[56px] min-[800px]:pt-[98px]`.
 
