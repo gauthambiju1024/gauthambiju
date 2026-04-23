@@ -255,6 +255,46 @@ export const deskAlphaMask = () => {
   return _alpha;
 };
 
+let _drafting: THREE.CanvasTexture | null = null;
+/** Dark green drafting-table top with faint blueprint grid + soft vignette. */
+export const draftingTopTexture = () => {
+  if (_drafting) return _drafting;
+  _drafting = make(1024, (ctx, s) => {
+    // base dark green (matches hero blueprint hsl(160 20% 16%))
+    const base = ctx.createLinearGradient(0, 0, 0, s);
+    base.addColorStop(0, "#1f3328");
+    base.addColorStop(1, "#172821");
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, s, s);
+    // faint blueprint grid
+    ctx.strokeStyle = "rgba(180,210,200,0.06)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= s; i += 32) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(180,210,200,0.10)";
+    for (let i = 0; i <= s; i += 128) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke();
+    }
+    // subtle paper grain
+    for (let i = 0; i < 1200; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.025})`;
+      ctx.fillRect(Math.random() * s, Math.random() * s, 1, 1);
+    }
+    // vignette
+    const r = s / 2;
+    const vg = ctx.createRadialGradient(r, r, r * 0.4, r, r, r);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, s, s);
+  });
+  _drafting.wrapS = _drafting.wrapT = THREE.ClampToEdgeWrapping;
+  return _drafting;
+};
+
 let _hAlpha: THREE.CanvasTexture | null = null;
 /** Horizontal alpha fade: opaque middle ~70%, fades to transparent at left/right edges. */
 export const deskHorizontalAlpha = () => {
