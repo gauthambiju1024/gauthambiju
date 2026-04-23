@@ -1,153 +1,80 @@
 
 
-## Replace the 3D Desk with a Recessed Blueprint Console Rail
+## Slim the Console Rail to a Minimal Local Dock + Relocate BYOP
 
-Swap out the bottom 12vh 3D scene (`DeskScene`, props, lamp, status light bar) for a flat, architectural, **section-aware** console strip — three functional zones, no scattered objects, no tabletop perspective.
+Three coordinated changes: (1) gut Zone 1 of the console rail, (2) move the Assembly Header's "Build Your Product" (BYOP / DESIGN.INPUT) utility down into the right-bottom of the rail and shift the section artifact to the left-bottom, (3) reclaim the freed header space so the assembly track stretches wider.
 
 ---
 
-### The new bottom strip
+### 1. Console Rail — strip the noise
 
-**Container:** `<ConsoleRail>` — a single CSS/SVG component, ~104px tall (clamp 88–120px), full content width, inset into the page.
+**Remove entirely:**
+- `BuildStatus` component (the `03 / 08` counter, section label echo, progress bar, three-dot LED cluster, "now building · …" caveat line) — it duplicates the assembly header's narrative.
+- `STATION_META[*].status` strings (no longer rendered anywhere).
+- The center "diagnostic" radial glow under `ActionDock`.
+- Per-zone vertical dividers (`border-r border-white/[0.06]`).
 
+**Keep, slimmed:**
+- The recessed strip itself: still ~`clamp(72px, 9vh, 96px)` (drop from 12vh → 9vh now that there's less inside).
+- Brass top hairline + four corner machining marks (subtle ambiance).
+- Blueprint grid background (very low opacity — already there).
+
+### 2. New three-zone layout (artifact ↔ actions ↔ BYOP)
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│ [artifact]      2–4 contextual actions (centered)         [BYOP dock]  │
+└────────────────────────────────────────────────────────────────────────┘
+   left ~22%                center 1fr                       right ~26%
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ░░ thin brass top edge ░░                                                   │
-│ ┌──────────────┐ │ ┌─────────────────────────────────┐ │ ┌────────────────┐│
-│ │ BUILD STATUS │ │ │   CONTEXTUAL ACTION DOCK        │ │ │ ARTIFACT PREVIEW││
-│ │ 03/08 · ABT  │ │ │ [Featured] [Case Studies] [...] │ │ │   ▢▢▢          ││
-│ │ ● ● ○  18%   │ │ │                                 │ │ │   blueprint tile││
-│ └──────────────┘ │ └─────────────────────────────────┘ │ └────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
-```
 
-**Surface:**
-- Base: `linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 8%))` (a touch lighter than `--background`)
-- Top border: 1px `hsl(38 60% 52% / 0.55)` brass hairline
-- Bottom border: 1px `hsl(220 30% 5%)` shadow line
-- Inset shadow: `inset 0 2px 8px rgba(0,0,0,0.6), inset 0 -1px 0 rgba(255,255,255,0.03)`
-- Faint blueprint grid overlay: 24px×24px lines at 4% white, 96px majors at 7%
-- Two subtle radial spotlight pools (amber `#ffc98a` 6%, blue `#9ec0ff` 4%) under the active action and active artifact — not lamps, just gradient glows
-- Vertical zone dividers: 1px `hsl(220 20% 28% / 0.5)`
-- Tiny corner machining marks (4 SVG L-brackets) at the four corners
+**Left zone — `ArtifactPreview` (moved from right):**
+- One small section-specific flat SVG only. No label, no caption.
+- Examples already wired: Home → folded blueprint, Projects → book spines, Thinking → pinned notes, Skills → caliper, Writing → notebook tab, Contact → letter slip.
+- Tiny hover tooltip (one word, e.g. "blueprint", "spines") via native `title` — the only text allowed in this zone.
+- `≤700px`: hidden.
 
-**Typography:** JetBrains Mono for labels/numerics, Space Grotesk for action text, Caveat only for the "now building" handwritten line that already lives above the rail.
+**Center zone — `ActionDock` (trimmed):**
+- Hard cap at **4 actions** per station; primary first, secondary muted. Truncate `STATION_META` accordingly:
+  - home: `View Work`, `Resume`
+  - about: `Bio`, `Contact`
+  - projects: `Featured`, `Case Studies`
+  - thinking: `Pinned`, `Strategy`
+  - skills: `Product`, `Technical`, `Design`
+  - journey: `Experience`, `Latest`
+  - writing: `Latest`, `Essays`
+  - contact: `Copy Email`, `LinkedIn`, `GitHub`
+- Same pill style, but center the row (`justify-center`) instead of left-aligned.
+- AnimatePresence cross-fade on `activeId` change is kept.
 
----
+**Right zone — `BYOPDock` (NEW, relocated from header):**
+- Lifts the existing `DESIGN.INPUT` / `QUICK·PIC` popover trigger out of `AssemblyHeader.tsx` and re-mounts it inside the rail's right zone.
+- Reuses the same Radix Popover content, sketch picker, and brass-accent styling — only the trigger position changes.
+- Trigger button: `BUILD ▸` pill, amber accent, fixed 36px height, right-aligned with 12px inset from rail edge.
+- Popover anchors **upward** from the rail (`side="top"`, `align="end"`) so it opens over the page, not below the viewport.
+- `<700px`: collapses to icon-only (wrench glyph), popover still functional.
 
-### Zone 1 — Build Status (left, ~22% width, max 260px)
+### 3. AssemblyHeader — reclaim BYOP's space
 
-Static structural readout, updates per active section. **No 3D, no animated belt, no scattered LEDs across the whole bar.**
+In `src/components/AssemblyHeader.tsx`:
+- Remove the `DESIGN.INPUT` utility cluster (trigger + popover) from the right side of the header SVG/flex row.
+- Re-distribute the freed width to the assembly track: the 8-station belt currently sits in the center column with a fixed right gutter for BYOP. After removal, the track's `max-width` (or grid column) expands by the BYOP width (~140–180px on desktop), so stations breathe more and label spacing increases proportionally.
+- Header height unchanged (~90px). Mobile header (`AssemblyHeaderMobile`) is unaffected — its compact menu already has no BYOP slot.
 
-Stack (vertical, mono):
-1. `03 / 08 · ABOUT` — large mono, ink `hsl(36 37% 96%)`
-2. Thin progress line — full zone width, 2px, fills `hsl(38 60% 52%)` based on `scrollYProgress` within the active section's slice
-3. `now building · about` — Caveat, amber `hsl(43 74% 55%)`, fades on station change (already exists, just relocate inside the rail)
-4. Three 6px LED dots in a row: past=dim cool, current=pulsing amber, upcoming=hollow ring. Represents prev / current / next station only
+### 4. Files
 
-Hover the block → tooltip "Section 3 of 8 · click to jump to top" → click scrolls to current section anchor.
+- `src/components/console/ConsoleRail.tsx` — drop `<BuildStatus>`, swap zone order (artifact left, actions center, BYOP right), update grid template, drop dividers, remove status glow, lower min-height.
+- `src/components/console/BuildStatus.tsx` — **delete**.
+- `src/components/console/ActionDock.tsx` — center alignment; respect 4-action cap.
+- `src/components/console/actionsByStation.ts` — trim each station's `actions` array; remove `status` field from `StationMeta`.
+- `src/components/console/ArtifactPreview.tsx` — remove any caption text; add `title` attr for hover label.
+- `src/components/console/BYOPDock.tsx` — **new**, hosts the relocated DESIGN.INPUT trigger + popover (extracted from AssemblyHeader).
+- `src/components/AssemblyHeader.tsx` — remove DESIGN.INPUT block; expand assembly track to fill freed space.
+- `src/components/DeskStage.tsx` — bottom strip height: `clamp(72px, 9vh, 96px)`; pass nothing extra to `ConsoleRail` (no more `progress` prop needed since BuildStatus is gone — but keep prop signature stable, just unused).
 
----
+### 5. What the user sees
 
-### Zone 2 — Contextual Action Dock (center, flex-1)
-
-The functional core. **Driven by an `actionsByStation` map keyed on `activeId`.** Each action is a compact pill button:
-
-- Height 36px, padding `0 14px`
-- Border 1px `hsl(220 20% 28%)`, bg `hsl(220 16% 14%)`
-- Label: Space Grotesk 13px, ink cream
-- Hover: lifts 2px, border becomes brass, faint amber underline
-- Active/current: brass border + 1px brass underline + amber dot prefix
-- Disabled (placeholder): 40% opacity, cursor not-allowed
-
-**Action map:**
-
-| Station | Actions |
-|---|---|
-| Home | `View Work` → scroll #projects · `Resume` → /resume.pdf · `What I Build` → scroll #about |
-| About | `Bio` · `Now` · `Contact` → scroll #contact |
-| Projects | `Featured` · `Case Studies` · `Product` · `AI / PM` (filter chips, set local filter state on `ProjectsShelf` via context) |
-| Thinking | `Pinned` · `Strategy` · `Product Essays` (filter `case_studies` by `card_type` / tag) |
-| Skills | `Product` · `Technical` · `Design` · `Systems` (filter compartments in `SkillsToolbox`) |
-| Journey | `Jump to year ▾` (mono dropdown of years from data) · `Education` · `Experience` |
-| Writing | `Latest` · `Product` · `Systems` · `Reflections` (filter `blog_posts` tags) |
-| Contact | `Copy Email` (writes to clipboard, toast confirms) · `LinkedIn` · `GitHub` · `Schedule Chat` (cal.link from `site_content`) |
-
-Layout: `flex gap-2 overflow-x-auto`, scrollbar hidden. On `<700px` rail collapses to first 3 actions + `⋯ More` opening a sheet.
-
----
-
-### Zone 3 — Adaptive Artifact Preview (right, ~22% width, max 280px)
-
-**One** small flat SVG/CSS object per station — drawn 2D, no perspective, no shadows beyond a 4px soft drop. Animates subtly on station change (200ms fade + 4px slide-up + draw-on stroke for the line art). All artifacts share the same 64px height frame so the rail stays still.
-
-| Station | Artifact |
-|---|---|
-| Home | Folded blueprint tile (4 rect facets, brass corner clip) + tiny profile chip beside it |
-| About | Letterhead card · monogram `GB` |
-| Projects | 3 stacked book spines, colors from top 3 `projects.color` |
-| Thinking | 4 overlapping pinned notes (yellow/cream squares with brass pin SVGs) |
-| Skills | Caliper silhouette + 1 tool chip showing the active filter |
-| Journey | Mini horizontal rail with milestone dots; current year highlighted brass |
-| Writing | 3 notebook tabs (cream rectangles offset) + count `· 12 essays` |
-| Contact | Airmail letter card + small green availability dot + "Open to roles · 2025" |
-
-Each artifact is a tiny stateless SVG component in `src/components/console/artifacts/`.
-
----
-
-### Motion budget
-
-- Console rail itself: **no idle motion**. Entirely static surface.
-- Station change: 220ms cross-fade between zone-1 readout, zone-2 action set, zone-3 artifact. Uses `AnimatePresence mode="wait"` per zone.
-- LED dots: only the active dot pulses (1.4s ease-in-out, opacity 0.6↔1.0)
-- Progress fill: smooth via `useTransform(scrollYProgress, …)` mapped to the active section slice
-- Action hover: 120ms transform + border color
-- Reduced motion: pulse and fade disabled, all swaps instantaneous
-- The "now building · {label}" Caveat tag is **moved inside the rail's status zone** (replaces the floating positioned tag)
-
----
-
-### What gets removed
-
-- `DeskScene.tsx` — no longer mounted (file kept for now, just unused)
-- `WorkbenchLamp`, `Parallax`, `Invalidator`, `DraftingTop`, `StatusLightBar` — no longer rendered
-- All workbench props from the bottom strip: `BlueprintTube`, `NotebookWithPen`, `DraftingTools`, `LaptopClosable`, `Mug`, `StickyNotes`, `BookStack`, `PolaroidStack`, `BrassPaperweight`
-- The 1.5vh fade gradient seam (replaced by the rail's own brass hairline)
-- The floating absolutely-positioned `now building` tag in `DeskStage`
-- `onJump` to LED dots (replaced by status-zone click + action-dock buttons)
-
-The R3F dependencies stay in `package.json` (no purge needed) so the props can be revisited if we want to bring some back as quick illustrations elsewhere — but nothing 3D renders below the viewport anymore.
-
----
-
-### What stays the same
-
-- `DeskStage` 800vh scroll engine, panel cross-fades, scroll-anchored navigation
-- Both `AssemblyHeader` (desktop) and `AssemblyHeaderMobile`
-- All 8 panel `Section` and `Frame` components
-- `MarginDoodles`, `Entropy`, ghost grid, blueprint hero
-- The 12vh footprint at the bottom of `DeskStage` — the rail occupies the same vertical slot, so panel layout above it doesn't move
-
----
-
-### Files to add
-
-- `src/components/console/ConsoleRail.tsx` — main shell, three zones, station-aware switching
-- `src/components/console/BuildStatus.tsx` — left zone
-- `src/components/console/ActionDock.tsx` — center zone
-- `src/components/console/actionsByStation.ts` — pure data map of actions per `FrameId`
-- `src/components/console/ArtifactPreview.tsx` — right zone, switch on `activeId`
-- `src/components/console/artifacts/{Blueprint,Letterhead,BookSpines,PinnedNotes,Caliper,MilestoneRail,NotebookTabs,LetterCard}.tsx` — 8 small SVGs
-
-### Files modified
-
-- `src/components/DeskStage.tsx` — replace the bottom-12vh `<DeskScene />` block (and the floating "now building" tag) with `<ConsoleRail activeId={activeId} activeIdx={activeIdx} progress={scrollYProgress} sections={sections} onJump={handleJumpIndex} />`
-- `src/index.css` — add `.console-rail` styles (surface gradient, brass edges, blueprint grid, action pill, LED dot)
-
-### Responsive
-
-- `≥1024px`: full three-zone layout, all actions visible
-- `700–1023px`: zones at 24% / 1fr / 24%, action dock scrolls horizontally with hidden scrollbar
-- `<700px`: rail height drops to 88px, zone 3 (artifact) hidden, zone 2 collapses to 3 actions + `⋯` sheet, zone 1 shows compact `03/08` only
+- Bottom strip is half as loud: a single small drawing on the left, 2–4 quiet pill buttons in the middle, and the BYOP "BUILD ▸" trigger anchored bottom-right that opens its sketch picker upward.
+- No more `03/08`, no progress bar, no "now building · drafting introduction" caveat — that narrative now lives only in the (wider) assembly header at the top.
+- The header's station belt visibly stretches into the space the BYOP control used to occupy.
 
