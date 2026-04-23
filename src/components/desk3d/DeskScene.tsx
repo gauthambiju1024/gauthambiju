@@ -3,10 +3,10 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { FrameId } from "@/components/desk/frames/FrameTypes";
-import { woodTexture, deskAlphaMask } from "./textures";
+import { woodTexture, deskHorizontalAlpha } from "./textures";
 import Prop3D from "./Prop3D";
 import { MatProp, CorkboardProp, BookProp, CardProp, NotebookProp, ToolboxProp, CompassProp, EnvelopeProp } from "./props";
-import { Lamp, Mug, Plant, PenHolder, ClosedJournal } from "./decor";
+import { Lamp, Mug, Plant, PenHolder, ClosedJournal, PolaroidStack, Paperclips } from "./decor";
 
 export type PropShape = "mat" | "cork" | "book" | "card" | "notebook" | "toolbox" | "compass" | "envelope";
 
@@ -35,12 +35,12 @@ const SHAPE_MAP: Record<PropShape, () => JSX.Element> = {
   envelope: () => <EnvelopeProp />,
 };
 
-const FeatheredFloor = () => {
+const PlankFloor = () => {
   const wood = useMemo(() => woodTexture(), []);
-  const alpha = useMemo(() => deskAlphaMask(), []);
+  const alpha = useMemo(() => deskHorizontalAlpha(), []);
   return (
     <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-      <circleGeometry args={[2.6, 96]} />
+      <planeGeometry args={[8, 2.4]} />
       <meshStandardMaterial
         map={wood}
         alphaMap={alpha}
@@ -57,11 +57,11 @@ const Parallax = ({ reduceMotion }: { reduceMotion: boolean }) => {
   const { camera, mouse } = useThree();
   useFrame(() => {
     if (reduceMotion) return;
-    const tx = mouse.x * 0.18;
-    const ty = 1.05 + mouse.y * 0.05;
+    const tx = mouse.x * 0.12;
+    const ty = 0.42 + mouse.y * 0.04;
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, tx, 0.05);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, ty, 0.05);
-    camera.lookAt(0, 0.05, 0);
+    camera.lookAt(0, 0.05, 0.3);
   });
   return null;
 };
@@ -80,42 +80,44 @@ const DeskScene = ({ slots, activeId, onSelect }: DeskSceneProps) => {
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 1.05, 2.4], fov: 38 }}
+      camera={{ position: [0, 0.42, 1.6], fov: 48 }}
       frameloop="always"
       gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
-      {/* No background color, no fog — canvas is fully transparent so the page bleeds through. */}
-
-      <ambientLight intensity={0.3} />
-      {/* warm key */}
+      <ambientLight intensity={0.25} />
+      {/* warm key from lamp side */}
       <directionalLight
-        position={[-2.5, 3.5, 2]}
-        intensity={1.0}
-        color="#ffe6c0"
+        position={[2, 1.8, 0.5]}
+        intensity={0.7}
+        color="#ffd9a0"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
         shadow-camera-near={0.5}
-        shadow-camera-far={10}
+        shadow-camera-far={8}
         shadow-camera-left={-3}
         shadow-camera-right={3}
-        shadow-camera-top={3}
-        shadow-camera-bottom={-3}
+        shadow-camera-top={2}
+        shadow-camera-bottom={-2}
       />
+      {/* soft fill */}
+      <directionalLight position={[-2, 1.6, 0.8]} intensity={0.35} color="#fff4dd" />
       {/* cool rim */}
-      <directionalLight position={[2.8, 2.2, -2]} intensity={0.4} color="#9ec0ff" />
+      <directionalLight position={[0, 1.2, -2]} intensity={0.3} color="#9ec0ff" />
 
       <Suspense fallback={null}>
         <Environment preset="apartment" background={false} />
-        <FeatheredFloor />
-        <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={4} blur={2.4} far={1.4} resolution={512} color="#000" />
+        <PlankFloor />
+        <ContactShadows position={[0, 0.001, 0]} opacity={0.55} scale={5} blur={2.6} far={1.4} resolution={512} color="#000" />
 
         <Lamp />
         <Mug />
         <Plant />
         <PenHolder />
         <ClosedJournal />
+        <PolaroidStack />
+        <Paperclips />
 
         {slots.map((s) => (
           <Prop3D
