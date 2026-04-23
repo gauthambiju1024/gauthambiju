@@ -163,25 +163,20 @@ const DeskStage = ({ sections }: DeskStageProps) => {
           </div>
         </div>
 
-        {/* CONSOLE RAIL — minimal local dock */}
+        {/* CONSOLE RAIL — minimal local dock (transparent) */}
         <div
-          className="absolute inset-x-0 bottom-0"
-          style={{
-            height: "clamp(72px, 9vh, 96px)",
-            background: "linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 7%))",
-            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.55), inset 0 -1px 0 rgba(255,255,255,0.02)",
-            backgroundImage:
-              "linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 7%)), repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,0.025) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,0.025) 23px 24px)",
-            backgroundBlendMode: "normal, overlay, overlay",
-          }}
+          className="absolute inset-x-0 bottom-0 pointer-events-none"
+          style={{ height: "clamp(72px, 9vh, 96px)", background: "transparent" }}
         >
-          <ConsoleRail
-            activeId={activeId}
-            activeIdx={activeIdx}
-            sections={sections}
-            progress={scrollYProgress}
-            onJump={handleJumpIndex}
-          />
+          <div className="pointer-events-auto h-full w-full">
+            <ConsoleRail
+              activeId={activeId}
+              activeIdx={activeIdx}
+              sections={sections}
+              progress={scrollYProgress}
+              onJump={handleJumpIndex}
+            />
+          </div>
         </div>
       </div>
     </div>
