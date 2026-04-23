@@ -1,78 +1,70 @@
 
 
-## Replicate Reference Desk: Bottom 18% Strip
+## Make Desk Objects More Realistic
 
-Same plan as before but the desk strip is compressed to **18vh** (panel takes 82vh). All other refinements (camera, premium props, reference-style layout, lighting) stay.
+Upgrade the 3D props from stylized primitives to higher-fidelity, photorealistic objects through better geometry, PBR materials, and finer detailing. No new dependencies, no GLB assets — purely procedural improvements within the existing R3F setup.
 
-### 1. Layout — slim bottom strip
+### 1. Material upgrades (global)
 
-`src/components/DeskStage.tsx`:
-- 3D `<DeskScene>` → `absolute inset-x-0 bottom-0`, `height: 18vh`.
-- Stage/panel area → `top: 0`, `height: 82vh`.
-- Remove the previous full-viewport overlay + top-fade gradient.
-- Thin 1.5vh blend strip just above the desk: `linear-gradient(to bottom, transparent, hsl(var(--background)))` to soften the panel→desk seam.
+Switch all hero materials to richer PBR config:
+- **Wood (desk + book covers)**: layered noise normal map (procedural via `DataTexture`) + anisotropic clearcoat for grain sheen.
+- **Brass/gold**: `metalness: 1`, `roughness: 0.22`, warm tint `#c8923a`, subtle `clearcoat`. Add a faint scratch/roughness map (procedural noise) so it isn't mirror-perfect.
+- **Leather**: bumpy normal map (procedural noise), `roughness: 0.7`, `sheen: 0.3`, `sheenColor: #2a1208`.
+- **Ceramic (mug)**: high `clearcoat: 1`, low `clearcoatRoughness: 0.08`, slight `iridescence` for glaze.
+- **Paper**: subtle fiber normal map, `sheen: 0.15`, off-white `#f4ead8`.
+- **Glass (compass dome)**: tighten — `transmission: 1`, `ior: 1.52`, `thickness: 0.2`, `roughness: 0.02`, with a thin `attenuationColor`.
 
-### 2. Camera tuned for a slim strip
+Add a new `src/components/desk3d/materials.ts` exporting reusable normal/roughness `DataTexture` generators (wood grain, leather grain, paper fiber, brass micro-scratch) so all props share consistent surface detail.
 
-`src/components/desk3d/DeskScene.tsx`:
-- Camera: `position: [0, 0.42, 1.6], fov: 48` — low and wide so the 18vh strip still reads as a full desk.
-- Parallax base Y: `0.42`, X: `mouse.x * 0.12`.
-- Floor: rectangular walnut plank `planeGeometry(8, 2.4)` with horizontal alpha fade (opaque middle 70%, fades to 0 at left/right edges) so it dissolves at screen edges, not a hard cut. New helper `deskHorizontalAlpha()` in `textures.ts`.
-- Transparent canvas (no bg, no fog).
+### 2. Geometry refinements per prop
 
-### 3. Prop arrangement — reference layout
+`src/components/desk3d/props/index.tsx`:
+- **BookProp**: replace flat box pages with stacked thin layers (8–12 page slices) so the edge reads as paper, add slight cover bevel via larger `RoundedBox` radius, add raised gold corner brackets, embossed title bar.
+- **CompassProp**: add knurled bezel ring (instanced tiny boxes around rim), N/E/S/W tick marks (small extruded boxes), faint cardinal text via emissive plane with procedural texture, replace flat needle with two-tone (red/white) tapered needle made of two `coneGeometry`s back-to-back.
+- **NotebookProp**: add many thin page slices (10 per side) for a real book stack, curved page edges via subtle `LatheGeometry` for the outer fore-edge, ink lines on the visible page using a procedural texture (`paperLinedTexture()`), pen gets a tapered nib (`coneGeometry`) and brass clip.
+- **MatProp**: add chamfered edge (compose two `RoundedBox`es) and stitched border via thin emissive line.
+- **CardProp**: layered (3 cards stacked, slight rotation), torn/deckled top edge (subtle vertex displacement), embossed monogram via small extruded `TextGeometry`-free shape (use `ExtrudeGeometry` from a `THREE.Shape`).
+- **ToolboxProp**: add panel seams (thin inset boxes), rivets (tiny instanced spheres along edges), rubber feet at corners, two-tone lid/body.
+- **EnvelopeProp**: actual triangular flap built from `Shape` + `ExtrudeGeometry`, pressed wax seal with embossed ring.
+- **CorkboardProp**: cork uses higher-res procedural texture (denser specks), notes get curled corners (slight rotation + tiny secondary plane) and string between two pins.
 
-`src/pages/Index.tsx` — props arranged left→right across the front edge (compressed Z range since strip is shallow):
-
-```text
-book   mat   notebook   compass   card   envelope   toolbox
- -1.5  -0.95   -0.05      0.55    0.85     1.15      1.55
-```
-
-- `book`: `[-1.5, 0, 0.4]`, rot `[0, 0.15, 0]`
-- `mat`: `[-0.95, 0, 0.45]`, rot `[0, 0.05, 0]`
-- `notebook`: `[-0.05, 0, 0.45]`, rot `[0, -0.02, 0]` — center-stage open book
-- `compass`: `[0.55, 0, 0.5]`, rot `[0, 0.1, 0]`
-- `card`: `[0.85, 0, 0.3]`, rot `[0, -0.2, 0]`
-- `envelope`: `[1.15, 0, 0.35]`, rot `[0, -0.15, 0]`
-- `toolbox`: `[1.55, 0, 0.1]`, rot `[0, -0.25, 0]`
-- `cork`: `[0.0, 0, -0.2]`, rot `[0, 0, 0]` (back row, half-hidden — ambient)
-
-### 4. Decor repositioned (matches reference)
+### 3. Decor upgrades
 
 `src/components/desk3d/decor/index.tsx`:
-- `Plant`: far-left `[-2.0, 0, 0.0]`
-- `Mug`: `[-1.4, 0, 0.5]`
-- `Lamp`: far-right hero `[2.0, 0, -0.05]`
-- `PenHolder`: `[1.8, 0, 0.4]`
-- `ClosedJournal`: `[2.2, 0, 0.45]`
-- New `PolaroidStack` decor: `[1.3, 0, 0.55]`
-- New `Paperclips` decor (3 small brass torus shapes) scattered front-left + front-right.
+- **Lamp**: articulated arm (two segments + joint sphere), proper shade made via `LatheGeometry` (curved profile), inner emissive bulb sphere, brass base ring, real soft `spotLight` (cone) replacing the `pointLight` for realistic falloff and shadow projection on the desk.
+- **Mug**: `LatheGeometry` body for a proper potter's profile (subtle taper + foot), thicker handle (`TorusGeometry` with larger tube), coffee surface with light brown radial gradient texture and slight `clearcoat` for liquid sheen, faint steam wisps (3 transparent `PlaneGeometry`s with noise alpha — static, no animation if `prefers-reduced-motion`).
+- **Plant**: replace cones with curved leaf strips made via `Shape` + `ExtrudeGeometry`, soil layer with darker noise texture, pot uses `LatheGeometry` for terracotta profile.
+- **PenHolder**: knurled brass surface (instanced micro-grooves), each pen gets a clip + nib.
+- **ClosedJournal**: add band closure (thin elastic strap across cover), embossed corner brackets.
+- **PolaroidStack**: each polaroid gets a tiny image area (off-white inner rectangle with very faint procedural "photo" gradient), rounded corners.
+- **Paperclips**: real paperclip path via `TubeGeometry` along a `CatmullRomCurve3` (the classic double-loop shape) instead of a torus.
 
-### 5. Premium props — keep + open-book variant
+### 4. Lighting & shadows
 
-Already-upgraded materials (brass compass with glass dome, leather book with gold band + silk bookmark, brushed steel toolbox, embossed letterpress card, ceramic mug, fountain pen) stay. Refine:
+`src/components/desk3d/DeskScene.tsx`:
+- Replace the lamp's `pointLight` with a `spotLight` (angle ~0.6, penumbra 0.5, decay 1.6, intensity 2.2) targeting the desk center → realistic warm pool of light.
+- Increase shadow map size to 2048 for the key + spot lights (only these two cast shadows; others stay shadow-off for perf).
+- Add `ContactShadows` second pass under the lamp area only (smaller, sharper) for grounded lamp base.
+- Switch `Environment` preset from `apartment` to `studio` for cleaner reflections on brass/glass; keep `background={false}`.
+- Add subtle `fog` (`color #0a0a0a`, near 2.5, far 5) so the desk edges dissolve into background more naturally.
 
-- **NotebookProp** → open book variant: two slightly-tented `RoundedBox` pages forming a spread, plus a small fountain pen lying diagonally across (matches reference's centerpiece open notebook).
+### 5. Performance guardrails
 
-### 6. Lighting tuned to reference
+- All procedural textures memoized once in `materials.ts` and shared.
+- Page-slice books use `InstancedMesh` where possible.
+- Knurling/rivets use `InstancedMesh`.
+- Keep total draw calls similar to current via instancing.
+- Respect `prefers-reduced-motion`: skip steam, skip needle wobble.
 
-`DeskScene.tsx`:
-- `ambient` 0.25
-- Warm key from upper-right (lamp side): `position: [2, 1.8, 0.5], intensity: 0.7, color: #ffd9a0`
-- Soft fill from upper-left: `intensity: 0.35, color: #fff4dd`
-- Cool rim from behind: `intensity: 0.3, color: #9ec0ff`
-- Lamp's own `pointLight` (already in decor, warm 1.6) acts as practical hero light.
-- `ContactShadows`: `opacity: 0.55, blur: 2.6, scale: 5`.
-
-### Files Changed
-- `src/components/DeskStage.tsx` — bottom 18vh strip, panel 82vh, thin seam blend.
-- `src/components/desk3d/DeskScene.tsx` — new camera, rectangular feathered plank floor, lighting rig.
-- `src/components/desk3d/textures.ts` — add `deskHorizontalAlpha()`.
-- `src/components/desk3d/props/index.tsx` — open-book `NotebookProp` with pen.
-- `src/components/desk3d/decor/index.tsx` — reposition decor + add `PolaroidStack`, `Paperclips`.
-- `src/pages/Index.tsx` — updated prop world coordinates.
+### Files Touched
+- `src/components/desk3d/materials.ts` — NEW: shared procedural normal/roughness textures + material factories.
+- `src/components/desk3d/textures.ts` — add `paperLinedTexture()`, denser `corkTexture()`, `coffeeTexture()`.
+- `src/components/desk3d/props/index.tsx` — geometry + material upgrades for all 8 props.
+- `src/components/desk3d/decor/index.tsx` — lathe-based mug/lamp/plant/pot, tube paperclips, articulated lamp.
+- `src/components/desk3d/DeskScene.tsx` — spotLight, fog, env preset, larger shadow maps.
 
 ### Out of Scope
-Frames, scroll, header, sections, routing, backend — untouched. No new assets or dependencies.
+- No GLB/GLTF model imports, no new npm packages, no asset uploads.
+- Layout (18vh strip), camera, parallax, panel, frames, sections, routing — all untouched.
+- No changes to `Prop3D.tsx` interaction logic.
 
