@@ -1,70 +1,78 @@
 
 
-## Blend Desk into Background + Premium 3D Props
+## Replicate Reference Desk: Bottom 18% Strip
 
-Two refinements to the existing R3F desk:
-1. **Blend the 3D scene seamlessly** into the page background (no visible floor edge, no dark band, no hard horizon).
-2. **Upgrade props to feel premium** — better materials (env-mapped reflections, brushed metals, subtle bevels), refined geometry, and softer cinematic lighting.
+Same plan as before but the desk strip is compressed to **18vh** (panel takes 82vh). All other refinements (camera, premium props, reference-style layout, lighting) stay.
 
-Scroll, snap, sections, frames, header, and margins remain untouched.
+### 1. Layout — slim bottom strip
 
-### 1. Seamless Desk Blend
+`src/components/DeskStage.tsx`:
+- 3D `<DeskScene>` → `absolute inset-x-0 bottom-0`, `height: 18vh`.
+- Stage/panel area → `top: 0`, `height: 82vh`.
+- Remove the previous full-viewport overlay + top-fade gradient.
+- Thin 1.5vh blend strip just above the desk: `linear-gradient(to bottom, transparent, hsl(var(--background)))` to soften the panel→desk seam.
 
-In `src/components/desk3d/DeskScene.tsx`:
+### 2. Camera tuned for a slim strip
 
-- **Transparent canvas, no fill, no fog horizon.** Remove `<color attach="background">` and `<fog>` so the WebGL canvas is fully alpha and the page background shows through.
-- **Replace the flat floor plane** with a *radial-fade desk surface*. Keep the wood material but apply a custom shader-free fade via a second overlay plane that fades the floor edges to the page background color using vertex colors / alpha gradient — so there is no visible cutoff line where the desk ends.
-- **Drop the hard rectangle** — change floor geometry from `planeGeometry(10,6)` to a smaller `circleGeometry(2.6, 64)` rotated flat, with a `meshStandardMaterial` using the wood texture *plus* a `transparent` alpha-mapped vignette texture (generated procedurally in `textures.ts` as `deskAlphaMask()`) that fades fully to 0 at the rim. Result: desk feathers into nothing.
+`src/components/desk3d/DeskScene.tsx`:
+- Camera: `position: [0, 0.42, 1.6], fov: 48` — low and wide so the 18vh strip still reads as a full desk.
+- Parallax base Y: `0.42`, X: `mouse.x * 0.12`.
+- Floor: rectangular walnut plank `planeGeometry(8, 2.4)` with horizontal alpha fade (opaque middle 70%, fades to 0 at left/right edges) so it dissolves at screen edges, not a hard cut. New helper `deskHorizontalAlpha()` in `textures.ts`.
+- Transparent canvas (no bg, no fog).
 
-In `src/components/DeskStage.tsx`:
+### 3. Prop arrangement — reference layout
 
-- Remove the rigid `22vh` bottom band split. Make the `<DeskScene>` container span the **full sticky viewport** (`absolute inset-0`) behind the panel, with `pointer-events-none` on the upper region (handled inside the canvas by raycaster — props are only at the bottom so this is automatic). The active panel sits in front; the desk recedes naturally below and behind it.
-- Add a CSS gradient overlay above the canvas (top 60% of viewport) fading from `hsl(var(--background))` solid → transparent, so the upper portion of the 3D scene dissolves into the page color. This guarantees the merge regardless of camera angle.
+`src/pages/Index.tsx` — props arranged left→right across the front edge (compressed Z range since strip is shallow):
 
-### 2. Premium 3D Props
+```text
+book   mat   notebook   compass   card   envelope   toolbox
+ -1.5  -0.95   -0.05      0.55    0.85     1.15      1.55
+```
 
-In `src/components/desk3d/DeskScene.tsx`:
+- `book`: `[-1.5, 0, 0.4]`, rot `[0, 0.15, 0]`
+- `mat`: `[-0.95, 0, 0.45]`, rot `[0, 0.05, 0]`
+- `notebook`: `[-0.05, 0, 0.45]`, rot `[0, -0.02, 0]` — center-stage open book
+- `compass`: `[0.55, 0, 0.5]`, rot `[0, 0.1, 0]`
+- `card`: `[0.85, 0, 0.3]`, rot `[0, -0.2, 0]`
+- `envelope`: `[1.15, 0, 0.35]`, rot `[0, -0.15, 0]`
+- `toolbox`: `[1.55, 0, 0.1]`, rot `[0, -0.25, 0]`
+- `cork`: `[0.0, 0, -0.2]`, rot `[0, 0, 0]` (back row, half-hidden — ambient)
 
-- **Environment lighting**: add `<Environment preset="apartment" background={false} />` from `@react-three/drei` (already installed) — gives PBR reflections on metals/leather/gold for a premium look without an HDR file.
-- **Soft contact shadows**: replace per-prop `circleGeometry` shadow disks with drei's `<ContactShadows opacity={0.45} blur={2.4} far={1.2} />` — single, realistic grounded shadow.
-- **Cinematic key light**: warm key (existing) + add a cool rim light from behind-right (`#7aa3ff`, intensity 0.4) for premium two-tone separation.
+### 4. Decor repositioned (matches reference)
 
-In `src/components/desk3d/props/index.tsx` — refine each prop:
+`src/components/desk3d/decor/index.tsx`:
+- `Plant`: far-left `[-2.0, 0, 0.0]`
+- `Mug`: `[-1.4, 0, 0.5]`
+- `Lamp`: far-right hero `[2.0, 0, -0.05]`
+- `PenHolder`: `[1.8, 0, 0.4]`
+- `ClosedJournal`: `[2.2, 0, 0.45]`
+- New `PolaroidStack` decor: `[1.3, 0, 0.55]`
+- New `Paperclips` decor (3 small brass torus shapes) scattered front-left + front-right.
 
-- **CompassProp** → brass instrument: `meshPhysicalMaterial` with `clearcoat: 1`, `metalness: 1`, `roughness: 0.18`, color `#d4a85a`; add engraved bezel (thin torus rings), glass dome (transparent sphere with `transmission: 0.9`, `ior: 1.45`), refined needle.
-- **BookProp** → leather-bound tome: `meshPhysicalMaterial` leather with `clearcoat: 0.4`, embossed gold band (extruded torus), bookmark ribbon (thin curved plane), beveled spine using `RoundedBox` from drei.
-- **ToolboxProp** → use drei `<RoundedBox>` for chassis with `radius: 0.015`, brushed steel `metalness: 0.85, roughness: 0.45`, two brass latches, rubber grip on handle (`roughness: 0.95`).
-- **NotebookProp** → softcover with `RoundedBox`, page edges with subtle stripes, leather elastic band across cover.
-- **MatProp** → cutting mat with rounded corners (`RoundedBox`), subtle bevel, `clearcoat: 0.2` for slight sheen.
-- **CorkboardProp** → beveled walnut frame (`RoundedBox`), inset cork, push-pins as small chrome spheres on the notes.
-- **CardProp** → letterpress business card with `RoundedBox` + `clearcoat: 0.3`, embossed accent square in brass.
-- **EnvelopeProp** → cream paper with subtle fiber texture, refined wax seal as a slightly domed cylinder with `clearcoat: 0.6`.
+### 5. Premium props — keep + open-book variant
 
-Decor in `src/components/desk3d/decor/index.tsx`:
+Already-upgraded materials (brass compass with glass dome, leather book with gold band + silk bookmark, brushed steel toolbox, embossed letterpress card, ceramic mug, fountain pen) stay. Refine:
 
-- **Lamp** → brass arm + matte black shade, warmer bulb (`#ffd9a0` intensity 1.6).
-- **Mug** → ceramic with `clearcoat: 0.5` glaze, subtle rim highlight.
-- **PenHolder** → brushed brass cup, three premium pens (one fountain pen with chrome cap).
-- Drop **Polaroids** (looks cluttered) — replace with a single **leather-bound journal** sitting closed for ambient richness.
+- **NotebookProp** → open book variant: two slightly-tented `RoundedBox` pages forming a spread, plus a small fountain pen lying diagonally across (matches reference's centerpiece open notebook).
 
-### 3. Active-State Polish
+### 6. Lighting tuned to reference
 
-In `src/components/desk3d/Prop3D.tsx`:
-
-- Replace flat ring + pointlight with a **soft volumetric glow disc** (a larger faded plane with additive blending) under the active prop, plus a gentle upward tilt (rotation.x sway) when active, in addition to existing bob.
-- Hover: subtle scale 1.04 with spring damping (lerped), plus brighter rim instead of yellow ring.
+`DeskScene.tsx`:
+- `ambient` 0.25
+- Warm key from upper-right (lamp side): `position: [2, 1.8, 0.5], intensity: 0.7, color: #ffd9a0`
+- Soft fill from upper-left: `intensity: 0.35, color: #fff4dd`
+- Cool rim from behind: `intensity: 0.3, color: #9ec0ff`
+- Lamp's own `pointLight` (already in decor, warm 1.6) acts as practical hero light.
+- `ContactShadows`: `opacity: 0.55, blur: 2.6, scale: 5`.
 
 ### Files Changed
-
-- `src/components/desk3d/DeskScene.tsx` — transparent canvas, circle floor with alpha fade, Environment, ContactShadows, rim light, full-viewport sizing.
-- `src/components/desk3d/textures.ts` — add `deskAlphaMask()` radial-fade canvas texture.
-- `src/components/desk3d/props/index.tsx` — physical materials, RoundedBox geometry, refined details on all 8 props.
-- `src/components/desk3d/decor/index.tsx` — premium materials; swap Polaroids for closed journal.
-- `src/components/desk3d/Prop3D.tsx` — softer glow + scale-on-hover.
-- `src/components/DeskStage.tsx` — full-viewport canvas layer, top fade gradient overlay, remove `22vh` split.
+- `src/components/DeskStage.tsx` — bottom 18vh strip, panel 82vh, thin seam blend.
+- `src/components/desk3d/DeskScene.tsx` — new camera, rectangular feathered plank floor, lighting rig.
+- `src/components/desk3d/textures.ts` — add `deskHorizontalAlpha()`.
+- `src/components/desk3d/props/index.tsx` — open-book `NotebookProp` with pen.
+- `src/components/desk3d/decor/index.tsx` — reposition decor + add `PolaroidStack`, `Paperclips`.
+- `src/pages/Index.tsx` — updated prop world coordinates.
 
 ### Out of Scope
-
-- All section components, frames (`BlueprintFrame` etc.), header, margins, scroll behavior, routing, backend.
-- No new image assets, no GLB/GLTF, no new dependencies (drei already provides `Environment`, `ContactShadows`, `RoundedBox`).
+Frames, scroll, header, sections, routing, backend — untouched. No new assets or dependencies.
 
