@@ -1,67 +1,87 @@
 
-## Hero Cutting Mat + 3D Compact Desk + 3D Objects
+## 3D Desk Props (R3F) + Remove Below-Panel Stage Glow
 
-Three focused refinements to the Builder's Desk experience.
+Two combined refinements: replace the flat CSS desk objects with **real 3D props** rendered with React Three Fiber, AND remove the dark stage lighting/horizon glow that bleeds below the active panel. **Scroll behavior, scroll-driven section flow, header, margins, and the cutting-mat hero all stay exactly as they are.**
 
-### 1. Hero Frame → Green Cutting Mat
+Reference image (uploaded) is the target mood: warm wooden desk in the foreground with realistic 3D props (book, notebook, mat, lamp, mug, compass, photos, journal, plant) sitting in front of the active section panel.
 
-Reskin the `BlueprintFrame` (which wraps `HeroSection`) as a self-healing **green cutting mat** — restoring the original hero look.
+### 1. Remove Below-Panel Stage Glow
 
-- Background: dark green `hsl(160 20% 16%)` with a subtle deeper-green vignette.
-- Overlay: faint white grid (1cm major / 2mm minor) using two layered low-opacity `linear-gradient` patterns — the classic cutting-mat look.
-- Two opposite corners get 45° diagonal angle hairlines, like a real mat.
-- Edge: soft beveled rubber rim (1px inner light line + 2px dark outer shadow) replacing the blue paper-curl.
-- Keep the unroll entry animation; only the visual skin changes.
-- `HeroSection` itself is unchanged — its light-on-dark text already matches the mat.
-- Desk thumbnail for "Home" in `Desk.tsx` (`shape: "blueprint"`) is restyled to a tiny green mat so the desk preview matches the stage.
+The "stage area" currently has soft lighting that wraps the panel and a horizon glow under the desk — visually it looks like a theater. Remove these so the panel sits cleanly above the desk with no extra ambient wash.
 
-### 2. 3D Compact Desk + Fit-to-Stage Sections
+- `src/components/DeskStage.tsx` — remove three overlay divs:
+  - `<div className="stage-light" />` (soft spotlight wash)
+  - `<div className="desk-horizon" />` (warm rim light where stage meets desk)
+  - `<div className="stage-ground-shadow" />` (floor-shadow ellipse beneath active frame)
+- `src/index.css` — delete `.stage-light`, `.desk-horizon`, `.stage-ground-shadow` rules.
+- Keep stage layout (`78vh` stage / `22vh` desk), scroll, snap, AnimatePresence — unchanged.
 
-Make the desk feel like a tilted physical surface, shrink it, and give each section enough room that inner scrolling is rarely needed.
+### 2. Real 3D Desk Props (React Three Fiber)
 
-**Desk (3D + smaller)**
-- Desk band: `32vh` → **22vh** in `DeskStage.tsx`; stage grows from `68vh` → **78vh**.
-- Real 3D tilt on the desk wrapper: `rotateX(38deg)` with `transform-origin: center bottom`, parent `perspective: 1400px`. The desk recedes toward the back wall.
-- Warm horizon gradient where stage and desk meet, so the desk visually plugs into the floor.
-- Slot positions re-balanced for the now-shorter, foreshortened desk: back row near the receding far edge, mid row middle, front row near the camera. Uniform +10% slot size so back-row items remain readable.
-- Stage padding tightened: `pt-[110px]` → `pt-[96px]`, `pb-6` → `pb-2`, `px-12` → `px-8`. Frame `max-w-6xl` → `max-w-7xl`.
+Replace the current CSS-tilted desk + flat slot-shape thumbnails with a **WebGL 3D desk scene** for the bottom 22vh band. The 8 interactive props become real 3D objects you can hover/click; ambient props (lamp, mug, plant, pen holder, paperclips) decorate the desk.
 
-**Sections fit the stage**
-- Each frame's content wrapper gets a `.stage-fit` utility (clamp-based scaling) so most sections render without overflow.
-- For the 3 genuinely long sections (`ProjectsShelf`, `ThinkingWall`, `WritingDesk`), keep a thin styled internal scrollbar bounded to the frame interior — the page itself never needs extra scrolling beyond the one-viewport-per-section that `DeskStage` already drives.
+**Dependencies (exact versions per project rules):**
+- `three@^0.160`
+- `@react-three/fiber@^8.18`
+- `@react-three/drei@^9.122.0`
 
-### 3. 3D Desk Objects
+**New component `src/components/desk3d/DeskScene.tsx`:**
+- `<Canvas camera={{ position: [0, 1.2, 3.0], fov: 36 }} shadows dpr={[1, 2]} frameloop="demand">`
+- Lighting: warm `directionalLight` from upper-left (lamp direction, shadow-casting) + soft `ambientLight` + small `pointLight` inside the lamp shade for the warm glow.
+- Wood floor: large `planeGeometry` with a procedurally-generated walnut **CanvasTexture** (no new image assets).
+- Tiny mouse parallax on camera (`x` lerps toward `mouse.x * 0.15`) — disabled under reduced-motion.
 
-The slot thumbnails on the desk become real little **3D props**, not flat rectangles.
+**8 interactive 3D props (all built from primitives — no GLB):**
 
-- Each `SlotShape` in `Desk.tsx` is wrapped in a `.prop-3d` container with `transform-style: preserve-3d` and gets:
-  - A **front face** (the existing shape).
-  - A **side wall** (1–6px deep depending on object) using a `::before` pseudo translated `translateZ(-Npx)` plus four thin side strips, painted darker than the front for shadow.
-  - A subtle **top highlight strip** for the back edge (catches the lamp).
-- Per-shape depth tuned to look real:
-  - `blueprint` (cutting mat) — 2px (thin rubber sheet).
-  - `card` (business card) — 1.5px (paper).
-  - `letter` (envelope) — 2px.
-  - `notebook` — 6px (closed book) with multi-page side stripes.
-  - `shelf` (bookshelf) — 8px box.
-  - `cork` (corkboard) — 5px frame depth.
-  - `toolbox` — 7px metal box with rounded top edge.
-  - `scroll` — true cylinder (rounded caps using `border-radius: 50%` on side faces, 6px diameter).
-- Rest tilt: each object sits at `rotateX(8deg) rotateZ(<slot.rotate>deg)` so the lamp light catches the top edge consistently.
-- Hover: `translateZ(14px) rotateX(0deg)` — the object lifts cleanly off the desk plane (replaces the old `translateY(-4px)`).
-- Active object: keeps blue rim + a longer, softer ground shadow; the 3D body itself fades to grayscale (already implemented) so the floating stage version reads as the "real" one.
-- Lamp behavior: a single CSS variable `--lamp-x: 8%` drives both the desk-lamp glow AND each prop's top-edge highlight intensity, so all props are lit consistently from one direction.
+| Section | Prop | Geometry |
+|---|---|---|
+| home | green cutting mat | thin `boxGeometry` + grid CanvasTexture |
+| thinking | corkboard | `boxGeometry` + cork-noise texture + tiny note quads |
+| projects | leather book | `boxGeometry` + gold trim (`torusGeometry`) |
+| about | business card | very thin `boxGeometry`, cream material |
+| writing | open notebook | two angled `boxGeometry` pages joined at spine |
+| skills | toolbox | red `boxGeometry` + half-`torus` handle |
+| journey | brass compass | `cylinderGeometry` + needle (`coneGeometry`) |
+| contact | envelope | cream `boxGeometry` + flap (`planeGeometry`) |
 
-### Files Changed
+**Ambient (non-interactive) decoration:** lamp (cylinder arm + hemisphere shade), coffee mug (cylinder + torus handle), pen holder + pencils, small plant (cone leaves), 2–3 paperclips (torus segments), stack of polaroids (thin boxes).
 
-- `src/index.css` — rewrite `.frame-blueprint` as cutting mat; add `.desk-3d`, `.desk-horizon`, `.stage-fit`, thin-scrollbar utility; add `.prop-3d`, `.prop-face`, `.prop-side`, `.prop-top-light`; tweak `.stage-float` to use `translateZ`.
-- `src/components/DeskStage.tsx` — stage 78vh / desk 22vh; tighter padding; `max-w-7xl`; wrap desk in `.desk-3d` perspective container.
-- `src/components/desk/Desk.tsx` — apply tilt transform; reposition slots; +10% size; wrap each `SlotShape` in `.prop-3d` with depth side faces; hover uses `translateZ`; restyle "blueprint" thumbnail to green mat.
-- `src/components/desk/frames/BlueprintFrame.tsx` — replace blue curl with rubber-edge highlight; wrap children in `stage-fit`.
-- Other 7 frame components — wrap children in `stage-fit` (+ thin scrollbar where needed).
+**Interactions per prop (`Prop3D` wrapper):**
+- Hover → cursor pointer + lerp `position.y` up by `0.06` + soft emissive rim.
+- Click → calls existing `onSlotClick(sectionId)` from `DeskStage` (unchanged signature) — same scroll-jump behavior.
+- Active prop → gentle bob (sin wave on `position.y`) + small blue `pointLight` above it; mirrors today's "active slot" highlight.
+- All animation via `useFrame`; no extra libs.
+
+**Performance:**
+- `dpr={[1, 2]}`, `frameloop="demand"`, `invalidate()` on hover/active changes; continuous tick only while a prop is active.
+- Materials and CanvasTextures memoized once.
+- Reduced-motion → static scene, no bob, no parallax.
+
+**Integration:**
+- `DeskStage.tsx` keeps the `22vh` bottom band but renders `<DeskScene slots={...} activeId activeId={active.id} onSlotClick={handleJump} />` instead of the current CSS `<Desk>`.
+- `Desk.tsx` (CSS desk + flat slot shapes) and the related CSS (`.desk-3d`, `.desk-tilt`, `.desk-slot`, `.prop-3d`, `.prop-side-*`, `.prop-face`, slot positioning) are removed.
+- The `slot` config in `src/pages/Index.tsx` switches from CSS `top/left/width/height/rotate` to 3D `position: [x, y, z]` + `rotation: [rx, ry, rz]` + `prop` type. Keeps the same 8 sections in the same conceptual back/mid/front zones, now placed in world space.
+
+### 3. Files
+
+**New**
+- `src/components/desk3d/DeskScene.tsx` — Canvas, camera, lighting, floor.
+- `src/components/desk3d/Prop3D.tsx` — generic interactive prop wrapper (hover lift, click, active bob, rim light).
+- `src/components/desk3d/props/*.tsx` — 8 interactive props (Mat, Corkboard, Book, Card, Notebook, Toolbox, Compass, Envelope).
+- `src/components/desk3d/decor/*.tsx` — ambient props (Lamp, Mug, PenHolder, Plant, Paperclips, Polaroids).
+- `src/components/desk3d/textures.ts` — CanvasTexture generators (walnut, cork, paper grid, leather).
+
+**Edited**
+- `src/components/DeskStage.tsx` — remove 3 glow divs; swap CSS `<Desk>` for `<DeskScene>`.
+- `src/pages/Index.tsx` — update each section's `slot` to 3D `position`/`rotation`/`prop`.
+- `src/index.css` — remove `.stage-light`, `.desk-horizon`, `.stage-ground-shadow`, `.desk-3d`, `.desk-tilt`, `.desk-slot`, `.prop-3d`, `.prop-face`, `.prop-side-*`. Keep frame skins, `.stage-fit`, `.stage-scroll`, `.stage-float`, `.desk-surface` (now just background fallback).
+
+**Removed**
+- `src/components/desk/Desk.tsx` (CSS desk + flat slot shapes — fully replaced by R3F scene).
 
 ### Out of Scope
-
 - `AssemblyHeader`, `MarginDoodles`, `Entropy` — untouched.
-- `HeroSection` and other section internals — untouched (only their wrapper frames change).
-- No new libraries, no new assets.
+- All section component internals + frame skins (`BlueprintFrame` cutting mat, etc.) — untouched.
+- Scroll behavior, snap, one-viewport-per-section — unchanged.
+- No GLB/GLTF assets, no new image files.
+- No backend, routing, or admin changes.
