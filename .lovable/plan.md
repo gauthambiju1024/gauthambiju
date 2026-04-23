@@ -1,62 +1,68 @@
 
-## Convert Panel Transitions to Horizontal Scroll
+## Smoother, Slower Horizontal Scroll Mapping
 
-Replace the current vertical-scroll-driven crossfade with a **horizontal-scroll-driven crossfade**. The page still scrolls vertically (natural mouse/trackpad behavior), but the visual metaphor of progressing through panels becomes horizontal: each panel slides in from the right and out to the left, in sync with scroll position. The Library and Thinking inner scrolls are preserved.
+Replace the current "snap-and-fade" horizontal transition with a **continuous 1:1 mapping** from vertical scroll to horizontal panel travel. Result: the active panel glides smoothly across the stage in lock-step with scroll velocity — no static "hold" in the middle, no fast snap at slice boundaries.
 
-### Behavior
+### Current behavior (the problem)
 
-- Page height stays `sections.length * 100vh` so vertical scroll drives progress.
-- As `scrollYProgress` advances, the **active panel translates horizontally across the stage** while crossfading with the next panel.
-- During each section's slice, panel sits centered (`x: 0%`).
-- During the fade window between section N and N+1:
-  - Panel N slides from `0%` → `-100%` (exits left) and fades out.
-  - Panel N+1 slides from `100%` → `0%` (enters right) and fades in.
-- Result: feels like a horizontal carousel, but driven smoothly by vertical scroll velocity.
+In `DeskStage.tsx`, each panel sits centered (`x: 0%`) for ~82% of its slice and only translates during a narrow 18% fade window at the edges. That makes the horizontal motion feel abrupt and disconnected from scroll — most of the scroll does nothing visually, then a quick jump happens.
 
-### Implementation (single file: `src/components/DeskStage.tsx`)
+### New behavior
 
-Update `PanelLayer` to compute both `opacity` and `x` from `scrollYProgress`:
+Each panel travels **continuously** across its full visible range:
 
 ```text
-slice       = 1 / total
-start       = index * slice
-end         = (index + 1) * slice
-fadeWindow  = slice * 0.18
-fadeInStart = start - fadeWindow   (entering from right)
-fadeOutEnd  = end + fadeWindow     (exiting to left, into next slice)
-
-x:        [fadeInStart → start]  : "100%"  → "0%"
-          [start → end - fadeWindow] : "0%"
-          [end - fadeWindow → end] : "0%" → "-100%"
-
-opacity:  same keyframes, 0 → 1 → 1 → 0
+scroll position:   prev-center        own-center         next-center
+panel x:               +100%   ───→      0%      ───→      -100%
+                   (just entering)   (centered)      (just exiting)
 ```
 
-Edge cases:
-- First panel (`index === 0`): no enter animation — starts at `x: 0%, opacity: 1`, only animates exit.
-- Last panel (`index === total - 1`): no exit animation — only enter, then stays at `x: 0%, opacity: 1`.
+- Vertical scroll maps **1:1** to horizontal travel — every pixel of scroll moves the panel.
+- A panel is centered only at the exact midpoint of its slice; before/after it's continuously sliding.
+- Two panels are always partially on stage during the handoff (one exiting left, one entering right), creating a smooth crossfade.
+- Opacity fades in/out near the edges (~25% of a slice) so off-stage panels don't bleed through.
+- First panel: starts centered, only animates exit. Last panel: only animates enter, ends centered.
 
-Apply via `motion.div` style:
+### Why this feels slower & smoother
+
+- Motion distance is spread across **2× the scroll range** (full slice × 2 instead of 18% × 2), so the same scroll input produces gentler horizontal velocity.
+- No flat "centered hold" means the eye always sees motion proportional to scroll — no perceived stutter.
+- Crossfade overlaps continuously with translation, eliminating the snap.
+
+### Implementation
+
+Single file: `src/components/DeskStage.tsx` — rewrite `PanelLayer`'s `opacity` and `x` transforms.
+
 ```tsx
-<motion.div style={{ opacity, x }} className="absolute inset-0">
+const slice    = 1 / total;
+const center   = (index + 0.5) * slice;
+const enterAt  = Math.max(0, center - slice);  // previous panel's center
+const exitAt   = Math.min(1, center + slice);  // next panel's center
+
+// X: continuous travel across the panel's full visible window
+const x = useTransform(
+  scrollYProgress,
+  [enterAt, center, exitAt],
+  ["100%", "0%", "-100%"]
+);
+
+// Opacity: crossfade near the edges only (25% of a slice)
+const opacity = useTransform(
+  scrollYProgress,
+  [enterAt, enterAt + slice*0.25, exitAt - slice*0.25, exitAt],
+  [0, 1, 1, 0]
+);
 ```
 
-Keep the existing `pointer-events` toggle (interactive when `opacity > 0.5`) so only the foreground panel receives input. Keep `overflow-hidden` on the stage container so off-screen panels don't leak into the layout.
+First/last panels get edge-case ranges (`[0, center, exitAt]` / `[enterAt, center, 1]`) so they don't slide off when there's no neighbor.
 
 ### What stays the same
 
-- Vertical scroll drives everything (no scroll hijacking, no horizontal page scroll).
-- Section anchors, header jump-to behavior, desk strip highlighting — unchanged.
-- Inner panel scroll for Library (`BookshelfFrame`) and Thinking (`CorkboardFrame`) — unchanged. Inner scroll still works because the panel is centered (`x: 0%`) for the bulk of its slice.
-- Reduced-motion fallback — unchanged (linear stack, no animation).
-- 3D desk, header, ordering, routing, backend — untouched.
+- Vertical page scroll drives everything (no scroll hijacking).
+- Page height (`sections.length * 100vh`), section anchors, header jump-to.
+- 3D desk strip, ordering, inner scroll for Library/Thinking, reduced-motion fallback.
+- No new dependencies, no CSS changes.
 
 ### Files Modified
 
-- `src/components/DeskStage.tsx` — add `x` transform alongside existing `opacity` transform in `PanelLayer`.
-
-### Out of Scope
-
-- No changes to individual frames or sections.
-- No new dependencies.
-- No CSS changes.
+- `src/components/DeskStage.tsx` — `PanelLayer` transform logic only.
