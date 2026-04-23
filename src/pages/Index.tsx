@@ -19,64 +19,15 @@ import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 
-// Order matches AssemblyHeader/Navigation: Home → About → Projects → Thinking → Skills → Journey → Writing → Contact
 const sections: SectionConfig[] = [
-  {
-    id: "home",
-    label: "Home",
-    Frame: BlueprintFrame,
-    Section: HeroSection,
-    slot: { shape: "mat", position: [-0.95, 0, 0.45], rotation: [0, 0.05, 0] },
-  },
-  {
-    id: "about",
-    label: "About",
-    Frame: BusinessCardFrame,
-    Section: AboutSection,
-    slot: { shape: "card", position: [0.85, 0, 0.3], rotation: [0, -0.2, 0] },
-  },
-  {
-    id: "projects",
-    label: "Projects",
-    Frame: BookshelfFrame,
-    Section: ProjectsShelf,
-    slot: { shape: "book", position: [-1.5, 0, 0.4], rotation: [0, 0.15, 0] },
-  },
-  {
-    id: "thinking",
-    label: "Thinking",
-    Frame: CorkboardFrame,
-    Section: ThinkingWall,
-    slot: { shape: "cork", position: [0.0, 0, -0.2], rotation: [0, 0, 0] },
-  },
-  {
-    id: "skills",
-    label: "Skills",
-    Frame: ToolboxFrame,
-    Section: SkillsToolbox,
-    slot: { shape: "toolbox", position: [1.55, 0, 0.1], rotation: [0, -0.25, 0] },
-  },
-  {
-    id: "journey",
-    label: "Journey",
-    Frame: ScrollFrame,
-    Section: JourneyTimeline,
-    slot: { shape: "compass", position: [0.55, 0, 0.5], rotation: [0, 0.1, 0] },
-  },
-  {
-    id: "writing",
-    label: "Writing",
-    Frame: NotebookFrame,
-    Section: WritingDesk,
-    slot: { shape: "notebook", position: [-0.05, 0, 0.45], rotation: [0, -0.02, 0] },
-  },
-  {
-    id: "contact",
-    label: "Contact",
-    Frame: LetterFrame,
-    Section: ContactClosing,
-    slot: { shape: "envelope", position: [1.15, 0, 0.35], rotation: [0, -0.15, 0] },
-  },
+  { id: "home", label: "Home", Frame: BlueprintFrame, Section: HeroSection },
+  { id: "about", label: "About", Frame: BusinessCardFrame, Section: AboutSection },
+  { id: "projects", label: "Projects", Frame: BookshelfFrame, Section: ProjectsShelf },
+  { id: "thinking", label: "Thinking", Frame: CorkboardFrame, Section: ThinkingWall },
+  { id: "skills", label: "Skills", Frame: ToolboxFrame, Section: SkillsToolbox },
+  { id: "journey", label: "Journey", Frame: ScrollFrame, Section: JourneyTimeline },
+  { id: "writing", label: "Writing", Frame: NotebookFrame, Section: WritingDesk },
+  { id: "contact", label: "Contact", Frame: LetterFrame, Section: ContactClosing },
 ];
 
 const Index = () => {
