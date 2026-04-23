@@ -128,7 +128,10 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     const idx = sections.findIndex((s) => s.id === id);
     if (idx < 0 || !containerRef.current) return;
     const el = containerRef.current;
-    const top = el.offsetTop + idx * window.innerHeight;
+    const total = sections.length;
+    const targetProgress = (idx + 0.5) / total; // panel center
+    const scrollable = (total - 1) * window.innerHeight;
+    const top = el.offsetTop + targetProgress * scrollable;
     window.scrollTo({ top, behavior: "smooth" });
   };
 
