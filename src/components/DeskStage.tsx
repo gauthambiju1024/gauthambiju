@@ -157,8 +157,8 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* STAGE — all panels stacked, opacity driven directly by scroll */}
         <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
-          <div className="absolute inset-0 px-3 md:px-6 pt-[88px] pb-1 overflow-hidden">
-            <div className="relative w-full h-full max-w-7xl mx-auto overflow-hidden">
+          <div className="absolute inset-0 px-0 pt-[88px] pb-1 overflow-hidden">
+            <div className="relative w-full h-full overflow-hidden">
               {sections.map((s, i) => (
                 <PanelLayer
                   key={s.id}
