@@ -39,7 +39,8 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
   const fadeOutStart = end - slice * FADE_WINDOW;
   const fadeOutEnd = end;
 
-  // For first section: visible from 0. For last: stays visible to 1.
+  // Horizontal carousel feel: panel enters from right (+100%), centers, then exits left (-100%).
+  // First panel: no enter (starts centered). Last panel: no exit (stays centered).
   const opacity = useTransform(
     scrollYProgress,
     index === 0
@@ -52,6 +53,20 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
       : index === total - 1
       ? [0, 0, 1]
       : [0, 1, 1, 0]
+  );
+
+  const x = useTransform(
+    scrollYProgress,
+    index === 0
+      ? [fadeOutStart, fadeOutEnd, 1]
+      : index === total - 1
+      ? [0, fadeInStart, fadeInEnd]
+      : [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd],
+    index === 0
+      ? ["0%", "-100%", "-100%"]
+      : index === total - 1
+      ? ["100%", "100%", "0%"]
+      : ["100%", "0%", "0%", "-100%"]
   );
 
   // Hide pointer events when nearly invisible (avoid blocking interactions).
