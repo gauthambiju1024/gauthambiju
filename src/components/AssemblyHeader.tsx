@@ -279,7 +279,7 @@ export function AssemblyHeader({ panelIds }: Props) {
 
     const SVG_NS = "http://www.w3.org/2000/svg";
     const BS = 30;
-    const BE = 1140;
+    const BE = 1390;
     const BL = BE - BS;
     const Y = 52;
 
@@ -639,7 +639,7 @@ export function AssemblyHeader({ panelIds }: Props) {
           </g>
 
           {/* Top dashed boundary */}
-          <line x1="30" y1="12" x2="1140" y2="12" stroke={INK} strokeWidth="0.3" strokeDasharray="1 3" opacity="0.5" />
+          <line x1="30" y1="12" x2="1390" y2="12" stroke={INK} strokeWidth="0.3" strokeDasharray="1 3" opacity="0.5" />
 
           {/* Top instrumentation — single strip */}
           <g fontFamily="monospace" fontSize="5" fill={INK} letterSpacing="1" opacity="0.85">
@@ -654,11 +654,11 @@ export function AssemblyHeader({ panelIds }: Props) {
             <text x="317" y="8">
               PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
             </text>
-            <text x="1140" y="8" textAnchor="end">
+            <text x="1390" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>
             </text>
-            <text ref={etaRef} x="1082" y="8" textAnchor="end">ETA 3.2s</text>
-            <text x="1035" y="8" textAnchor="end">OP·A7/B3/C1</text>
+            <text ref={etaRef} x="1332" y="8" textAnchor="end">ETA 3.2s</text>
+            <text x="1285" y="8" textAnchor="end">OP·A7/B3/C1</text>
           </g>
 
           {/* Station ticks + serif nav */}
@@ -666,16 +666,16 @@ export function AssemblyHeader({ panelIds }: Props) {
 
           {/* BELT STRUCTURE — compact */}
           <g>
-            <rect x="30" y="40" width="1110" height="24" fill={BELT_DARK} stroke={METAL} strokeWidth="0.4" opacity="0.9" />
-            <line x1="30" y1="44" x2="1140" y2="44" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
-            <line x1="30" y1="60" x2="1140" y2="60" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
-            <line x1="30" y1="47" x2="1140" y2="47" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
-            <line x1="30" y1="57" x2="1140" y2="57" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
+            <rect x="30" y="40" width="1360" height="24" fill={BELT_DARK} stroke={METAL} strokeWidth="0.4" opacity="0.9" />
+            <line x1="30" y1="44" x2="1390" y2="44" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="60" x2="1390" y2="60" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="47" x2="1390" y2="47" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
+            <line x1="30" y1="57" x2="1390" y2="57" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
 
             <g ref={rollersRef} />
 
             <line x1="30" y1="40" x2="30" y2="64" stroke={INK} strokeWidth="0.6" />
-            <line x1="1140" y1="40" x2="1140" y2="64" stroke={INK} strokeWidth="0.6" />
+            <line x1="1390" y1="40" x2="1390" y2="64" stroke={INK} strokeWidth="0.6" />
 
             <g transform="translate(30, 52)">
               <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
@@ -683,7 +683,7 @@ export function AssemblyHeader({ panelIds }: Props) {
               <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
               <line x1="-2" y1="3" x2="2" y2="3" stroke={METAL} strokeWidth="0.3" />
             </g>
-            <g transform="translate(1140, 52)">
+            <g transform="translate(1390, 52)">
               <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
               <line x1="-2" y1="-3" x2="2" y2="-3" stroke={METAL} strokeWidth="0.3" />
               <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
@@ -700,11 +700,11 @@ export function AssemblyHeader({ panelIds }: Props) {
             <text x="30" y="76">─── INTAKE</text>
             <text x="73" y="76" fill={INK_BRIGHT}>user·sketch</text>
             <circle ref={intakeDotRef} cx="107" cy="74.5" r="1" fill={INK_BRIGHT} opacity="0.4" />
-            <circle ref={dispatchDotRef} cx="1063" cy="74.5" r="1" fill={INK_DIM} opacity="0.6" />
-            <text x="1140" y="76" textAnchor="end">
+            <circle ref={dispatchDotRef} cx="1313" cy="74.5" r="1" fill={INK_DIM} opacity="0.6" />
+            <text x="1390" y="76" textAnchor="end">
               dispatch·<tspan ref={dispRef} fill={INK_DIM}>--</tspan> ───
             </text>
-            <text x="1060" y="76" textAnchor="end">field ready</text>
+            <text x="1310" y="76" textAnchor="end">field ready</text>
           </g>
 
           {/* COMPACT DESIGN BOX — 72px tall */}
