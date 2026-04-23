@@ -255,7 +255,8 @@ export const PolaroidStack = ({ position = [1.3, 0, 0.55] as [number, number, nu
       <meshPhysicalMaterial color="#d4a73a" metalness={1} roughness={0.25} clearcoat={1} />
     </mesh>
   </group>
-);
+  );
+};
 
 export const Paperclips = () => {
   // real paperclip path via tube along curve
