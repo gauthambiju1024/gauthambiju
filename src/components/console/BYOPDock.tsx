@@ -158,7 +158,7 @@ const BYOPDock = () => {
   }, [open]);
 
   return (
-    <div className="h-full flex items-center justify-end pr-3 pl-2 relative">
+    <div className="h-full flex items-center justify-start pl-2 relative">
       <button
         onClick={() => setOpen((o) => !o)}
         className="group flex items-center gap-2 h-9 px-3.5 rounded-[3px] border border-amber-400/60 bg-amber-400/[0.06] hover:-translate-y-[2px] hover:border-amber-400/90 transition-all duration-150"

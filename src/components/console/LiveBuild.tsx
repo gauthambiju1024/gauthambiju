@@ -58,7 +58,7 @@ const LiveBuild = () => {
   const isComplete = partCount >= 8;
 
   return (
-    <div className="h-full flex items-center justify-start gap-3 px-3" title={sketch.name}>
+    <div className="h-full flex items-center justify-start gap-3 pl-2 pr-3" title={sketch.name}>
       <svg viewBox="-30 -22 60 44" className="h-[52px] w-[80px] flex-shrink-0">
         {parts.map((part, i) => {
           const op = i < stage ? 1 : i === stage ? Math.min(1, stageProg) : 0;
