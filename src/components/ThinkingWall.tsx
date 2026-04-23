@@ -43,23 +43,23 @@ const ThinkingWall = () => {
     : fallbackCards;
 
   return (
-    <section className="py-16 md:py-24">
-      <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
+    <section className="py-6 md:py-8 h-full flex flex-col">
+      <div className="px-6 md:px-12 flex items-center gap-3 mb-3">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Thinking</span>
       </div>
 
-      <div className="px-6 md:px-16 mb-10">
-        <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight">
+      <div className="px-6 md:px-12 mb-4">
+        <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground leading-tight">
           The Strategy Wall
         </h2>
-        <p className="mt-3 font-body text-sm text-muted-foreground">
-          How I structure ambiguity, break down products, and think through problems. Click a card to read more.
+        <p className="mt-1 font-body text-xs text-muted-foreground">
+          How I structure ambiguity, break down products, and think through problems.
         </p>
       </div>
 
       {/* Corkboard / pinboard */}
-      <div className="whiteboard-bg rounded-lg mx-4 md:mx-12 relative">
+      <div className="rounded-lg mx-4 md:mx-8 relative flex-1 min-h-0">
         {/* Grid pattern */}
         <div className="absolute inset-0 rounded-lg opacity-[0.03]"
           style={{
@@ -69,8 +69,8 @@ const ThinkingWall = () => {
         />
 
         {/* Vertical scrollable area */}
-        <ScrollArea className="h-[520px] w-full relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-6 md:p-10">
+        <ScrollArea className="h-full w-full relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 md:p-6">
             {cards.map((card, i) => {
               const rotation = rotations[i % rotations.length];
               const isSticky = card.card_type === "sticky";

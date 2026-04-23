@@ -16,10 +16,10 @@ const HeroSection = () => {
   const portraitSrc = hero?.portrait || heroPortrait;
 
   return (
-    <section className="relative px-6 md:px-12 pt-6 pb-0 overflow-hidden">
+    <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-hidden h-full flex flex-col justify-center">
       {/* Top bar */}
       <motion.div
-        className="flex items-center justify-between mb-8"
+        className="flex items-center justify-between mb-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.6 }}
@@ -34,7 +34,7 @@ const HeroSection = () => {
 
       {/* Tagline box */}
       <motion.div
-        className="flex items-center gap-3 mb-10"
+        className="flex items-center gap-3 mb-6"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35, duration: 0.5 }}
@@ -83,14 +83,14 @@ const HeroSection = () => {
             </span>
           </div>
 
-          <div className="mb-10">
+          <div className="mb-6">
             <h1 className="font-handwritten text-[clamp(2.2rem,5.5vw,4rem)] leading-[1.1]" style={{ color: 'hsl(40 30% 85% / 0.5)' }}>
               for problems worth solving.
             </h1>
           </div>
 
           {/* CTAs */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-2">
             <button
               onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
               className="px-5 py-2.5 text-xs font-mono tracking-wider uppercase rounded-sm hover:opacity-90 transition-opacity flex items-center gap-1.5"
@@ -126,7 +126,7 @@ const HeroSection = () => {
               <img
                 src={portraitSrc}
                 alt="Gautham portrait"
-                className="w-[180px] lg:w-[220px] h-auto border"
+                className="w-[150px] lg:w-[190px] h-auto border"
                 style={{ borderColor: 'hsl(0 0% 100% / 0.15)', filter: 'grayscale(0.3)' }}
               />
             </div>
@@ -139,7 +139,7 @@ const HeroSection = () => {
           </div>
 
           {/* Bottom dimension line */}
-          <div className="dimension-line w-[180px] lg:w-[220px]">
+          <div className="dimension-line w-[150px] lg:w-[190px]">
             <span>160 PX</span>
           </div>
 

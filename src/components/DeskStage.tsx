@@ -96,9 +96,9 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       ))}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* STAGE — active panel takes the upper 82vh */}
-        <div className="absolute inset-x-0 top-0" style={{ height: "82vh" }}>
-          <div className="absolute inset-0 px-4 md:px-8 pt-[96px] pb-2 overflow-hidden">
+        {/* STAGE — active panel takes the upper 88vh */}
+        <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
+          <div className="absolute inset-0 px-3 md:px-6 pt-[88px] pb-1 overflow-hidden">
             <div className="relative w-full h-full max-w-7xl mx-auto overflow-hidden">
               <AnimatePresence mode="popLayout" custom={direction} initial={false}>
                 <motion.div
@@ -130,15 +130,15 @@ const DeskStage = ({ sections }: DeskStageProps) => {
         <div
           className="absolute inset-x-0 pointer-events-none"
           style={{
-            bottom: "18vh",
+            bottom: "12vh",
             height: "1.5vh",
             background: "linear-gradient(to bottom, transparent, hsl(var(--background)))",
           }}
           aria-hidden="true"
         />
 
-        {/* DESK — bottom 18vh strip */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: "18vh" }}>
+        {/* DESK — bottom 12vh strip */}
+        <div className="absolute inset-x-0 bottom-0" style={{ height: "12vh" }}>
           <DeskScene slots={slots3D} activeId={active.id} onSelect={handleJump} />
         </div>
       </div>

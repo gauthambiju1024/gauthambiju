@@ -20,25 +20,24 @@ const ContactClosing = () => {
     : defaultLinks;
 
   return (
-    <section className="py-20 md:py-32">
-      <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
+    <section className="py-6 md:py-8 h-full flex flex-col">
+      <div className="px-6 md:px-12 flex items-center gap-3 mb-4">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">End Notes</span>
       </div>
 
-      <div className="px-6 md:px-16 max-w-2xl mx-auto text-center">
+      <div className="px-6 md:px-12 max-w-2xl mx-auto text-center flex-1 flex flex-col justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight mb-6">
+          <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground leading-tight mb-4">
             Let's Connect
           </h2>
-          <p className="font-body text-base text-muted-foreground leading-relaxed mb-12">
+          <p className="font-body text-sm text-muted-foreground leading-relaxed mb-6">
             I'm always open to conversations about product, technology, and building things that matter.
-            If something here resonated, I'd love to hear from you.
           </p>
         </motion.div>
 
@@ -73,20 +72,20 @@ const ContactClosing = () => {
 
         {/* Signature */}
         <motion.div
-          className="mt-16"
+          className="mt-6"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
           <div className="inline-block">
-            <p className="font-handwritten text-2xl text-card-foreground/30 mb-1">— GB</p>
+            <p className="font-handwritten text-xl text-card-foreground/30 mb-1">— GB</p>
             <div className="h-px w-16 mx-auto bg-gradient-to-r from-transparent via-border to-transparent" />
           </div>
         </motion.div>
 
         {/* Footer */}
-        <div className="mt-12 pt-6 border-t border-border/50">
+        <div className="mt-4 pt-3 border-t border-border/50">
           <p className="text-[10px] font-mono tracking-wider text-muted-foreground/40 uppercase">
             Designed & built with intent · {new Date().getFullYear()}
           </p>
