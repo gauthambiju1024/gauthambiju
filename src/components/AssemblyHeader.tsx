@@ -254,6 +254,19 @@ export function AssemblyHeader({ panelIds }: Props) {
     }
   }, [currentSketch]);
 
+  // Receive sketch picks from the relocated BYOPDock in the bottom rail.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Sketch | undefined;
+      if (detail && detail.strokes) setCurrentSketch(detail);
+    };
+    window.addEventListener("byop:sketch", handler);
+    // Pick up an initial value if the dock fired before mount
+    const initial = (window as any).__byop_sketch as Sketch | undefined;
+    if (initial && initial.strokes) setCurrentSketch(initial);
+    return () => window.removeEventListener("byop:sketch", handler);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
