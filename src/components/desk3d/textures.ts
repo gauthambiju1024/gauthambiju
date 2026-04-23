@@ -5,6 +5,7 @@ let _grid: THREE.CanvasTexture | null = null;
 let _cork: THREE.CanvasTexture | null = null;
 let _leather: THREE.CanvasTexture | null = null;
 let _paper: THREE.CanvasTexture | null = null;
+let _alpha: THREE.CanvasTexture | null = null;
 
 const make = (size: number, draw: (ctx: CanvasRenderingContext2D, s: number) => void) => {
   const c = document.createElement("canvas");
@@ -24,7 +25,6 @@ export const woodTexture = () => {
     grad.addColorStop(1, "#27170d");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, s, s);
-    // grain streaks
     for (let i = 0; i < 240; i++) {
       const y = Math.random() * s;
       const w = 0.5 + Math.random() * 1.5;
@@ -37,7 +37,6 @@ export const woodTexture = () => {
       }
       ctx.stroke();
     }
-    // knots
     for (let i = 0; i < 4; i++) {
       const x = Math.random() * s, y = Math.random() * s;
       const r = 8 + Math.random() * 14;
@@ -114,4 +113,21 @@ export const paperTexture = () => {
     }
   });
   return _paper;
+};
+
+/** Radial alpha mask: opaque center → fully transparent edges, for feathering the desk into the page. */
+export const deskAlphaMask = () => {
+  if (_alpha) return _alpha;
+  _alpha = make(512, (ctx, s) => {
+    const r = s / 2;
+    const g = ctx.createRadialGradient(r, r, r * 0.15, r, r, r);
+    g.addColorStop(0, "#ffffff");
+    g.addColorStop(0.55, "#ffffff");
+    g.addColorStop(0.85, "#444444");
+    g.addColorStop(1, "#000000");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+  });
+  _alpha.wrapS = _alpha.wrapT = THREE.ClampToEdgeWrapping;
+  return _alpha;
 };
