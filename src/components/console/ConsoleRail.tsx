@@ -1,6 +1,7 @@
 import { MotionValue } from "framer-motion";
 import { FrameId } from "@/components/desk/frames/FrameTypes";
 import ActionDock from "./ActionDock";
+import ArtifactPreview from "./ArtifactPreview";
 import LiveBuild from "./LiveBuild";
 import BYOPDock from "./BYOPDock";
 
@@ -28,19 +29,23 @@ const ConsoleRail = ({ activeId }: Props) => {
 
       <div
         className="relative h-full w-full grid items-center"
-        style={{ gridTemplateColumns: "minmax(180px, 24%) 1fr minmax(180px, 28%)" }}
+        style={{ gridTemplateColumns: "minmax(160px, 22%) 1fr minmax(320px, 36%)" }}
       >
-        {/* zone 1 — live build (left) */}
+        {/* zone 1 — section artifact (left) */}
         <div className="h-full hidden min-[700px]:block">
-          <LiveBuild />
+          <ArtifactPreview activeId={activeId} />
         </div>
         {/* zone 2 — actions (center) */}
         <div className="h-full">
           <ActionDock activeId={activeId} />
         </div>
-        {/* zone 3 — BYOP (right) */}
-        <div className="h-full">
+        {/* zone 3 — BUILD ▸ then live build (right, in that order) */}
+        <div className="h-full flex items-center justify-end gap-2">
           <BYOPDock />
+          <div className="w-px h-8 bg-white/[0.08] hidden min-[900px]:block" />
+          <div className="hidden min-[900px]:flex h-full items-center">
+            <LiveBuild />
+          </div>
         </div>
       </div>
     </div>
