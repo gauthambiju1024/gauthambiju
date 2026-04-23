@@ -8,6 +8,7 @@ import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
+import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
 import DeskStage, { SectionConfig } from "@/components/DeskStage";
 import BlueprintFrame from "@/components/desk/frames/BlueprintFrame";
