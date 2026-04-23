@@ -61,6 +61,10 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
   );
 
   // X: continuous travel across the panel's full visible window.
+  // GAP adds breathing room between adjacent panels (10% viewport-width).
+  const GAP = 10; // percent
+  const offRight = `${100 + GAP}%`;
+  const offLeft = `-${100 + GAP}%`;
   const x = useTransform(
     scrollYProgress,
     isFirst
@@ -69,10 +73,10 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
       ? [enterAt, center, 1]
       : [enterAt, center, exitAt],
     isFirst
-      ? ["0%", "0%", "-100%"]
+      ? ["0%", "0%", offLeft]
       : isLast
-      ? ["100%", "0%", "0%"]
-      : ["100%", "0%", "-100%"]
+      ? [offRight, "0%", "0%"]
+      : [offRight, "0%", offLeft]
   );
 
   // Hide pointer events when nearly invisible (avoid blocking interactions).
@@ -124,7 +128,10 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     const idx = sections.findIndex((s) => s.id === id);
     if (idx < 0 || !containerRef.current) return;
     const el = containerRef.current;
-    const top = el.offsetTop + idx * window.innerHeight;
+    const total = sections.length;
+    const targetProgress = (idx + 0.5) / total; // panel center
+    const scrollable = (total - 1) * window.innerHeight;
+    const top = el.offsetTop + targetProgress * scrollable;
     window.scrollTo({ top, behavior: "smooth" });
   };
 
@@ -144,15 +151,19 @@ const DeskStage = ({ sections }: DeskStageProps) => {
 
   return (
     <div ref={containerRef} className="relative" style={{ height: `${sections.length * 100}vh` }}>
-      {sections.map((s, i) => (
-        <span
-          key={s.id}
-          id={s.id}
-          className="absolute left-0 w-1 pointer-events-none"
-          style={{ top: `${i * 100}vh`, height: "100vh" }}
-          aria-hidden="true"
-        />
-      ))}
+      {sections.map((s, i) => {
+        const total = sections.length;
+        const topVh = ((i + 0.5) / total) * (total - 1) * 100;
+        return (
+          <span
+            key={s.id}
+            id={s.id}
+            className="absolute left-0 w-1 pointer-events-none"
+            style={{ top: `${topVh}vh`, height: "100vh" }}
+            aria-hidden="true"
+          />
+        );
+      })}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* STAGE — all panels stacked, opacity driven directly by scroll */}
