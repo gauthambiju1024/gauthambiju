@@ -39,6 +39,7 @@ const Index = () => {
 
       <div className="margin-content-wrapper relative z-[2]">
         <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         <DeskStage sections={sections} />
       </div>
     </div>
