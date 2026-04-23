@@ -232,18 +232,20 @@ export const ClosedJournal = ({ position = [2.2, 0, 0.45] as [number, number, nu
   </group>
 );
 
-export const PolaroidStack = ({ position = [1.3, 0, 0.55] as [number, number, number] }) => (
-  <group position={position} rotation={[0, -0.35, 0]}>
+export const PolaroidStack = ({ position = [1.3, 0, 0.55] as [number, number, number] }) => {
+  const sepia = ["#efe4cf", "#d8c9a6", "#b89968"];
+  return (
+  <group position={position}>
     {[0, 1, 2].map((i) => (
-      <group key={i} position={[i * 0.025, 0.005 + i * 0.005, i * 0.018]} rotation={[0, i * 0.18 - 0.15, 0]}>
+      <group key={i} position={[i * 0.012, 0.005 + i * 0.005, i * 0.01]}>
         <mesh castShadow>
           <boxGeometry args={[0.16, 0.005, 0.2]} />
           <meshPhysicalMaterial color="#f8f3e3" roughness={0.85} clearcoat={0.2} />
         </mesh>
-        {/* photo area (off-white) */}
+        {/* photo area — sepia tones, on-brand */}
         <mesh position={[0, 0.0028, -0.015]}>
           <planeGeometry args={[0.13, 0.13]} />
-          <meshStandardMaterial color={`hsl(${30 + i * 60}, 30%, ${50 + i * 8}%)`} roughness={0.75} />
+          <meshStandardMaterial color={sepia[i]} roughness={0.75} />
         </mesh>
       </group>
     ))}
