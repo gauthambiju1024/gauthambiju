@@ -131,3 +131,20 @@ export const deskAlphaMask = () => {
   _alpha.wrapS = _alpha.wrapT = THREE.ClampToEdgeWrapping;
   return _alpha;
 };
+
+let _hAlpha: THREE.CanvasTexture | null = null;
+/** Horizontal alpha fade: opaque middle ~70%, fades to transparent at left/right edges. */
+export const deskHorizontalAlpha = () => {
+  if (_hAlpha) return _hAlpha;
+  _hAlpha = make(512, (ctx, s) => {
+    const g = ctx.createLinearGradient(0, 0, s, 0);
+    g.addColorStop(0, "#000000");
+    g.addColorStop(0.18, "#ffffff");
+    g.addColorStop(0.82, "#ffffff");
+    g.addColorStop(1, "#000000");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+  });
+  _hAlpha.wrapS = _hAlpha.wrapT = THREE.ClampToEdgeWrapping;
+  return _hAlpha;
+};

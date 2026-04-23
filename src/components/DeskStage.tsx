@@ -84,29 +84,14 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       ))}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* DESK — full-viewport transparent 3D layer; props live in lower portion, upper portion is empty space */}
-        <div className="absolute inset-0 pointer-events-auto">
-          <DeskScene slots={slots3D} activeId={active.id} onSelect={handleJump} />
-        </div>
-
-        {/* Top fade — dissolves the upper part of the 3D scene into the page background */}
-        <div
-          className="absolute inset-x-0 top-0 pointer-events-none"
-          style={{
-            height: "70%",
-            background: "linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--background) / 0.85) 35%, hsl(var(--background) / 0) 100%)",
-          }}
-          aria-hidden="true"
-        />
-
-        {/* STAGE — active panel sits in front of the desk */}
-        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "78vh" }}>
+        {/* STAGE — active panel takes the upper 82vh */}
+        <div className="absolute inset-x-0 top-0" style={{ height: "82vh" }}>
           <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8 pt-[96px] pb-2">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
                 style={{ opacity: stageOpacity, y: stageY }}
-                className="relative w-full max-w-7xl h-full pointer-events-auto"
+                className="relative w-full max-w-7xl h-full"
               >
                 <div className="w-full h-full">
                   <ActiveFrame t={t} active>
@@ -116,6 +101,22 @@ const DeskStage = ({ sections }: DeskStageProps) => {
               </motion.div>
             </AnimatePresence>
           </div>
+        </div>
+
+        {/* Soft seam blend just above the desk strip */}
+        <div
+          className="absolute inset-x-0 pointer-events-none"
+          style={{
+            bottom: "18vh",
+            height: "1.5vh",
+            background: "linear-gradient(to bottom, transparent, hsl(var(--background)))",
+          }}
+          aria-hidden="true"
+        />
+
+        {/* DESK — bottom 18vh strip */}
+        <div className="absolute inset-x-0 bottom-0" style={{ height: "18vh" }}>
+          <DeskScene slots={slots3D} activeId={active.id} onSelect={handleJump} />
         </div>
       </div>
     </div>

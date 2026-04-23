@@ -103,18 +103,36 @@ export const NotebookProp = () => {
   const paper = useMemo(() => paperTexture(), []);
   return (
     <group>
-      <RoundedBox args={[0.42, 0.05, 0.54]} radius={0.012} smoothness={4} castShadow receiveShadow position={[0, 0.025, 0]}>
-        <meshPhysicalMaterial map={paper} color="#2c2218" roughness={0.55} clearcoat={0.4} />
-      </RoundedBox>
-      {/* page edges */}
-      <mesh position={[0, 0.025, 0.27]} castShadow>
-        <boxGeometry args={[0.4, 0.04, 0.005]} />
-        <meshStandardMaterial color="#f4ead8" roughness={0.9} />
+      {/* left page tented */}
+      <mesh castShadow receiveShadow position={[-0.18, 0.025, 0]} rotation={[0, 0, 0.05]}>
+        <boxGeometry args={[0.36, 0.04, 0.5]} />
+        <meshStandardMaterial map={paper} color="#f4ead8" roughness={0.9} />
       </mesh>
-      {/* leather elastic band */}
-      <mesh position={[0.16, 0.026, 0]}>
-        <boxGeometry args={[0.012, 0.052, 0.55]} />
-        <meshStandardMaterial color="#1a1208" roughness={0.7} />
+      {/* right page tented */}
+      <mesh castShadow receiveShadow position={[0.18, 0.025, 0]} rotation={[0, 0, -0.05]}>
+        <boxGeometry args={[0.36, 0.04, 0.5]} />
+        <meshStandardMaterial map={paper} color="#f4ead8" roughness={0.9} />
+      </mesh>
+      {/* spine */}
+      <mesh position={[0, 0.05, 0]}>
+        <boxGeometry args={[0.02, 0.012, 0.5]} />
+        <meshStandardMaterial color="#2a1a10" roughness={0.7} />
+      </mesh>
+      {/* fountain pen lying diagonally on right page */}
+      <group position={[0.18, 0.05, -0.02]} rotation={[0, 0.5, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.008, 0.008, 0.32, 12]} />
+          <meshPhysicalMaterial color="#0e0e10" metalness={0.4} roughness={0.3} clearcoat={0.8} />
+        </mesh>
+        <mesh position={[0, 0.13, 0]} castShadow>
+          <cylinderGeometry args={[0.0085, 0.0085, 0.06, 12]} />
+          <meshPhysicalMaterial color="#e8e8ee" metalness={1} roughness={0.15} clearcoat={1} />
+        </mesh>
+      </group>
+      {/* black ribbon bookmark */}
+      <mesh position={[0, 0.058, 0.28]}>
+        <boxGeometry args={[0.018, 0.001, 0.12]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.6} />
       </mesh>
     </group>
   );
