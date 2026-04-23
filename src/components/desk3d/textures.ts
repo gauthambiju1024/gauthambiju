@@ -74,17 +74,140 @@ export const gridTexture = () => {
 
 export const corkTexture = () => {
   if (_cork) return _cork;
-  _cork = make(256, (ctx, s) => {
-    ctx.fillStyle = "#a07040";
+  _cork = make(512, (ctx, s) => {
+    const bg = ctx.createLinearGradient(0, 0, s, s);
+    bg.addColorStop(0, "#a87648");
+    bg.addColorStop(1, "#8a5a32");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, s, s);
-    for (let i = 0; i < 1200; i++) {
-      ctx.fillStyle = `rgba(${60 + Math.random() * 60},${30 + Math.random() * 40},10,${0.2 + Math.random() * 0.4})`;
+    for (let i = 0; i < 4000; i++) {
+      const r = Math.random() * 2.2;
+      ctx.fillStyle = `rgba(${40 + Math.random() * 70},${20 + Math.random() * 45},8,${0.18 + Math.random() * 0.5})`;
       ctx.beginPath();
-      ctx.arc(Math.random() * s, Math.random() * s, Math.random() * 1.6, 0, Math.PI * 2);
+      ctx.arc(Math.random() * s, Math.random() * s, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (let i = 0; i < 80; i++) {
+      ctx.fillStyle = `rgba(255,230,180,${0.04 + Math.random() * 0.06})`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * s, Math.random() * s, 3 + Math.random() * 5, 0, Math.PI * 2);
       ctx.fill();
     }
   });
   return _cork;
+};
+
+let _paperLined: THREE.CanvasTexture | null = null;
+export const paperLinedTexture = () => {
+  if (_paperLined) return _paperLined;
+  _paperLined = make(512, (ctx, s) => {
+    ctx.fillStyle = "#f4ead8";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 800; i++) {
+      ctx.fillStyle = `rgba(120,90,40,${Math.random() * 0.06})`;
+      ctx.fillRect(Math.random() * s, Math.random() * s, 1, 1);
+    }
+    ctx.strokeStyle = "rgba(90,120,170,0.35)";
+    ctx.lineWidth = 1;
+    for (let y = 40; y < s; y += 28) {
+      ctx.beginPath();
+      ctx.moveTo(20, y);
+      ctx.lineTo(s - 20, y);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(180,60,60,0.4)";
+    ctx.beginPath();
+    ctx.moveTo(48, 0); ctx.lineTo(48, s); ctx.stroke();
+  });
+  _paperLined.wrapS = _paperLined.wrapT = THREE.ClampToEdgeWrapping;
+  return _paperLined;
+};
+
+let _coffee: THREE.CanvasTexture | null = null;
+export const coffeeTexture = () => {
+  if (_coffee) return _coffee;
+  _coffee = make(256, (ctx, s) => {
+    const r = s / 2;
+    const g = ctx.createRadialGradient(r, r, 4, r, r, r);
+    g.addColorStop(0, "#4a2a14");
+    g.addColorStop(0.7, "#2e1808");
+    g.addColorStop(1, "#1a0d04");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+    ctx.strokeStyle = "rgba(220,180,120,0.18)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.arc(r, r, 20 + i * 14, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+  _coffee.wrapS = _coffee.wrapT = THREE.ClampToEdgeWrapping;
+  return _coffee;
+};
+
+let _woodNormal: THREE.CanvasTexture | null = null;
+export const woodNormalTexture = () => {
+  if (_woodNormal) return _woodNormal;
+  _woodNormal = make(512, (ctx, s) => {
+    ctx.fillStyle = "rgb(128,128,255)";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 200; i++) {
+      const y = Math.random() * s;
+      const r = 100 + Math.floor(Math.random() * 50);
+      const gch = 100 + Math.floor(Math.random() * 50);
+      ctx.strokeStyle = `rgba(${r},${gch},255,0.5)`;
+      ctx.lineWidth = 0.5 + Math.random() * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      for (let x = 0; x <= s; x += 8) ctx.lineTo(x, y + Math.sin(x * 0.02 + i) * 2);
+      ctx.stroke();
+    }
+  });
+  _woodNormal.repeat.set(2, 2);
+  return _woodNormal;
+};
+
+let _leatherNormal: THREE.CanvasTexture | null = null;
+export const leatherNormalTexture = () => {
+  if (_leatherNormal) return _leatherNormal;
+  _leatherNormal = make(256, (ctx, s) => {
+    ctx.fillStyle = "rgb(128,128,255)";
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 1500; i++) {
+      const x = Math.random() * s, y = Math.random() * s;
+      const dx = Math.floor(120 + Math.random() * 16);
+      const dy = Math.floor(120 + Math.random() * 16);
+      ctx.fillStyle = `rgba(${dx},${dy},255,0.7)`;
+      ctx.beginPath();
+      ctx.arc(x, y, 1 + Math.random() * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  return _leatherNormal;
+};
+
+let _brassRough: THREE.CanvasTexture | null = null;
+export const brassRoughnessTexture = () => {
+  if (_brassRough) return _brassRough;
+  _brassRough = make(256, (ctx, s) => {
+    const g = ctx.createLinearGradient(0, 0, s, 0);
+    g.addColorStop(0, "#3a3a3a");
+    g.addColorStop(0.5, "#2a2a2a");
+    g.addColorStop(1, "#3a3a3a");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+    for (let i = 0; i < 600; i++) {
+      ctx.strokeStyle = `rgba(255,255,255,${Math.random() * 0.15})`;
+      ctx.lineWidth = 0.5;
+      const y = Math.random() * s;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(s, y + (Math.random() - 0.5) * 4);
+      ctx.stroke();
+    }
+  });
+  return _brassRough;
 };
 
 export const leatherTexture = () => {
