@@ -32,11 +32,11 @@ const AboutSection = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground mb-8 leading-tight">
+          <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground mb-4 leading-tight">
             Notes on How I Work
           </h2>
 
-          <div className="space-y-4 font-body text-base leading-relaxed text-card-foreground/70">
+          <div className="space-y-3 font-body text-sm leading-relaxed text-card-foreground/70">
             <p>
               I'm a product-minded builder who operates at the intersection of technology, business, and design.
               I don't just want to ship features — I want to understand <em className="text-card-foreground/90 not-italic border-b border-primary/30">why</em> something
@@ -44,18 +44,13 @@ const AboutSection = () => {
             </p>
             <p>
               My approach is rooted in structured thinking — breaking complex problems into clear frameworks,
-              validating assumptions early, and iterating with intent. I gravitate toward ambiguity because
-              that's where the most meaningful work lives.
-            </p>
-            <p>
-              I believe the best products emerge when you combine deep user empathy with systems-level thinking
-              and business acumen. That's the space I'm building my career in.
+              validating assumptions early, and iterating with intent.
             </p>
           </div>
 
           {/* Philosophy quote */}
-          <div className="mt-10 pl-4 border-l-2 border-primary/20">
-            <p className="font-handwritten text-xl text-card-foreground/50 italic">
+          <div className="mt-5 pl-4 border-l-2 border-primary/20">
+            <p className="font-handwritten text-lg text-card-foreground/50 italic">
               "Build with intent. Document deeply. Ship what matters."
             </p>
           </div>
@@ -67,18 +62,18 @@ const AboutSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="space-y-10"
+          className="space-y-5"
         >
           {/* Strengths */}
           <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
               <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Traits</span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {strengths.map((s, i) => (
                 <motion.div
                   key={s.title}
-                  className="group p-4 rounded-lg border border-transparent hover:border-border hover:bg-card/50 transition-all duration-300 cursor-default"
+                  className="group p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-card/50 transition-all duration-300 cursor-default"
                   onHoverStart={() => setHoveredStrength(i)}
                   onHoverEnd={() => setHoveredStrength(null)}
                 >
@@ -103,7 +98,7 @@ const AboutSection = () => {
 
           {/* Focus areas */}
           <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
               <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Focus</span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -120,7 +115,7 @@ const AboutSection = () => {
 
           {/* Quick facts */}
           <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-5">
+            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
               <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Quick Facts</span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs font-mono text-muted-foreground">
