@@ -146,7 +146,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
       })}
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
+        <div className="absolute inset-x-0 top-0" style={{ height: "91vh" }}>
           <div className="absolute inset-0 px-0 pt-[88px] pb-1 overflow-hidden">
             <div className="relative w-full h-full overflow-hidden">
               {sections.map((s, i) => (
@@ -163,11 +163,11 @@ const DeskStage = ({ sections }: DeskStageProps) => {
           </div>
         </div>
 
-        {/* CONSOLE RAIL — bottom 12vh recessed station console */}
+        {/* CONSOLE RAIL — minimal local dock */}
         <div
           className="absolute inset-x-0 bottom-0"
           style={{
-            height: "clamp(88px, 12vh, 120px)",
+            height: "clamp(72px, 9vh, 96px)",
             background: "linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 7%))",
             boxShadow: "inset 0 2px 10px rgba(0,0,0,0.55), inset 0 -1px 0 rgba(255,255,255,0.02)",
             backgroundImage:

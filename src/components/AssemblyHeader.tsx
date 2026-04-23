@@ -254,6 +254,19 @@ export function AssemblyHeader({ panelIds }: Props) {
     }
   }, [currentSketch]);
 
+  // Receive sketch picks from the relocated BYOPDock in the bottom rail.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Sketch | undefined;
+      if (detail && detail.strokes) setCurrentSketch(detail);
+    };
+    window.addEventListener("byop:sketch", handler);
+    // Pick up an initial value if the dock fired before mount
+    const initial = (window as any).__byop_sketch as Sketch | undefined;
+    if (initial && initial.strokes) setCurrentSketch(initial);
+    return () => window.removeEventListener("byop:sketch", handler);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -279,7 +292,7 @@ export function AssemblyHeader({ panelIds }: Props) {
 
     const SVG_NS = "http://www.w3.org/2000/svg";
     const BS = 30;
-    const BE = 1140;
+    const BE = 1390;
     const BL = BE - BS;
     const Y = 52;
 
@@ -639,7 +652,7 @@ export function AssemblyHeader({ panelIds }: Props) {
           </g>
 
           {/* Top dashed boundary */}
-          <line x1="30" y1="12" x2="1140" y2="12" stroke={INK} strokeWidth="0.3" strokeDasharray="1 3" opacity="0.5" />
+          <line x1="30" y1="12" x2="1390" y2="12" stroke={INK} strokeWidth="0.3" strokeDasharray="1 3" opacity="0.5" />
 
           {/* Top instrumentation — single strip */}
           <g fontFamily="monospace" fontSize="5" fill={INK} letterSpacing="1" opacity="0.85">
@@ -654,11 +667,11 @@ export function AssemblyHeader({ panelIds }: Props) {
             <text x="317" y="8">
               PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
             </text>
-            <text x="1140" y="8" textAnchor="end">
+            <text x="1390" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>
             </text>
-            <text ref={etaRef} x="1082" y="8" textAnchor="end">ETA 3.2s</text>
-            <text x="1035" y="8" textAnchor="end">OP·A7/B3/C1</text>
+            <text ref={etaRef} x="1332" y="8" textAnchor="end">ETA 3.2s</text>
+            <text x="1285" y="8" textAnchor="end">OP·A7/B3/C1</text>
           </g>
 
           {/* Station ticks + serif nav */}
@@ -666,16 +679,16 @@ export function AssemblyHeader({ panelIds }: Props) {
 
           {/* BELT STRUCTURE — compact */}
           <g>
-            <rect x="30" y="40" width="1110" height="24" fill={BELT_DARK} stroke={METAL} strokeWidth="0.4" opacity="0.9" />
-            <line x1="30" y1="44" x2="1140" y2="44" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
-            <line x1="30" y1="60" x2="1140" y2="60" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
-            <line x1="30" y1="47" x2="1140" y2="47" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
-            <line x1="30" y1="57" x2="1140" y2="57" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
+            <rect x="30" y="40" width="1360" height="24" fill={BELT_DARK} stroke={METAL} strokeWidth="0.4" opacity="0.9" />
+            <line x1="30" y1="44" x2="1390" y2="44" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="60" x2="1390" y2="60" stroke={INK_BG} strokeWidth="0.5" opacity="0.7" />
+            <line x1="30" y1="47" x2="1390" y2="47" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
+            <line x1="30" y1="57" x2="1390" y2="57" stroke="hsl(38 35% 38%)" strokeWidth="0.25" opacity="0.5" strokeDasharray="5 3" />
 
             <g ref={rollersRef} />
 
             <line x1="30" y1="40" x2="30" y2="64" stroke={INK} strokeWidth="0.6" />
-            <line x1="1140" y1="40" x2="1140" y2="64" stroke={INK} strokeWidth="0.6" />
+            <line x1="1390" y1="40" x2="1390" y2="64" stroke={INK} strokeWidth="0.6" />
 
             <g transform="translate(30, 52)">
               <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
@@ -683,7 +696,7 @@ export function AssemblyHeader({ panelIds }: Props) {
               <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
               <line x1="-2" y1="3" x2="2" y2="3" stroke={METAL} strokeWidth="0.3" />
             </g>
-            <g transform="translate(1140, 52)">
+            <g transform="translate(1390, 52)">
               <rect x="-3" y="-6" width="6" height="12" fill={BELT_DARKER} stroke={METAL} strokeWidth="0.4" />
               <line x1="-2" y1="-3" x2="2" y2="-3" stroke={METAL} strokeWidth="0.3" />
               <line x1="-2" y1="0" x2="2" y2="0" stroke={METAL} strokeWidth="0.3" />
@@ -700,198 +713,18 @@ export function AssemblyHeader({ panelIds }: Props) {
             <text x="30" y="76">─── INTAKE</text>
             <text x="73" y="76" fill={INK_BRIGHT}>user·sketch</text>
             <circle ref={intakeDotRef} cx="107" cy="74.5" r="1" fill={INK_BRIGHT} opacity="0.4" />
-            <circle ref={dispatchDotRef} cx="1063" cy="74.5" r="1" fill={INK_DIM} opacity="0.6" />
-            <text x="1140" y="76" textAnchor="end">
+            <circle ref={dispatchDotRef} cx="1313" cy="74.5" r="1" fill={INK_DIM} opacity="0.6" />
+            <text x="1390" y="76" textAnchor="end">
               dispatch·<tspan ref={dispRef} fill={INK_DIM}>--</tspan> ───
             </text>
-            <text x="1060" y="76" textAnchor="end">field ready</text>
+            <text x="1310" y="76" textAnchor="end">field ready</text>
           </g>
 
-          {/* COMPACT DESIGN BOX — 72px tall */}
-          <g
-            style={{ cursor: "pointer" }}
-            onClick={() => setPopoverOpen((o) => !o)}
-          >
-            <rect x="1160" y="10" width="228" height="72" fill="none" stroke={INK_BRIGHT} strokeWidth="0.6" />
-            <rect x="1162" y="12" width="224" height="68" fill="none" stroke={BORDER_DASH} strokeWidth="0.3" strokeDasharray="2 2" />
-
-            <text x="1168" y="20" fontFamily="monospace" fontSize="5" fill={INK_BRIGHT} letterSpacing="1">
-              ─── YOUR PRODUCT
-            </text>
-
-            <g ref={previewRef} transform="translate(1274, 46)" />
-
-            {/* Corner crop marks (shrunk) */}
-            <line x1="1238" y1="25" x2="1241" y2="25" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1238" y1="25" x2="1238" y2="28" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1310" y1="25" x2="1307" y2="25" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1310" y1="25" x2="1310" y2="28" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1238" y1="67" x2="1241" y2="67" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1238" y1="67" x2="1238" y2="64" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1310" y1="67" x2="1307" y2="67" stroke={INK_DIM} strokeWidth="0.4" />
-            <line x1="1310" y1="67" x2="1310" y2="64" stroke={INK_DIM} strokeWidth="0.4" />
-
-            <rect x="1168" y="72" width="212" height="7" fill={BELT_DARK} stroke={INK} strokeWidth="0.3" />
-            <text
-              x="1274"
-              y="77.5"
-              fontFamily="Playfair Display, Georgia, serif"
-              fontStyle="italic"
-              fontSize="5.5"
-              fill="hsl(38 60% 68%)"
-              textAnchor="middle"
-            >
-              click to change → design yours ↗
-            </text>
-          </g>
+          {/* Hidden preview slot — kept for ref compatibility */}
+          <g ref={previewRef} transform="translate(-9999, -9999)" />
         </svg>
       </div>
 
-        {popoverOpen && (
-          <div
-            className="pointer-events-auto absolute right-4 z-[60] rounded-md p-4"
-            style={{
-              top: 88,
-              width: 640,
-              background: "hsl(160 22% 11%)",
-              border: `0.5px solid ${BORDER_DASH}`,
-            }}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <div
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 10,
-                  color: INK,
-                  letterSpacing: "1.5px",
-                }}
-              >
-                ─── DESIGN YOUR PRODUCT ·{" "}
-                <span style={{ color: INK_DIM }}>pick a preset or draw your own</span>
-              </div>
-              <button
-                onClick={() => setPopoverOpen(false)}
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 10,
-                  padding: "2px 10px",
-                  background: "transparent",
-                  border: `0.5px solid ${BORDER_DASH}`,
-                  color: INK_DIM,
-                  cursor: "pointer",
-                }}
-              >
-                close ✕
-              </button>
-            </div>
-
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: 8,
-                color: INK_DIM,
-                letterSpacing: "0.8px",
-                marginBottom: 6,
-              }}
-            >
-              QUICK·PICK
-            </div>
-            <div className="mb-3 grid grid-cols-5 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => handlePickPreset(p)}
-                  className="flex flex-col items-center gap-1.5 transition-colors"
-                  style={{
-                    background: "hsl(160 22% 8%)",
-                    border: `0.5px dashed ${currentSketch.name === p.name ? INK_BRIGHT : BORDER_DASH}`,
-                    padding: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  <svg
-                    viewBox="-25 -25 50 50"
-                    width="100%"
-                    height={50}
-                    dangerouslySetInnerHTML={{
-                      __html: renderPathsSvg(p.strokes, 40, INK_BRIGHT, 1.4),
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: 9,
-                      color: INK,
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {p.name}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: 8,
-                color: INK_DIM,
-                letterSpacing: "0.8px",
-                marginBottom: 6,
-              }}
-            >
-              OR DRAW YOUR OWN
-            </div>
-            <canvas
-              ref={canvasRef}
-              width={900}
-              height={400}
-              style={{
-                display: "block",
-                width: "100%",
-                height: 180,
-                background: "hsl(160 22% 8%)",
-                border: `0.5px dashed ${BORDER_DASH}`,
-                borderRadius: 3,
-                cursor: "crosshair",
-                touchAction: "none",
-              }}
-            />
-
-            <div className="mt-2.5 flex gap-2">
-              <button
-                onClick={handleClearCanvas}
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 10,
-                  flex: 1,
-                  background: "transparent",
-                  border: `0.5px solid ${BORDER_DASH}`,
-                  color: INK_DIM,
-                  padding: "6px 12px",
-                  cursor: "pointer",
-                }}
-              >
-                Clear
-              </button>
-              <button
-                onClick={handleBuildCustom}
-                style={{
-                  fontFamily: "monospace",
-                  fontSize: 10,
-                  flex: 2,
-                  background: "transparent",
-                  border: `0.5px solid ${INK}`,
-                  color: INK_BRIGHT,
-                  padding: "6px 12px",
-                  cursor: "pointer",
-                }}
-              >
-                Build this →
-              </button>
-            </div>
-          </div>
-        )}
     </div>
   );
 }
