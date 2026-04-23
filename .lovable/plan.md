@@ -1,74 +1,48 @@
 
-## Fix Panel Order, Content Overflow, and Scroll-Linked Transitions
+## Scroll-Driven Panel Transitions + Inner Scroll for Library & Cases
 
-Four targeted fixes across section ordering, content density, and panel transitions.
+Two tightly scoped changes:
 
-### 1. Reorder sections (About before Library, Strategy after Library)
+### 1. Replace alternating L/R slide with scroll-driven crossfade
 
-The current section flow in `src/pages/Index.tsx` is:
-`Home → Thinking → Projects → About → Writing → Skills → Journey → Contact`
+Currently `DeskStage` swaps panels instantly when `scrollYProgress` crosses a section boundary, then plays a 0.55s L/R slide animation (`AnimatePresence` + `slideVariants`). The animation is decoupled from scroll velocity.
 
-The header (`Navigation.tsx` / `AssemblyHeader`) declares this order:
-`Home → About → Projects → Thinking → Skills → Journey → Writing → Contact`
+New behavior:
+- Each section occupies its own `100vh` slice of the scroll track (already true).
+- Within each slice, derive a local progress `p ∈ [0,1]` from `scrollYProgress`.
+- Render **two panels at a time** during the transition window (last 15% of the outgoing slice + first 15% of the incoming slice). Outside that window, only the active panel renders.
+- Transition is a **pure opacity crossfade tied directly to scroll position** — no horizontal motion, no scale. Scrolling slowly = transition plays slowly; scrolling fast = transition plays fast; scrolling backward reverses it. No `AnimatePresence`, no time-based easing.
+- Remove the `direction` / parity logic and `slideVariants` entirely.
 
-Mapping to the requested vocabulary (Library = Projects, Strategy = Thinking):
-**New canonical order**:
-`Home → About → Projects (Library) → Thinking (Strategy) → Skills → Journey → Writing → Contact`
+Implementation in `src/components/DeskStage.tsx`:
+- Subscribe to `scrollYProgress` and compute `floatIndex = v * sections.length` (no rounding).
+- `activeIndex = floor(floatIndex)`, `localP = floatIndex - activeIndex`.
+- Define transition zone, e.g. `localP > 0.85` → start fading in `activeIndex+1`, fading out `activeIndex`. Map `localP ∈ [0.85, 1.0]` linearly to opacity `[0,1]` for incoming and `[1,0]` for outgoing.
+- Render up to two absolutely-positioned layers inside the stage container, each wrapping its `Frame` + `Section`. Use plain inline `style={{ opacity }}` updated via state (throttled) or `motion.div` with `style={{ opacity: motionValue }}` driven by `useTransform` for smoothness without re-renders.
+- Preferred: use `useTransform(scrollYProgress, ...)` to derive two `MotionValue<number>` opacities — zero re-render cost.
+- Keep `prefers-reduced-motion` fallback (just renders all sections stacked, as today).
+- Keep header jump (`handleJump`) untouched — smooth scroll naturally drives the same crossfade.
 
-This satisfies "About before Library" and "Strategy after Library" and matches the header exactly.
+### 2. Add inner scroll for Projects (Library) and Thinking (Case Studies)
 
-**File changed**: `src/pages/Index.tsx` — reorder the `sections` array entries (slot 3D positions stay attached to each section so the desk layout follows).
+The user wants vertical scrolling **inside** these two panels only. All other panels remain non-scrolling.
 
-### 2. Sync header → panel navigation
+- `src/components/desk/frames/BookshelfFrame.tsx` (Projects/Library): change inner wrapper from `overflow-hidden` to `overflow-y-auto` with custom thin scrollbar styling. Keep the outer panel `overflow-hidden` so the rounded frame still clips.
+- `src/components/desk/frames/CorkboardFrame.tsx` (Thinking/Cases): same treatment.
+- Add a small CSS utility `.panel-inner-scroll` in `src/index.css` with: `overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: hsl(var(--border)) transparent;` plus `::-webkit-scrollbar` styling (6px, subtle thumb).
+- `overscroll-behavior: contain` ensures inner scroll doesn't bubble up and trigger the outer page scroll / panel transition while reading.
+- Revert the earlier "cap to 3 projects" compaction in `ProjectsShelf.tsx` (now that scrolling is allowed inside the panel) — restore showing all projects in their natural layout. No font/size compaction needed for these two panels.
 
-Because `DeskStage` derives `activeIndex` from window scroll progress (each section = 100vh of vertical scroll), the existing `scrollIntoView` in `Navigation.tsx` already works **as long as section order in `Index.tsx` matches the nav `navItems` array**. After step 1, both lists are identical → header clicks land on the correct panel automatically.
+### Files Modified
 
-No code change needed in `Navigation.tsx`. Verify by clicking each nav item maps to the matching panel.
+- `src/components/DeskStage.tsx` — replace slide variants with scroll-driven dual-layer crossfade using `useTransform`.
+- `src/components/desk/frames/BookshelfFrame.tsx` — enable inner vertical scroll.
+- `src/components/desk/frames/CorkboardFrame.tsx` — enable inner vertical scroll.
+- `src/index.css` — add `.panel-inner-scroll` utility with thin custom scrollbar.
+- `src/components/ProjectsShelf.tsx` — remove the 3-item cap and overflow-clipping tweaks added in the prior pass; allow natural shelf height.
 
-### 3. Compact overflowing panels (Writing + Projects/Library)
+### Out of Scope
 
-Two panels currently overflow the 88vh non-scroll container at 1178×769:
-
-**`src/components/WritingDesk.tsx`** — currently has `py-16 md:py-24`, large featured card, plus 3-card row + "View all" link. Changes:
-- Outer wrapper: `py-16 md:py-24` → `py-4`, `px-6 md:px-16` → `px-5 md:px-10`.
-- Header rail + title block: `mb-12` → `mb-3`, `mb-10` → `mb-3`; title `text-3xl md:text-4xl` → `text-xl md:text-2xl`; drop the descriptive `<p>` or shrink to `text-xs`.
-- Featured card: padding `p-4 md:p-5` → `p-3`; title `text-xl md:text-2xl` → `text-base md:text-lg`; excerpt `line-clamp-2`.
-- Article grid: gap `gap-4` → `gap-2.5`; card padding `p-5` → `p-3`; title `text-sm` → `text-xs`; excerpt → `line-clamp-2 text-[11px]`.
-- "View all" link: `mt-4` → `mt-2`, `text-xs` → `text-[11px]`.
-
-**`src/components/ProjectsShelf.tsx`** — review and apply the same compaction pattern: shrink section padding to `py-4`, header `mb-3`, card titles to `text-sm`, descriptions clamped to 2 lines, gaps reduced. Cap to 3 books in the horizontal row.
-
-Also do a quick pass on **`AboutSection.tsx`**, **`ThinkingWall.tsx`**, **`JourneyTimeline.tsx`**, **`SkillsToolbox.tsx`**, **`ContactClosing.tsx`** to confirm nothing clips at 769px viewport height; trim padding only where overflow exists.
-
-### 4. Scroll-linked alternating L/R transitions
-
-Currently `DeskStage` already uses `direction = +1` when scrolling forward (next panel), `-1` when scrolling back, and the `slideVariants` translate the entering panel from that side and exit the leaving panel to the opposite side. This **is** scroll-linked.
-
-Improvements to make it feel deliberately alternating and tighter:
-- **Alternation by index parity** (instead of pure forward/back): incoming panel slides from **left for even indices, right for odd indices**, regardless of scroll direction. This produces the visible left/right/left/right rhythm the user described. Outgoing panel exits to the opposite side.
-- Keep the easing `[0.7, 0, 0.3, 1]` but shorten duration `0.7 → 0.55` for a snappier, more scroll-coupled feel.
-- Remove the `boxShadow` leading-edge shadow (it implied a directional drag); replace with a 1.5vh-wide vertical seam gradient on the leading edge for a cleaner cut.
-
-**File changed**: `src/components/DeskStage.tsx` — update `slideVariants` to take parity instead of direction; pass `activeIndex % 2` as `custom`.
-
-```ts
-const slideVariants = {
-  enter: (parity: number) => ({ x: parity === 0 ? "-100%" : "100%" }),
-  center: { x: "0%" },
-  exit:  (parity: number) => ({ x: parity === 0 ? "100%"  : "-100%" }),
-};
-```
-
-### Files to modify
-
-- `src/pages/Index.tsx` — reorder `sections` array.
-- `src/components/DeskStage.tsx` — parity-based slide variants, shorter duration, remove boxShadow.
-- `src/components/WritingDesk.tsx` — full compaction pass.
-- `src/components/ProjectsShelf.tsx` — compaction pass, cap to 3 items.
-- `src/components/AboutSection.tsx`, `ThinkingWall.tsx`, `JourneyTimeline.tsx`, `SkillsToolbox.tsx`, `ContactClosing.tsx` — minor padding trims only if overflow detected.
-
-### Out of scope
-
-- 3D desk strip, props, lighting, decor — untouched (slot positions travel with each section in the reorder).
-- Header design, routing, backend, doodles, entropy — untouched.
-- No new dependencies, no new assets.
+- Other panels (Home, About, Skills, Journey, Writing, Contact) stay non-scrolling.
+- Section ordering, header, 3D desk strip, routing, backend — untouched.
+- No new dependencies.
