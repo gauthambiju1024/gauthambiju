@@ -61,6 +61,10 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
   );
 
   // X: continuous travel across the panel's full visible window.
+  // GAP adds breathing room between adjacent panels (10% viewport-width).
+  const GAP = 10; // percent
+  const offRight = `${100 + GAP}%`;
+  const offLeft = `-${100 + GAP}%`;
   const x = useTransform(
     scrollYProgress,
     isFirst
@@ -69,10 +73,10 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
       ? [enterAt, center, 1]
       : [enterAt, center, exitAt],
     isFirst
-      ? ["0%", "0%", "-100%"]
+      ? ["0%", "0%", offLeft]
       : isLast
-      ? ["100%", "0%", "0%"]
-      : ["100%", "0%", "-100%"]
+      ? [offRight, "0%", "0%"]
+      : [offRight, "0%", offLeft]
   );
 
   // Hide pointer events when nearly invisible (avoid blocking interactions).
