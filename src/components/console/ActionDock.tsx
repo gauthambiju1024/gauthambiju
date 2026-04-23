@@ -29,9 +29,10 @@ const handleClick = (a: ConsoleAction, toast: ReturnType<typeof useToast>["toast
 const ActionDock = ({ activeId }: Props) => {
   const { toast } = useToast();
   const meta = STATION_META[activeId];
+  const actions = meta.actions.slice(0, 4);
 
   return (
-    <div className="h-full flex items-center px-3 overflow-hidden">
+    <div className="h-full flex items-center justify-center px-3 overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeId}
@@ -39,9 +40,9 @@ const ActionDock = ({ activeId }: Props) => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar"
+          className="flex items-center justify-center gap-2 overflow-x-auto no-scrollbar"
         >
-          {meta.actions.map((a) => {
+          {actions.map((a) => {
             const isPrimary = a.primary;
             const isDisabled = !a.href && !a.action;
             return (

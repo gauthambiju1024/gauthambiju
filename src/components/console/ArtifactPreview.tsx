@@ -12,7 +12,6 @@ const Blueprint = () => (
     <path d="M 70 14 L 88 8 L 88 48 L 70 54 Z" fill="hsl(160 25% 16%)" stroke={stroke} strokeWidth="0.7" />
     <path d="M 6 18 H 50 M 6 28 H 50 M 6 38 H 50" stroke={ink} strokeOpacity="0.18" strokeWidth="0.3" />
     <polygon points="88,8 96,8 88,16" fill={stroke} opacity="0.7" />
-    <text x="100" y="30" fill={dim} fontSize="6" fontFamily="JetBrains Mono">REV·01</text>
   </svg>
 );
 
@@ -68,7 +67,6 @@ const Caliper = () => (
     {Array.from({ length: 9 }).map((_, i) => (
       <line key={i} x1={14 + i * 10} y1="36" x2={14 + i * 10} y2={i % 2 ? 39 : 41} stroke={ink} strokeOpacity="0.4" strokeWidth="0.3" />
     ))}
-    <text x="100" y="30" fill={dim} fontSize="6" fontFamily="JetBrains Mono">04</text>
   </svg>
 );
 
@@ -76,10 +74,7 @@ const MilestoneRail = () => (
   <svg viewBox="0 0 120 56" className="h-full w-auto">
     <line x1="14" y1="32" x2="106" y2="32" stroke={stroke} strokeWidth="0.6" />
     {[18, 36, 54, 72, 90].map((x, i) => (
-      <g key={i}>
-        <circle cx={x} cy="32" r={i === 2 ? 3 : 2} fill={i === 2 ? "hsl(38 60% 52%)" : "hsl(220 12% 55%)"} />
-        <text x={x - 5} y="46" fill={dim} fontSize="5" fontFamily="JetBrains Mono">{`'2${i + 1}`}</text>
-      </g>
+      <circle key={i} cx={x} cy="32" r={i === 2 ? 3 : 2} fill={i === 2 ? "hsl(38 60% 52%)" : "hsl(220 12% 55%)"} />
     ))}
   </svg>
 );
@@ -93,7 +88,6 @@ const NotebookTabs = () => (
     ))}
     <line x1="26" y1="22" x2="74" y2="22" stroke={dim} strokeWidth="0.3" />
     <line x1="26" y1="28" x2="68" y2="28" stroke={dim} strokeWidth="0.3" />
-    <text x="86" y="28" fill={dim} fontSize="6" fontFamily="JetBrains Mono">12</text>
   </svg>
 );
 
@@ -104,7 +98,6 @@ const LetterCard = () => (
     <circle cx="92" cy="36" r="3" fill="hsl(140 50% 45%)">
       <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
     </circle>
-    <text x="98" y="38" fill={ink} fontSize="6" fontFamily="JetBrains Mono">OPEN</text>
   </svg>
 );
 
@@ -119,21 +112,21 @@ const ART: Record<FrameId, () => JSX.Element> = {
   contact: LetterCard,
 };
 
-const LABELS: Record<FrameId, string> = {
-  home: "blueprint · rev 01",
+const HOVER: Record<FrameId, string> = {
+  home: "blueprint",
   about: "letterhead",
-  projects: "shelf · 04",
-  thinking: "wall · pinned",
-  skills: "tool tray",
+  projects: "shelf",
+  thinking: "pinned",
+  skills: "caliper",
   journey: "milestones",
-  writing: "essays · 12",
-  contact: "open to roles",
+  writing: "notebook",
+  contact: "letter",
 };
 
 const ArtifactPreview = ({ activeId }: { activeId: FrameId }) => {
   const Comp = ART[activeId];
   return (
-    <div className="h-full flex items-center justify-end gap-3 px-3">
+    <div className="h-full flex items-center justify-start px-3" title={HOVER[activeId]}>
       <AnimatePresence mode="wait">
         <motion.div
           key={activeId}
@@ -141,17 +134,9 @@ const ArtifactPreview = ({ activeId }: { activeId: FrameId }) => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="flex items-center gap-3 h-full"
+          className="h-[56px] w-[120px] flex items-center justify-center"
         >
-          <span
-            className="text-[10px] tracking-[0.16em] uppercase text-stone-400 hidden lg:inline"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            {LABELS[activeId]}
-          </span>
-          <div className="h-[64px] w-[140px] flex items-center justify-center">
-            <Comp />
-          </div>
+          <Comp />
         </motion.div>
       </AnimatePresence>
     </div>
