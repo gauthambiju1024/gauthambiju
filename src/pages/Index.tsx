@@ -19,65 +19,63 @@ import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 
-// Realistic spatial arrangement on the (foreshortened) desk.
-// Back row sits higher (small top values), front row near camera (large top).
-// Sizes bumped slightly so back-row props remain readable through the 38° tilt.
+// 3D world coordinates: x = left/right (-1.5..1.5), z = depth (-0.5 back .. 0.7 front), y=0 floor.
 const sections: SectionConfig[] = [
   {
     id: "home",
     label: "Home",
     Frame: BlueprintFrame,
     Section: HeroSection,
-    slot: { top: "22%", left: "16%", width: 145, height: 92, rotate: -4, zone: "back", shape: "blueprint" },
+    slot: { shape: "mat", position: [-0.55, 0, 0.35], rotation: [0, 0.05, 0] },
   },
   {
     id: "thinking",
     label: "Thinking",
     Frame: CorkboardFrame,
     Section: ThinkingWall,
-    slot: { top: "20%", left: "44%", width: 154, height: 94, rotate: 1, zone: "back", shape: "cork" },
+    slot: { shape: "cork", position: [0.0, 0, -0.35], rotation: [0, -0.1, 0] },
   },
   {
     id: "projects",
     label: "Projects",
     Frame: BookshelfFrame,
     Section: ProjectsShelf,
-    slot: { top: "22%", left: "78%", width: 165, height: 82, rotate: 3, zone: "back", shape: "shelf" },
+    slot: { shape: "book", position: [-0.6, 0, -0.4], rotation: [0, 0.2, 0] },
   },
   {
     id: "about",
     label: "About",
     Frame: BusinessCardFrame,
     Section: AboutSection,
-    slot: { top: "52%", left: "22%", width: 122, height: 70, rotate: -8, zone: "mid", shape: "card" },
+    slot: { shape: "card", position: [0.55, 0, 0.45], rotation: [0, -0.2, 0] },
   },
   {
     id: "writing",
     label: "Writing",
     Frame: NotebookFrame,
     Section: WritingDesk,
-    slot: { top: "55%", left: "50%", width: 165, height: 100, rotate: -3, zone: "mid", shape: "notebook" },
+    slot: { shape: "notebook", position: [0.15, 0, 0.4], rotation: [0, -0.05, 0] },
   },
   {
     id: "skills",
     label: "Skills",
     Frame: ToolboxFrame,
     Section: SkillsToolbox,
-    slot: { top: "52%", left: "78%", width: 132, height: 76, rotate: 5, zone: "mid", shape: "toolbox" },
+    slot: { shape: "toolbox", position: [0.7, 0, -0.35], rotation: [0, -0.25, 0] },
   },
   {
     id: "journey",
     label: "Journey",
     Frame: ScrollFrame,
     Section: JourneyTimeline,
-    slot: { top: "85%", left: "28%", width: 165, height: 30, rotate: -10, zone: "front", shape: "scroll" },
+    slot: { shape: "compass", position: [-0.05, 0, 0.55], rotation: [0, 0.1, 0] },
   },
   {
     id: "contact",
     label: "Contact",
     Frame: LetterFrame,
     Section: ContactClosing,
-    slot: { top: "85%", left: "70%", width: 122, height: 78, rotate: 8, zone: "front", shape: "letter" },
+    slot: { shape: "envelope", position: [0.4, 0, -0.05], rotation: [0, -0.15, 0] },
   },
 ];
 

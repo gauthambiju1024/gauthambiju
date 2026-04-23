@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState, ComponentType } from "react";
 import { AnimatePresence, motion, useScroll, useTransform, MotionValue } from "framer-motion";
-import Desk, { DeskSlotConfig } from "./desk/Desk";
+import DeskScene, { SlotConfig3D } from "./desk3d/DeskScene";
 import { FrameId, FrameProps } from "./desk/frames/FrameTypes";
 
 export interface SectionConfig {
@@ -8,18 +8,13 @@ export interface SectionConfig {
   label: string;
   Frame: ComponentType<FrameProps>;
   Section: ComponentType;
-  slot: Omit<DeskSlotConfig, "id" | "label">;
+  slot: Omit<SlotConfig3D, "id" | "label">;
 }
 
 interface DeskStageProps {
   sections: SectionConfig[];
 }
 
-/**
- * DeskStage — orchestrates a sticky stage + sticky desk inside a tall scroll container.
- * Each section gets one viewport-height of scroll and snaps. Header & margins are
- * untouched (they live outside this component).
- */
 const DeskStage = ({ sections }: DeskStageProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
@@ -41,7 +36,6 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     });
   }, [scrollYProgress, sections.length]);
 
-  // local t for the active section: 0→1
   const t: MotionValue<number> = useTransform(scrollYProgress, (v) => {
     const seg = 1 / sections.length;
     const local = (v - activeIndex * seg) / seg;
@@ -59,7 +53,6 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     window.scrollTo({ top, behavior: "smooth" });
   };
 
-  // REDUCED-MOTION fallback: render sections stacked normally
   if (reducedMotion) {
     return (
       <div>
@@ -68,9 +61,6 @@ const DeskStage = ({ sections }: DeskStageProps) => {
             <Section />
           </section>
         ))}
-        <div className="h-[40vh] desk-surface relative" aria-hidden="true">
-          <Desk slots={sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }))} activeId={sections[0].id} onSlotClick={() => {}} />
-        </div>
       </div>
     );
   }
@@ -79,9 +69,10 @@ const DeskStage = ({ sections }: DeskStageProps) => {
   const ActiveFrame = active.Frame;
   const ActiveSection = active.Section;
 
+  const slots3D: SlotConfig3D[] = sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }));
+
   return (
     <div ref={containerRef} className="relative" style={{ height: `${sections.length * 100}vh` }}>
-      {/* Hidden anchors for header pill IntersectionObserver — one per section, evenly spaced */}
       {sections.map((s, i) => (
         <span
           key={s.id}
@@ -92,42 +83,29 @@ const DeskStage = ({ sections }: DeskStageProps) => {
         />
       ))}
 
-      {/* Sticky viewport: stage on top, desk on bottom */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* STAGE */}
-        <div className="stage-area absolute inset-x-0 top-0" style={{ height: "78vh" }}>
-          <div className="stage-light absolute inset-0 pointer-events-none" />
+        {/* STAGE — clean, no extra lighting overlays */}
+        <div className="absolute inset-x-0 top-0" style={{ height: "78vh" }}>
           <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8 pt-[96px] pb-2">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
-                style={{ opacity: stageOpacity, y: stageY, perspective: 1500 }}
+                style={{ opacity: stageOpacity, y: stageY }}
                 className="relative w-full max-w-7xl h-full"
               >
-                <motion.div
-                  className="w-full h-full stage-float"
-                  style={{ transformStyle: "preserve-3d" }}
-                >
+                <div className="w-full h-full">
                   <ActiveFrame t={t} active>
                     <ActiveSection />
                   </ActiveFrame>
-                </motion.div>
-                <div className="stage-ground-shadow absolute left-1/2 -translate-x-1/2 -bottom-2 w-[80%] h-6 pointer-events-none" />
+                </div>
               </motion.div>
             </AnimatePresence>
           </div>
-          <div className="desk-horizon absolute inset-x-0 bottom-0 h-10" />
         </div>
 
-        {/* DESK — 3D tilted */}
-        <div className="absolute inset-x-0 bottom-0 desk-3d" style={{ height: "22vh" }}>
-          <div className="desk-tilt">
-            <Desk
-              slots={sections.map((s) => ({ id: s.id, label: s.label, ...s.slot }))}
-              activeId={active.id}
-              onSlotClick={handleJump}
-            />
-          </div>
+        {/* DESK — real 3D R3F scene */}
+        <div className="absolute inset-x-0 bottom-0" style={{ height: "22vh" }}>
+          <DeskScene slots={slots3D} activeId={active.id} onSelect={handleJump} />
         </div>
       </div>
     </div>
