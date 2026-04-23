@@ -16,16 +16,12 @@ interface DeskStageProps {
   sections: SectionConfig[];
 }
 
+// Alternating L/R based on index parity, regardless of scroll direction.
+// Even index → enters from left; odd index → enters from right. Outgoing exits opposite side.
 const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? "100%" : "-100%",
-  }),
-  center: {
-    x: "0%",
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? "-100%" : "100%",
-  }),
+  enter: (parity: number) => ({ x: parity === 0 ? "-100%" : "100%" }),
+  center: { x: "0%" },
+  exit: (parity: number) => ({ x: parity === 0 ? "100%" : "-100%" }),
 };
 
 const DeskStage = ({ sections }: DeskStageProps) => {
@@ -100,22 +96,16 @@ const DeskStage = ({ sections }: DeskStageProps) => {
         <div className="absolute inset-x-0 top-0" style={{ height: "88vh" }}>
           <div className="absolute inset-0 px-3 md:px-6 pt-[88px] pb-1 overflow-hidden">
             <div className="relative w-full h-full max-w-7xl mx-auto overflow-hidden">
-              <AnimatePresence mode="popLayout" custom={direction} initial={false}>
+              <AnimatePresence mode="popLayout" custom={activeIndex % 2} initial={false}>
                 <motion.div
                   key={active.id}
-                  custom={direction}
+                  custom={activeIndex % 2}
                   variants={slideVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.7, ease: [0.7, 0, 0.3, 1] }}
+                  transition={{ duration: 0.55, ease: [0.7, 0, 0.3, 1] }}
                   className="absolute inset-0"
-                  style={{
-                    boxShadow:
-                      direction > 0
-                        ? "-30px 0 60px -20px rgba(0,0,0,0.55)"
-                        : "30px 0 60px -20px rgba(0,0,0,0.55)",
-                  }}
                 >
                   <ActiveFrame t={tDummy} active>
                     <ActiveSection />

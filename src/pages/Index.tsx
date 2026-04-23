@@ -19,7 +19,7 @@ import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 
-// 3D world coords: x = -2..2 across desk width, z = -0.2 back .. 0.5 front, y=0 floor.
+// Order matches AssemblyHeader/Navigation: Home → About → Projects → Thinking → Skills → Journey → Writing → Contact
 const sections: SectionConfig[] = [
   {
     id: "home",
@@ -29,11 +29,11 @@ const sections: SectionConfig[] = [
     slot: { shape: "mat", position: [-0.95, 0, 0.45], rotation: [0, 0.05, 0] },
   },
   {
-    id: "thinking",
-    label: "Thinking",
-    Frame: CorkboardFrame,
-    Section: ThinkingWall,
-    slot: { shape: "cork", position: [0.0, 0, -0.2], rotation: [0, 0, 0] },
+    id: "about",
+    label: "About",
+    Frame: BusinessCardFrame,
+    Section: AboutSection,
+    slot: { shape: "card", position: [0.85, 0, 0.3], rotation: [0, -0.2, 0] },
   },
   {
     id: "projects",
@@ -43,18 +43,11 @@ const sections: SectionConfig[] = [
     slot: { shape: "book", position: [-1.5, 0, 0.4], rotation: [0, 0.15, 0] },
   },
   {
-    id: "about",
-    label: "About",
-    Frame: BusinessCardFrame,
-    Section: AboutSection,
-    slot: { shape: "card", position: [0.85, 0, 0.3], rotation: [0, -0.2, 0] },
-  },
-  {
-    id: "writing",
-    label: "Writing",
-    Frame: NotebookFrame,
-    Section: WritingDesk,
-    slot: { shape: "notebook", position: [-0.05, 0, 0.45], rotation: [0, -0.02, 0] },
+    id: "thinking",
+    label: "Thinking",
+    Frame: CorkboardFrame,
+    Section: ThinkingWall,
+    slot: { shape: "cork", position: [0.0, 0, -0.2], rotation: [0, 0, 0] },
   },
   {
     id: "skills",
@@ -69,6 +62,13 @@ const sections: SectionConfig[] = [
     Frame: ScrollFrame,
     Section: JourneyTimeline,
     slot: { shape: "compass", position: [0.55, 0, 0.5], rotation: [0, 0.1, 0] },
+  },
+  {
+    id: "writing",
+    label: "Writing",
+    Frame: NotebookFrame,
+    Section: WritingDesk,
+    slot: { shape: "notebook", position: [-0.05, 0, 0.45], rotation: [0, -0.02, 0] },
   },
   {
     id: "contact",

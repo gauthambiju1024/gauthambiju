@@ -105,7 +105,7 @@ const ProjectsShelf = () => {
             {/* Bottom recessed shadow */}
             <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-black/15 to-transparent z-[1] pointer-events-none" />
 
-            <div className="flex gap-3 md:gap-4 items-end min-h-[240px] overflow-x-auto pb-1 relative z-[2]">
+            <div className="flex gap-3 md:gap-4 items-end min-h-[200px] overflow-x-auto pb-1 relative z-[2]">
               {grouped[category].map((project, i) => {
                 const isSelected = selectedId === project.id;
                 const spineColor = project.color || SPINE_COLORS[i % SPINE_COLORS.length];
@@ -123,8 +123,8 @@ const ProjectsShelf = () => {
                     <motion.div
                       className="relative rounded-sm overflow-hidden"
                       style={{
-                        width: "85px",
-                        height: "240px",
+                        width: "78px",
+                        height: "200px",
                         ...linenTexture(spineColor),
                       }}
                       whileHover={{ rotateY: -3 }}

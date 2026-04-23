@@ -51,81 +51,79 @@ const WritingDesk = () => {
   const rest = articles.slice(1);
 
   return (
-    <section className="py-16 md:py-24">
-      <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
+    <section className="py-3 md:py-4 h-full flex flex-col">
+      <div className="px-5 md:px-10 flex items-center gap-3 mb-2">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Writing</span>
       </div>
 
-      <div className="px-6 md:px-16 mb-10">
-        <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight">
+      <div className="px-5 md:px-10 mb-2">
+        <h2 className="font-serif-display text-xl md:text-2xl text-card-foreground leading-tight">
           The Editorial Desk
         </h2>
-        <p className="mt-3 font-body text-sm text-muted-foreground">
+        <p className="mt-0.5 font-body text-[11px] text-muted-foreground">
           Thinking through writing. Insights, reflections, and structured notes.
         </p>
       </div>
 
-      <div className="px-6 md:px-16">
+      <div className="px-5 md:px-10 flex-1 flex flex-col min-h-0">
         {/* Featured article */}
         {featured && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-4"
+            transition={{ duration: 0.4 }}
+            className="mb-2"
           >
             <Link
               to={featured.slug !== "#" ? `/blog/${featured.slug}` : "/blog"}
-              className="group block rounded-lg border border-border bg-card/50 p-4 md:p-5 hover:bg-card/80 transition-all duration-300"
+              className="group block rounded-md border border-border bg-card/50 p-3 hover:bg-card/80 transition-all duration-300"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-mono bg-primary/5 text-primary border border-primary/10 rounded-sm">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="px-1.5 py-0.5 text-[9px] tracking-[0.2em] uppercase font-mono bg-primary/5 text-primary border border-primary/10 rounded-sm">
                   {featured.category}
                 </span>
                 <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {featured.readTime}
                 </span>
               </div>
-              <h3 className="font-serif-display text-xl md:text-2xl text-card-foreground group-hover:text-primary transition-colors leading-tight mb-3">
+              <h3 className="font-serif-display text-base md:text-lg text-card-foreground group-hover:text-primary transition-colors leading-snug mb-1">
                 {featured.title}
               </h3>
-              <p className="font-body text-sm text-muted-foreground leading-relaxed max-w-2xl">
+              <p className="font-body text-[11px] text-muted-foreground leading-snug max-w-2xl line-clamp-2">
                 {featured.excerpt}
               </p>
-              <div className="mt-4 flex items-center gap-1 text-xs font-mono text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                Read article <ArrowUpRight className="w-3 h-3" />
-              </div>
             </Link>
           </motion.div>
         )}
 
         {/* Article grid */}
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-2 flex-1 min-h-0">
           {rest.map((article, i) => (
             <motion.div
               key={article.id}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08, duration: 0.4 }}
+              transition={{ delay: i * 0.06, duration: 0.3 }}
+              className="min-h-0"
             >
               <Link
                 to={article.slug !== "#" ? `/blog/${article.slug}` : "/blog"}
-                className="group block rounded-lg border border-border bg-card/30 p-5 hover:bg-card/60 hover:border-border transition-all duration-300 h-full"
+                className="group block rounded-md border border-border bg-card/30 p-2.5 hover:bg-card/60 transition-all duration-300 h-full"
               >
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-[9px] tracking-[0.15em] uppercase font-mono text-muted-foreground">
                     {article.category}
                   </span>
                   <span className="text-muted-foreground/30">·</span>
-                  <span className="text-[10px] font-mono text-muted-foreground">{article.readTime}</span>
+                  <span className="text-[9px] font-mono text-muted-foreground">{article.readTime}</span>
                 </div>
-                <h4 className="font-display text-sm font-semibold text-card-foreground group-hover:text-primary transition-colors leading-snug mb-2">
+                <h4 className="font-display text-xs font-semibold text-card-foreground group-hover:text-primary transition-colors leading-snug mb-1">
                   {article.title}
                 </h4>
-                <p className="text-xs text-muted-foreground/70 font-body leading-relaxed line-clamp-2">
+                <p className="text-[10px] text-muted-foreground/70 font-body leading-snug line-clamp-2">
                   {article.excerpt}
                 </p>
               </Link>
@@ -134,8 +132,8 @@ const WritingDesk = () => {
         </div>
 
         {/* View all */}
-        <div className="mt-4 text-center">
-          <Link to="/blog" className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline">
+        <div className="mt-2 text-center">
+          <Link to="/blog" className="inline-flex items-center gap-1.5 text-[11px] font-mono text-primary hover:underline">
             View all writing <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
