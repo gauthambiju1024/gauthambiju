@@ -598,7 +598,7 @@ export function AssemblyHeader({ panelIds }: Props) {
   }
 
   return (
-    <div className="pointer-events-none fixed top-0 z-50 left-0 right-0 min-[800px]:left-[calc(var(--margin-col-width,60px)+6px)] min-[800px]:right-[calc(var(--margin-col-width,60px)+6px)]">
+    <div className="pointer-events-none fixed top-0 z-50 left-0 right-0 min-[800px]:left-[calc(var(--margin-col-width,60px)+6px)] min-[800px]:right-[calc(var(--margin-col-width,60px)+6px)] hidden min-[800px]:block">
       <div className="relative" style={{
         background: 'hsla(220, 15%, 12%, 0.92)',
         backdropFilter: 'blur(20px)',
