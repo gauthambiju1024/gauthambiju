@@ -1,80 +1,66 @@
 
 
-## Slim the Console Rail to a Minimal Local Dock + Relocate BYOP
+## Move the assembly belt's product down to the bottom rail
 
-Three coordinated changes: (1) gut Zone 1 of the console rail, (2) move the Assembly Header's "Build Your Product" (BYOP / DESIGN.INPUT) utility down into the right-bottom of the rail and shift the section artifact to the left-bottom, (3) reclaim the freed header space so the assembly track stretches wider.
+The user wants the **product being built** (the live sketch that travels along the conveyor belt in the assembly header) to also appear in the bottom rail. Plus the rail should have a transparent background.
 
 ---
 
-### 1. Console Rail — strip the noise
+### What "the object being built" means
 
-**Remove entirely:**
-- `BuildStatus` component (the `03 / 08` counter, section label echo, progress bar, three-dot LED cluster, "now building · …" caveat line) — it duplicates the assembly header's narrative.
-- `STATION_META[*].status` strings (no longer rendered anywhere).
-- The center "diagnostic" radial glow under `ActionDock`.
-- Per-zone vertical dividers (`border-r border-white/[0.06]`).
+In `AssemblyHeader.tsx`, the `prodRef` group renders the user's chosen sketch (drone / rocket / phone / custom) progressively assembling part-by-part as you scroll, riding along the belt. There's also a `previewRef` slot that used to render a larger static "YOUR PRODUCT" preview inside the now-removed design box (currently parked off-screen at `-9999, -9999`).
 
-**Keep, slimmed:**
-- The recessed strip itself: still ~`clamp(72px, 9vh, 96px)` (drop from 12vh → 9vh now that there's less inside).
-- Brass top hairline + four corner machining marks (subtle ambiance).
-- Blueprint grid background (very low opacity — already there).
+That progressive sketch is what the user wants visible in the bottom rail.
 
-### 2. New three-zone layout (artifact ↔ actions ↔ BYOP)
+---
+
+### 1. Transparent rail background
+
+In `src/components/DeskStage.tsx`, replace the rail wrapper's dark gradient + blueprint grid + inset shadow with `background: "transparent"`. Drop the brass top hairline and bottom black hairline in `ConsoleRail.tsx` (they only read against a solid surface). Keep the four corner machining marks at low opacity for ambient grounding. Pills already have their own borders so they remain readable.
+
+### 2. Show the live build in the rail
+
+Add a new component `src/components/console/LiveBuild.tsx` that mirrors the same sketch + same scroll progress as the header belt — but as a static, centered, scaled-up rendering, not a moving conveyor object.
+
+**How it gets the data without coupling to AssemblyHeader internals:**
+
+`AssemblyHeader.tsx` already listens for a `byop:sketch` window CustomEvent (added when we relocated BYOP). We extend the same channel:
+
+- `BYOPDock` already fires `byop:sketch` on pick → both the header AND `LiveBuild` listen.
+- Add a tiny scroll listener inside `LiveBuild` (same one-liner the header uses) to compute `progress` 0..1 → `stage = floor(p*8)`, `stageProg = p*8 - stage`.
+- Render the sketch's parts using the same `strokesToParts` helper currently inside `AssemblyHeader.tsx`.
+
+**Refactor:** lift `strokesToParts`, `bbox`, `Stroke`/`Sketch` types, and the default `PRESETS[0]` into a shared module `src/components/console/sketchUtils.ts` so both `AssemblyHeader.tsx` and `LiveBuild.tsx` import from one place. No behavior change for the header.
+
+**Visual:**
+- Sits in the rail, replacing the current static `<ArtifactPreview>` on the **left zone** (the section-specific blueprint/spines/etc artifact is removed — the live build IS the artifact now, it's the same metaphor and avoids two competing visuals).
+- Renders inside an SVG, ~120×56 viewBox like the artifact slot was.
+- Each part fades in at `opacity = i < stage ? 1 : stageProg` exactly like the header belt does, so the bottom build assembles in lockstep with the top belt.
+- Subtle pulsing dot at top-right of the SVG (small amber LED) when `stage < 8`; turns green at completion. Tiny mono caption below: `parts NN / 08` — this is the only text and it's the build state, not a section counter.
+
+### 3. New rail layout
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│ [artifact]      2–4 contextual actions (centered)         [BYOP dock]  │
-└────────────────────────────────────────────────────────────────────────┘
-   left ~22%                center 1fr                       right ~26%
+┌───────────────────────────────────────────────────────────────────┐
+│  [live build sketch]      contextual actions          [BUILD ▸]   │
+│   parts 03/08                                                     │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
-**Left zone — `ArtifactPreview` (moved from right):**
-- One small section-specific flat SVG only. No label, no caption.
-- Examples already wired: Home → folded blueprint, Projects → book spines, Thinking → pinned notes, Skills → caliper, Writing → notebook tab, Contact → letter slip.
-- Tiny hover tooltip (one word, e.g. "blueprint", "spines") via native `title` — the only text allowed in this zone.
-- `≤700px`: hidden.
+Three zones unchanged — only the left zone's content swaps from static `ArtifactPreview` to the new `LiveBuild`.
 
-**Center zone — `ActionDock` (trimmed):**
-- Hard cap at **4 actions** per station; primary first, secondary muted. Truncate `STATION_META` accordingly:
-  - home: `View Work`, `Resume`
-  - about: `Bio`, `Contact`
-  - projects: `Featured`, `Case Studies`
-  - thinking: `Pinned`, `Strategy`
-  - skills: `Product`, `Technical`, `Design`
-  - journey: `Experience`, `Latest`
-  - writing: `Latest`, `Essays`
-  - contact: `Copy Email`, `LinkedIn`, `GitHub`
-- Same pill style, but center the row (`justify-center`) instead of left-aligned.
-- AnimatePresence cross-fade on `activeId` change is kept.
+### Files
 
-**Right zone — `BYOPDock` (NEW, relocated from header):**
-- Lifts the existing `DESIGN.INPUT` / `QUICK·PIC` popover trigger out of `AssemblyHeader.tsx` and re-mounts it inside the rail's right zone.
-- Reuses the same Radix Popover content, sketch picker, and brass-accent styling — only the trigger position changes.
-- Trigger button: `BUILD ▸` pill, amber accent, fixed 36px height, right-aligned with 12px inset from rail edge.
-- Popover anchors **upward** from the rail (`side="top"`, `align="end"`) so it opens over the page, not below the viewport.
-- `<700px`: collapses to icon-only (wrench glyph), popover still functional.
+- `src/components/DeskStage.tsx` — rail wrapper background → `transparent`; remove gradient/grid/shadow; height stays `clamp(72px, 9vh, 96px)`.
+- `src/components/console/ConsoleRail.tsx` — drop top brass hairline + bottom black hairline; swap `<ArtifactPreview>` for `<LiveBuild>` in the left zone.
+- `src/components/console/sketchUtils.ts` — **new**, exports `Stroke`, `Sketch`, `bbox`, `strokesToParts`, and `DEFAULT_SKETCH` (the drone preset).
+- `src/components/console/LiveBuild.tsx` — **new**, the rail-side live build renderer (listens to scroll + `byop:sketch`, renders progressively-assembling SVG sketch).
+- `src/components/AssemblyHeader.tsx` — replace local `strokesToParts`/`bbox`/types/PRESETS[0] usage with imports from `sketchUtils.ts`. No visual change in the header.
+- `src/components/console/ArtifactPreview.tsx` — kept on disk but no longer mounted (can stay for future use; not deleted to avoid risk).
 
-### 3. AssemblyHeader — reclaim BYOP's space
+### What the user sees
 
-In `src/components/AssemblyHeader.tsx`:
-- Remove the `DESIGN.INPUT` utility cluster (trigger + popover) from the right side of the header SVG/flex row.
-- Re-distribute the freed width to the assembly track: the 8-station belt currently sits in the center column with a fixed right gutter for BYOP. After removal, the track's `max-width` (or grid column) expands by the BYOP width (~140–180px on desktop), so stations breathe more and label spacing increases proportionally.
-- Header height unchanged (~90px). Mobile header (`AssemblyHeaderMobile`) is unaffected — its compact menu already has no BYOP slot.
-
-### 4. Files
-
-- `src/components/console/ConsoleRail.tsx` — drop `<BuildStatus>`, swap zone order (artifact left, actions center, BYOP right), update grid template, drop dividers, remove status glow, lower min-height.
-- `src/components/console/BuildStatus.tsx` — **delete**.
-- `src/components/console/ActionDock.tsx` — center alignment; respect 4-action cap.
-- `src/components/console/actionsByStation.ts` — trim each station's `actions` array; remove `status` field from `StationMeta`.
-- `src/components/console/ArtifactPreview.tsx` — remove any caption text; add `title` attr for hover label.
-- `src/components/console/BYOPDock.tsx` — **new**, hosts the relocated DESIGN.INPUT trigger + popover (extracted from AssemblyHeader).
-- `src/components/AssemblyHeader.tsx` — remove DESIGN.INPUT block; expand assembly track to fill freed space.
-- `src/components/DeskStage.tsx` — bottom strip height: `clamp(72px, 9vh, 96px)`; pass nothing extra to `ConsoleRail` (no more `progress` prop needed since BuildStatus is gone — but keep prop signature stable, just unused).
-
-### 5. What the user sees
-
-- Bottom strip is half as loud: a single small drawing on the left, 2–4 quiet pill buttons in the middle, and the BYOP "BUILD ▸" trigger anchored bottom-right that opens its sketch picker upward.
-- No more `03/08`, no progress bar, no "now building · drafting introduction" caveat — that narrative now lives only in the (wider) assembly header at the top.
-- The header's station belt visibly stretches into the space the BYOP control used to occupy.
+- Bottom strip is fully see-through over the page background.
+- On the left of the rail: the same drone (or whatever sketch the user picked) that's riding the belt up top, drawn statically and assembling in sync as they scroll. Pick a different sketch from BUILD ▸ and both update together.
+- Center pills and right BUILD trigger unchanged.
 
