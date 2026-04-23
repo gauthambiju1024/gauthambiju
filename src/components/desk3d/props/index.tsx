@@ -109,7 +109,7 @@ export const BookProp = () => {
       {/* silk bookmark */}
       <mesh position={[0.06, 0.13, 0.2]} rotation={[0, 0.1, 0]}>
         <boxGeometry args={[0.02, 0.001, 0.34]} />
-        <meshStandardMaterial color="#a8281e" roughness={0.5} sheen={0.6} sheenColor="#ff6655" />
+        <meshPhysicalMaterial color="#a8281e" roughness={0.5} sheen={0.6} sheenColor="#ff6655" />
       </mesh>
     </group>
   );
@@ -199,7 +199,7 @@ export const NotebookProp = () => {
       {/* black ribbon bookmark */}
       <mesh position={[0, 0.06, 0.28]}>
         <boxGeometry args={[0.018, 0.001, 0.12]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.6} sheen={0.4} sheenColor="#444" />
+        <meshPhysicalMaterial color="#0a0a0a" roughness={0.6} sheen={0.4} sheenColor="#444" />
       </mesh>
     </group>
   );
