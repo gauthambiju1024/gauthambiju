@@ -55,26 +55,26 @@ const SkillsToolbox = () => {
   const [activeSkill, setActiveSkill] = useState<{ group: number; skill: number } | null>(null);
 
   return (
-    <section className="py-16 md:py-24">
-      <div className="px-6 md:px-16 flex items-center gap-3 mb-12">
+    <section className="py-6 md:py-8 h-full flex flex-col">
+      <div className="px-6 md:px-12 flex items-center gap-3 mb-3">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">Skills</span>
       </div>
 
-      <div className="px-6 md:px-16 mb-10">
-        <h2 className="font-serif-display text-3xl md:text-4xl text-card-foreground leading-tight">
+      <div className="px-6 md:px-12 mb-4">
+        <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground leading-tight">
           The Toolbox
         </h2>
-        <p className="mt-3 font-body text-sm text-muted-foreground">
+        <p className="mt-1 font-body text-xs text-muted-foreground">
           Tools I use, not buzzwords I list. Hover for context.
         </p>
       </div>
 
-      <div className="px-6 md:px-16 grid md:grid-cols-3 gap-6">
+      <div className="px-6 md:px-12 grid md:grid-cols-3 gap-4 flex-1 min-h-0">
         {skillGroups.map((group, gi) => (
           <motion.div
             key={group.title}
-            className="rounded-lg border border-border bg-card p-6 relative overflow-hidden"
+            className="rounded-lg border border-border bg-card p-4 relative overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -82,7 +82,7 @@ const SkillsToolbox = () => {
             whileHover={{ y: -2, boxShadow: "0 8px 30px -8px rgba(0,0,0,0.08)" }}
           >
             {/* Compartment header */}
-            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
               <span className="text-lg">{group.icon}</span>
               <h3 className="font-display text-sm font-semibold tracking-wide uppercase text-card-foreground">{group.title}</h3>
               <span className="ml-auto text-[10px] font-mono text-muted-foreground">{group.skills.length}</span>

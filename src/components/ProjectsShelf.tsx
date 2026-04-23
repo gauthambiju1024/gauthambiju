@@ -55,9 +55,9 @@ const ProjectsShelf = () => {
     : "";
 
   return (
-    <section className="py-6 md:py-8" style={{ background: "hsl(220 10% 8%)", borderRadius: "8px" }}>
+    <section className="py-4 md:py-6 h-full flex flex-col" style={{ background: "transparent", borderRadius: "8px" }}>
       {/* Section header — consistent with other sections */}
-      <div className="flex items-center gap-4 mb-4 px-6 md:px-10">
+      <div className="flex items-center gap-4 mb-3 px-6 md:px-10">
         <div className="h-px flex-1" style={{ background: "hsl(var(--border))" }} />
         <span className="text-[10px] tracking-[0.25em] uppercase font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>
           Projects
@@ -69,7 +69,7 @@ const ProjectsShelf = () => {
         <h2 className="font-serif-display text-2xl md:text-3xl" style={{ color: "hsl(var(--card-foreground))" }}>
           Project Library
         </h2>
-        <p className="mt-2 font-body text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+        <p className="mt-1 font-body text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
           Case Studies · Products · Builds
         </p>
       </div>

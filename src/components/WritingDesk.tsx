@@ -74,11 +74,11 @@ const WritingDesk = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mb-8"
+            className="mb-4"
           >
             <Link
               to={featured.slug !== "#" ? `/blog/${featured.slug}` : "/blog"}
-              className="group block rounded-lg border border-border bg-card/50 p-6 md:p-8 hover:bg-card/80 transition-all duration-300"
+              className="group block rounded-lg border border-border bg-card/50 p-4 md:p-5 hover:bg-card/80 transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4">
                 <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] uppercase font-mono bg-primary/5 text-primary border border-primary/10 rounded-sm">
@@ -134,7 +134,7 @@ const WritingDesk = () => {
         </div>
 
         {/* View all */}
-        <div className="mt-8 text-center">
+        <div className="mt-4 text-center">
           <Link to="/blog" className="inline-flex items-center gap-1.5 text-xs font-mono text-primary hover:underline">
             View all writing <ArrowUpRight className="w-3 h-3" />
           </Link>
