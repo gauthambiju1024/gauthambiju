@@ -198,15 +198,11 @@ export const NotebookWithPen = ({ position = [-1.1, 0, 0.35] as [number, number,
     </mesh>
     {/* pen resting diagonally */}
     <group position={[0, 0.032, 0]} rotation={[0, 0.7, 0]}>
-      <mesh castShadow>
-        <cylinderGeometry args={[0.008, 0.008, 0.26, 16]} rotateZ={Math.PI / 2} />
-        <meshPhysicalMaterial color="#0e0e10" metalness={0.5} roughness={0.25} clearcoat={0.9} />
-      </mesh>
       <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
         <cylinderGeometry args={[0.008, 0.008, 0.26, 16]} />
         <meshPhysicalMaterial color="#0e0e10" metalness={0.5} roughness={0.25} clearcoat={0.9} />
       </mesh>
-      <mesh position={[0.13, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[0.13, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
         <coneGeometry args={[0.008, 0.022, 12]} />
         <meshPhysicalMaterial color="#d4a73a" metalness={1} roughness={0.22} clearcoat={1} />
       </mesh>
