@@ -1,11 +1,12 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { FrameId } from "@/components/desk/frames/FrameTypes";
-import { woodTexture } from "./textures";
+import { woodTexture, deskAlphaMask } from "./textures";
 import Prop3D from "./Prop3D";
 import { MatProp, CorkboardProp, BookProp, CardProp, NotebookProp, ToolboxProp, CompassProp, EnvelopeProp } from "./props";
-import { Lamp, Mug, Plant, PenHolder, Polaroids } from "./decor";
+import { Lamp, Mug, Plant, PenHolder, ClosedJournal } from "./decor";
 
 export type PropShape = "mat" | "cork" | "book" | "card" | "notebook" | "toolbox" | "compass" | "envelope";
 
@@ -34,12 +35,20 @@ const SHAPE_MAP: Record<PropShape, () => JSX.Element> = {
   envelope: () => <EnvelopeProp />,
 };
 
-const Floor = () => {
-  const tex = useMemo(() => woodTexture(), []);
+const FeatheredFloor = () => {
+  const wood = useMemo(() => woodTexture(), []);
+  const alpha = useMemo(() => deskAlphaMask(), []);
   return (
     <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-      <planeGeometry args={[10, 6]} />
-      <meshStandardMaterial map={tex} roughness={0.85} metalness={0.05} />
+      <circleGeometry args={[2.6, 96]} />
+      <meshStandardMaterial
+        map={wood}
+        alphaMap={alpha}
+        transparent
+        roughness={0.82}
+        metalness={0.06}
+        depthWrite={false}
+      />
     </mesh>
   );
 };
@@ -73,16 +82,16 @@ const DeskScene = ({ slots, activeId, onSelect }: DeskSceneProps) => {
       dpr={[1, 2]}
       camera={{ position: [0, 1.05, 2.4], fov: 38 }}
       frameloop="always"
-      gl={{ antialias: true, alpha: true }}
-      style={{ width: "100%", height: "100%" }}
+      gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}
+      style={{ width: "100%", height: "100%", background: "transparent" }}
     >
-      <color attach="background" args={["#15100b"]} />
-      <fog attach="fog" args={["#15100b", 4, 9]} />
+      {/* No background color, no fog — canvas is fully transparent so the page bleeds through. */}
 
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.3} />
+      {/* warm key */}
       <directionalLight
         position={[-2.5, 3.5, 2]}
-        intensity={1.1}
+        intensity={1.0}
         color="#ffe6c0"
         castShadow
         shadow-mapSize-width={1024}
@@ -94,18 +103,20 @@ const DeskScene = ({ slots, activeId, onSelect }: DeskSceneProps) => {
         shadow-camera-top={3}
         shadow-camera-bottom={-3}
       />
+      {/* cool rim */}
+      <directionalLight position={[2.8, 2.2, -2]} intensity={0.4} color="#9ec0ff" />
 
       <Suspense fallback={null}>
-        <Floor />
+        <Environment preset="apartment" background={false} />
+        <FeatheredFloor />
+        <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={4} blur={2.4} far={1.4} resolution={512} color="#000" />
 
-        {/* ambient decor */}
         <Lamp />
         <Mug />
         <Plant />
         <PenHolder />
-        <Polaroids />
+        <ClosedJournal />
 
-        {/* interactive slots */}
         {slots.map((s) => (
           <Prop3D
             key={s.id}
