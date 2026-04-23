@@ -85,29 +85,31 @@ const DeskScene = ({ slots, activeId, onSelect }: DeskSceneProps) => {
       gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}
       style={{ width: "100%", height: "100%", background: "transparent" }}
     >
-      <ambientLight intensity={0.25} />
+      <fog attach="fog" args={["#0a0a0a", 2.4, 5.2]} />
+      <ambientLight intensity={0.22} />
       {/* warm key from lamp side */}
       <directionalLight
         position={[2, 1.8, 0.5]}
-        intensity={0.7}
+        intensity={0.55}
         color="#ffd9a0"
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
         shadow-camera-near={0.5}
         shadow-camera-far={8}
         shadow-camera-left={-3}
         shadow-camera-right={3}
         shadow-camera-top={2}
         shadow-camera-bottom={-2}
+        shadow-bias={-0.0005}
       />
       {/* soft fill */}
-      <directionalLight position={[-2, 1.6, 0.8]} intensity={0.35} color="#fff4dd" />
+      <directionalLight position={[-2, 1.6, 0.8]} intensity={0.3} color="#fff4dd" />
       {/* cool rim */}
-      <directionalLight position={[0, 1.2, -2]} intensity={0.3} color="#9ec0ff" />
+      <directionalLight position={[0, 1.2, -2]} intensity={0.28} color="#9ec0ff" />
 
       <Suspense fallback={null}>
-        <Environment preset="apartment" background={false} />
+        <Environment preset="studio" background={false} />
         <PlankFloor />
         <ContactShadows position={[0, 0.001, 0]} opacity={0.55} scale={5} blur={2.6} far={1.4} resolution={512} color="#000" />
 
