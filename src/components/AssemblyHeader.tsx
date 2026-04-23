@@ -308,7 +308,11 @@ export function AssemblyHeader({ panelIds }: Props) {
       const i = parseInt(el.getAttribute("data-jump") || "0");
       const handler = () => {
         const target = document.getElementById(panelIds[i]);
-        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (!target) return;
+        // Use raw document position to bypass the global `[id] { scroll-margin-top: 100px }`
+        // rule in index.css — that rule offsets scrollIntoView and lands panels off-center.
+        const top = target.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top, behavior: "smooth" });
       };
       el.addEventListener("click", handler);
       clickHandlers.push(handler);
