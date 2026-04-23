@@ -17,14 +17,14 @@ const AboutSection = () => {
   const [hoveredStrength, setHoveredStrength] = useState<number | null>(null);
 
   return (
-    <section className="px-6 md:px-16 py-16 md:py-24">
+    <section className="px-6 md:px-16 py-6 md:py-8 h-full flex flex-col">
       {/* Section label */}
-      <div className="flex items-center gap-3 mb-12">
+      <div className="flex items-center gap-3 mb-4">
         <div className="h-px flex-1 bg-border" />
         <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">About</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12 md:gap-16">
+      <div className="grid md:grid-cols-2 gap-8 md:gap-12 flex-1 min-h-0">
         {/* Left page — Narrative */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
