@@ -161,7 +161,7 @@ const DeskScene = ({ progress, sectionCount, onJump }: DeskSceneProps) => {
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ position: [0, 0.42, 1.6], fov: 48 }}
+      camera={{ position: [0, 0.55, 1.25], fov: 42 }}
       frameloop="demand"
       gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}
       style={{ width: "100%", height: "100%", background: "transparent" }}
@@ -177,19 +177,19 @@ const DeskScene = ({ progress, sectionCount, onJump }: DeskSceneProps) => {
 
         {/* Left zone — thinking & planning */}
         <WorkbenchLamp eod={eod} />
-        <BlueprintTube />
-        <NotebookWithPen />
-        <DraftingTools />
+        <group scale={1.25}><BlueprintTube /></group>
+        <group scale={1.25}><NotebookWithPen /></group>
+        <group scale={1.25}><DraftingTools /></group>
 
         {/* Center zone — current work */}
         <LaptopClosable eod={eod} />
         <Mug position={[-0.55, 0, 0.5]} />
-        <StickyNotes />
+        <group scale={1.25}><StickyNotes /></group>
 
         {/* Right zone — shipped & people */}
-        <BookStack />
-        <PolaroidStack position={[1.2, 0, 0.55]} />
-        <BrassPaperweight eod={eod} />
+        <BookStack position={[1.7, 0, 0.35]} />
+        <PolaroidStack position={[1.35, 0, 0.55]} />
+        <group scale={1.25}><BrassPaperweight position={[2.1, 0, 0.5]} eod={eod} /></group>
 
         {/* Status light bar above the back of the desk */}
         <StatusLightBar progress={progress} eod={eod} count={sectionCount} onJump={onJump} />
