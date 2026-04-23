@@ -81,7 +81,7 @@ const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLay
   return (
     <motion.div
       className="absolute inset-0"
-      style={{ opacity, pointerEvents: interactive ? "auto" : "none" }}
+      style={{ opacity, x, pointerEvents: interactive ? "auto" : "none" }}
     >
       <Frame t={tDummy} active={interactive}>
         <Section />
