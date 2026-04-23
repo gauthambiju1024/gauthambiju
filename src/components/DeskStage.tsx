@@ -27,46 +27,52 @@ interface PanelLayerProps {
 }
 
 const PanelLayer = ({ section, index, total, scrollYProgress, tDummy }: PanelLayerProps) => {
-  // Each section "owns" the scroll range [index/total, (index+1)/total].
-  // It fades in over the last FADE_WINDOW of the previous slice,
-  // is fully visible across its slice, and fades out over the last FADE_WINDOW of its own slice.
+  // Continuous 1:1 mapping: each panel travels horizontally from +100% (right)
+  // through 0% (centered at its slice midpoint) to -100% (left), spanning the
+  // range from the previous panel's center to the next panel's center.
+  // Vertical scroll → horizontal travel with no static "hold" → smooth & gradual.
   const slice = 1 / total;
-  const start = index / total;
-  const end = (index + 1) / total;
+  const center = (index + 0.5) * slice;
+  const enterAt = Math.max(0, center - slice);
+  const exitAt = Math.min(1, center + slice);
 
-  const fadeInStart = Math.max(0, start - slice * FADE_WINDOW);
-  const fadeInEnd = start;
-  const fadeOutStart = end - slice * FADE_WINDOW;
-  const fadeOutEnd = end;
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
 
-  // Horizontal carousel feel: panel enters from right (+100%), centers, then exits left (-100%).
-  // First panel: no enter (starts centered). Last panel: no exit (stays centered).
+  // Opacity: crossfade only near the edges (~25% of a slice) so off-stage panels
+  // don't bleed through during the long continuous translation.
+  const fadeIn1 = enterAt;
+  const fadeIn2 = enterAt + slice * 0.25;
+  const fadeOut1 = exitAt - slice * 0.25;
+  const fadeOut2 = exitAt;
+
   const opacity = useTransform(
     scrollYProgress,
-    index === 0
-      ? [fadeOutStart, fadeOutEnd, 1]
-      : index === total - 1
-      ? [0, fadeInStart, fadeInEnd]
-      : [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd],
-    index === 0
-      ? [1, 0, 0]
-      : index === total - 1
-      ? [0, 0, 1]
+    isFirst
+      ? [center, fadeOut1, fadeOut2, 1]
+      : isLast
+      ? [0, fadeIn1, fadeIn2, center]
+      : [fadeIn1, fadeIn2, fadeOut1, fadeOut2],
+    isFirst
+      ? [1, 1, 0, 0]
+      : isLast
+      ? [0, 0, 1, 1]
       : [0, 1, 1, 0]
   );
 
+  // X: continuous travel across the panel's full visible window.
   const x = useTransform(
     scrollYProgress,
-    index === 0
-      ? [fadeOutStart, fadeOutEnd, 1]
-      : index === total - 1
-      ? [0, fadeInStart, fadeInEnd]
-      : [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd],
-    index === 0
-      ? ["0%", "-100%", "-100%"]
-      : index === total - 1
-      ? ["100%", "100%", "0%"]
-      : ["100%", "0%", "0%", "-100%"]
+    isFirst
+      ? [0, center, exitAt]
+      : isLast
+      ? [enterAt, center, 1]
+      : [enterAt, center, exitAt],
+    isFirst
+      ? ["0%", "0%", "-100%"]
+      : isLast
+      ? ["100%", "0%", "0%"]
+      : ["100%", "0%", "-100%"]
   );
 
   // Hide pointer events when nearly invisible (avoid blocking interactions).
