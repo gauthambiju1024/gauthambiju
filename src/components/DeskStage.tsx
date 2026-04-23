@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, ComponentType } from "react";
-import { motion, useScroll, useTransform, MotionValue, useMotionValue } from "framer-motion";
-import DeskScene from "./desk3d/DeskScene";
+import { useScroll, useTransform, MotionValue, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
+import ConsoleRail from "./console/ConsoleRail";
 import { FrameId, FrameProps } from "./desk/frames/FrameTypes";
 
 export interface SectionConfig {
@@ -128,12 +129,6 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     );
   }
 
-  // Horizontal position of the "now building" tag, tracking the LED traveler.
-  // Bar visible width spans roughly center 70% of the desk strip.
-  const tagLeftPct = sections.length > 1
-    ? 15 + (activeIdx / (sections.length - 1)) * 70
-    : 50;
-
   return (
     <div ref={containerRef} className="relative" style={{ height: `${sections.length * 100}vh` }}>
       {sections.map((s, i) => {
@@ -168,43 +163,25 @@ const DeskStage = ({ sections }: DeskStageProps) => {
           </div>
         </div>
 
+        {/* CONSOLE RAIL — bottom 12vh recessed station console */}
         <div
-          className="absolute inset-x-0 pointer-events-none"
+          className="absolute inset-x-0 bottom-0"
           style={{
-            bottom: "12vh",
-            height: "1.5vh",
-            background: "linear-gradient(to bottom, transparent, hsl(var(--background)))",
+            height: "clamp(88px, 12vh, 120px)",
+            background: "linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 7%))",
+            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.55), inset 0 -1px 0 rgba(255,255,255,0.02)",
+            backgroundImage:
+              "linear-gradient(180deg, hsl(220 18% 10%), hsl(220 22% 7%)), repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,0.025) 23px 24px), repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,0.025) 23px 24px)",
+            backgroundBlendMode: "normal, overlay, overlay",
           }}
-          aria-hidden="true"
-        />
-
-        {/* DESK — bottom 12vh strip */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: "12vh" }}>
-          <DeskScene
-            progress={scrollYProgress}
+        >
+          <ConsoleRail
             activeId={activeId}
-            sectionCount={sections.length}
+            activeIdx={activeIdx}
+            sections={sections}
+            progress={scrollYProgress}
             onJump={handleJumpIndex}
           />
-          {/* "Now Building" handwritten tag — tracks the status light */}
-          <motion.div
-            className="absolute pointer-events-none select-none"
-            style={{
-              left: `${tagLeftPct}%`,
-              top: "8%",
-              transform: "translateX(-50%)",
-              fontFamily: "'Caveat', cursive",
-              color: "hsl(43 74% 55%)",
-              fontSize: "clamp(14px, 1.6vh, 22px)",
-              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-            }}
-            initial={false}
-            animate={{ opacity: showTag ? 1 : 0, y: showTag ? 0 : -4 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            aria-hidden="true"
-          >
-            now building · {sections[activeIdx]?.label.toLowerCase()}
-          </motion.div>
         </div>
       </div>
     </div>
