@@ -108,45 +108,148 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Right — Portrait */}
+        {/* Right — ID badge on lanyard, lying on the mat */}
         <motion.div
-          className="hidden md:flex flex-col items-center gap-2 relative z-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: heroLoading ? 0 : 1 }}
-          transition={{ duration: 0.5 }}
+          className="hidden md:flex relative items-start justify-center pt-1 pr-2 pl-4"
+          initial={{ opacity: 0, y: -10, rotate: -10 }}
+          animate={{ opacity: heroLoading ? 0 : 1, y: 0, rotate: -6 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
+          whileHover={{ rotate: -3, y: -2, transition: { duration: 0.2 } }}
+          style={{ transformOrigin: "top center" }}
         >
-          {/* Profile label */}
-          <span className="text-[8px] font-mono tracking-[0.3em] uppercase" style={{ color: 'hsl(0 0% 100% / 0.3)' }}>
-            — Profile —
-          </span>
+          {/* mat shadow */}
+          <div
+            aria-hidden
+            className="absolute pointer-events-none"
+            style={{
+              left: "12%",
+              right: "8%",
+              top: "55%",
+              bottom: "-6%",
+              background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
+              filter: "blur(10px)",
+              zIndex: 0,
+            }}
+          />
 
-          {/* Portrait with corner brackets */}
-          <div className="relative">
-            <div className="corner-brackets">
-              <img
-                src={portraitSrc}
-                alt="Gautham portrait"
-                className="w-[150px] lg:w-[190px] h-auto border"
-                style={{ borderColor: 'hsl(0 0% 100% / 0.15)', filter: 'grayscale(0.3)' }}
+          <div className="relative z-[1] flex flex-col items-center" style={{ width: "clamp(160px, 14vw, 200px)" }}>
+            {/* Ribbon / lanyard + clip */}
+            <svg
+              viewBox="0 0 200 90"
+              className="w-full"
+              style={{ height: 70, marginBottom: -6, filter: "drop-shadow(2px 3px 4px hsl(160 30% 4% / 0.35))" }}
+              preserveAspectRatio="none"
+            >
+              {/* left strap */}
+              <polygon points="20,0 36,0 110,72 96,80" fill="hsl(40 30% 70%)" />
+              <line x1="28" y1="6" x2="103" y2="76" stroke="hsl(40 30% 80%)" strokeWidth="0.6" />
+              {/* right strap */}
+              <polygon points="180,0 164,0 90,72 104,80" fill="hsl(40 28% 66%)" />
+              <line x1="172" y1="6" x2="97" y2="76" stroke="hsl(40 30% 78%)" strokeWidth="0.6" />
+              {/* tiny mono mark on right strap */}
+              <text x="168" y="14" fontSize="6" fill="hsl(160 20% 16% / 0.5)" fontFamily="monospace" textAnchor="end">GB · 0024</text>
+              {/* metal clip */}
+              <rect x="92" y="74" width="16" height="10" rx="2" fill="hsl(0 0% 72%)" stroke="hsl(0 0% 50%)" strokeWidth="0.5" />
+              <rect x="95" y="76" width="10" height="2" fill="hsl(0 0% 88%)" />
+            </svg>
+
+            {/* Card body */}
+            <div
+              className="relative w-full"
+              style={{
+                background: "hsl(40 25% 92%)",
+                border: "1px solid hsl(160 15% 30% / 0.25)",
+                borderRadius: 4,
+                padding: "14px 12px 10px",
+                boxShadow: "4px 10px 26px hsl(160 30% 4% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.5)",
+              }}
+            >
+              {/* punched hole */}
+              <div
+                aria-hidden
+                className="absolute"
+                style={{
+                  top: 4,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 14,
+                  height: 4,
+                  borderRadius: 2,
+                  background: "hsl(160 20% 16%)",
+                  boxShadow: "inset 0 1px 1px hsl(0 0% 0% / 0.6)",
+                }}
               />
-            </div>
 
-            {/* Right-side vertical dimension */}
-            <div className="absolute top-0 -right-8 h-full flex flex-col items-center justify-center">
-              <div className="w-px h-full" style={{ background: 'hsl(0 0% 100% / 0.15)' }} />
-              <span className="text-[7px] font-mono absolute rotate-90" style={{ color: 'hsl(0 0% 100% / 0.2)' }}>2E00</span>
+              {/* Photo window */}
+              <div
+                className="relative mx-auto"
+                style={{
+                  marginTop: 6,
+                  width: "100%",
+                  aspectRatio: "1 / 1",
+                  border: "1px solid hsl(160 20% 16% / 0.3)",
+                  background: "hsl(40 20% 88%)",
+                  overflow: "hidden",
+                  boxShadow: "inset 0 0 8px hsl(160 30% 10% / 0.25)",
+                }}
+              >
+                <img
+                  src={portraitSrc}
+                  alt="Gautham portrait"
+                  className="w-full h-full object-cover"
+                  style={{ filter: "grayscale(0.4) contrast(1.05)" }}
+                />
+              </div>
+
+              {/* Name */}
+              <div
+                className="font-mono uppercase mt-2.5"
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.15em",
+                  color: "hsl(160 20% 16%)",
+                  fontWeight: 600,
+                }}
+              >
+                {hero?.name ?? "Gautham Biju"}
+              </div>
+
+              {/* Role */}
+              <div
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 8,
+                  letterSpacing: "0.25em",
+                  color: "hsl(160 15% 30% / 0.75)",
+                  marginTop: 2,
+                }}
+              >
+                Builder · Thinker · Maker
+              </div>
+
+              {/* Dashed divider */}
+              <div
+                className="my-2"
+                style={{ borderTop: "1px dashed hsl(160 20% 16% / 0.3)" }}
+              />
+
+              {/* ID + barcode */}
+              <div className="flex items-end justify-between">
+                <span
+                  className="font-mono"
+                  style={{ fontSize: 8, letterSpacing: "0.2em", color: "hsl(160 20% 16% / 0.7)" }}
+                >
+                  ID · 0024
+                </span>
+                <svg width="56" height="14" viewBox="0 0 56 14" aria-hidden>
+                  {[1, 3, 2, 1, 4, 1, 2, 3, 1, 2, 1, 3].map((w, i, arr) => {
+                    const x = arr.slice(0, i).reduce((s, v) => s + v + 1, 0);
+                    return <rect key={i} x={x} y="0" width={w} height="14" fill="hsl(160 20% 16% / 0.85)" />;
+                  })}
+                </svg>
+              </div>
             </div>
           </div>
-
-          {/* Bottom dimension line */}
-          <div className="dimension-line w-[150px] lg:w-[190px]">
-            <span>160 PX</span>
-          </div>
-
-          {/* Descriptor */}
-          <span className="text-[8px] font-mono tracking-[0.2em] uppercase mt-1" style={{ color: 'hsl(0 0% 100% / 0.25)' }}>
-            Builder · Thinker · Maker
-          </span>
         </motion.div>
       </div>
 
