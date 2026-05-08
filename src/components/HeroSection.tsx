@@ -133,24 +133,48 @@ const HeroSection = () => {
           />
 
           <div className="relative z-[1] flex flex-col items-center" style={{ width: "clamp(160px, 14vw, 200px)" }}>
-            {/* Ribbon / lanyard + clip */}
+            {/* Ribbon / lanyard loop + clip */}
             <svg
-              viewBox="0 0 200 90"
+              viewBox="0 0 240 150"
               className="w-full"
-              style={{ height: 70, marginBottom: -6, filter: "drop-shadow(2px 3px 4px hsl(160 30% 4% / 0.35))" }}
-              preserveAspectRatio="none"
+              style={{ height: 130, marginBottom: -6, overflow: "visible", filter: "drop-shadow(3px 4px 4px hsl(160 30% 4% / 0.4))" }}
+              preserveAspectRatio="xMidYMax meet"
             >
-              {/* left strap */}
-              <polygon points="20,0 36,0 110,72 96,80" fill="hsl(40 30% 70%)" />
-              <line x1="28" y1="6" x2="103" y2="76" stroke="hsl(40 30% 80%)" strokeWidth="0.6" />
-              {/* right strap */}
-              <polygon points="180,0 164,0 90,72 104,80" fill="hsl(40 28% 66%)" />
-              <line x1="172" y1="6" x2="97" y2="76" stroke="hsl(40 30% 78%)" strokeWidth="0.6" />
-              {/* tiny mono mark on right strap */}
-              <text x="168" y="14" fontSize="6" fill="hsl(160 20% 16% / 0.5)" fontFamily="monospace" textAnchor="end">GB · 0024</text>
-              {/* metal clip */}
-              <rect x="92" y="74" width="16" height="10" rx="2" fill="hsl(0 0% 72%)" stroke="hsl(0 0% 50%)" strokeWidth="0.5" />
-              <rect x="95" y="76" width="10" height="2" fill="hsl(0 0% 88%)" />
+              {/* Closed ribbon loop — outer (shadow) edge */}
+              <path
+                d="M 116 142 C 70 110, 40 80, 50 40 C 58 8, 110 0, 160 8 C 210 16, 240 50, 220 90 C 205 120, 170 138, 128 142 Z"
+                fill="hsl(140 35% 38%)"
+                stroke="hsl(140 30% 24%)"
+                strokeWidth="0.8"
+              />
+              {/* Inner cutout to make it a true loop (ribbon, not blob) */}
+              <path
+                d="M 122 132 C 88 108, 62 82, 70 50 C 78 22, 118 14, 158 22 C 200 30, 224 56, 208 86 C 196 110, 168 126, 132 132 Z"
+                fill="hsl(160 30% 6%)"
+              />
+              {/* Highlight along outer top edge */}
+              <path
+                d="M 60 38 C 70 14, 116 6, 158 12 C 196 18, 222 42, 222 70"
+                fill="none"
+                stroke="hsl(140 42% 52%)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+                opacity="0.85"
+              />
+              {/* Subtle fold/twist near top */}
+              <path
+                d="M 150 8 C 158 14, 162 22, 158 30"
+                fill="none"
+                stroke="hsl(140 30% 22%)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              {/* tiny mono mark on ribbon */}
+              <text x="180" y="46" fontSize="6" fill="hsl(40 30% 88% / 0.7)" fontFamily="monospace" textAnchor="middle" transform="rotate(18 180 46)">GB · 0024</text>
+              {/* metal clip at bottom of loop */}
+              <rect x="112" y="138" width="16" height="10" rx="2" fill="hsl(0 0% 72%)" stroke="hsl(0 0% 50%)" strokeWidth="0.5" />
+              <rect x="115" y="140" width="10" height="2" fill="hsl(0 0% 88%)" />
             </svg>
 
             {/* Card body */}
