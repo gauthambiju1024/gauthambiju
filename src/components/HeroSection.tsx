@@ -54,6 +54,7 @@ const HeroSection = () => {
     if (!stage || !section) return;
 
     let raf = 0;
+    let lastW = 0, lastH = 0;
     const update = () => {
       raf = 0;
       const r = section.getBoundingClientRect();
@@ -72,7 +73,13 @@ const HeroSection = () => {
         depth++;
       }
       stage.style.opacity = String(op);
-      stage.style.pointerEvents = op > 0.5 ? "none" : "none";
+      stage.style.pointerEvents = "none";
+      // When the stage actually has size or its size changed, recompute the lanyard.
+      if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
+        lastW = r.width;
+        lastH = r.height;
+        updateLanyardRef.current?.();
+      }
     };
     const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
 
