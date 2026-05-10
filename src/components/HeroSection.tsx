@@ -326,14 +326,14 @@ const HeroSection = () => {
           <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
           <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
 
-          <text fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill="hsl(40 30% 96% / 0.95)" letterSpacing="4">
-            <textPath href="#hero-lanyard-text-left" startOffset="0%">
-              {`${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft}`}
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.95)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-left" startOffset="50%">
+              {badge.ribbonLeft}
             </textPath>
           </text>
-          <text fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill="hsl(40 30% 96% / 0.7)" letterSpacing="4">
-            <textPath href="#hero-lanyard-text-right" startOffset="0%">
-              {`${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight}`}
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.7)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-right" startOffset="50%">
+              {badge.ribbonRight}
             </textPath>
           </text>
         </svg>
