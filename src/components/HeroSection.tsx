@@ -420,7 +420,7 @@ const HeroSection = () => {
           className="absolute select-none"
           style={{
             top: 90,
-            right: "clamp(20px, 3.5vw, 56px)",
+            right: 32,
             width: 200,
             padding: "12px 12px 16px",
             background: "hsl(40 25% 92%)",
