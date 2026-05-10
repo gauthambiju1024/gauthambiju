@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
