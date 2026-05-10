@@ -61,9 +61,9 @@ const HeroSection = () => {
       const targetY = slotRect.top - stageRect.top + slotRect.height / 2;
       const w = stageRect.width;
 
-      const sxL = w * 0.55, syL = 0;
-      const cp1xL = sxL + 20, cp1yL = targetY * 0.2;
-      const cp2xL = targetX - 40, cp2yL = targetY - 60;
+      const sxL = w * 0.62, syL = -8;
+      const cp1xL = sxL + 30, cp1yL = targetY * 0.25;
+      const cp2xL = targetX - 50, cp2yL = targetY - 80;
       const dL = `M ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
       const dTL = `M ${sxL - 200} ${syL - 100} L ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
 
