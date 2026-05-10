@@ -236,7 +236,7 @@ const HeroSection = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: heroLoading ? 0 : 1 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        style={{ zIndex: 20 }}
+        style={{ zIndex: 30 }}
       >
         {/* mat shadow under card rest position */}
         <div
