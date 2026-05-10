@@ -118,13 +118,13 @@ const HeroSection = () => {
       const cp1xL = sxL + 30, cp1yL = targetY * 0.25;
       const cp2xL = targetX - 50, cp2yL = targetY - 80;
       const dL = `M ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
-      const dTL = `M ${sxL - 200} ${syL - 100} L ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
+      const dTL = dL;
 
       const sxR = w * 0.86, syR = -8;
       const cp1xR = sxR - 30, cp1yR = targetY * 0.3;
       const cp2xR = targetX + 50, cp2yR = targetY - 70;
       const dR = `M ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
-      const dTR = `M ${sxR + 200} ${syR - 100} L ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
+      const dTR = dR;
 
       visualLeftRef.current?.setAttribute('d', dL);
       edgesLeftRef.current?.setAttribute('d', dL);
