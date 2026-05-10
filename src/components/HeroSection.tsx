@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
 import { ArrowUpRight } from "lucide-react";
-
-
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
 const HeroSection = () => {
