@@ -150,6 +150,7 @@ const HeroSection = () => {
         clipRef.current.style.transform = `translateY(-15px) rotate(${angle - 90}deg)`;
       }
     };
+    updateLanyardRef.current = updateLanyard;
 
     const applyTransform = () => {
       card.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(8deg)`;
@@ -181,6 +182,8 @@ const HeroSection = () => {
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
     window.addEventListener('resize', updateLanyard);
+    const ro = new ResizeObserver(() => updateLanyard());
+    ro.observe(stage);
 
     requestAnimationFrame(() => requestAnimationFrame(updateLanyard));
 
@@ -190,8 +193,10 @@ const HeroSection = () => {
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('pointercancel', onPointerUp);
       window.removeEventListener('resize', updateLanyard);
+      ro.disconnect();
+      updateLanyardRef.current = null;
     };
-  }, []);
+  }, [mounted]);
 
   return (
     <section ref={sectionRef} className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
