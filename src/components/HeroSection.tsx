@@ -99,38 +99,20 @@ const HeroSection = () => {
       const t = e.target as HTMLElement;
       if (t.closest('a,button,input,textarea')) return;
       dragging = true;
-      springing = false;
       startX = e.clientX - offsetX;
       startY = e.clientY - offsetY;
       card.setPointerCapture(e.pointerId);
-      card.style.transition = 'none';
     };
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging) return;
       e.preventDefault();
-      offsetX = Math.max(-140, Math.min(140, e.clientX - startX));
-      offsetY = Math.max(-140, Math.min(140, e.clientY - startY));
+      offsetX = e.clientX - startX;
+      offsetY = e.clientY - startY;
       if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; applyTransform(); });
     };
     const onPointerUp = () => {
       if (!dragging) return;
       dragging = false;
-      const fromX = offsetX, fromY = offsetY;
-      const startTs = performance.now();
-      const duration = 500;
-      const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-      springing = true;
-      const tick = () => {
-        if (!springing) return;
-        const t = Math.min(1, (performance.now() - startTs) / duration);
-        const k = 1 - ease(t);
-        offsetX = fromX * k;
-        offsetY = fromY * k;
-        applyTransform();
-        if (t < 1) requestAnimationFrame(tick);
-        else springing = false;
-      };
-      requestAnimationFrame(tick);
     };
 
     card.addEventListener('pointerdown', onPointerDown);
