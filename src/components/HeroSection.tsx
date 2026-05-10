@@ -282,14 +282,12 @@ const HeroSection = () => {
         <div className="hidden md:block" style={{ width: "clamp(220px, 18vw, 280px)", flexShrink: 0 }} aria-hidden />
       </div>
 
-      {/* Full-bleed lanyard + ID badge overlay (anchored to the hero section / cutmat) */}
-      <motion.div
+      {/* Full-bleed lanyard + ID badge overlay (portaled to body so the card can extend outside the panel viewport) */}
+      {mounted && createPortal(
+      <div
         ref={stageRef}
-        className="hidden md:block absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: heroLoading ? 0 : 1 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        style={{ zIndex: 30 }}
+        className="hidden md:block pointer-events-none"
+        style={{ position: "fixed", top: 0, left: 0, width: 0, height: 0, zIndex: 30, opacity: heroLoading ? 0 : 1, transition: "opacity 0.6s 0.4s" }}
       >
         {/* mat shadow under card rest position */}
         <div
