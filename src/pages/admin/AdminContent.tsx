@@ -77,6 +77,40 @@ export default function AdminContent() {
                 <Label>Rotating Words (one per line)</Label>
                 <Textarea rows={4} value={rotatingWords.join('\n')} onChange={e => setRotatingWords(e.target.value.split('\n').filter(Boolean))} />
               </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <Label className="text-base">ID Badge (right side of hero)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Card Name</Label>
+                    <Input value={(heroContent as any).badge?.name ?? ''} placeholder="GAUTHAM BIJU"
+                      onChange={e => setHeroContent({ ...heroContent, badge: { ...(heroContent as any).badge, name: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">ID Label</Label>
+                    <Input value={(heroContent as any).badge?.idLabel ?? ''} placeholder="ID · 0024"
+                      onChange={e => setHeroContent({ ...heroContent, badge: { ...(heroContent as any).badge, idLabel: e.target.value } })} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Card Title (use \n for line break)</Label>
+                  <Input value={(heroContent as any).badge?.title ?? ''} placeholder="BUILDER · THINKER · MAKER"
+                    onChange={e => setHeroContent({ ...heroContent, badge: { ...(heroContent as any).badge, title: e.target.value } })} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Ribbon Text (left strand)</Label>
+                    <Input value={(heroContent as any).badge?.ribbonLeft ?? ''} placeholder="GAUTHAM BIJU"
+                      onChange={e => setHeroContent({ ...heroContent, badge: { ...(heroContent as any).badge, ribbonLeft: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Ribbon Text (right strand)</Label>
+                    <Input value={(heroContent as any).badge?.ribbonRight ?? ''} placeholder="PORTFOLIO · 2026"
+                      onChange={e => setHeroContent({ ...heroContent, badge: { ...(heroContent as any).badge, ribbonRight: e.target.value } })} />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <Button onClick={() => saveContent('hero', 'main', heroContent as Json)}><Save className="h-4 w-4 mr-2" />Save Hero</Button>
                 <Button onClick={() => saveContent('hero', 'rotating_words', rotatingWords as unknown as Json)}><Save className="h-4 w-4 mr-2" />Save Words</Button>
