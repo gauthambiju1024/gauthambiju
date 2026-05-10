@@ -496,7 +496,8 @@ const HeroSection = () => {
             />
           </div>
         </div>
-      </motion.div>
+      </div>,
+      document.body)}
 
     </section>
   );
