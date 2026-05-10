@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import { MorphingText } from "./MorphingText";
@@ -30,6 +31,7 @@ const HeroSection = () => {
     ribbonRight: hero?.badge?.ribbonRight || "PORTFOLIO · 2026",
   };
 
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
@@ -40,6 +42,57 @@ const HeroSection = () => {
   const edgesRightRef = useRef<SVGPathElement>(null);
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Track the hero section's rect + inherited opacity so the portaled overlay
+  // follows panel slide/fade transitions while still rendering above clipping wrappers.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const section = sectionRef.current;
+    if (!stage || !section) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = section.getBoundingClientRect();
+      stage.style.top = `${r.top}px`;
+      stage.style.left = `${r.left}px`;
+      stage.style.width = `${r.width}px`;
+      stage.style.height = `${r.height}px`;
+      // Walk up the DOM and multiply opacities so we mirror PanelLayer fade.
+      let op = 1;
+      let el: HTMLElement | null = section;
+      let depth = 0;
+      while (el && depth < 8) {
+        const o = parseFloat(getComputedStyle(el).opacity || "1");
+        if (!Number.isNaN(o)) op *= o;
+        el = el.parentElement;
+        depth++;
+      }
+      stage.style.opacity = String(op);
+      stage.style.pointerEvents = op > 0.5 ? "none" : "none";
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+
+    update();
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
+    const ro = new ResizeObserver(schedule);
+    ro.observe(section);
+    // Continuously follow framer-motion animated opacity.
+    let mo: number | null = null;
+    const tick = () => { update(); mo = requestAnimationFrame(tick); };
+    mo = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
+      ro.disconnect();
+      if (mo) cancelAnimationFrame(mo);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [mounted]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -133,7 +186,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
+    <section ref={sectionRef} className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
       {/* Top bar */}
       <motion.div
         className="flex items-center justify-between mb-5"
@@ -229,29 +282,15 @@ const HeroSection = () => {
         <div className="hidden md:block" style={{ width: "clamp(220px, 18vw, 280px)", flexShrink: 0 }} aria-hidden />
       </div>
 
-      {/* Full-bleed lanyard + ID badge overlay (anchored to the hero section / cutmat) */}
-      <motion.div
+      {/* Full-bleed lanyard + ID badge overlay (portaled to body so the card can extend outside the panel viewport) */}
+      {mounted && createPortal(
+      <div
         ref={stageRef}
-        className="hidden md:block absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: heroLoading ? 0 : 1 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        style={{ zIndex: 30 }}
+        className="hidden md:block pointer-events-none"
+        style={{ position: "fixed", top: 0, left: 0, width: 0, height: 0, zIndex: 30, opacity: heroLoading ? 0 : 1, transition: "opacity 0.6s 0.4s" }}
       >
-        {/* mat shadow under card rest position */}
-        <div
-          aria-hidden
-          className="absolute"
-          style={{
-            top: 320,
-            right: 30,
-            width: 280,
-            height: 60,
-            background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
-            filter: "blur(10px)",
-            zIndex: 1,
-          }}
-        />
+        {/* (mat shadow now lives inside the card so it follows drag) */}
+
 
         {/* Lanyard SVG (full hero width) */}
         <svg
@@ -287,14 +326,14 @@ const HeroSection = () => {
           <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
           <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
 
-          <text fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill="hsl(40 30% 96% / 0.95)" letterSpacing="4">
-            <textPath href="#hero-lanyard-text-left" startOffset="0%">
-              {`${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft} · ${badge.ribbonLeft}`}
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.95)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-left" startOffset="50%">
+              {badge.ribbonLeft}
             </textPath>
           </text>
-          <text fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill="hsl(40 30% 96% / 0.7)" letterSpacing="4">
-            <textPath href="#hero-lanyard-text-right" startOffset="0%">
-              {`${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight} · ${badge.ribbonRight}`}
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.7)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-right" startOffset="50%">
+              {badge.ribbonRight}
             </textPath>
           </text>
         </svg>
@@ -373,7 +412,7 @@ const HeroSection = () => {
             padding: "12px 12px 16px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
-            boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
             transform: "rotate(8deg)",
             transformOrigin: "center center",
             cursor: "grab",
@@ -382,6 +421,22 @@ const HeroSection = () => {
             pointerEvents: "auto",
           }}
         >
+          {/* Ground shadow — sits inside the card so it transforms (drag + rotate) with it */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: -28,
+              transform: "translateX(-50%)",
+              width: "115%",
+              height: 40,
+              background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
+              filter: "blur(8px)",
+              zIndex: -1,
+              pointerEvents: "none",
+            }}
+          />
           <div
             ref={slotRef}
             aria-hidden
@@ -457,7 +512,8 @@ const HeroSection = () => {
             />
           </div>
         </div>
-      </motion.div>
+      </div>,
+      document.body)}
 
     </section>
   );
