@@ -289,20 +289,8 @@ const HeroSection = () => {
         className="hidden md:block pointer-events-none"
         style={{ position: "fixed", top: 0, left: 0, width: 0, height: 0, zIndex: 30, opacity: heroLoading ? 0 : 1, transition: "opacity 0.6s 0.4s" }}
       >
-        {/* mat shadow under card rest position */}
-        <div
-          aria-hidden
-          className="absolute"
-          style={{
-            top: 320,
-            right: 30,
-            width: 280,
-            height: 60,
-            background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
-            filter: "blur(10px)",
-            zIndex: 1,
-          }}
-        />
+        {/* (mat shadow now lives inside the card so it follows drag) */}
+
 
         {/* Lanyard SVG (full hero width) */}
         <svg
