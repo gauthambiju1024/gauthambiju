@@ -50,7 +50,7 @@ const HeroSection = () => {
     let dragging = false;
     let startX = 0, startY = 0;
     let rafId = 0;
-    let springing = false;
+    
 
     const updateLanyard = () => {
       const slot = slotRef.current;
@@ -99,38 +99,20 @@ const HeroSection = () => {
       const t = e.target as HTMLElement;
       if (t.closest('a,button,input,textarea')) return;
       dragging = true;
-      springing = false;
       startX = e.clientX - offsetX;
       startY = e.clientY - offsetY;
       card.setPointerCapture(e.pointerId);
-      card.style.transition = 'none';
     };
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging) return;
       e.preventDefault();
-      offsetX = Math.max(-140, Math.min(140, e.clientX - startX));
-      offsetY = Math.max(-140, Math.min(140, e.clientY - startY));
+      offsetX = e.clientX - startX;
+      offsetY = e.clientY - startY;
       if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; applyTransform(); });
     };
     const onPointerUp = () => {
       if (!dragging) return;
       dragging = false;
-      const fromX = offsetX, fromY = offsetY;
-      const startTs = performance.now();
-      const duration = 500;
-      const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-      springing = true;
-      const tick = () => {
-        if (!springing) return;
-        const t = Math.min(1, (performance.now() - startTs) / duration);
-        const k = 1 - ease(t);
-        offsetX = fromX * k;
-        offsetY = fromY * k;
-        applyTransform();
-        if (t < 1) requestAnimationFrame(tick);
-        else springing = false;
-      };
-      requestAnimationFrame(tick);
     };
 
     card.addEventListener('pointerdown', onPointerDown);
@@ -151,7 +133,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-hidden h-full flex flex-col justify-center">
+    <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
       {/* Top bar */}
       <motion.div
         className="flex items-center justify-between mb-5"
@@ -254,7 +236,7 @@ const HeroSection = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: heroLoading ? 0 : 1 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        style={{ zIndex: 20 }}
+        style={{ zIndex: 30 }}
       >
         {/* mat shadow under card rest position */}
         <div
@@ -381,16 +363,15 @@ const HeroSection = () => {
           ref={cardRef}
           className="absolute select-none"
           style={{
-            top: 110,
-            right: "clamp(24px, 4vw, 64px)",
-            width: 240,
-            padding: "16px 16px 20px",
+            top: 90,
+            right: "clamp(20px, 3.5vw, 56px)",
+            width: 200,
+            padding: "12px 12px 16px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
             boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
             transform: "rotate(8deg)",
             transformOrigin: "center center",
-            transition: "box-shadow 0.2s",
             cursor: "grab",
             zIndex: 10,
             touchAction: "none",
@@ -402,11 +383,11 @@ const HeroSection = () => {
             aria-hidden
             style={{
               position: "absolute",
-              top: 10,
+              top: 8,
               left: "50%",
               transform: "translateX(-50%)",
-              width: 45,
-              height: 8,
+              width: 38,
+              height: 7,
               borderRadius: 4,
               background: "hsl(160 30% 6%)",
               boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)",
@@ -417,9 +398,9 @@ const HeroSection = () => {
           <div
             style={{
               width: "100%",
-              height: 160,
-              marginTop: 18,
-              marginBottom: 16,
+              height: 130,
+              marginTop: 14,
+              marginBottom: 12,
               backgroundImage: `url(${portraitSrc})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
@@ -431,11 +412,11 @@ const HeroSection = () => {
           <div
             className="font-mono"
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 700,
               color: "hsl(160 20% 16%)",
-              letterSpacing: "1.5px",
-              marginBottom: 6,
+              letterSpacing: "1.3px",
+              marginBottom: 5,
               lineHeight: 1.2,
             }}
           >
@@ -444,27 +425,27 @@ const HeroSection = () => {
           <div
             className="font-mono"
             style={{
-              fontSize: 9,
+              fontSize: 8.5,
               color: "hsl(160 15% 30% / 0.85)",
               letterSpacing: "1px",
-              lineHeight: 1.5,
+              lineHeight: 1.45,
               whiteSpace: "pre-line",
             }}
           >
             {badge.title.replace(/\\n/g, "\n")}
           </div>
 
-          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "16px 0 12px" }} />
+          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "12px 0 10px" }} />
 
           <div className="flex items-end justify-between w-full">
-            <span className="font-mono" style={{ fontSize: 9, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.5px" }}>
+            <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.3px" }}>
               {badge.idLabel}
             </span>
             <div
               aria-hidden
               style={{
-                width: 45,
-                height: 12,
+                width: 38,
+                height: 10,
                 opacity: 0.85,
                 background:
                   "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)",
