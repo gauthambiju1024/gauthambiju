@@ -412,7 +412,7 @@ const HeroSection = () => {
             padding: "12px 12px 16px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
-            boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
             transform: "rotate(8deg)",
             transformOrigin: "center center",
             cursor: "grab",
@@ -421,6 +421,22 @@ const HeroSection = () => {
             pointerEvents: "auto",
           }}
         >
+          {/* Ground shadow — sits inside the card so it transforms (drag + rotate) with it */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: -28,
+              transform: "translateX(-50%)",
+              width: "115%",
+              height: 40,
+              background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
+              filter: "blur(8px)",
+              zIndex: -1,
+              pointerEvents: "none",
+            }}
+          />
           <div
             ref={slotRef}
             aria-hidden
