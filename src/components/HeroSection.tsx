@@ -42,6 +42,7 @@ const HeroSection = () => {
   const edgesRightRef = useRef<SVGPathElement>(null);
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
+  const updateLanyardRef = useRef<(() => void) | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
