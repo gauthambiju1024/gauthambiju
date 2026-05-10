@@ -31,6 +31,7 @@ const HeroSection = () => {
     ribbonRight: hero?.badge?.ribbonRight || "PORTFOLIO · 2026",
   };
 
+  const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
@@ -41,6 +42,57 @@ const HeroSection = () => {
   const edgesRightRef = useRef<SVGPathElement>(null);
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Track the hero section's rect + inherited opacity so the portaled overlay
+  // follows panel slide/fade transitions while still rendering above clipping wrappers.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const section = sectionRef.current;
+    if (!stage || !section) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = section.getBoundingClientRect();
+      stage.style.top = `${r.top}px`;
+      stage.style.left = `${r.left}px`;
+      stage.style.width = `${r.width}px`;
+      stage.style.height = `${r.height}px`;
+      // Walk up the DOM and multiply opacities so we mirror PanelLayer fade.
+      let op = 1;
+      let el: HTMLElement | null = section;
+      let depth = 0;
+      while (el && depth < 8) {
+        const o = parseFloat(getComputedStyle(el).opacity || "1");
+        if (!Number.isNaN(o)) op *= o;
+        el = el.parentElement;
+        depth++;
+      }
+      stage.style.opacity = String(op);
+      stage.style.pointerEvents = op > 0.5 ? "none" : "none";
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+
+    update();
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
+    const ro = new ResizeObserver(schedule);
+    ro.observe(section);
+    // Continuously follow framer-motion animated opacity.
+    let mo: number | null = null;
+    const tick = () => { update(); mo = requestAnimationFrame(tick); };
+    mo = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
+      ro.disconnect();
+      if (mo) cancelAnimationFrame(mo);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [mounted]);
 
   useEffect(() => {
     const stage = stageRef.current;
