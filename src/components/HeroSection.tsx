@@ -50,7 +50,7 @@ const HeroSection = () => {
     let dragging = false;
     let startX = 0, startY = 0;
     let rafId = 0;
-    let springing = false;
+    
 
     const updateLanyard = () => {
       const slot = slotRef.current;
