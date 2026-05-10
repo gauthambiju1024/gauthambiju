@@ -67,9 +67,9 @@ const HeroSection = () => {
       const dL = `M ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
       const dTL = `M ${sxL - 200} ${syL - 100} L ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
 
-      const sxR = w * 0.75, syR = 0;
+      const sxR = w * 0.86, syR = -8;
       const cp1xR = sxR - 30, cp1yR = targetY * 0.3;
-      const cp2xR = targetX + 40, cp2yR = targetY - 50;
+      const cp2xR = targetX + 50, cp2yR = targetY - 70;
       const dR = `M ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
       const dTR = `M ${sxR + 200} ${syR - 100} L ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
 
