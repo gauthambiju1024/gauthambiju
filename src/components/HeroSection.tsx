@@ -243,235 +243,236 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Right — Interactive ID badge on woven lanyard */}
-        <motion.div
-          ref={stageRef}
-          className="hidden md:block relative"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: heroLoading ? 0 : 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          style={{ width: "clamp(260px, 22vw, 320px)", height: 380, alignSelf: "stretch" }}
+        {/* Right — spacer to keep headline width */}
+        <div className="hidden md:block" style={{ width: "clamp(220px, 18vw, 280px)", flexShrink: 0 }} aria-hidden />
+      </div>
+
+      {/* Full-bleed lanyard + ID badge overlay (anchored to the hero section / cutmat) */}
+      <motion.div
+        ref={stageRef}
+        className="hidden md:block absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: heroLoading ? 0 : 1 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        style={{ zIndex: 20 }}
+      >
+        {/* mat shadow under card rest position */}
+        <div
+          aria-hidden
+          className="absolute"
+          style={{
+            top: 320,
+            right: 30,
+            width: 280,
+            height: 60,
+            background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
+            filter: "blur(10px)",
+            zIndex: 1,
+          }}
+        />
+
+        {/* Lanyard SVG (full hero width) */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          style={{ zIndex: 5, overflow: "visible" }}
+          xmlns="http://www.w3.org/2000/svg"
         >
-          {/* mat shadow at rest position */}
+          <defs>
+            <filter id="hero-lanyard-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="2" dy="8" stdDeviation="5" floodColor="hsl(160 30% 4%)" floodOpacity="0.55" />
+            </filter>
+            <pattern id="hero-fabric-front" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+              <rect width="8" height="8" fill="hsl(140 30% 28%)" />
+              <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 25% 18%)" strokeWidth="3" />
+              <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 35% 38%)" strokeWidth="3" />
+              <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.18)" strokeWidth="1" />
+              <line x1="0" y1="6" x2="8" y2="6" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="1" />
+            </pattern>
+            <pattern id="hero-fabric-back" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+              <rect width="8" height="8" fill="hsl(140 28% 18%)" />
+              <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 20% 12%)" strokeWidth="3" />
+              <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 30% 22%)" strokeWidth="3" />
+              <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.22)" strokeWidth="1" />
+            </pattern>
+          </defs>
+
+          <path ref={visualRightRef} d="" fill="none" stroke="url(#hero-fabric-back)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+          <path ref={edgesRightRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.35)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+
+          <path ref={visualLeftRef} d="" fill="none" stroke="url(#hero-fabric-front)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+          <path ref={edgesLeftRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.28)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+
+          <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
+          <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
+
+          <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.85)" letterSpacing="3">
+            <textPath href="#hero-lanyard-text-left" startOffset="10%">{badge.ribbonLeft}</textPath>
+          </text>
+          <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.55)" letterSpacing="3">
+            <textPath href="#hero-lanyard-text-right" startOffset="15%">{badge.ribbonRight}</textPath>
+          </text>
+        </svg>
+
+        {/* Metal clip + plastic strap */}
+        <div
+          ref={clipRef}
+          className="absolute flex flex-col items-center"
+          style={{
+            zIndex: 8,
+            filter: "drop-shadow(3px 8px 6px hsl(160 30% 4% / 0.5))",
+            transformOrigin: "top center",
+            pointerEvents: "none",
+          }}
+        >
           <div
-            aria-hidden
-            className="absolute pointer-events-none"
             style={{
-              left: "30%",
-              right: "10%",
-              top: "65%",
-              bottom: "-4%",
-              background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
-              filter: "blur(10px)",
-              zIndex: 0,
+              width: 24,
+              height: 30,
+              background: "linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 70%) 50%, hsl(0 0% 44%) 100%)",
+              borderRadius: "6px 6px 12px 12px",
+              boxShadow: "inset 1px 1px 3px hsl(0 0% 100% / 0.9), inset -2px -2px 4px hsl(0 0% 0% / 0.5)",
+              position: "relative",
+              zIndex: 2,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                bottom: 4,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 14,
+                height: 8,
+                background: "hsl(0 0% 30%)",
+                borderRadius: 4,
+                boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.7)",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              width: 16,
+              height: 35,
+              background: "linear-gradient(to right, hsl(0 0% 78% / 0.6), hsl(0 0% 100% / 0.8), hsl(0 0% 78% / 0.6))",
+              border: "1px solid hsl(0 0% 100% / 0.5)",
+              borderRadius: 2,
+              marginTop: -6,
+              position: "relative",
+              display: "flex",
+              justifyContent: "center",
+              boxShadow: "0 2px 4px hsl(0 0% 0% / 0.3)",
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                background: "radial-gradient(circle at 30% 30%, hsl(0 0% 100%), hsl(0 0% 60%))",
+                borderRadius: "50%",
+                marginTop: 18,
+                boxShadow: "0 2px 3px hsl(0 0% 0% / 0.6), inset 0 -1px 2px hsl(0 0% 0% / 0.4)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ID Card (draggable) — anchored top-right */}
+        <div
+          ref={cardRef}
+          className="absolute select-none"
+          style={{
+            top: 110,
+            right: "clamp(24px, 4vw, 64px)",
+            width: 240,
+            padding: "16px 16px 20px",
+            background: "hsl(40 25% 92%)",
+            borderRadius: 4,
+            boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            transform: "rotate(8deg)",
+            transformOrigin: "center center",
+            transition: "box-shadow 0.2s",
+            cursor: "grab",
+            zIndex: 10,
+            touchAction: "none",
+            pointerEvents: "auto",
+          }}
+        >
+          <div
+            ref={slotRef}
+            aria-hidden
+            style={{
+              position: "absolute",
+              top: 10,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 45,
+              height: 8,
+              borderRadius: 4,
+              background: "hsl(160 30% 6%)",
+              boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)",
+              zIndex: 2,
             }}
           />
 
-          {/* Lanyard SVG */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ zIndex: 5, overflow: "visible" }}
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <filter id="hero-lanyard-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="2" dy="8" stdDeviation="5" floodColor="hsl(160 30% 4%)" floodOpacity="0.55" />
-              </filter>
-              <pattern id="hero-fabric-front" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
-                <rect width="8" height="8" fill="hsl(140 30% 28%)" />
-                <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 25% 18%)" strokeWidth="3" />
-                <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 35% 38%)" strokeWidth="3" />
-                <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.18)" strokeWidth="1" />
-                <line x1="0" y1="6" x2="8" y2="6" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="1" />
-              </pattern>
-              <pattern id="hero-fabric-back" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
-                <rect width="8" height="8" fill="hsl(140 28% 18%)" />
-                <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 20% 12%)" strokeWidth="3" />
-                <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 30% 22%)" strokeWidth="3" />
-                <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.22)" strokeWidth="1" />
-              </pattern>
-            </defs>
-
-            {/* Right strand (behind) */}
-            <path ref={visualRightRef} d="" fill="none" stroke="url(#hero-fabric-back)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
-            <path ref={edgesRightRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.35)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
-
-            {/* Left strand (front) */}
-            <path ref={visualLeftRef} d="" fill="none" stroke="url(#hero-fabric-front)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
-            <path ref={edgesLeftRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.28)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
-
-            {/* Invisible text alignment paths */}
-            <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
-            <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
-
-            <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.85)" letterSpacing="3">
-              <textPath href="#hero-lanyard-text-left" startOffset="10%">{badge.ribbonLeft}</textPath>
-            </text>
-            <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.55)" letterSpacing="3">
-              <textPath href="#hero-lanyard-text-right" startOffset="15%">{badge.ribbonRight}</textPath>
-            </text>
-          </svg>
-
-          {/* Metal clip + plastic strap */}
           <div
-            ref={clipRef}
-            className="absolute flex flex-col items-center pointer-events-none"
             style={{
-              zIndex: 8,
-              filter: "drop-shadow(3px 8px 6px hsl(160 30% 4% / 0.5))",
-              transformOrigin: "top center",
+              width: "100%",
+              height: 160,
+              marginTop: 18,
+              marginBottom: 16,
+              backgroundImage: `url(${portraitSrc})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.12)",
+              filter: "grayscale(1) contrast(1.2)",
+            }}
+          />
+
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "hsl(160 20% 16%)",
+              letterSpacing: "1.5px",
+              marginBottom: 6,
+              lineHeight: 1.2,
             }}
           >
-            <div
-              style={{
-                width: 24,
-                height: 30,
-                background: "linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 70%) 50%, hsl(0 0% 44%) 100%)",
-                borderRadius: "6px 6px 12px 12px",
-                boxShadow: "inset 1px 1px 3px hsl(0 0% 100% / 0.9), inset -2px -2px 4px hsl(0 0% 0% / 0.5)",
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 4,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: 14,
-                  height: 8,
-                  background: "hsl(0 0% 30%)",
-                  borderRadius: 4,
-                  boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.7)",
-                }}
-              />
-            </div>
-            <div
-              style={{
-                width: 16,
-                height: 35,
-                background: "linear-gradient(to right, hsl(0 0% 78% / 0.6), hsl(0 0% 100% / 0.8), hsl(0 0% 78% / 0.6))",
-                border: "1px solid hsl(0 0% 100% / 0.5)",
-                borderRadius: 2,
-                marginTop: -6,
-                position: "relative",
-                display: "flex",
-                justifyContent: "center",
-                boxShadow: "0 2px 4px hsl(0 0% 0% / 0.3)",
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: "radial-gradient(circle at 30% 30%, hsl(0 0% 100%), hsl(0 0% 60%))",
-                  borderRadius: "50%",
-                  marginTop: 18,
-                  boxShadow: "0 2px 3px hsl(0 0% 0% / 0.6), inset 0 -1px 2px hsl(0 0% 0% / 0.4)",
-                }}
-              />
-            </div>
+            {badge.name}
+          </div>
+          <div
+            className="font-mono"
+            style={{
+              fontSize: 9,
+              color: "hsl(160 15% 30% / 0.85)",
+              letterSpacing: "1px",
+              lineHeight: 1.5,
+              whiteSpace: "pre-line",
+            }}
+          >
+            {badge.title.replace(/\\n/g, "\n")}
           </div>
 
-          {/* ID Card (draggable) */}
-          <div
-            ref={cardRef}
-            className="absolute select-none"
-            style={{
-              top: "55%",
-              left: "55%",
-              width: 240,
-              padding: "16px 16px 20px",
-              background: "hsl(40 25% 92%)",
-              borderRadius: 4,
-              boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
-              transform: "translate(-50%, -50%) rotate(8deg)",
-              transition: "box-shadow 0.2s",
-              cursor: "grab",
-              zIndex: 10,
-              touchAction: "none",
-            }}
-          >
-            {/* hole slot */}
+          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "16px 0 12px" }} />
+
+          <div className="flex items-end justify-between w-full">
+            <span className="font-mono" style={{ fontSize: 9, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.5px" }}>
+              {badge.idLabel}
+            </span>
             <div
-              ref={slotRef}
               aria-hidden
               style={{
-                position: "absolute",
-                top: 10,
-                left: "50%",
-                transform: "translateX(-50%)",
                 width: 45,
-                height: 8,
-                borderRadius: 4,
-                background: "hsl(160 30% 6%)",
-                boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)",
-                zIndex: 2,
+                height: 12,
+                opacity: 0.85,
+                background:
+                  "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)",
               }}
             />
-
-            {/* photo */}
-            <div
-              style={{
-                width: "100%",
-                height: 160,
-                marginTop: 18,
-                marginBottom: 16,
-                backgroundImage: `url(${portraitSrc})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.12)",
-                filter: "grayscale(1) contrast(1.2)",
-              }}
-            />
-
-            <div
-              className="font-mono"
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "hsl(160 20% 16%)",
-                letterSpacing: "1.5px",
-                marginBottom: 6,
-                lineHeight: 1.2,
-              }}
-            >
-              {badge.name}
-            </div>
-            <div
-              className="font-mono"
-              style={{
-                fontSize: 9,
-                color: "hsl(160 15% 30% / 0.85)",
-                letterSpacing: "1px",
-                lineHeight: 1.5,
-                whiteSpace: "pre-line",
-              }}
-            >
-              {badge.title.replace(/\\n/g, "\n")}
-            </div>
-
-            <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "16px 0 12px" }} />
-
-            <div className="flex items-end justify-between w-full">
-              <span className="font-mono" style={{ fontSize: 9, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.5px" }}>
-                {badge.idLabel}
-              </span>
-              <div
-                aria-hidden
-                style={{
-                  width: 45,
-                  height: 12,
-                  opacity: 0.85,
-                  background:
-                    "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)",
-                }}
-              />
-            </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
     </section>
   );
