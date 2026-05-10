@@ -42,6 +42,7 @@ const HeroSection = () => {
   const edgesRightRef = useRef<SVGPathElement>(null);
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
+  const updateLanyardRef = useRef<(() => void) | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -53,6 +54,7 @@ const HeroSection = () => {
     if (!stage || !section) return;
 
     let raf = 0;
+    let lastW = 0, lastH = 0;
     const update = () => {
       raf = 0;
       const r = section.getBoundingClientRect();
@@ -71,7 +73,13 @@ const HeroSection = () => {
         depth++;
       }
       stage.style.opacity = String(op);
-      stage.style.pointerEvents = op > 0.5 ? "none" : "none";
+      stage.style.pointerEvents = "none";
+      // When the stage actually has size or its size changed, recompute the lanyard.
+      if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
+        lastW = r.width;
+        lastH = r.height;
+        updateLanyardRef.current?.();
+      }
     };
     const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
 
@@ -142,6 +150,7 @@ const HeroSection = () => {
         clipRef.current.style.transform = `translateY(-15px) rotate(${angle - 90}deg)`;
       }
     };
+    updateLanyardRef.current = updateLanyard;
 
     const applyTransform = () => {
       card.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(8deg)`;
@@ -173,6 +182,8 @@ const HeroSection = () => {
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
     window.addEventListener('resize', updateLanyard);
+    const ro = new ResizeObserver(() => updateLanyard());
+    ro.observe(stage);
 
     requestAnimationFrame(() => requestAnimationFrame(updateLanyard));
 
@@ -182,8 +193,10 @@ const HeroSection = () => {
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('pointercancel', onPointerUp);
       window.removeEventListener('resize', updateLanyard);
+      ro.disconnect();
+      updateLanyardRef.current = null;
     };
-  }, []);
+  }, [mounted]);
 
   return (
     <section ref={sectionRef} className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
@@ -407,7 +420,7 @@ const HeroSection = () => {
           className="absolute select-none"
           style={{
             top: 90,
-            right: "clamp(20px, 3.5vw, 56px)",
+            right: 32,
             width: 200,
             padding: "12px 12px 16px",
             background: "hsl(40 25% 92%)",
