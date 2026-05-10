@@ -6,13 +6,149 @@ import { MorphingText } from "./MorphingText";
 import { ArrowUpRight } from "lucide-react";
 const defaultWords = ["products", "systems", "platforms", "experiences"];
 
+type HeroBadge = {
+  name?: string;
+  title?: string;
+  idLabel?: string;
+  ribbonLeft?: string;
+  ribbonRight?: string;
+};
+
 const HeroSection = () => {
   const { value: heroData, loading: heroLoading } = useSiteContent('hero', 'main');
   const { value: wordsData } = useSiteContent('hero', 'rotating_words');
 
-  const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string } | null;
+  const hero = heroData as { name?: string; tagline?: string; location?: string; portrait?: string; badge?: HeroBadge } | null;
   const rotatingWords = (wordsData as string[] | null) ?? defaultWords;
   const portraitSrc = hero?.portrait || heroPortrait;
+
+  const badge: Required<HeroBadge> = {
+    name: hero?.badge?.name || "GAUTHAM BIJU",
+    title: hero?.badge?.title || "BUILDER · THINKER · MAKER",
+    idLabel: hero?.badge?.idLabel || "ID · 0024",
+    ribbonLeft: hero?.badge?.ribbonLeft || "GAUTHAM BIJU",
+    ribbonRight: hero?.badge?.ribbonRight || "PORTFOLIO · 2026",
+  };
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const slotRef = useRef<HTMLDivElement>(null);
+  const clipRef = useRef<HTMLDivElement>(null);
+  const visualLeftRef = useRef<SVGPathElement>(null);
+  const visualRightRef = useRef<SVGPathElement>(null);
+  const edgesLeftRef = useRef<SVGPathElement>(null);
+  const edgesRightRef = useRef<SVGPathElement>(null);
+  const textPathLeftRef = useRef<SVGPathElement>(null);
+  const textPathRightRef = useRef<SVGPathElement>(null);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    const card = cardRef.current;
+    if (!stage || !card) return;
+
+    let offsetX = 0, offsetY = 0;
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let rafId = 0;
+    let springing = false;
+
+    const updateLanyard = () => {
+      const slot = slotRef.current;
+      if (!slot) return;
+      const slotRect = slot.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const targetX = slotRect.left - stageRect.left + slotRect.width / 2;
+      const targetY = slotRect.top - stageRect.top + slotRect.height / 2;
+      const w = stageRect.width;
+
+      const sxL = w * 0.55, syL = 0;
+      const cp1xL = sxL + 20, cp1yL = targetY * 0.2;
+      const cp2xL = targetX - 40, cp2yL = targetY - 60;
+      const dL = `M ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
+      const dTL = `M ${sxL - 200} ${syL - 100} L ${sxL} ${syL} C ${cp1xL} ${cp1yL}, ${cp2xL} ${cp2yL}, ${targetX} ${targetY}`;
+
+      const sxR = w * 0.75, syR = 0;
+      const cp1xR = sxR - 30, cp1yR = targetY * 0.3;
+      const cp2xR = targetX + 40, cp2yR = targetY - 50;
+      const dR = `M ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
+      const dTR = `M ${sxR + 200} ${syR - 100} L ${sxR} ${syR} C ${cp1xR} ${cp1yR}, ${cp2xR} ${cp2yR}, ${targetX} ${targetY}`;
+
+      visualLeftRef.current?.setAttribute('d', dL);
+      edgesLeftRef.current?.setAttribute('d', dL);
+      textPathLeftRef.current?.setAttribute('d', dTL);
+      visualRightRef.current?.setAttribute('d', dR);
+      edgesRightRef.current?.setAttribute('d', dR);
+      textPathRightRef.current?.setAttribute('d', dTR);
+
+      const dx = targetX - (cp2xL + cp2xR) / 2;
+      const dy = targetY - (cp2yL + cp2yR) / 2;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (clipRef.current) {
+        clipRef.current.style.left = `${targetX - 12}px`;
+        clipRef.current.style.top = `${targetY - 12}px`;
+        clipRef.current.style.transform = `translateY(-15px) rotate(${angle - 90}deg)`;
+      }
+    };
+
+    const applyTransform = () => {
+      card.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(8deg)`;
+      updateLanyard();
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('a,button,input,textarea')) return;
+      dragging = true;
+      springing = false;
+      startX = e.clientX - offsetX;
+      startY = e.clientY - offsetY;
+      card.setPointerCapture(e.pointerId);
+      card.style.transition = 'none';
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      offsetX = Math.max(-140, Math.min(140, e.clientX - startX));
+      offsetY = Math.max(-140, Math.min(140, e.clientY - startY));
+      if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; applyTransform(); });
+    };
+    const onPointerUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      const fromX = offsetX, fromY = offsetY;
+      const startTs = performance.now();
+      const duration = 500;
+      const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+      springing = true;
+      const tick = () => {
+        if (!springing) return;
+        const t = Math.min(1, (performance.now() - startTs) / duration);
+        const k = 1 - ease(t);
+        offsetX = fromX * k;
+        offsetY = fromY * k;
+        applyTransform();
+        if (t < 1) requestAnimationFrame(tick);
+        else springing = false;
+      };
+      requestAnimationFrame(tick);
+    };
+
+    card.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('resize', updateLanyard);
+
+    requestAnimationFrame(() => requestAnimationFrame(updateLanyard));
+
+    return () => {
+      card.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      window.removeEventListener('resize', updateLanyard);
+    };
+  }, []);
 
   return (
     <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-hidden h-full flex flex-col justify-center">
