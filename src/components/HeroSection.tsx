@@ -91,7 +91,7 @@ const HeroSection = () => {
     };
 
     const applyTransform = () => {
-      card.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(8deg)`;
+      card.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(8deg)`;
       updateLanyard();
     };
 
