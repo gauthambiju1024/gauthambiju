@@ -186,7 +186,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
+    <section ref={sectionRef} className="relative px-6 md:px-12 pt-4 pb-2 overflow-visible h-full flex flex-col justify-center">
       {/* Top bar */}
       <motion.div
         className="flex items-center justify-between mb-5"
