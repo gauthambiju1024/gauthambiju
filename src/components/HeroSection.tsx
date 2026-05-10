@@ -243,170 +243,231 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Right — ID badge on lanyard, lying on the mat */}
+        {/* Right — Interactive ID badge on woven lanyard */}
         <motion.div
-          className="hidden md:flex relative items-start justify-center pt-1 pr-2 pl-4"
-          initial={{ opacity: 0, y: -10, rotate: -10 }}
-          animate={{ opacity: heroLoading ? 0 : 1, y: 0, rotate: -6 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
-          whileHover={{ rotate: -3, y: -2, transition: { duration: 0.2 } }}
-          style={{ transformOrigin: "top center" }}
+          ref={stageRef}
+          className="hidden md:block relative"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: heroLoading ? 0 : 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          style={{ width: "clamp(260px, 22vw, 320px)", height: 380, alignSelf: "stretch" }}
         >
-          {/* mat shadow */}
+          {/* mat shadow at rest position */}
           <div
             aria-hidden
             className="absolute pointer-events-none"
             style={{
-              left: "12%",
-              right: "8%",
-              top: "55%",
-              bottom: "-6%",
+              left: "30%",
+              right: "10%",
+              top: "65%",
+              bottom: "-4%",
               background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)",
               filter: "blur(10px)",
               zIndex: 0,
             }}
           />
 
-          <div className="relative z-[1] flex flex-col items-center" style={{ width: "clamp(160px, 14vw, 200px)" }}>
-            {/* Ribbon / lanyard loop + clip */}
-            <svg
-              viewBox="0 0 240 150"
-              className="w-full"
-              style={{ height: 130, marginBottom: -6, overflow: "visible", filter: "drop-shadow(3px 4px 4px hsl(160 30% 4% / 0.4))" }}
-              preserveAspectRatio="xMidYMax meet"
-            >
-              {/* Closed ribbon loop — outer (shadow) edge */}
-              <path
-                d="M 116 142 C 70 110, 40 80, 50 40 C 58 8, 110 0, 160 8 C 210 16, 240 50, 220 90 C 205 120, 170 138, 128 142 Z"
-                fill="hsl(140 35% 38%)"
-                stroke="hsl(140 30% 24%)"
-                strokeWidth="0.8"
-              />
-              {/* Inner cutout to make it a true loop (ribbon, not blob) */}
-              <path
-                d="M 122 132 C 88 108, 62 82, 70 50 C 78 22, 118 14, 158 22 C 200 30, 224 56, 208 86 C 196 110, 168 126, 132 132 Z"
-                fill="hsl(160 30% 6%)"
-              />
-              {/* Highlight along outer top edge */}
-              <path
-                d="M 60 38 C 70 14, 116 6, 158 12 C 196 18, 222 42, 222 70"
-                fill="none"
-                stroke="hsl(140 42% 52%)"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                opacity="0.85"
-              />
-              {/* Subtle fold/twist near top */}
-              <path
-                d="M 150 8 C 158 14, 162 22, 158 30"
-                fill="none"
-                stroke="hsl(140 30% 22%)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                opacity="0.6"
-              />
-              {/* tiny mono mark on ribbon */}
-              <text x="180" y="46" fontSize="6" fill="hsl(40 30% 88% / 0.7)" fontFamily="monospace" textAnchor="middle" transform="rotate(18 180 46)">GB · 0024</text>
-              {/* metal clip at bottom of loop */}
-              <rect x="112" y="138" width="16" height="10" rx="2" fill="hsl(0 0% 72%)" stroke="hsl(0 0% 50%)" strokeWidth="0.5" />
-              <rect x="115" y="140" width="10" height="2" fill="hsl(0 0% 88%)" />
-            </svg>
+          {/* Lanyard SVG */}
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ zIndex: 5, overflow: "visible" }}
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <filter id="hero-lanyard-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="2" dy="8" stdDeviation="5" floodColor="hsl(160 30% 4%)" floodOpacity="0.55" />
+              </filter>
+              <pattern id="hero-fabric-front" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+                <rect width="8" height="8" fill="hsl(140 30% 28%)" />
+                <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 25% 18%)" strokeWidth="3" />
+                <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 35% 38%)" strokeWidth="3" />
+                <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.18)" strokeWidth="1" />
+                <line x1="0" y1="6" x2="8" y2="6" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="1" />
+              </pattern>
+              <pattern id="hero-fabric-back" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+                <rect width="8" height="8" fill="hsl(140 28% 18%)" />
+                <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 20% 12%)" strokeWidth="3" />
+                <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 30% 22%)" strokeWidth="3" />
+                <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.22)" strokeWidth="1" />
+              </pattern>
+            </defs>
 
-            {/* Card body */}
+            {/* Right strand (behind) */}
+            <path ref={visualRightRef} d="" fill="none" stroke="url(#hero-fabric-back)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+            <path ref={edgesRightRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.35)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+
+            {/* Left strand (front) */}
+            <path ref={visualLeftRef} d="" fill="none" stroke="url(#hero-fabric-front)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+            <path ref={edgesLeftRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.28)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+
+            {/* Invisible text alignment paths */}
+            <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
+            <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
+
+            <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.85)" letterSpacing="3">
+              <textPath href="#hero-lanyard-text-left" startOffset="10%">{badge.ribbonLeft}</textPath>
+            </text>
+            <text fontFamily="JetBrains Mono, monospace" fontSize="11" fontWeight="700" fill="hsl(40 30% 88% / 0.55)" letterSpacing="3">
+              <textPath href="#hero-lanyard-text-right" startOffset="15%">{badge.ribbonRight}</textPath>
+            </text>
+          </svg>
+
+          {/* Metal clip + plastic strap */}
+          <div
+            ref={clipRef}
+            className="absolute flex flex-col items-center pointer-events-none"
+            style={{
+              zIndex: 8,
+              filter: "drop-shadow(3px 8px 6px hsl(160 30% 4% / 0.5))",
+              transformOrigin: "top center",
+            }}
+          >
             <div
-              className="relative w-full"
               style={{
-                background: "hsl(40 25% 92%)",
-                border: "1px solid hsl(160 15% 30% / 0.25)",
-                borderRadius: 4,
-                padding: "14px 12px 10px",
-                boxShadow: "4px 10px 26px hsl(160 30% 4% / 0.45), inset 0 1px 0 hsl(0 0% 100% / 0.5)",
+                width: 24,
+                height: 30,
+                background: "linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 70%) 50%, hsl(0 0% 44%) 100%)",
+                borderRadius: "6px 6px 12px 12px",
+                boxShadow: "inset 1px 1px 3px hsl(0 0% 100% / 0.9), inset -2px -2px 4px hsl(0 0% 0% / 0.5)",
+                position: "relative",
+                zIndex: 2,
               }}
             >
-              {/* punched hole */}
               <div
-                aria-hidden
-                className="absolute"
                 style={{
-                  top: 4,
+                  position: "absolute",
+                  bottom: 4,
                   left: "50%",
                   transform: "translateX(-50%)",
                   width: 14,
-                  height: 4,
-                  borderRadius: 2,
-                  background: "hsl(160 20% 16%)",
-                  boxShadow: "inset 0 1px 1px hsl(0 0% 0% / 0.6)",
+                  height: 8,
+                  background: "hsl(0 0% 30%)",
+                  borderRadius: 4,
+                  boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.7)",
                 }}
               />
-
-              {/* Photo window */}
+            </div>
+            <div
+              style={{
+                width: 16,
+                height: 35,
+                background: "linear-gradient(to right, hsl(0 0% 78% / 0.6), hsl(0 0% 100% / 0.8), hsl(0 0% 78% / 0.6))",
+                border: "1px solid hsl(0 0% 100% / 0.5)",
+                borderRadius: 2,
+                marginTop: -6,
+                position: "relative",
+                display: "flex",
+                justifyContent: "center",
+                boxShadow: "0 2px 4px hsl(0 0% 0% / 0.3)",
+              }}
+            >
               <div
-                className="relative mx-auto"
                 style={{
-                  marginTop: 6,
-                  width: "100%",
-                  aspectRatio: "1 / 1",
-                  border: "1px solid hsl(160 20% 16% / 0.3)",
-                  background: "hsl(40 20% 88%)",
-                  overflow: "hidden",
-                  boxShadow: "inset 0 0 8px hsl(160 30% 10% / 0.25)",
+                  width: 8,
+                  height: 8,
+                  background: "radial-gradient(circle at 30% 30%, hsl(0 0% 100%), hsl(0 0% 60%))",
+                  borderRadius: "50%",
+                  marginTop: 18,
+                  boxShadow: "0 2px 3px hsl(0 0% 0% / 0.6), inset 0 -1px 2px hsl(0 0% 0% / 0.4)",
                 }}
-              >
-                <img
-                  src={portraitSrc}
-                  alt="Gautham portrait"
-                  className="w-full h-full object-cover"
-                  style={{ filter: "grayscale(0.4) contrast(1.05)" }}
-                />
-              </div>
-
-              {/* Name */}
-              <div
-                className="font-mono uppercase mt-2.5"
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.15em",
-                  color: "hsl(160 20% 16%)",
-                  fontWeight: 600,
-                }}
-              >
-                {hero?.name ?? "Gautham Biju"}
-              </div>
-
-              {/* Role */}
-              <div
-                className="font-mono uppercase"
-                style={{
-                  fontSize: 8,
-                  letterSpacing: "0.25em",
-                  color: "hsl(160 15% 30% / 0.75)",
-                  marginTop: 2,
-                }}
-              >
-                Builder · Thinker · Maker
-              </div>
-
-              {/* Dashed divider */}
-              <div
-                className="my-2"
-                style={{ borderTop: "1px dashed hsl(160 20% 16% / 0.3)" }}
               />
+            </div>
+          </div>
 
-              {/* ID + barcode */}
-              <div className="flex items-end justify-between">
-                <span
-                  className="font-mono"
-                  style={{ fontSize: 8, letterSpacing: "0.2em", color: "hsl(160 20% 16% / 0.7)" }}
-                >
-                  ID · 0024
-                </span>
-                <svg width="56" height="14" viewBox="0 0 56 14" aria-hidden>
-                  {[1, 3, 2, 1, 4, 1, 2, 3, 1, 2, 1, 3].map((w, i, arr) => {
-                    const x = arr.slice(0, i).reduce((s, v) => s + v + 1, 0);
-                    return <rect key={i} x={x} y="0" width={w} height="14" fill="hsl(160 20% 16% / 0.85)" />;
-                  })}
-                </svg>
-              </div>
+          {/* ID Card (draggable) */}
+          <div
+            ref={cardRef}
+            className="absolute select-none"
+            style={{
+              top: "55%",
+              left: "55%",
+              width: 240,
+              padding: "16px 16px 20px",
+              background: "hsl(40 25% 92%)",
+              borderRadius: 4,
+              boxShadow: "0 25px 50px hsl(160 30% 4% / 0.45), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+              transform: "translate(-50%, -50%) rotate(8deg)",
+              transition: "box-shadow 0.2s",
+              cursor: "grab",
+              zIndex: 10,
+              touchAction: "none",
+            }}
+          >
+            {/* hole slot */}
+            <div
+              ref={slotRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: 10,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 45,
+                height: 8,
+                borderRadius: 4,
+                background: "hsl(160 30% 6%)",
+                boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)",
+                zIndex: 2,
+              }}
+            />
+
+            {/* photo */}
+            <div
+              style={{
+                width: "100%",
+                height: 160,
+                marginTop: 18,
+                marginBottom: 16,
+                backgroundImage: `url(${portraitSrc})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.12)",
+                filter: "grayscale(1) contrast(1.2)",
+              }}
+            />
+
+            <div
+              className="font-mono"
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "hsl(160 20% 16%)",
+                letterSpacing: "1.5px",
+                marginBottom: 6,
+                lineHeight: 1.2,
+              }}
+            >
+              {badge.name}
+            </div>
+            <div
+              className="font-mono"
+              style={{
+                fontSize: 9,
+                color: "hsl(160 15% 30% / 0.85)",
+                letterSpacing: "1px",
+                lineHeight: 1.5,
+                whiteSpace: "pre-line",
+              }}
+            >
+              {badge.title.replace(/\\n/g, "\n")}
+            </div>
+
+            <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "16px 0 12px" }} />
+
+            <div className="flex items-end justify-between w-full">
+              <span className="font-mono" style={{ fontSize: 9, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.5px" }}>
+                {badge.idLabel}
+              </span>
+              <div
+                aria-hidden
+                style={{
+                  width: 45,
+                  height: 12,
+                  opacity: 0.85,
+                  background:
+                    "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)",
+                }}
+              />
             </div>
           </div>
         </motion.div>
