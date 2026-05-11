@@ -182,6 +182,35 @@ export default function AdminContent() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="journey">
+          <Card>
+            <CardHeader>
+              <CardTitle>About → Journey (back of ID card + globe markers)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Edit the JSON below. Shape: <code>{`{ overview, education[], experience[], markers[] }`}</code>.
+                Each entry has <code>id, title, org, period, location, summary, details, link?, markerId?</code>.
+                Markers: <code>{`{ id, location:[lat,lng], label }`}</code>. Match an entry's <code>markerId</code>
+                to a marker's <code>id</code> to make the globe button expand that entry.
+              </p>
+              <Textarea rows={22} value={journey} onChange={e => setJourney(e.target.value)} className="font-mono text-xs" />
+              <Button
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(journey);
+                    saveContent('about', 'journey', parsed as Json);
+                  } catch (err: any) {
+                    toast.error('Invalid JSON: ' + err.message);
+                  }
+                }}
+              >
+                <Save className="h-4 w-4 mr-2" />Save Journey
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
