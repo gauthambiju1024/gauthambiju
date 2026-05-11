@@ -58,6 +58,7 @@ export default function AdminContent() {
           <TabsTrigger value="beliefs">Beliefs</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="marquee">Marquee</TabsTrigger>
+          <TabsTrigger value="journey">About / Journey</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
