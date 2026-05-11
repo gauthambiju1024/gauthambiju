@@ -43,6 +43,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => 
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
   const lanyardLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
