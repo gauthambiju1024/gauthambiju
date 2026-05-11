@@ -1,70 +1,53 @@
-## Globe → Desk Hub transition with interactive hotspots
+## Vector zoom + AI-edited shelf with live project spines
 
-A new pinned scroll section between the existing About panel and the rest of the workspace. It zooms from the cobe globe (outer space) → India → Pune → rooftops → desk render. The desk image then becomes a clickable hub where each object jumps to its existing section.
+### 1. Replace raster zoom tiers with blueprint-line SVGs
 
-### Scroll choreography (single pinned section, ~400vh tall)
+Drop `zoom-india.jpg`, `zoom-pune.jpg`, `zoom-rooftops.jpg`. Build four React SVG components in a single shared file `src/components/desk-hub/ZoomTiers.tsx` — all using the same blueprint vocabulary so the zoom feels continuous:
 
-```
-0.00 — 0.18   Outer space: existing cobe globe centered, dark backdrop
-0.18 — 0.36   Zoom to India: globe scales up + crossfades to AI-generated India satellite tile
-0.36 — 0.54   Zoom to Pune: crossfade to AI-generated Pune district tile
-0.54 — 0.72   Zoom to rooftops: crossfade to AI-generated rooftop/aerial tile
-0.72 — 1.00   Desk reveal: crossfade to uploaded builders-desk image, hotspots fade in
-```
+- **Stroke**: `hsl(40 30% 92%)` at 1.2px, plus a faint `hsl(40 60% 55%)` accent stroke at 0.6px for the focus marker (crosshair / circle).
+- **Background**: transparent — the section's dark backdrop shows through, so each tier composites cleanly.
+- **Subtle blueprint grid**: thin `0.5px` lines at 5% opacity behind every tier, scale-matched per tier so zooming feels like flying down through the same drawing.
 
-Each tier is a layered `<img>` (or canvas for the globe) inside a stage that scales/translates via `framer-motion` `useTransform` driven by the section's `scrollYProgress`. Crossfades use opacity transforms with overlapping ranges so it feels like one continuous push-in. `prefers-reduced-motion` collapses the whole sequence to an instant cut to the desk view.
+Tiers:
 
-### Desk hub interaction (after zoom completes)
+1. **`<GlobeWireSVG />`** — sphere with longitude/latitude lines, India landmass outlined heavier, marker dot pulsing on Pune. (Replaces the cobe canvas during the zoom — cobe stays only as a still first frame, then the SVG overlays.)
+2. **`<IndiaSVG />`** — accurate India border path, state lines as faint dotted strokes, crosshair on Pune coordinates, "PUNE · 18.52°N 73.86°E" mono label.
+3. **`<PuneSVG />`** — abstracted city street grid (radial + grid streets), district blocks as outlined polygons, single marked block.
+4. **`<RoofSVG />`** — top-down floorplan of a small house with a desk inside; the desk rectangle is the morph target into tier 5.
 
-The desk image (uploaded `image-47.png`) sits full-bleed inside an aspect-locked stage. Transparent `<button>` hotspots are absolutely positioned in **percentages** of the stage, so they scale perfectly across viewports.
+All four share viewBox `0 0 1000 1000`, are absolutely positioned `inset: 0`, scale via the existing `useTransform` pipeline. No new asset files — pure inline SVG.
 
-Hotspots → existing sections only:
+**Continuity**: the focus crosshair sits at the same screen position across all 4 tiers, so the user feels they're falling toward one fixed point. Slight stroke-dash animation on the crosshair while it's the foreground tier ("settling in").
 
-| Object on desk | Section anchor |
-|---|---|
-| Bookshelf (top-center) | `#projects` |
-| Corkboard (top-right) | `#thinking` |
-| Notepad ("Ideas in progress") | `#writing` |
-| Toolbox (right) | `#skills` |
-| Contact tray (far right) | `#contact` |
-| ID badge (center-right) | `#about` (scrolls back up) |
+### 2. Replace the bookshelf in the desk image with a real interactive project shelf
 
-(Globe, laptop, build queue notebook, lamp, mug, books, polaroids — decorative, not clickable. Per your selection, only existing sections are wired.)
+**Step A — bake out the shelf**: use `imagegen--edit_image` on `src/assets/builders-desk.png` with a prompt like *"Remove the entire wooden bookshelf and all books at the top center. Replace that area with the same dark wall and ambient lighting, keeping shadows and lamp glow consistent. Do not alter anything else."* → save as `src/assets/builders-desk-noshelf.png`. Swap the desk hub to use this version.
 
-Hover state: a soft warm glow rectangle (`box-shadow: 0 0 24px hsl(40 60% 60% / 0.4)`) plus a small label tag fading in above the object. Click → smooth scroll to the target `#id` (relies on the existing global `scroll-margin-top: 100px`). After visiting a section and scrolling back up, the desk view is exactly as before — no state lost.
+**Step B — render the shelf in SVG over the empty wall**: new component `src/components/desk-hub/ProjectShelfOverlay.tsx`, absolutely positioned at the same `{left: 21, top: 7, width: 38, height: 24}` rectangle the original shelf occupied. Contains:
 
-### Responsive behavior
+- A wooden plank (filled rect with subtle wood-grain noise via `<filter>`), warm amber underglow LED at top mimicking the original strip light.
+- N book spines side-by-side, each an SVG `<g>` — varying widths, heights, dark muted spine colors derived from `project.color`, vertical text label using `Playfair Display` for the project title and a small mono year tag at the spine foot.
+- A small potted plant SVG at the right end matches the original.
 
-- **Aspect-locked stage**: `aspect-ratio: 3/2`, `width: 100%`, `max-height: 100vh`, image set as `background-size: contain`. Hotspots are positioned with `left/top/width/height` in `%` of the stage, so they always stay aligned to the rendered image regardless of letterboxing.
-- **Desktop / laptop (≥1024px)**: full zoom sequence + interactive desk.
-- **Tablet (800–1023px)**: same desk image but hotspot hit areas have a `min(44px)` fallback overlay so taps are reliable.
-- **Mobile (<800px)**: per your choice — skip the zoom intro and the desk scene entirely. Show a stacked card hub with the 6 sections (Projects, Thinking, Skills, Writing, Contact, About) rendered as simple cards. The pinned section collapses to natural height.
+**Data**: fetch from the existing `projects` table via the same query `ProjectsShelf` already uses. New hook `useProjects()` extracted from `ProjectsShelf.tsx` (or just inline `useEffect` + `supabase.from('projects').select(...)` ordered by `sort_order`, limited to 8 spines max so the shelf doesn't crowd).
 
-### Files to touch
+**Interaction**: each spine is a `<a href={`/projects/${slug}`}>` (or button calling the existing project navigation), with hover lift (translateY -3px, brightness up) and a tooltip plate above showing full title. Removes the need for the generic "shelf hotspot → #projects" — clicking a spine deep-links to the case study page.
+
+### Files
 
 **New**
-- `src/components/desk-hub/DeskHubScene.tsx` — the pinned scroll section, manages zoom layers + hotspot overlay
-- `src/components/desk-hub/DeskHotspot.tsx` — single transparent button with hover glow + label
-- `src/components/desk-hub/MobileHubCards.tsx` — mobile fallback stacked cards
-- `src/assets/builders-desk.png` — copied from `user-uploads://image-47.png`
-- `src/assets/zoom-india.jpg` — AI-generated (Gemini image) satellite-style India view
-- `src/assets/zoom-pune.jpg` — AI-generated Pune district aerial
-- `src/assets/zoom-rooftops.jpg` — AI-generated rooftop aerial near sunset, matching the desk's warm palette
+- `src/components/desk-hub/ZoomTiers.tsx` — `GlobeWireSVG`, `IndiaSVG`, `PuneSVG`, `RoofSVG`
+- `src/components/desk-hub/ProjectShelfOverlay.tsx`
+- `src/assets/builders-desk-noshelf.png` — generated via `imagegen--edit_image`
 
 **Edited**
-- `src/pages/Index.tsx` — insert `<DeskHubScene />` between `HeroAboutFlip` and the `trailingStations.map(...)`, keep existing section IDs intact so hotspots link works
-- No changes to `Globe.tsx`, `HeroIdBadge.tsx`, `AssemblyHeader.tsx`, individual section components, or Supabase
+- `src/components/desk-hub/DeskHubScene.tsx` — swap raster `<motion.img>` layers for the SVG components; swap desk image import to no-shelf version; mount `<ProjectShelfOverlay />` inside the desk stage; remove the `shelf` entry from the hotspot overlay (it's replaced by interactive spines)
+- `src/components/desk-hub/hotspots.ts` — drop the `shelf` hotspot
 
-### Technical details
-
-- Zoom layers use `transform: scale()` + `opacity` driven by `useTransform(scrollYProgress, [in, mid, out], [0, 1, 0])` per layer. All layers stacked with `position: absolute; inset: 0`. GPU compositing only — no React re-renders during scroll (matches existing animation policy).
-- Globe layer reuses `<Globe>` component with the existing markers config; it's the bottom layer (z-0).
-- Desk image layer is the top layer (z-4) and stays opaque after `progress > 0.85`.
-- Hotspot coordinates are calibrated against the uploaded image's actual aspect (~3:2). I'll measure each object's bounding box on the image and store as `{left, top, width, height}` in percentages in a `hotspots.ts` constants file.
-- Mobile detection via `useIsMobile()` hook (already exists at `src/hooks/use-mobile.tsx`); switch component at `<800px`.
+**Deleted**
+- `src/assets/zoom-india.jpg`
+- `src/assets/zoom-pune.jpg`
+- `src/assets/zoom-rooftops.jpg`
 
 ### Out of scope
-- No new sections (Build Queue, Experience, Cases/Strategy plates from the image are not wired — only existing sections per your answer).
-- No edits to the cobe globe rotation or marker logic.
-- No backend / DB changes.
-- No changes to Assembly Header navigation.
+Other hotspots (corkboard, notepad, toolbox, badge, contact tray) and their image positions are unchanged. Globe rotation, ID-card flip, Assembly Header, mobile fallback all untouched. No DB schema changes.

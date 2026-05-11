@@ -11,8 +11,7 @@ export type Hotspot = {
 };
 
 export const HOTSPOTS: Hotspot[] = [
-  // Bookshelf at top center → projects
-  { id: "shelf",     target: "projects", label: "Projects",  left: 21, top: 7,  width: 38, height: 24 },
+  // (Bookshelf area is now an interactive SVG overlay — no hotspot.)
   // Corkboard top right → thinking
   { id: "corkboard", target: "thinking", label: "Thinking",  left: 65, top: 4,  width: 30, height: 30 },
   // Spiral notepad center-left → writing
