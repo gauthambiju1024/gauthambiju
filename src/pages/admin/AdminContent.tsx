@@ -20,6 +20,7 @@ export default function AdminContent() {
   const [stats, setStats] = useState<{ value: string; label: string }[]>([]);
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
+  const [journey, setJourney] = useState<string>('{}');
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -34,6 +35,7 @@ export default function AdminContent() {
       if (row.section === 'story' && row.key === 'main') setStory(val);
       if (row.section === 'story' && row.key === 'stats') setStats(val);
       if (row.section === 'marquee' && row.key === 'items') setMarqueeItems(val as string[]);
+      if (row.section === 'about' && row.key === 'journey') setJourney(JSON.stringify(val, null, 2));
     }
   };
 
@@ -56,6 +58,7 @@ export default function AdminContent() {
           <TabsTrigger value="beliefs">Beliefs</TabsTrigger>
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="marquee">Marquee</TabsTrigger>
+          <TabsTrigger value="journey">About / Journey</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -176,6 +179,35 @@ export default function AdminContent() {
                 <Textarea rows={8} value={marqueeItems.join('\n')} onChange={e => setMarqueeItems(e.target.value.split('\n').filter(Boolean))} />
               </div>
               <Button onClick={() => saveContent('marquee', 'items', marqueeItems as unknown as Json)}><Save className="h-4 w-4 mr-2" />Save Marquee</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="journey">
+          <Card>
+            <CardHeader>
+              <CardTitle>About → Journey (back of ID card + globe markers)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Edit the JSON below. Shape: <code>{`{ overview, education[], experience[], markers[] }`}</code>.
+                Each entry has <code>id, title, org, period, location, summary, details, link?, markerId?</code>.
+                Markers: <code>{`{ id, location:[lat,lng], label }`}</code>. Match an entry's <code>markerId</code>
+                to a marker's <code>id</code> to make the globe button expand that entry.
+              </p>
+              <Textarea rows={22} value={journey} onChange={e => setJourney(e.target.value)} className="font-mono text-xs" />
+              <Button
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(journey);
+                    saveContent('about', 'journey', parsed as Json);
+                  } catch (err: any) {
+                    toast.error('Invalid JSON: ' + err.message);
+                  }
+                }}
+              >
+                <Save className="h-4 w-4 mr-2" />Save Journey
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

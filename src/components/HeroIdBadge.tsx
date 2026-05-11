@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MotionValue } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
+import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
+import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
 
 type HeroBadge = {
   name?: string;
@@ -24,9 +26,11 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   const t = clamp((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
 };
+const snap = (v: number, q = 0.5) => Math.round(v / q) * q;
 
 const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
+  const { value: journeyData } = useSiteContent("about", "journey");
   const hero = heroData as { badge?: HeroBadge } | null;
 
   const badge: Required<HeroBadge> = {
@@ -38,11 +42,47 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   };
   const portraitSrc = (hero as any)?.portrait || heroPortrait;
 
+  const journey = (journeyData as AboutJourneyData) || {};
+  const markers: GlobeMarker[] = useMemo(
+    () =>
+      ((journeyData as any)?.markers as GlobeMarker[]) || [
+        { id: "dubai", location: [25.2048, 55.2708], label: "Dubai" },
+        { id: "ahmedabad", location: [23.0225, 72.5714], label: "Ahmedabad" },
+        { id: "kerala", location: [9.9312, 76.2673], label: "Kerala" },
+        { id: "indore", location: [22.7196, 75.8577], label: "Indore" },
+      ],
+    [journeyData]
+  );
+
+  // Shared state for globe ↔ back-of-card linking
+  const [activeTab, setActiveTab] = useState<"overview" | "education" | "experience">("overview");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const onMarkerClick = (markerId: string) => {
+    // Find entry whose markerId matches
+    const allEntries = [
+      ...(journey.education || []).map((e) => ({ ...e, _tab: "education" as const })),
+      ...(journey.experience || []).map((e) => ({ ...e, _tab: "experience" as const })),
+    ];
+    const match = allEntries.find((e) => e.markerId === markerId);
+    if (match) {
+      setActiveTab(match._tab);
+      setExpandedId(match.id);
+    }
+  };
+
+  // Selected marker reflects the currently-expanded entry
+  const selectedMarkerId = useMemo(() => {
+    if (!expandedId) return null;
+    const all = [...(journey.education || []), ...(journey.experience || [])];
+    return all.find((e) => e.id === expandedId)?.markerId || null;
+  }, [expandedId, journey]);
+
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
-  const backRef = useRef<HTMLDivElement>(null);
   const lanyardLayerRef = useRef<HTMLDivElement>(null);
+  const globeLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
@@ -55,7 +95,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Track the hero panel rect + opacity into the fixed stage.
+  // Track the hero panel rect into the fixed stage using transform (no jitter).
   useEffect(() => {
     const stage = stageRef.current;
     const anchor = document.getElementById(anchorId);
@@ -64,10 +104,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     let lastW = 0, lastH = 0;
     const update = () => {
       const r = anchor.getBoundingClientRect();
-      stage.style.top = `${r.top}px`;
-      stage.style.left = `${r.left}px`;
-      stage.style.width = `${r.width}px`;
-      stage.style.height = `${r.height}px`;
+      const tx = snap(r.left);
+      const ty = snap(r.top);
+      stage.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+      stage.style.width = `${snap(r.width)}px`;
+      stage.style.height = `${snap(r.height)}px`;
       let op = 1;
       let el: HTMLElement | null = anchor;
       let depth = 0;
@@ -143,43 +184,42 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     const applyTransform = () => {
       const t = progressMV?.get() ?? 0;
 
-      // Phase 1 (0.30..0.55): translate to viewport center + scale up. Tilt eases out.
       const p1 = smoothstep(0.30, 0.55, t);
-      // Phase 2 (0.55..0.80): rotateY 0..180.
-      const p2 = smoothstep(0.55, 0.80, t);
+      const p2 = smoothstep(0.55, 0.92, t);
 
-      // Compute resting card center vs. stage center.
       const stageRect = stage.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      // cardRect already reflects current transforms, so back out by using the resting offset
-      // from layout: card is positioned at top:90, right:32, w:200, h≈card.offsetHeight.
       const w = card.offsetWidth;
       const h = card.offsetHeight;
-      const restingLeft = stageRect.width - 32 - w;     // because right:32
-      const restingTop = 90;                            // because top:90
-      const stageCenterX = stageRect.width / 2;
-      const stageCenterY = stageRect.height / 2;
+      // Card is positioned right:32 top:90 by default — slide it left toward right-of-center
+      // so the globe has room on the left.
+      const restingLeft = stageRect.width - 32 - w;
+      const restingTop = 90;
+      const targetCenterX = stageRect.width * 0.68; // right side
+      const targetCenterY = stageRect.height / 2;
       const restingCenterX = restingLeft + w / 2;
       const restingCenterY = restingTop + h / 2;
-      const dxToCenter = (stageCenterX - restingCenterX) * p1;
-      const dyToCenter = (stageCenterY - restingCenterY) * p1;
+      const dxToCenter = (targetCenterX - restingCenterX) * p1;
+      const dyToCenter = (targetCenterY - restingCenterY) * p1;
 
       const tilt = 8 * (1 - p1);
-      // Scale so the card grows toward the viewer. Cap at panel-fitting size.
-      const maxScale = Math.min(stageRect.width / w, stageRect.height / h) * 0.85;
+      const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const scale = 1 + (maxScale - 1) * p1;
       const rotY = p2 * 180;
 
-      const tx = offsetX + dxToCenter;
-      const ty = offsetY + dyToCenter;
+      const tx = snap(offsetX + dxToCenter);
+      const ty = snap(offsetY + dyToCenter);
+      const s = Math.round(scale * 1000) / 1000;
 
-      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${scale}) rotateY(${rotY}deg)`;
+      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg)`;
 
-      // Lanyard stays attached (and stretches) through the slide; only fades during the flip.
       if (lanyardLayerRef.current) {
         lanyardLayerRef.current.style.opacity = String(1 - p2);
       }
-      // Disable pointer events while moving.
+      // Globe fades in as flip completes
+      if (globeLayerRef.current) {
+        globeLayerRef.current.style.opacity = String(p2);
+        globeLayerRef.current.style.pointerEvents = p2 > 0.5 ? "auto" : "none";
+      }
       cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
@@ -236,12 +276,32 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       style={{
         position: "fixed",
         top: 0, left: 0, width: 0, height: 0,
-        zIndex: 30,
+        zIndex: 1,
         opacity: heroLoading ? 0 : 1,
         transition: "opacity 0.4s ease",
         perspective: 1800,
+        willChange: "transform",
       }}
     >
+      {/* Globe layer — left of card, fades in with the flip */}
+      <div
+        ref={globeLayerRef}
+        className="absolute"
+        style={{
+          left: "4%",
+          top: "10%",
+          width: "42%",
+          height: "80%",
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: 6,
+          transition: "opacity 0.05s linear",
+          color: "hsl(40 25% 92%)",
+        }}
+      >
+        <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
+      </div>
+
       {/* Lanyard layer (fades out as card travels) */}
       <div ref={lanyardLayerRef} className="absolute inset-0" style={{ pointerEvents: "none" }}>
         <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 5, overflow: "visible" }} xmlns="http://www.w3.org/2000/svg">
@@ -310,6 +370,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           ref={cardRef}
           style={{
             width: 260,
+            height: 380,
             padding: "12px 14px 16px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
@@ -331,82 +392,33 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           </div>
         </div>
 
-        {/* Back face — same card size as front; complementary "stat sheet", no repeats from the front */}
+        {/* Back face — Tabbed About panel */}
         <div
-          ref={backRef}
           style={{
             position: "absolute",
             inset: 0,
             width: 260,
-            padding: "14px 14px 16px",
+            height: 380,
+            padding: "12px 14px 14px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
             boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            pointerEvents: "none",
+            pointerEvents: "auto",
             display: "flex",
             flexDirection: "column",
+            overflow: "hidden",
           }}
         >
-          <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)" }} />
-
-          <div className="flex items-center justify-between" style={{ marginTop: 14, marginBottom: 8 }}>
-            <span className="font-mono" style={{ fontSize: 8, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.4px" }}>· ABOUT</span>
-            <span className="font-mono" style={{ fontSize: 8, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.2px" }}>02 / 08</span>
-          </div>
-
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontStyle: "italic", color: "hsl(160 20% 14%)", lineHeight: 1.35, marginBottom: 8 }}>
-            Notes on How I Work
-          </div>
-
-          <div style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.85)", lineHeight: 1.45, marginBottom: 10 }}>
-            Product-minded builder at the intersection of tech, business &amp; design. I want to know{" "}
-            <span style={{ borderBottom: "1px solid hsl(160 20% 16% / 0.5)" }}>why</span> something should exist before figuring out{" "}
-            <span style={{ borderBottom: "1px solid hsl(160 20% 16% / 0.5)" }}>how</span> to build it.
-          </div>
-
-          <div style={{ marginBottom: 8 }}>
-            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>TRAITS</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              {[
-                "Systems Thinking",
-                "Fast Learning",
-                "Structured Problem Solving",
-              ].map((t, i) => (
-                <div key={t} style={{ display: "flex", gap: 6, fontSize: 8.5, color: "hsl(160 20% 16%)", lineHeight: 1.3 }}>
-                  <span className="font-mono" style={{ color: "hsl(160 20% 16% / 0.5)" }}>0{i + 1}</span>
-                  <span>{t}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 8 }}>
-            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>FOCUS</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-              {["Product", "AI Workflows", "Business × UX"].map((f) => (
-                <span key={f} className="font-mono" style={{ fontSize: 7.5, padding: "2px 5px", border: "1px solid hsl(160 20% 16% / 0.25)", color: "hsl(160 20% 16%)", letterSpacing: "0.5px" }}>{f}</span>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 6 }}>
-            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>QUICK FACTS</div>
-            <div className="font-mono" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 7.5, color: "hsl(160 20% 16%)" }}>
-              <div><span style={{ opacity: 0.55 }}>Based</span> India</div>
-              <div><span style={{ opacity: 0.55 }}>Edu</span> IIM Indore</div>
-              <div><span style={{ opacity: 0.55 }}>Focus</span> Product</div>
-              <div><span style={{ opacity: 0.55 }}>Now</span> Building</div>
-            </div>
-          </div>
-
-          <div style={{ flex: 1 }} />
-          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "0 0 6px" }} />
-          <div style={{ fontFamily: "'Caveat', cursive", fontSize: 13, color: "hsl(160 20% 16% / 0.7)", lineHeight: 1.1, textAlign: "center" }}>
-            "Build with intent. Ship what matters."
-          </div>
+          <AboutCardBack
+            data={journey}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
+          />
         </div>
       </div>
     </div>,

@@ -1,74 +1,67 @@
 ## Goal
 
-Make the trailing 6 panels (Projects, Thinking, Skills, Journey, Writing, Contact) match the reference project's compact, content-driven layout: a `max-w-7xl` centered wrapper with `my-6 md:my-8` spacing, and the panel itself sized by its content (no forced 100vh). Hero/About flip stays untouched.
+After the ID-card flip, the hero stage transitions into a real `#about` panel that:
+- behaves like every other panel (scrolls under the Assembly Header, same width/spacing rhythm)
+- shows the **back of the card on the right** (now an interactive Journey card)
+- shows the **interactive Globe on the left**, markers wired to specific Journey entries
 
-## Changes
+## 1. Pin release & "About" becomes a real panel
 
-### 1. `src/pages/Index.tsx`
+`src/components/HeroAboutFlip.tsx`
+- Tighten pin: end the sticky pin right after the flip completes (~135vh) so the card is no longer locked to the viewport once it has flipped.
+- After pin release, the hero anchor scrolls away and the portal stage follows it (existing behavior), so the card naturally exits with the page.
 
-Replace the trailing-station `<section>` block:
+`src/components/HeroIdBadge.tsx`
+- Lower the portal stage `z-index` from 30 → `1` so the Assembly Header (fixed, body-level) sits above the card while it scrolls past.
+- Keep `position: fixed` tracking, but use `transform: translate3d(...)` instead of writing `top/left` each frame, and snap `tx/ty` to 0.5 px and `scale` to 0.001 to remove jitter.
 
-```tsx
-<section key={id} id={id} className="w-full" style={{ height: "calc(100vh - 100px)" }}>
-  <div className="relative w-full h-full">
-    <Frame t={tDummy} active={true}><Section /></Frame>
-  </div>
-</section>
-```
+## 2. Right side after flip — Tabbed Journey card (back of ID)
 
-with the reference pattern:
+Restructure the back face so it looks like a "mini journey panel" living inside the card:
 
-```tsx
-<div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
-  <section id={id} className="relative w-full">
-    <Frame t={tDummy} active={true}><Section /></Frame>
-  </section>
-</div>
-```
+- **Header row:** small `· ABOUT` label + page count (kept).
+- **Tabs (segmented control, mono text):** `OVERVIEW · EDUCATION · EXPERIENCE`
+  - **Overview:** the existing About blurb + traits + focus pills + quick facts (current content, condensed).
+  - **Education:** entries from `JourneyTimeline` (IIT GN, IIM Indore, schooling).
+  - **Experience:** internships + work entries (Accenture + new ones the admin adds).
+- **Entry list:** each row = title, subtitle, period; click expands inline (Airbnb-style) — content morphs **inside the card bounds** (no overflow). Only one expanded at a time; smooth height/crossfade animation; close button to return to list.
+- **Common content** persists across tabs: the small "Build with intent" footer note stays pinned to the bottom of the card.
 
-This drops the forced `100vh - 100px` height; each panel will grow to its content.
+Backing data:
+- New Supabase content key under `site_content`: `about.journey` with shape `{ education: Entry[], experience: Entry[] }`, where `Entry = { id, title, org, period, location, summary, details, link?, markerId? }`.
+- Read via existing `useSiteContent("about", "journey")` pattern; fall back to current `JourneyTimeline.milestones` array if empty.
+- Admin: extend `src/pages/admin/AdminContent.tsx` with an editor for `about.journey` (CRUD entries, optional external link, optional `markerId` to link a globe marker).
 
-### 2. `src/components/desk/frames/*Frame.tsx` (6 files)
+Card sizing:
+- Bump the card width on flip (handled in `HeroIdBadge` via target scale) so the tabbed content is readable; back face uses `flex` column with a scrollable inner region clipped to card bounds (`overflow: hidden` + inner `max-height`).
 
-The frames currently rely on `w-full h-full` + `absolute inset-0` (a fixed-height pattern). Switch each to a flow-layout, content-driven shell so they collapse to their content:
+## 3. Left side after flip — Globe linked to entries
 
-For `BookshelfFrame`, `CorkboardFrame`:
-```tsx
-<div className="section-panel <bg> <border> relative w-full overflow-hidden">
-  <div className="panel-inner-scroll-flow">{children}</div>
-</div>
-```
+`src/components/HeroIdBadge.tsx` (new sibling layer inside the stage)
+- Add a left-side slot that fades in as `p2` (flip progress) goes 0 → 1, mirroring the card's slide. Holds `<Globe>` at ~`min(40vh, 380px)` square.
+- Pass a custom `markers` config so each marker carries `markerId` matching a Journey entry (Dubai, Ahmedabad, Kerala, Indore, etc.).
+- Click handler on canvas → hit-test marker → set selected entry id in a shared store (lightweight: lift state to `HeroAboutFlip` or use a small Zustand/`useState` + context). On selection: switch the back-of-card to the right tab and expand that entry inline.
 
-For `ToolboxFrame`, `NotebookFrame`, `ScrollFrame`, `LetterFrame` (which use `stage-fit`):
-```tsx
-<div className="section-panel <bg> <border> relative w-full overflow-hidden">
-  <div className="w-full">{children}</div>
-</div>
-```
+`src/components/Globe.tsx`
+- Extend props: `markers: { id, location, size, label }[]`, `onMarkerClick?(id)`.
+- Add a transparent overlay `<div>` matching marker screen positions (computed from cobe phi/theta) for accessible clickable hit areas (cobe canvas alone can't dispatch per-marker clicks reliably).
 
-Remove `h-full` from the outer and remove the `absolute inset-0` wrapper. Drop `stage-fit` (it forces aspect-ratio fitting for fixed-height stages — incompatible with content-driven sizing).
+## 4. Journey panel cleanup
 
-### 3. `src/index.css`
+- `JourneyTimeline.tsx`: remove the embedded `<Globe>` background (it's moving to the hero/about composition). Keep the timeline list as the standalone `#journey` station.
+- Source `JourneyTimeline` from the same `about.journey` data so admin edits flow to both card-back and the journey station.
 
-Add a flow variant of the scroll wrapper so existing scroll styling can still apply if children opt-in (no fixed height):
-```css
-.panel-inner-scroll-flow { width: 100%; }
-```
+## 5. Out of scope
 
-Leave `.panel-inner-scroll` and `.stage-fit` in place — other places may still use them (Hero blueprint frame still does, and that stays untouched).
+- BlueprintFrame, MarginDoodles, Entropy, AssemblyHeader styling.
+- Any other panels (projects, thinking, skills, writing, contact).
+- Lanyard math, drag behavior, front-of-card layout.
 
-### 4. Section components — internal padding sanity
+## Technical notes
 
-Reference `.section-panel` is just a bordered box; the inner sections in the reference (e.g. `AboutSection`) provide their own `px-6 md:px-16 py-16 md:py-24` spacing. Each of `ProjectsShelf`, `ThinkingWall`, `SkillsToolbox`, `JourneyTimeline`, `WritingDesk`, `ContactClosing` will be **spot-checked** to ensure they have inherent padding and don't assume an absolute-positioned parent. If any section was previously sized via `h-full`/`absolute` assumptions inherited from the frame, swap to natural block layout with `py-12 md:py-20` padding to match reference rhythm. (Edits made surgically per component, not a sweep.)
-
-## Out of scope
-
-- HeroAboutFlip, BlueprintFrame, ID card — unchanged.
-- Assembly Header, MarginDoodles, Entropy background — unchanged.
-- Navigation behavior and `scroll-margin-top` — unchanged (still works since each section keeps its `id`).
-- Admin/CMS, Supabase — unchanged.
-
-## Risks / verification
-
-- Any section that depended on `position: absolute` ancestor will reflow. Will check each in preview after edits and apply minimal padding fixes per component.
-- `panel-inner-scroll` previously enabled internal scrolling within a fixed-height frame; with content-driven panels, scrolling becomes the page itself — this is the desired reference behavior.
+- Z-index map after change: AssemblyHeader (fixed, body) `z-50` > card stage `z-1` > Entropy/grid backgrounds.
+- Smoothness: replace per-frame `top/left` writes with `translate3d`; snap subpixels.
+- New file: `src/components/about/AboutCardBack.tsx` to host the tabbed UI (keeps `HeroIdBadge` focused on transform/lanyard).
+- New file: `src/components/about/AboutGlobe.tsx` wrapping `Globe` + click overlay.
+- Shared selection: small context `AboutSelectionContext` (selected entry id + active tab) consumed by both `AboutCardBack` and `AboutGlobe`.
+- DB migration: add seed row `site_content (section='about', key='journey', value=jsonb)` with current milestones merged into education/experience.
