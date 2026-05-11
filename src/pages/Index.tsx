@@ -2,7 +2,6 @@ import HeroAboutFlip from "@/components/HeroAboutFlip";
 import ProjectsShelf from "@/components/ProjectsShelf";
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
-import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
@@ -12,7 +11,6 @@ import { Entropy } from "@/components/ui/entropy";
 import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
-import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
@@ -21,7 +19,6 @@ const trailingStations = [
   { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
-  { id: "journey", Frame: ScrollFrame, Section: JourneyTimeline },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
   { id: "contact", Frame: LetterFrame, Section: ContactClosing },
 ] as const;
@@ -33,9 +30,9 @@ const Index = () => {
       <Entropy />
       <MarginDoodles />
 
-      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
       <div className="block min-[800px]:hidden">
-        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
       </div>
 
       <div className="margin-content-wrapper relative z-[2]">
