@@ -20,6 +20,7 @@ export default function AdminContent() {
   const [stats, setStats] = useState<{ value: string; label: string }[]>([]);
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
+  const [journey, setJourney] = useState<string>('{}');
 
   useEffect(() => { fetchAll(); }, []);
 
