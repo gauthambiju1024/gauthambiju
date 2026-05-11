@@ -19,7 +19,7 @@ const HeroAboutFlip = () => {
   });
 
   // Subtle dim of the blueprint as the card takes focus.
-  const heroFade = useTransform(scrollYProgress, [0.30, 0.60], [1, 0.85]);
+  const heroFade = useTransform(scrollYProgress, [0.30, 0.55], [1, 0]);
 
   return (
     <section ref={pinRef} id="home-about-pin" style={{ height: "150vh" }} className="relative">

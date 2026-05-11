@@ -190,9 +190,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${scale}) rotateY(${rotY}deg)`;
 
-      // Lanyard fades out as card travels to center.
+      // Lanyard stays attached (and stretches) through the slide; only fades during the flip.
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String(1 - p1);
+        lanyardLayerRef.current.style.opacity = String(1 - p2);
       }
       // Disable pointer events while moving.
       cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
