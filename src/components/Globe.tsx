@@ -30,9 +30,9 @@ interface GlobeProps {
 }
 
 const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
-  let phi = config.phi || 1.2;
-  let width = 0;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const widthRef = useRef(0);
+  const phiRef = useRef(config.phi ?? 1.2);
   const pointerInteracting = useRef<number | null>(null);
   const pointerInteractionMovement = useRef(0);
   const [r, setR] = useState(0);
@@ -54,46 +54,62 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
 
   const onRender = useCallback(
     (state: Record<string, number>) => {
-      if (!pointerInteracting.current) phi += 0.004;
-      state.phi = phi + r;
-      state.width = width * 2;
-      state.height = width * 2;
+      if (!pointerInteracting.current) phiRef.current += 0.004;
+      state.phi = phiRef.current + r;
+      const w = widthRef.current * 2;
+      state.width = w;
+      state.height = w;
     },
     [r]
   );
 
-  const onResize = () => {
-    if (canvasRef.current) {
-      width = canvasRef.current.offsetWidth;
-    }
-  };
-
   useEffect(() => {
-    window.addEventListener("resize", onResize);
-    onResize();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement as HTMLElement | null;
 
-    const globe = createGlobe(canvasRef.current!, {
-      ...config,
-      width: width * 2,
-      height: width * 2,
-      onRender,
+    const measure = () => {
+      const w =
+        (parent?.clientWidth ?? 0) ||
+        canvas.clientWidth ||
+        canvas.offsetWidth ||
+        0;
+      widthRef.current = w;
+      return w;
+    };
+
+    let globe: ReturnType<typeof createGlobe> | null = null;
+    const tryInit = () => {
+      if (globe) return;
+      const w = measure();
+      if (w <= 0) return;
+      globe = createGlobe(canvas, {
+        ...config,
+        width: w * 2,
+        height: w * 2,
+        onRender,
+      });
+      requestAnimationFrame(() => {
+        canvas.style.opacity = "1";
+      });
+    };
+
+    tryInit();
+
+    const ro = new ResizeObserver(() => {
+      measure();
+      tryInit();
     });
-
-    let ro: ResizeObserver | null = null;
-    if (canvasRef.current) {
-      ro = new ResizeObserver(() => onResize());
-      ro.observe(canvasRef.current);
-    }
-
-    setTimeout(() => {
-      if (canvasRef.current) canvasRef.current.style.opacity = "1";
-    });
+    if (parent) ro.observe(parent);
+    ro.observe(canvas);
+    window.addEventListener("resize", measure);
 
     return () => {
-      globe.destroy();
-      window.removeEventListener("resize", onResize);
-      ro?.disconnect();
+      globe?.destroy();
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -109,10 +125,10 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
         e.touches[0] && updateMovement(e.touches[0].clientX)
       }
       className={cn(
-        "w-full h-full opacity-0 transition-opacity duration-1000",
+        "w-full h-full opacity-0 transition-opacity duration-700",
         className
       )}
-      style={{ contain: "layout paint size", cursor: "grab" }}
+      style={{ contain: "layout paint", cursor: "grab", aspectRatio: "1 / 1" }}
     />
   );
 };
