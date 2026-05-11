@@ -142,7 +142,7 @@ const AboutCardBack = ({ data, activeTab, setActiveTab, expandedId, setExpandedI
       <div className="flex gap-1" style={{ marginBottom: 8 }}>
         <TabBtn label="OVERVIEW" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
         <TabBtn label="EDUCATION" active={activeTab === "education"} onClick={() => setActiveTab("education")} />
-        <TabBtn label="WORK" active={activeTab === "experience"} onClick={() => setActiveTab("experience")} />
+        <TabBtn label="EXPERIENCE" active={activeTab === "experience"} onClick={() => setActiveTab("experience")} />
       </div>
 
       {/* Body */}

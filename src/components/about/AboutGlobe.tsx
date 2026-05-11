@@ -33,7 +33,7 @@ const AboutGlobe = ({ markers, selectedId, onMarkerClick }: Props) => {
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
-      <div style={{ width: "min(360px, 70%)", aspectRatio: "1 / 1", position: "relative" }}>
+      <div style={{ width: "min(520px, 92%)", aspectRatio: "1 / 1", position: "relative" }}>
         <Globe className="w-full h-full" config={config} />
       </div>
       {/* Marker legend — clickable, drives the back-of-card */}
