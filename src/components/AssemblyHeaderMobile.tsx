@@ -118,7 +118,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
               <span style={{ color: INK_BRIGHT }}>
                 {String(partCount).padStart(2, "0")}
               </span>
-              /08
+              /07
             </span>
           </div>
 
@@ -166,7 +166,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
             >
               ─── STATIONS ·{" "}
               <span style={{ color: INK_DIM }}>
-                {String(stage + 1).padStart(2, "0")}/08
+                {String(stage + 1).padStart(2, "0")}/07
               </span>
             </div>
             <button
@@ -253,7 +253,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
               <span style={{ color: INK_BRIGHT }}>
                 {String(partCount).padStart(2, "0")}
               </span>
-              /08
+              /07
             </span>
             <span>BUILD·{Math.round(progress * 100)}%</span>
           </div>
