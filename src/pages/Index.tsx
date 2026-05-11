@@ -1,5 +1,4 @@
-import HeroSection from "@/components/HeroSection";
-import AboutSection from "@/components/AboutSection";
+import HeroAboutFlip from "@/components/HeroAboutFlip";
 import ProjectsShelf from "@/components/ProjectsShelf";
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
@@ -10,8 +9,6 @@ import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
 import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
-import BlueprintFrame from "@/components/desk/frames/BlueprintFrame";
-import BusinessCardFrame from "@/components/desk/frames/BusinessCardFrame";
 import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
@@ -20,9 +17,7 @@ import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
 
-const stations = [
-  { id: "home", Frame: BlueprintFrame, Section: HeroSection },
-  { id: "about", Frame: BusinessCardFrame, Section: AboutSection },
+const trailingStations = [
   { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
@@ -43,17 +38,18 @@ const Index = () => {
         <div className="block min-[800px]:hidden">
           <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         </div>
-        <div className="pt-[88px]">
-          {stations.map(({ id, Frame, Section }) => (
-            <section key={id} id={id} className="w-full px-0 py-3" style={{ height: "100vh" }}>
-              <div className="relative w-full h-full">
-                <Frame t={tDummy} active={true}>
-                  <Section />
-                </Frame>
-              </div>
-            </section>
-          ))}
-        </div>
+
+        <HeroAboutFlip />
+
+        {trailingStations.map(({ id, Frame, Section }) => (
+          <section key={id} id={id} className="w-full" style={{ height: "calc(100vh - 100px)", marginTop: "100px" }}>
+            <div className="relative w-full h-full">
+              <Frame t={tDummy} active={true}>
+                <Section />
+              </Frame>
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );
