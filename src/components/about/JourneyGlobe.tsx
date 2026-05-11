@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import Globe from "@/components/Globe";
 import type { JourneyEntry } from "./journeyData";
+import { useSelectedJourneyId } from "./journeyStore";
 
 interface Props {
   entries: JourneyEntry[];
-  selectedId: string | null;
 }
 
-const JourneyGlobe = ({ entries, selectedId }: Props) => {
+const JourneyGlobe = ({ entries }: Props) => {
+  const selectedId = useSelectedJourneyId();
   const selected = entries.find((e) => e.id === selectedId) || null;
 
   const config = useMemo(() => {
@@ -35,56 +36,23 @@ const JourneyGlobe = ({ entries, selectedId }: Props) => {
     };
   }, [entries, selectedId]);
 
-  // Convert lat/lng to phi/theta target for the globe
   const target = selected
     ? {
-        // cobe phi: rotation around vertical axis, 0 at lng=0, +pi at lng=180
-        // we want lng to face the camera => phi = lng in radians (with offset for cobe defaults)
         phi: (-selected.location.lng * Math.PI) / 180 + Math.PI / 2,
-        theta: (selected.location.lat * Math.PI) / 180 * 0.6,
+        theta: ((selected.location.lat * Math.PI) / 180) * 0.6,
       }
     : undefined;
 
   return (
     <div className="relative w-full">
-      <div
-        className="relative mx-auto w-full aspect-square max-w-[460px]"
-        style={{
-          border: "1px dashed hsl(160 20% 16% / 0.25)",
-          background:
-            "radial-gradient(circle at center, hsl(160 25% 10% / 0.08), hsl(160 25% 10% / 0) 70%), repeating-linear-gradient(0deg, transparent 0 24px, hsl(160 20% 16% / 0.06) 24px 25px), repeating-linear-gradient(90deg, transparent 0 24px, hsl(160 20% 16% / 0.06) 24px 25px)",
-          padding: 12,
-        }}
-      >
+      <div className="relative mx-auto w-full aspect-square max-w-[460px]">
         <Globe
           className="w-full h-full"
           config={config as any}
           targetPhi={target?.phi}
           targetTheta={target?.theta}
         />
-
-        {/* corner ticks */}
-        {[
-          { top: -1, left: -1 },
-          { top: -1, right: -1 },
-          { bottom: -1, left: -1 },
-          { bottom: -1, right: -1 },
-        ].map((pos, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2"
-            style={{
-              ...pos,
-              borderTop: pos.top !== undefined ? "1px solid hsl(160 20% 16% / 0.5)" : undefined,
-              borderBottom: pos.bottom !== undefined ? "1px solid hsl(160 20% 16% / 0.5)" : undefined,
-              borderLeft: pos.left !== undefined ? "1px solid hsl(160 20% 16% / 0.5)" : undefined,
-              borderRight: pos.right !== undefined ? "1px solid hsl(160 20% 16% / 0.5)" : undefined,
-            }}
-          />
-        ))}
       </div>
-
-      {/* Caption */}
       <div className="mt-4 mx-auto max-w-[460px] flex items-center justify-between font-mono text-[10px] tracking-[0.2em] uppercase text-card-foreground/70">
         <div className="flex items-center gap-2">
           {selected ? (
