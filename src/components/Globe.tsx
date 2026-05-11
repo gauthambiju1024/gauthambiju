@@ -79,6 +79,12 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
       onRender,
     });
 
+    let ro: ResizeObserver | null = null;
+    if (canvasRef.current) {
+      ro = new ResizeObserver(() => onResize());
+      ro.observe(canvasRef.current);
+    }
+
     setTimeout(() => {
       if (canvasRef.current) canvasRef.current.style.opacity = "1";
     });
@@ -86,6 +92,7 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
     return () => {
       globe.destroy();
       window.removeEventListener("resize", onResize);
+      ro?.disconnect();
     };
   }, []);
 
