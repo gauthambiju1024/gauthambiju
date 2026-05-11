@@ -4,11 +4,10 @@ import Globe from "@/components/Globe";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DeskHotspot from "./DeskHotspot";
 import MobileHubCards from "./MobileHubCards";
+import ProjectShelfOverlay from "./ProjectShelfOverlay";
+import { GlobeWireSVG, IndiaSVG, PuneSVG, RoofSVG } from "./ZoomTiers";
 import { HOTSPOTS } from "./hotspots";
-import deskImg from "@/assets/builders-desk.png";
-import indiaImg from "@/assets/zoom-india.jpg";
-import puneImg from "@/assets/zoom-pune.jpg";
-import roofsImg from "@/assets/zoom-rooftops.jpg";
+import deskImg from "@/assets/builders-desk-noshelf.png";
 
 /**
  * Pinned scroll section: Earth → India → Pune → rooftops → Builder's desk hub.
@@ -22,22 +21,23 @@ const DeskHubScene = () => {
     offset: ["start start", "end end"],
   });
 
-  // Layer opacity transitions
-  const globeOpacity   = useTransform(scrollYProgress, [0.00, 0.15, 0.22], [1, 1, 0]);
-  const globeScale     = useTransform(scrollYProgress, [0.00, 0.22], [1, 2.4]);
+  // Layer opacity transitions — globe canvas is just the first frame, then SVG wireframe takes over
+  const cobeOpacity    = useTransform(scrollYProgress, [0.00, 0.08, 0.14], [1, 1, 0]);
+  const wireOpacity    = useTransform(scrollYProgress, [0.06, 0.14, 0.22, 0.28], [0, 1, 1, 0]);
+  const wireScale      = useTransform(scrollYProgress, [0.06, 0.28], [1, 2.6]);
 
-  const indiaOpacity   = useTransform(scrollYProgress, [0.15, 0.22, 0.36, 0.42], [0, 1, 1, 0]);
-  const indiaScale     = useTransform(scrollYProgress, [0.15, 0.42], [1, 2.0]);
+  const indiaOpacity   = useTransform(scrollYProgress, [0.22, 0.30, 0.42, 0.48], [0, 1, 1, 0]);
+  const indiaScale     = useTransform(scrollYProgress, [0.22, 0.48], [1, 2.4]);
 
-  const puneOpacity    = useTransform(scrollYProgress, [0.36, 0.42, 0.54, 0.60], [0, 1, 1, 0]);
-  const puneScale      = useTransform(scrollYProgress, [0.36, 0.60], [1, 1.8]);
+  const puneOpacity    = useTransform(scrollYProgress, [0.42, 0.50, 0.60, 0.66], [0, 1, 1, 0]);
+  const puneScale      = useTransform(scrollYProgress, [0.42, 0.66], [1, 2.2]);
 
-  const roofsOpacity   = useTransform(scrollYProgress, [0.54, 0.60, 0.72, 0.78], [0, 1, 1, 0]);
-  const roofsScale     = useTransform(scrollYProgress, [0.54, 0.78], [1, 1.6]);
+  const roofsOpacity   = useTransform(scrollYProgress, [0.60, 0.68, 0.76, 0.82], [0, 1, 1, 0]);
+  const roofsScale     = useTransform(scrollYProgress, [0.60, 0.82], [1, 2.0]);
 
-  const deskOpacity    = useTransform(scrollYProgress, [0.72, 0.82], [0, 1]);
-  const deskScale      = useTransform(scrollYProgress, [0.72, 0.85, 1.0], [1.15, 1, 1]);
-  const hotspotsOpacity = useTransform(scrollYProgress, [0.86, 0.95], [0, 1]);
+  const deskOpacity    = useTransform(scrollYProgress, [0.78, 0.86], [0, 1]);
+  const deskScale      = useTransform(scrollYProgress, [0.78, 0.88, 1.0], [1.2, 1, 1]);
+  const hotspotsOpacity = useTransform(scrollYProgress, [0.88, 0.96], [0, 1]);
 
   const handleActivate = (target: string) => {
     document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -54,11 +54,11 @@ const DeskHubScene = () => {
   return (
     <section ref={ref} id="desk-hub" style={{ height: "400vh", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", width: "100%", overflow: "hidden", background: "hsl(160 35% 5%)" }}>
-        {/* Layer 0: Globe (outer space) */}
+        {/* Layer 0: Cobe globe (first frame only, fades quickly) */}
         <motion.div
           style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: globeOpacity, scale: globeScale, willChange: "transform, opacity", zIndex: 1,
+            opacity: cobeOpacity, willChange: "opacity", zIndex: 1,
           }}
         >
           <div style={{ width: "min(70vh, 70vw)", aspectRatio: "1 / 1" }}>
@@ -66,33 +66,45 @@ const DeskHubScene = () => {
           </div>
         </motion.div>
 
-        {/* Layer 1: India */}
-        <motion.img
-          src={indiaImg} alt="" loading="lazy" width={1280} height={1280}
+        {/* Layer 1: Globe wireframe SVG */}
+        <motion.div
           style={{
-            position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
-            opacity: indiaOpacity, scale: indiaScale, willChange: "transform, opacity", zIndex: 2,
+            position: "absolute", inset: 0,
+            opacity: wireOpacity, scale: wireScale, willChange: "transform, opacity", zIndex: 2,
           }}
-        />
+        >
+          <GlobeWireSVG />
+        </motion.div>
 
-        {/* Layer 2: Pune */}
-        <motion.img
-          src={puneImg} alt="" loading="lazy" width={1280} height={1280}
+        {/* Layer 2: India outline */}
+        <motion.div
           style={{
-            position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
-            opacity: puneOpacity, scale: puneScale, willChange: "transform, opacity", zIndex: 3,
+            position: "absolute", inset: 0,
+            opacity: indiaOpacity, scale: indiaScale, willChange: "transform, opacity", zIndex: 3,
           }}
-        />
+        >
+          <IndiaSVG />
+        </motion.div>
 
-        {/* Layer 3: Rooftops */}
-        <motion.img
-          src={roofsImg} alt="" loading="lazy" width={1280} height={1280}
+        {/* Layer 3: Pune street grid */}
+        <motion.div
           style={{
-            position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
-            opacity: roofsOpacity, scale: roofsScale, willChange: "transform, opacity", zIndex: 4,
+            position: "absolute", inset: 0,
+            opacity: puneOpacity, scale: puneScale, willChange: "transform, opacity", zIndex: 4,
           }}
-        />
+        >
+          <PuneSVG />
+        </motion.div>
 
+        {/* Layer 4: Room floorplan */}
+        <motion.div
+          style={{
+            position: "absolute", inset: 0,
+            opacity: roofsOpacity, scale: roofsScale, willChange: "transform, opacity", zIndex: 5,
+          }}
+        >
+          <RoofSVG />
+        </motion.div>
         {/* Layer 4: Desk image + hotspots */}
         <motion.div
           style={{
