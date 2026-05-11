@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import type { JourneyEntry } from "./journeyData";
+import { setSelected, useSelectedJourneyId } from "./journeyStore";
 
 interface Props {
   entries: JourneyEntry[];
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
 }
 
 const PAPER = "hsl(40 25% 92%)";
@@ -15,12 +14,13 @@ const INK = "hsl(160 20% 16%)";
 
 const chips = ["Product", "Strategy", "Design", "Technology"];
 
-const IdentityCard = ({ entries, selectedId, onSelect }: Props) => {
+const IdentityCard = ({ entries }: Props) => {
   const { value: heroData } = useSiteContent("hero", "main");
   const hero = heroData as any;
   const portraitSrc = hero?.portrait || heroPortrait;
   const [flipped, setFlipped] = useState(false);
-
+  const selectedId = useSelectedJourneyId();
+  const onSelect = (id: string | null) => setSelected(id);
   const selected = entries.find((e) => e.id === selectedId) || null;
 
   return (
