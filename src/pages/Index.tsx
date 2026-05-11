@@ -10,7 +10,6 @@ import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
 import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
-import DeskStage, { SectionConfig } from "@/components/DeskStage";
 import BlueprintFrame from "@/components/desk/frames/BlueprintFrame";
 import BusinessCardFrame from "@/components/desk/frames/BusinessCardFrame";
 import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
@@ -19,19 +18,21 @@ import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
+import { useMotionValue } from "framer-motion";
 
-const sections: SectionConfig[] = [
-  { id: "home", label: "Home", Frame: BlueprintFrame, Section: HeroSection },
-  { id: "about", label: "About", Frame: BusinessCardFrame, Section: AboutSection },
-  { id: "projects", label: "Projects", Frame: BookshelfFrame, Section: ProjectsShelf },
-  { id: "thinking", label: "Thinking", Frame: CorkboardFrame, Section: ThinkingWall },
-  { id: "skills", label: "Skills", Frame: ToolboxFrame, Section: SkillsToolbox },
-  { id: "journey", label: "Journey", Frame: ScrollFrame, Section: JourneyTimeline },
-  { id: "writing", label: "Writing", Frame: NotebookFrame, Section: WritingDesk },
-  { id: "contact", label: "Contact", Frame: LetterFrame, Section: ContactClosing },
-];
+const stations = [
+  { id: "home", Frame: BlueprintFrame, Section: HeroSection },
+  { id: "about", Frame: BusinessCardFrame, Section: AboutSection },
+  { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
+  { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
+  { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
+  { id: "journey", Frame: ScrollFrame, Section: JourneyTimeline },
+  { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
+  { id: "contact", Frame: LetterFrame, Section: ContactClosing },
+] as const;
 
 const Index = () => {
+  const tDummy = useMotionValue(0.5);
   return (
     <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
       <Entropy />
@@ -42,7 +43,17 @@ const Index = () => {
         <div className="block min-[800px]:hidden">
           <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         </div>
-        <DeskStage sections={sections} />
+        <div className="pt-[88px]">
+          {stations.map(({ id, Frame, Section }) => (
+            <section key={id} id={id} className="min-h-screen w-full px-0 py-3">
+              <div className="relative w-full" style={{ minHeight: "calc(100vh - 100px)" }}>
+                <Frame t={tDummy} active={true}>
+                  <Section />
+                </Frame>
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );
