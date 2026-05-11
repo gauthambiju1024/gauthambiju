@@ -276,7 +276,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       style={{
         position: "fixed",
         top: 0, left: 0, width: 0, height: 0,
-        zIndex: 1,
+        zIndex: 3,
         opacity: heroLoading ? 0 : 1,
         transition: "opacity 0.4s ease",
         perspective: 1800,
