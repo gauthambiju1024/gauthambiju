@@ -352,35 +352,60 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         >
           <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)" }} />
 
-          <div className="flex items-center justify-between" style={{ marginTop: 14, marginBottom: 10 }}>
-            <span className="font-mono" style={{ fontSize: 8.5, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.4px" }}>· REVERSE</span>
-            <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.2px" }}>02 / 08</span>
+          <div className="flex items-center justify-between" style={{ marginTop: 14, marginBottom: 8 }}>
+            <span className="font-mono" style={{ fontSize: 8, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.4px" }}>· ABOUT</span>
+            <span className="font-mono" style={{ fontSize: 8, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.2px" }}>02 / 08</span>
           </div>
 
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, fontStyle: "italic", color: "hsl(160 20% 14%)", lineHeight: 1.35, marginBottom: 14 }}>
-            {back.statement}
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontStyle: "italic", color: "hsl(160 20% 14%)", lineHeight: 1.35, marginBottom: 8 }}>
+            Notes on How I Work
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-            <div>
-              <div className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 2 }}>FOCUS</div>
-              <div style={{ fontSize: 9.5, color: "hsl(160 20% 16%)", lineHeight: 1.35 }}>{back.focus}</div>
+          <div style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.85)", lineHeight: 1.45, marginBottom: 10 }}>
+            Product-minded builder at the intersection of tech, business &amp; design. I want to know{" "}
+            <span style={{ borderBottom: "1px solid hsl(160 20% 16% / 0.5)" }}>why</span> something should exist before figuring out{" "}
+            <span style={{ borderBottom: "1px solid hsl(160 20% 16% / 0.5)" }}>how</span> to build it.
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>TRAITS</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {[
+                "Systems Thinking",
+                "Fast Learning",
+                "Structured Problem Solving",
+              ].map((t, i) => (
+                <div key={t} style={{ display: "flex", gap: 6, fontSize: 8.5, color: "hsl(160 20% 16%)", lineHeight: 1.3 }}>
+                  <span className="font-mono" style={{ color: "hsl(160 20% 16% / 0.5)" }}>0{i + 1}</span>
+                  <span>{t}</span>
+                </div>
+              ))}
             </div>
-            <div>
-              <div className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 2 }}>BASED IN</div>
-              <div style={{ fontSize: 9.5, color: "hsl(160 20% 16%)", lineHeight: 1.35 }}>{back.basedIn}</div>
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>FOCUS</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+              {["Product", "AI Workflows", "Business × UX"].map((f) => (
+                <span key={f} className="font-mono" style={{ fontSize: 7.5, padding: "2px 5px", border: "1px solid hsl(160 20% 16% / 0.25)", color: "hsl(160 20% 16%)", letterSpacing: "0.5px" }}>{f}</span>
+              ))}
             </div>
-            <div>
-              <div className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 2 }}>WORKING ON</div>
-              <div style={{ fontSize: 9.5, color: "hsl(160 20% 16%)", lineHeight: 1.35 }}>{back.workingOn}</div>
+          </div>
+
+          <div style={{ marginBottom: 6 }}>
+            <div className="font-mono" style={{ fontSize: 7, color: "hsl(160 20% 16% / 0.55)", letterSpacing: "1.4px", marginBottom: 3 }}>QUICK FACTS</div>
+            <div className="font-mono" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 7.5, color: "hsl(160 20% 16%)" }}>
+              <div><span style={{ opacity: 0.55 }}>Based</span> India</div>
+              <div><span style={{ opacity: 0.55 }}>Edu</span> IIM Indore</div>
+              <div><span style={{ opacity: 0.55 }}>Focus</span> Product</div>
+              <div><span style={{ opacity: 0.55 }}>Now</span> Building</div>
             </div>
           </div>
 
           <div style={{ flex: 1 }} />
-          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "0 0 8px" }} />
-          <div className="flex items-end justify-between w-full">
-            <span className="font-mono" style={{ fontSize: 8, color: "hsl(160 20% 16%)", letterSpacing: "1px" }}>{back.contact}</span>
-            <span className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.4px" }}>· END</span>
+          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "0 0 6px" }} />
+          <div style={{ fontFamily: "'Caveat', cursive", fontSize: 13, color: "hsl(160 20% 16% / 0.7)", lineHeight: 1.1, textAlign: "center" }}>
+            "Build with intent. Ship what matters."
           </div>
         </div>
       </div>
