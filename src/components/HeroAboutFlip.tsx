@@ -26,12 +26,14 @@ const HeroAboutFlip = () => {
       <div className="sticky top-0 w-full" style={{ height: "100vh" }}>
         <div className="w-full h-full pt-[100px]">
           <div className="relative w-full h-full">
-            {/* Hero panel (anchor #home) */}
-            <motion.div id="home" className="absolute inset-0" style={{ opacity: heroFade }}>
-              <BlueprintFrame t={tDummy} active={true}>
-                <HeroSection />
-              </BlueprintFrame>
-            </motion.div>
+            {/* Hero panel — id="home" stays opaque so the portal-mounted ID card stage doesn't inherit the fade */}
+            <div id="home" className="absolute inset-0">
+              <motion.div className="absolute inset-0" style={{ opacity: heroFade }}>
+                <BlueprintFrame t={tDummy} active={true}>
+                  <HeroSection />
+                </BlueprintFrame>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
