@@ -305,8 +305,8 @@ export function AssemblyHeader({ panelIds }: Props) {
     const rMarks = rollers.querySelectorAll<SVGLineElement>(".h7-rm");
 
     let stationsHtml = "";
-    for (let i = 0; i < 8; i++) {
-      const x = BS + 45 + (i / 7) * (BL - 90);
+    for (let i = 0; i < NAV.length; i++) {
+      const x = BS + 45 + (i / Math.max(NAV.length - 1, 1)) * (BL - 90);
       stationsHtml += `<line x1="${x}" y1="36" x2="${x}" y2="40" stroke="${INK_BG}" stroke-width="0.35" opacity="0.6"/>`;
       stationsHtml += `<text class="h7-nv" data-i="${i}" data-jump="${i}" x="${x}" y="32" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="16" letter-spacing="0.3" fill="${INK}" style="cursor:pointer">${NAV[i].label}</text>`;
       stationsHtml += `<line class="h7-nu" data-i="${i}" x1="${x - 16}" y1="35" x2="${x + 16}" y2="35" stroke="${INK_BRIGHT}" stroke-width="0.6" opacity="0"/>`;
