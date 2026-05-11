@@ -27,7 +27,7 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
+const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
   const hero = heroData as { badge?: HeroBadge } | null;
 
