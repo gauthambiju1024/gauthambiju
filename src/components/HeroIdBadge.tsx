@@ -194,7 +194,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // so the globe has room on the left.
       const restingLeft = stageRect.width - 32 - w;
       const restingTop = 90;
-      const targetCenterX = stageRect.width * 0.68; // right side
+      const targetCenterX = stageRect.width * 0.74; // right side
       const targetCenterY = stageRect.height / 2;
       const restingCenterX = restingLeft + w / 2;
       const restingCenterY = restingTop + h / 2;
@@ -288,10 +288,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         ref={globeLayerRef}
         className="absolute"
         style={{
-          left: "4%",
-          top: "10%",
-          width: "42%",
-          height: "80%",
+          left: "2%",
+          top: "2%",
+          width: "50%",
+          height: "96%",
           opacity: 0,
           pointerEvents: "none",
           zIndex: 6,
@@ -382,10 +382,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         >
           <div aria-hidden style={{ position: "absolute", left: "50%", bottom: -28, transform: "translateX(-50%)", width: "115%", height: 40, background: "radial-gradient(ellipse at center, hsl(160 30% 4% / 0.55) 0%, hsl(160 30% 4% / 0) 70%)", filter: "blur(8px)", zIndex: -1, pointerEvents: "none" }} />
           <div ref={slotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2 }} />
-          <div style={{ width: "100%", height: 150, marginTop: 14, marginBottom: 12, backgroundImage: `url(${portraitSrc})`, backgroundSize: "cover", backgroundPosition: "center", boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.12)", filter: "grayscale(1) contrast(1.2)" }} />
-          <div className="font-mono" style={{ fontSize: 12, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.3px", marginBottom: 5, lineHeight: 1.2 }}>{badge.name}</div>
-          <div className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 15% 30% / 0.85)", letterSpacing: "1px", lineHeight: 1.45, whiteSpace: "pre-line" }}>{badge.title.replace(/\\n/g, "\n")}</div>
-          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "12px 0 10px" }} />
+          <div style={{ width: "100%", height: 230, marginTop: 14, marginBottom: 10, backgroundImage: `url(${portraitSrc})`, backgroundSize: "cover", backgroundPosition: "center 18%", boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.12)", filter: "grayscale(1) contrast(1.2)" }} />
+          <div className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.2px", marginBottom: 3, lineHeight: 1.2 }}>{badge.name}</div>
+          <div className="font-mono" style={{ fontSize: 8, color: "hsl(160 15% 30% / 0.85)", letterSpacing: "0.9px", lineHeight: 1.4, whiteSpace: "pre-line" }}>{badge.title.replace(/\\n/g, "\n")}</div>
+          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "8px 0 6px" }} />
           <div className="flex items-end justify-between w-full">
             <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.3px" }}>{badge.idLabel}</span>
             <div aria-hidden style={{ width: 38, height: 10, opacity: 0.85, background: "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)" }} />

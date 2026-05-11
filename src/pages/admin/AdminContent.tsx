@@ -10,6 +10,7 @@ import { Plus, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 import ImageUpload from '@/components/admin/ImageUpload';
+import AboutJourneyEditor, { JourneyData } from '@/components/admin/AboutJourneyEditor';
 
 type ContentMap = Record<string, Json>;
 
@@ -20,7 +21,7 @@ export default function AdminContent() {
   const [stats, setStats] = useState<{ value: string; label: string }[]>([]);
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
-  const [journey, setJourney] = useState<string>('{}');
+  const [journey, setJourney] = useState<JourneyData>({});
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -35,7 +36,7 @@ export default function AdminContent() {
       if (row.section === 'story' && row.key === 'main') setStory(val);
       if (row.section === 'story' && row.key === 'stats') setStats(val);
       if (row.section === 'marquee' && row.key === 'items') setMarqueeItems(val as string[]);
-      if (row.section === 'about' && row.key === 'journey') setJourney(JSON.stringify(val, null, 2));
+      if (row.section === 'about' && row.key === 'journey') setJourney((val as JourneyData) || {});
     }
   };
 
@@ -190,22 +191,12 @@ export default function AdminContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-muted-foreground">
-                Edit the JSON below. Shape: <code>{`{ overview, education[], experience[], markers[] }`}</code>.
-                Each entry has <code>id, title, org, period, location, summary, details, link?, markerId?</code>.
-                Markers: <code>{`{ id, location:[lat,lng], label }`}</code>. Match an entry's <code>markerId</code>
-                to a marker's <code>id</code> to make the globe button expand that entry.
+                Edit the overview, globe markers, education and experience entries.
+                Link an entry to a globe marker via the dropdown so clicking the marker expands that entry.
+                Add a logo and optional group heading per entry.
               </p>
-              <Textarea rows={22} value={journey} onChange={e => setJourney(e.target.value)} className="font-mono text-xs" />
-              <Button
-                onClick={() => {
-                  try {
-                    const parsed = JSON.parse(journey);
-                    saveContent('about', 'journey', parsed as Json);
-                  } catch (err: any) {
-                    toast.error('Invalid JSON: ' + err.message);
-                  }
-                }}
-              >
+              <AboutJourneyEditor value={journey} onChange={setJourney} />
+              <Button onClick={() => saveContent('about', 'journey', journey as unknown as Json)}>
                 <Save className="h-4 w-4 mr-2" />Save Journey
               </Button>
             </CardContent>
