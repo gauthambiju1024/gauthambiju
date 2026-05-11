@@ -146,7 +146,6 @@ const NAV = [
   { key: "work", label: "Work" },
   { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "path", label: "Path" },
   { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
