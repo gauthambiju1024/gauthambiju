@@ -105,12 +105,12 @@ const DeskHubScene = () => {
         >
           <RoofSVG />
         </motion.div>
-        {/* Layer 4: Desk image + hotspots */}
+        {/* Layer 5: Desk image + hotspots + project shelf */}
         <motion.div
           style={{
             position: "absolute", inset: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: deskOpacity, scale: deskScale, willChange: "transform, opacity", zIndex: 5,
+            opacity: deskOpacity, scale: deskScale, willChange: "transform, opacity", zIndex: 6,
           }}
         >
           <div
@@ -125,6 +125,18 @@ const DeskHubScene = () => {
               backgroundPosition: "center",
             }}
           >
+            {/* Live project shelf where the original bookshelf was (left:21% top:7% width:38% height:24%) */}
+            <motion.div
+              style={{
+                position: "absolute",
+                left: "21%", top: "5%", width: "38%", height: "26%",
+                opacity: hotspotsOpacity,
+                zIndex: 4,
+              }}
+            >
+              <ProjectShelfOverlay />
+            </motion.div>
+
             <motion.div style={{ position: "absolute", inset: 0, opacity: hotspotsOpacity }}>
               {HOTSPOTS.map((h) => (
                 <DeskHotspot key={h.id} hotspot={h} onActivate={handleActivate} />
