@@ -185,6 +185,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => 
       cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
+      // Size + counter-scale the back face so it lays out at full panel dimensions
+      // and arrives at 1:1 on screen exactly when the card is fully scaled.
+      if (backRef.current) {
+        backRef.current.style.width = `${stageRect.width}px`;
+        backRef.current.style.height = `${stageRect.height}px`;
+        backRef.current.style.transform = `translate(-50%, -50%) rotateY(180deg) scale(${1 / maxScale})`;
+      }
+
       updateLanyard();
     };
 
