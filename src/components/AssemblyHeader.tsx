@@ -146,10 +146,11 @@ const NAV = [
   { key: "work", label: "Work" },
   { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "path", label: "Path" },
   { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
+
+const STATION_COUNT = NAV.length; // 7
 
 function bbox(strokes: Stroke[]) {
   let mx = Infinity, my = Infinity, Mx = -Infinity, My = -Infinity;
