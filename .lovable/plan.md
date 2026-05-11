@@ -1,39 +1,44 @@
-# Plan: Use the real hero ID card for the flip
+# Plan: Render About content on the back face of the ID card
 
-Replace the duplicate "morph card" with the actual hero ID card so the same lanyard-hung badge slides to center and grows toward the viewer.
+Drop the separate About panel layer; put the About content inside the card so the flip literally reveals it.
 
-## Refactor
+## Changes
 
-1. **Extract** the lanyard SVG + draggable ID card markup from `src/components/HeroSection.tsx` into a new component `src/components/HeroIdBadge.tsx`. It keeps all current behavior: lanyard path math, drag-to-move, portrait, ribbon text, drop shadow.
-   - Props: `stageRef` (the hero panel rect to anchor the lanyard to) and an optional `motionStyle` (framer-motion style object) applied to the outer stage element.
-2. **Remove** the badge JSX and the `createPortal` overlay from `HeroSection.tsx`. Hero keeps only its text/CTA content.
-3. **Mount** `<HeroIdBadge>` inside `HeroAboutFlip` so it lives in the same DOM subtree as the flip stage. Pass it the hero panel ref so the lanyard still anchors to the top of the hero.
-4. **Drive transforms with scroll progress** (no replica card, no body data attribute):
-   - 0.00–0.30 — badge sits at its current resting spot (top:90, right:32), lanyard visible, drag enabled.
-   - 0.30–0.55 — badge translates to viewport center (compute target relative to stage), `scale` 1 → ~3.6, `rotate` 8° → 0°, lanyard `opacity` 1 → 0, drag disabled. Use `transform: translateZ()` feel by combining scale + slight Y lift so it reads as "coming toward the viewer".
-   - 0.55–0.80 — `rotateY` 0° → 180°.
-   - Past 0.55 — About panel (already rendered behind) fades in via existing `backOpacity`; badge front face uses `backface-visibility: hidden` so the back of the card is invisible and About shows through.
-5. Delete the placeholder back-face div and the front-face replica card markup added in the previous iteration.
-6. Remove the `body[data-hero-card-hidden]` CSS rule and the `useMotionValueEvent` toggle — no longer needed.
+### `src/components/HeroIdBadge.tsx`
 
-## Technical notes
+1. Wrap the existing card body in a "front face" div with `backfaceVisibility: hidden`.
+2. Add a sibling "back face" div inside the same `cardWrapRef`, with:
+   - `position: absolute; inset: 0;`
+   - `transform: rotateY(180deg);`
+   - `backfaceVisibility: hidden;`
+   - The back face renders `<BusinessCardFrame><AboutSection /></BusinessCardFrame>` (or just `<AboutSection />` styled as a card back — see "Sizing" below).
+3. The card wrapper already has `transformStyle: preserve-3d`, which is what makes the two faces work.
 
-- The card transforms must be applied to its outermost wrapper (the one currently positioned `right: 32; top: 90` with `rotate(8deg)`). Convert that wrapper into a `motion.div` whose `top/right/rotate/scale/rotateY/x/y` come from `useTransform(scrollYProgress, ...)`.
-- The lanyard anchors itself by reading the slot rect inside the card; once we transform the card, the existing `updateLanyard()` recomputes paths every animation frame, so the lanyard naturally stretches as the card moves — then fades out.
-- Drag handler should early-return when `scrollYProgress.get() > 0.25` to avoid fighting the scroll-driven transform.
-- Keep the badge `hidden md:block` (no flip on mobile, matches existing behavior).
-- Anchor IDs `#home` and `#about` remain on their respective panel wrappers in `HeroAboutFlip`.
+### Sizing trick (so About is readable when flipped)
 
-## Files
+The card is 200px wide and is scaled up via CSS transform during flip. If we put `AboutSection` directly inside, its text would render at 200px-card scale and only become visible-sized after the scale animation — but pixel-perfect-wise it would be re-rasterized fine. To keep the About layout legible and laid out at panel proportions:
 
-- `src/components/HeroIdBadge.tsx` — new, owns lanyard + card.
-- `src/components/HeroSection.tsx` — strip out badge/portal/lanyard.
-- `src/components/HeroAboutFlip.tsx` — mount `<HeroIdBadge>`, drive its transforms from `scrollYProgress`; remove the replica morph card and the back-face placeholder.
-- `src/index.css` — remove the `body[data-hero-card-hidden="1"]` rule.
+- Render the back face at **panel-target dimensions** (e.g., width = 1000px, height = 620px), positioned centered on the card (`left:50%; top:50%; translate(-50%,-50%)`).
+- Pre-scale the back face down by `1 / maxScale` so at the resting state (scale=1) the back is the same on-screen footprint as the card front (200px). As the card scales up to `maxScale` during the flip, the back face naturally arrives at its design size — exactly filling the panel area.
+- This means `AboutSection` is laid out at full size from the start; only its on-screen footprint changes with the parent's scale.
 
-## Acceptance
+Implementation detail: `maxScale` is computed in the per-frame transform code. Mirror that calc into a CSS variable on the card wrapper (e.g., `--card-max-scale`) set once per resize, and apply `transform: translate(-50%,-50%) rotateY(180deg) scale(calc(1 / var(--card-max-scale)))` to the back face. The back face stays correctly sized regardless of viewport.
 
-- The same lanyard-hung ID card visible in the hero is the one that moves; no second card pops in.
-- Scrolling smoothly slides it to the center while it grows (reads as moving toward the viewer), then it flips on Y to reveal the About panel.
-- Reverse scroll plays the animation in reverse, returning the card to its draggable resting state.
-- Mobile keeps the simple stacked layout.
+### `src/components/HeroAboutFlip.tsx`
+
+1. Remove the separate `<motion.div id="about">` panel layer (with `BusinessCardFrame + AboutSection` and `backOpacity` fade). It's no longer needed because the back of the card is the about.
+2. Keep `id="about"` somewhere so the Assembly Header anchor still scrolls here. Place `id="about"` on a small spacer div near the bottom of the pin section (e.g., absolute, top:50%) — that way clicking "About" in the nav scrolls the user into the flip range where the card is mid-flip / flipped.
+3. Hero panel still fades via `heroFade` so the dark blueprint background recedes as the about content takes over.
+4. Background behind the card while flipped: add a soft cream/paper backdrop on the sticky stage (matches BusinessCardFrame's notebook tone) that fades in 0.55→0.80 so the flipped card sits on a coherent surface, not the dark blueprint.
+
+### Acceptance
+
+- The same lanyard ID card flips on Y; its back face shows the About section content directly (no separate panel fade).
+- About text is laid out at full panel size (no cramped text shrunk inside a 200px card).
+- The Assembly Header's "About" link still scrolls to the flipped state.
+- Mobile (no flip) still shows About as a normal section — needs a separate stacked About panel after the pin section for `< 800px` viewports only.
+
+### Files
+
+- `src/components/HeroIdBadge.tsx` — add back face + sizing trick.
+- `src/components/HeroAboutFlip.tsx` — remove the separate About layer; add anchor spacer; add backdrop fade; render mobile-only fallback About panel after the pin.
