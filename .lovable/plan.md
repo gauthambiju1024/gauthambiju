@@ -1,56 +1,168 @@
-## About section rework — plan
+## Fix the invisible globe
 
-### 1. Card portrait — taller, ID-shaped
-`HeroIdBadge.tsx` (front face): change the photo block from `height: 150` to a true 3:4 portrait window (≈ `width: 100%; aspect-ratio: 3/4`, ~170×226). Reduce slot/header margins so the card stays 260×380. `backgroundPosition: "center top"` so the face isn't cropped.
+### Diagnosis
+`src/components/Globe.tsx` has three combined defects:
 
-### 2. Bigger globe, balanced columns
-`HeroIdBadge.tsx` globe layer: grow from `left:4% width:42% height:80%` → `left:3% width:48% height:92% top:4%`, and lift `top` so its vertical centre aligns with the card. In `AboutGlobe.tsx` the canvas already auto-resizes via the `ResizeObserver`, so it will fill the new box. Card column gets `targetCenterX = stageRect.width * 0.72` (was 0.68) so the two columns sit symmetrically.
+- `let width = 0` in the function body is reborn every render, so the per-frame `onRender` (recreated when `r` changes) reads `width = 0` and pushes `state.width = 0` into cobe.
+- `contain: "layout paint size"` collapses the canvas's intrinsic size; combined with the empty portal stage at mount the initial `offsetWidth` is `0`, so `createGlobe` is called with a zero buffer.
+- The `ResizeObserver` is attached to the canvas itself; with `size` containment it doesn't always fire when the parent grows from `0` to the real size.
 
-### 3. About goes under the Assembly Header (acts like a normal panel)
-Today the back-of-card + globe live in a `position:fixed` portal at `z-3`, but the hero pin keeps it visually "floating". Restructure so the post-flip state is a real in-flow panel:
+### Fix (single file: `src/components/Globe.tsx`)
 
-- Shorten the pin in `HeroAboutFlip.tsx` to `110vh` and end the flip at `p2 = 1` before pin release.
-- Replace `<div id="about">` placeholder with a real, in-flow `<section id="about">` rendered **after** the pin, wrapped in the same `.margin-content-wrapper` / panel frame used by the other stations (use `BlueprintFrame` or a new `IdCardFrame` for visual continuity). It contains: globe (left col) + back-of-card content (right col) — same `AboutCardBack` + `AboutGlobe` components, just laid out in normal flow.
-- The portal stage stays only for the flip animation: once `p2 ≥ 0.98`, fade the portal stage to `opacity: 0` and `pointer-events: none`, and fade in the in-flow About panel. Both share identical layout so the handoff is seamless.
-- Result: scrolling past About slides it under the fixed `z-50` header like every other station.
+Replace the file with the version below:
 
-### 4. Full admin control over About
-Extend `AdminContent.tsx`'s "About / Journey" tab from a raw JSON textarea into a structured form (still saved to `site_content` row `about/journey`). Sections:
+- Use `useRef` for `width` (and `phi`) so closures share one mutable value across renders.
+- Observe the **parent** element with `ResizeObserver` instead of the canvas, and read `parent.clientWidth`.
+- Drop `size` from `contain` (keep `layout paint`).
+- Defer `createGlobe` until the parent has a non-zero width; if it's still `0` at mount, wait for the first `ResizeObserver` callback.
 
-- **Overview**: blurb, traits[], focus[], quickFacts[{label,value}], footer.
-- **Markers** (globe pins): id, label, [lat, lng].
-- **Education** & **Experience**: ordered list. Each entry: id, title, org, period, location, summary, details, link, `markerId` (dropdown of markers), `logoUrl` (new, see #7), `groupHeading` (new, see #7).
-- "Add / remove / reorder" controls per list. JSON view kept as a fallback "Advanced" toggle.
+### Code
 
-### 5. Remove "Path" from menu
-- `AssemblyHeader.tsx` line 149: drop `{ key: "path", label: "Path" }` from `NAV` (and the same entry in `AssemblyHeaderMobile.tsx` if present). Recompute belt spacing — NAV now has 7 items; the existing layout maths uses `NAV.length`, so it auto-rebalances.
-- DB: delete the `homepage_sections` row where `section_key = 'path'` (data-only, via the insert/delete tool).
+```tsx
+import createGlobe, { COBEOptions } from "cobe";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
-### 6. "Experience" instead of "Work"
-- `AboutCardBack.tsx` line 145: tab label `WORK` → `EXPERIENCE`.
-- Admin labels in #4 use "Experience" too. Underlying data key stays `experience` (already is).
-- AssemblyHeader's separate `work` nav key (which maps to the Projects shelf) is unrelated and stays.
+const GLOBE_CONFIG: COBEOptions = {
+  width: 800,
+  height: 800,
+  onRender: () => {},
+  devicePixelRatio: 2,
+  phi: 1.2,
+  theta: -0.3,
+  dark: 1,
+  diffuse: 0.3,
+  mapSamples: 16000,
+  mapBrightness: 1.8,
+  baseColor: [1, 1, 1],
+  markerColor: [0.1, 0.5, 1],
+  glowColor: [1, 1, 1],
+  markers: [
+    { location: [25.7895, 55.9432], size: 0.07 },
+    { location: [23.2156, 72.6369], size: 0.07 },
+    { location: [9.7132, 76.6841], size: 0.07 },
+    { location: [22.7196, 75.8577], size: 0.07 },
+  ],
+};
 
-### 7. Logos + section headings in Experience / Education
-- `JourneyEntry` type gains `logoUrl?: string` and `groupHeading?: string`.
-- `AboutCardBack.tsx` `EntryRow`: when `logoUrl` is set, render a 16×16 monochrome logo to the left of the title (mix-blend or grayscale to fit the cream card aesthetic). When `groupHeading` is set on the first entry of a run, render a small mono divider row above it (e.g. `· INTERNSHIPS`, `· FULL-TIME`).
-- Admin form (#4) exposes a logo URL field per entry (uploads via existing `uploads` storage bucket — paste URL or file picker) and a free-text "Group heading" field.
-- Migration: none needed (JSONB).
+interface GlobeProps {
+  className?: string;
+  config?: COBEOptions;
+}
 
-### Technical notes / files touched
+const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const widthRef = useRef(0);
+  const phiRef = useRef(config.phi ?? 1.2);
+  const pointerInteracting = useRef<number | null>(null);
+  const pointerInteractionMovement = useRef(0);
+  const [r, setR] = useState(0);
 
+  const updatePointerInteraction = (value: number | null) => {
+    pointerInteracting.current = value;
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = value ? "grabbing" : "grab";
+    }
+  };
+
+  const updateMovement = (clientX: number) => {
+    if (pointerInteracting.current !== null) {
+      const delta = clientX - pointerInteracting.current;
+      pointerInteractionMovement.current = delta;
+      setR(delta / 200);
+    }
+  };
+
+  const onRender = useCallback(
+    (state: Record<string, number>) => {
+      if (!pointerInteracting.current) phiRef.current += 0.004;
+      state.phi = phiRef.current + r;
+      const w = widthRef.current * 2;
+      state.width = w;
+      state.height = w;
+    },
+    [r]
+  );
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement as HTMLElement | null;
+
+    const measure = () => {
+      const w =
+        (parent?.clientWidth ?? 0) ||
+        canvas.clientWidth ||
+        canvas.offsetWidth ||
+        0;
+      widthRef.current = w;
+      return w;
+    };
+
+    let globe: ReturnType<typeof createGlobe> | null = null;
+    const tryInit = () => {
+      if (globe) return;
+      const w = measure();
+      if (w <= 0) return;
+      globe = createGlobe(canvas, {
+        ...config,
+        width: w * 2,
+        height: w * 2,
+        onRender,
+      });
+      requestAnimationFrame(() => {
+        canvas.style.opacity = "1";
+      });
+    };
+
+    tryInit();
+
+    const ro = new ResizeObserver(() => {
+      measure();
+      tryInit();
+    });
+    if (parent) ro.observe(parent);
+    ro.observe(canvas);
+    window.addEventListener("resize", measure);
+
+    return () => {
+      globe?.destroy();
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      onPointerDown={(e) =>
+        updatePointerInteraction(e.clientX - pointerInteractionMovement.current)
+      }
+      onPointerUp={() => updatePointerInteraction(null)}
+      onPointerOut={() => updatePointerInteraction(null)}
+      onMouseMove={(e) => updateMovement(e.clientX)}
+      onTouchMove={(e) =>
+        e.touches[0] && updateMovement(e.touches[0].clientX)
+      }
+      className={cn(
+        "w-full h-full opacity-0 transition-opacity duration-700",
+        className
+      )}
+      style={{ contain: "layout paint", cursor: "grab", aspectRatio: "1 / 1" }}
+    />
+  );
+};
+
+export default Globe;
 ```
-src/components/HeroIdBadge.tsx              # portrait box, globe box, handoff fade
-src/components/HeroAboutFlip.tsx            # shorter pin, in-flow About panel
-src/components/about/AboutCardBack.tsx      # EXPERIENCE label, logo + group heading
-src/components/about/AboutGlobe.tsx         # (only if sizing tweaks needed)
-src/components/AssemblyHeader.tsx           # remove path
-src/components/AssemblyHeaderMobile.tsx     # remove path (if present)
-src/pages/admin/AdminContent.tsx            # structured About editor
-DB (data, not schema):
-  delete from homepage_sections where section_key='path';
-```
+
+### Why this works
+
+- `widthRef` is a single mutable cell; every closure (the original `onRender`, every re-rendered `onRender`, the resize callback) reads/writes the same value. cobe's per-frame `state.width` is always current.
+- `tryInit()` defers `createGlobe` until the parent actually has width, so the WebGL buffer is created at the right size on the first frame the About flip reveals it.
+- Observing the parent guarantees we get a callback when the portal stage grows from `0×0` to its tracked size.
+- Removing `size` from `contain` lets the canvas participate in layout normally.
 
 ### Out of scope
-
-Lanyard physics, hero blueprint, other stations, auth/RLS.
+No other files change. `AboutGlobe.tsx`, `HeroIdBadge.tsx`, and the cobe config remain as-is.
