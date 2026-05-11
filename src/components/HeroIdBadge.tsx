@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MotionValue } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
@@ -12,13 +12,18 @@ type HeroBadge = {
   ribbonRight?: string;
 };
 
+type HeroBack = {
+  bio?: string;
+  tags?: string[];
+  contact?: string;
+  location?: string;
+};
+
 interface Props {
   /** Optional scroll progress 0..1 controlling slide-to-center, scale, and rotateY flip. */
   progressMV?: MotionValue<number>;
   /** Element id of the hero panel to anchor the lanyard against. */
   anchorId?: string;
-  /** Content rendered on the back of the card (revealed by the flip). */
-  backChildren?: ReactNode;
 }
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -27,9 +32,9 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => {
+const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
-  const hero = heroData as { badge?: HeroBadge } | null;
+  const hero = heroData as { badge?: HeroBadge; back?: HeroBack } | null;
 
   const badge: Required<HeroBadge> = {
     name: hero?.badge?.name || "GAUTHAM BIJU",
@@ -37,6 +42,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => 
     idLabel: hero?.badge?.idLabel || "ID · 0024",
     ribbonLeft: hero?.badge?.ribbonLeft || "GAUTHAM BIJU",
     ribbonRight: hero?.badge?.ribbonRight || "PORTFOLIO · 2026",
+  };
+  const back: Required<HeroBack> = {
+    bio:
+      hero?.back?.bio ||
+      "Product builder shaping AI-native workflows where business strategy and human-centered design meet.",
+    tags: hero?.back?.tags || ["Product", "AI Workflows", "Business × UX"],
+    contact: hero?.back?.contact || "gauthambiju.com",
+    location: hero?.back?.location || "Calicut, IN",
   };
   const portraitSrc = (hero as any)?.portrait || heroPortrait;
 
@@ -184,14 +197,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => 
       // Disable pointer events while moving.
       cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
-
-      // Size + counter-scale the back face so it lays out at full panel dimensions
-      // and arrives at 1:1 on screen exactly when the card is fully scaled.
-      if (backRef.current) {
-        backRef.current.style.width = `${stageRect.width}px`;
-        backRef.current.style.height = `${stageRect.height}px`;
-        backRef.current.style.transform = `translate(-50%, -50%) rotateY(180deg) scale(${1 / maxScale})`;
-      }
 
       updateLanyard();
     };
