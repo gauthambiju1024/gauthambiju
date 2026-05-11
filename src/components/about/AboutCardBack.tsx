@@ -231,18 +231,14 @@ const AboutCardBack = ({ data, activeTab, setActiveTab, expandedId, setExpandedI
             {activeTab === "education" && (
               <div>
                 {edu.length === 0 && <div style={{ fontSize: 8, color: inkSoft }}>No entries.</div>}
-                {edu.map((e) => (
-                  <EntryRow key={e.id} entry={e} expanded={expandedId === e.id} onToggle={() => setExpandedId(expandedId === e.id ? null : e.id)} />
-                ))}
+                {renderList(edu, expandedId, setExpandedId)}
               </div>
             )}
 
             {activeTab === "experience" && (
               <div>
                 {exp.length === 0 && <div style={{ fontSize: 8, color: inkSoft }}>No entries.</div>}
-                {exp.map((e) => (
-                  <EntryRow key={e.id} entry={e} expanded={expandedId === e.id} onToggle={() => setExpandedId(expandedId === e.id ? null : e.id)} />
-                ))}
+                {renderList(exp, expandedId, setExpandedId)}
               </div>
             )}
           </motion.div>
