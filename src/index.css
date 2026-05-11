@@ -833,3 +833,6 @@
 /* Console rail scrollbar hiding */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide hero ID card overlay during the hero→about flip animation */
+body[data-hero-card-hidden="1"] .hero-card-stage { opacity: 0 !important; }
