@@ -1,26 +1,74 @@
-## Issues to fix
+## Goal
 
-1. **Card floats above the Assembly Header** during scroll. Root cause: the ID-card stage portals to `document.body` at `z-index: 30`, while the Assembly Header lives inside `.margin-content-wrapper` (a `relative z-[2]` stacking context). Inside that wrapper the header has `z-50`, but it's clamped to its parent's `z-2` — so the body-level card (z-30) wins.
-2. **Back of card jitters** during scroll. Root cause: per-frame `getBoundingClientRect()` reads + inline `top/left` writes are subpixel-rounded by the browser, and the rAF loop reading `progressMV` is decoupled from the scroll frame, producing 1-frame mismatches that show up most when the card is scaled large (the back face).
-3. **After flip, the card should scroll away with the page** like any other panel — currently the pin still holds the card in viewport for ~10vh of empty scroll after `p2 = 1`.
+Make the trailing 6 panels (Projects, Thinking, Skills, Journey, Writing, Contact) match the reference project's compact, content-driven layout: a `max-w-7xl` centered wrapper with `my-6 md:my-8` spacing, and the panel itself sized by its content (no forced 100vh). Hero/About flip stays untouched.
 
-## Changes (all in two files)
+## Changes
 
-### `src/components/HeroIdBadge.tsx`
+### 1. `src/pages/Index.tsx`
 
-- **Stage z-index:** drop `zIndex` from `30` to `1` so the Assembly Header (which is fixed at body-level via the wrapper) sits above the card. Verify Assembly Header still renders above by also raising `z-[2]` on the wrapper to `z-[3]` if needed (only if z=1 isn't enough — to be confirmed live).
-- **Smooth tracking:** replace per-frame `top`/`left` writes with `transform: translate3d(x, y, 0)` on the stage element. GPU-composited transforms avoid the subpixel rasterization that causes jitter, and the stage no longer triggers layout each frame. Width/height continue to be set as CSS pixels (or via `scale` if needed; pixel size is fine since they only change on resize).
-- **Card transform pipeline:** snap the cardWrap transform values (`tx`, `ty`, `scale`, `rotY`) to a tighter precision — round translate to 0.5px and scale to 0.001 — to eliminate residual jitter.
+Replace the trailing-station `<section>` block:
 
-### `src/components/HeroAboutFlip.tsx`
+```tsx
+<section key={id} id={id} className="w-full" style={{ height: "calc(100vh - 100px)" }}>
+  <div className="relative w-full h-full">
+    <Frame t={tDummy} active={true}><Section /></Frame>
+  </div>
+</section>
+```
 
-- **Tighten pin range so card releases right after flip completes.** Two coordinated edits:
-  - Change pin section height from `150vh` to `135vh` (less empty post-flip pinning).
-  - Move the flip ranges so `p2` reaches 1 at the end of the pin: `heroFade [0.30, 0.55]` stays, but the flip in `HeroIdBadge` (`smoothstep(0.55, 0.80, t)` for p2) shifts to `smoothstep(0.55, 0.95, t)` (and `p1` from `[0.30, 0.55]` → `[0.30, 0.55]` unchanged). The remaining 5% gives a brief settle before pin releases.
-- After the pin releases, the stage continues tracking the hero anchor (which now scrolls up out of view), so the flipped card naturally scrolls off-screen with the page — matching how the other panels behave. No portal-detach gymnastics needed.
+with the reference pattern:
+
+```tsx
+<div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
+  <section id={id} className="relative w-full">
+    <Frame t={tDummy} active={true}><Section /></Frame>
+  </section>
+</div>
+```
+
+This drops the forced `100vh - 100px` height; each panel will grow to its content.
+
+### 2. `src/components/desk/frames/*Frame.tsx` (6 files)
+
+The frames currently rely on `w-full h-full` + `absolute inset-0` (a fixed-height pattern). Switch each to a flow-layout, content-driven shell so they collapse to their content:
+
+For `BookshelfFrame`, `CorkboardFrame`:
+```tsx
+<div className="section-panel <bg> <border> relative w-full overflow-hidden">
+  <div className="panel-inner-scroll-flow">{children}</div>
+</div>
+```
+
+For `ToolboxFrame`, `NotebookFrame`, `ScrollFrame`, `LetterFrame` (which use `stage-fit`):
+```tsx
+<div className="section-panel <bg> <border> relative w-full overflow-hidden">
+  <div className="w-full">{children}</div>
+</div>
+```
+
+Remove `h-full` from the outer and remove the `absolute inset-0` wrapper. Drop `stage-fit` (it forces aspect-ratio fitting for fixed-height stages — incompatible with content-driven sizing).
+
+### 3. `src/index.css`
+
+Add a flow variant of the scroll wrapper so existing scroll styling can still apply if children opt-in (no fixed height):
+```css
+.panel-inner-scroll-flow { width: 100%; }
+```
+
+Leave `.panel-inner-scroll` and `.stage-fit` in place — other places may still use them (Hero blueprint frame still does, and that stays untouched).
+
+### 4. Section components — internal padding sanity
+
+Reference `.section-panel` is just a bordered box; the inner sections in the reference (e.g. `AboutSection`) provide their own `px-6 md:px-16 py-16 md:py-24` spacing. Each of `ProjectsShelf`, `ThinkingWall`, `SkillsToolbox`, `JourneyTimeline`, `WritingDesk`, `ContactClosing` will be **spot-checked** to ensure they have inherent padding and don't assume an absolute-positioned parent. If any section was previously sized via `h-full`/`absolute` assumptions inherited from the frame, swap to natural block layout with `py-12 md:py-20` padding to match reference rhythm. (Edits made surgically per component, not a sweep.)
 
 ## Out of scope
 
-- Lanyard math, drag, content of either face — unchanged.
-- AssemblyHeader code — unchanged unless z-index test shows it still loses; in that case a one-line z-index bump.
-- Trailing panels — unchanged.
+- HeroAboutFlip, BlueprintFrame, ID card — unchanged.
+- Assembly Header, MarginDoodles, Entropy background — unchanged.
+- Navigation behavior and `scroll-margin-top` — unchanged (still works since each section keeps its `id`).
+- Admin/CMS, Supabase — unchanged.
+
+## Risks / verification
+
+- Any section that depended on `position: absolute` ancestor will reflow. Will check each in preview after edits and apply minimal padding fixes per component.
+- `panel-inner-scroll` previously enabled internal scrolling within a fixed-height frame; with content-driven panels, scrolling becomes the page itself — this is the desired reference behavior.

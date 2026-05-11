@@ -22,7 +22,7 @@ const HeroAboutFlip = () => {
   const heroFade = useTransform(scrollYProgress, [0.30, 0.55], [1, 0]);
 
   return (
-    <section ref={pinRef} id="home-about-pin" style={{ height: "135vh" }} className="relative">
+    <section ref={pinRef} id="home-about-pin" style={{ height: "150vh" }} className="relative">
       <div className="sticky top-0 w-full" style={{ height: "100vh" }}>
         <div className="w-full h-full pt-[100px]">
           <div className="relative w-full h-full">
