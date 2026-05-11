@@ -33,12 +33,12 @@ const Index = () => {
       <Entropy />
       <MarginDoodles />
 
-      <div className="margin-content-wrapper relative z-[2]">
-        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-        <div className="block min-[800px]:hidden">
-          <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
-        </div>
+      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+      <div className="block min-[800px]:hidden">
+        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
+      </div>
 
+      <div className="margin-content-wrapper relative z-[2]">
         <HeroAboutFlip />
 
         {trailingStations.map(({ id, Frame, Section }) => (
