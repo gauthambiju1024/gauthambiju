@@ -42,7 +42,7 @@ const Index = () => {
         <HeroAboutFlip />
 
         {trailingStations.map(({ id, Frame, Section }) => (
-          <section key={id} id={id} className="w-full" style={{ height: "calc(100vh - 100px)", marginTop: "100px" }}>
+          <section key={id} id={id} className="w-full" style={{ height: "calc(100vh - 100px)" }}>
             <div className="relative w-full h-full">
               <Frame t={tDummy} active={true}>
                 <Section />
