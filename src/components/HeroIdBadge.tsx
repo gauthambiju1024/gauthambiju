@@ -399,7 +399,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             inset: 0,
             width: 260,
             height: 380,
-            padding: "12px 14px 14px",
+            padding: "20px 14px 14px",
             background: "hsl(40 25% 92%)",
             borderRadius: 4,
             boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
