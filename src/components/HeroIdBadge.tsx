@@ -365,7 +365,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             flexDirection: "column",
           }}
         >
-          <div ref={slotRef === slotRef ? undefined : undefined} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)" }} />
+          <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)" }} />
           <div className="flex items-center justify-between" style={{ marginTop: 14, marginBottom: 8 }}>
             <span className="font-mono" style={{ fontSize: 8.5, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.4px" }}>ABOUT</span>
             <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.2px" }}>· 02</span>
