@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MotionValue } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
@@ -17,6 +17,8 @@ interface Props {
   progressMV?: MotionValue<number>;
   /** Element id of the hero panel to anchor the lanyard against. */
   anchorId?: string;
+  /** Content rendered on the back of the card (revealed by the flip). */
+  backChildren?: ReactNode;
 }
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -25,7 +27,7 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
+const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
   const hero = heroData as { badge?: HeroBadge } | null;
 
@@ -41,6 +43,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
   const lanyardLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
@@ -181,6 +184,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Disable pointer events while moving.
       cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
+
+      // Size + counter-scale the back face so it lays out at full panel dimensions
+      // and arrives at 1:1 on screen exactly when the card is fully scaled.
+      if (backRef.current) {
+        backRef.current.style.width = `${stageRect.width}px`;
+        backRef.current.style.height = `${stageRect.height}px`;
+        backRef.current.style.transform = `translate(-50%, -50%) rotateY(180deg) scale(${1 / maxScale})`;
+      }
 
       updateLanyard();
     };
@@ -328,6 +339,23 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.75)", letterSpacing: "1.3px" }}>{badge.idLabel}</span>
             <div aria-hidden style={{ width: 38, height: 10, opacity: 0.85, background: "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)" }} />
           </div>
+        </div>
+
+        {/* Back face — content rendered at full panel size, counter-scaled so it appears 1:1 when the card is fully scaled up */}
+        <div
+          ref={backRef}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transformOrigin: "center center",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            pointerEvents: "none",
+            // width/height/transform set per-frame
+          }}
+        >
+          {backChildren}
         </div>
       </div>
     </div>,
