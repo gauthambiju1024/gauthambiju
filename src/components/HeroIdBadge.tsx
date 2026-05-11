@@ -346,21 +346,46 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           </div>
         </div>
 
-        {/* Back face — content rendered at full panel size, counter-scaled so it appears 1:1 when the card is fully scaled up */}
+        {/* Back face — same card size as front, holds a compact "about" blurb */}
         <div
           ref={backRef}
           style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transformOrigin: "center center",
+            inset: 0,
+            width: 200,
+            padding: "14px 12px 16px",
+            background: "hsl(40 25% 92%)",
+            borderRadius: 4,
+            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
             pointerEvents: "none",
-            // width/height/transform set per-frame
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          {backChildren}
+          <div ref={slotRef === slotRef ? undefined : undefined} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)" }} />
+          <div className="flex items-center justify-between" style={{ marginTop: 14, marginBottom: 8 }}>
+            <span className="font-mono" style={{ fontSize: 8.5, fontWeight: 700, color: "hsl(160 20% 16%)", letterSpacing: "1.4px" }}>ABOUT</span>
+            <span className="font-mono" style={{ fontSize: 8.5, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.2px" }}>· 02</span>
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, color: "hsl(160 20% 12%)", lineHeight: 1.15, marginBottom: 8 }}>{badge.name}</div>
+          <div style={{ fontSize: 9, color: "hsl(160 15% 22%)", lineHeight: 1.5, marginBottom: 10 }}>{back.bio}</div>
+          <div className="flex flex-wrap" style={{ gap: 4, marginBottom: 10 }}>
+            {back.tags.map((tag) => (
+              <span key={tag} className="font-mono" style={{ fontSize: 7.5, padding: "2px 5px", border: "1px solid hsl(160 20% 16% / 0.35)", borderRadius: 2, color: "hsl(160 20% 16%)", letterSpacing: "0.8px", textTransform: "uppercase" }}>{tag}</span>
+            ))}
+          </div>
+          <div style={{ flex: 1 }} />
+          <div style={{ width: "100%", borderTop: "1px dashed hsl(160 20% 16% / 0.3)", margin: "0 0 8px" }} />
+          <div className="flex items-end justify-between w-full">
+            <div className="flex flex-col" style={{ gap: 2 }}>
+              <span className="font-mono" style={{ fontSize: 8, color: "hsl(160 20% 16%)", letterSpacing: "1px" }}>{back.contact}</span>
+              <span className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.65)", letterSpacing: "1px" }}>{back.location}</span>
+            </div>
+            <span className="font-mono" style={{ fontSize: 7.5, color: "hsl(160 20% 16% / 0.6)", letterSpacing: "1.4px" }}>· END</span>
+          </div>
         </div>
       </div>
     </div>,
