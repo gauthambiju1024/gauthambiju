@@ -27,7 +27,7 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
 
 const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
-  const hero = heroData as { badge?: HeroBadge; back?: HeroBack } | null;
+  const hero = heroData as { badge?: HeroBadge } | null;
 
   const badge: Required<HeroBadge> = {
     name: hero?.badge?.name || "GAUTHAM BIJU",
@@ -35,15 +35,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     idLabel: hero?.badge?.idLabel || "ID · 0024",
     ribbonLeft: hero?.badge?.ribbonLeft || "GAUTHAM BIJU",
     ribbonRight: hero?.badge?.ribbonRight || "PORTFOLIO · 2026",
-  };
-  const back: Required<HeroBack> = {
-    statement:
-      hero?.back?.statement ||
-      "I build product systems where AI, business strategy, and human-centered design converge.",
-    focus: hero?.back?.focus || "Product · AI workflows · UX strategy",
-    basedIn: hero?.back?.basedIn || "Calicut, IN · Remote-friendly",
-    workingOn: hero?.back?.workingOn || "AI-first portfolio tools, agentic ops",
-    contact: hero?.back?.contact || "gauthambiju.com",
   };
   const portraitSrc = (hero as any)?.portrait || heroPortrait;
 
