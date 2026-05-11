@@ -64,8 +64,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     let lastW = 0, lastH = 0;
     const update = () => {
       const r = anchor.getBoundingClientRect();
-      stage.style.top = `${r.top}px`;
-      stage.style.left = `${r.left}px`;
+      stage.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
       stage.style.width = `${r.width}px`;
       stage.style.height = `${r.height}px`;
       let op = 1;
@@ -145,14 +144,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // Phase 1 (0.30..0.55): translate to viewport center + scale up. Tilt eases out.
       const p1 = smoothstep(0.30, 0.55, t);
-      // Phase 2 (0.55..0.80): rotateY 0..180.
-      const p2 = smoothstep(0.55, 0.80, t);
+      // Phase 2 (0.55..0.95): rotateY 0..180.
+      const p2 = smoothstep(0.55, 0.95, t);
 
       // Compute resting card center vs. stage center.
       const stageRect = stage.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      // cardRect already reflects current transforms, so back out by using the resting offset
-      // from layout: card is positioned at top:90, right:32, w:200, h≈card.offsetHeight.
       const w = card.offsetWidth;
       const h = card.offsetHeight;
       const restingLeft = stageRect.width - 32 - w;     // because right:32
@@ -170,10 +166,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotY = p2 * 180;
 
-      const tx = offsetX + dxToCenter;
-      const ty = offsetY + dyToCenter;
+      // Snap to sub-pixel precision to avoid scroll jitter.
+      const tx = Math.round((offsetX + dxToCenter) * 2) / 2;
+      const ty = Math.round((offsetY + dyToCenter) * 2) / 2;
+      const sScale = Math.round(scale * 1000) / 1000;
+      const sTilt = Math.round(tilt * 100) / 100;
+      const sRot = Math.round(rotY * 100) / 100;
 
-      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${scale}) rotateY(${rotY}deg)`;
+      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${sTilt}deg) scale(${sScale}) rotateY(${sRot}deg)`;
 
       // Lanyard stays attached (and stretches) through the slide; only fades during the flip.
       if (lanyardLayerRef.current) {
@@ -236,7 +236,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       style={{
         position: "fixed",
         top: 0, left: 0, width: 0, height: 0,
-        zIndex: 30,
+        transform: "translate3d(0,0,0)",
+        transformOrigin: "top left",
+        willChange: "transform",
+        zIndex: 1,
         opacity: heroLoading ? 0 : 1,
         transition: "opacity 0.4s ease",
         perspective: 1800,
