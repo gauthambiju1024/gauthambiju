@@ -340,6 +340,23 @@ const HeroIdBadge = ({ progressMV, anchorId = "home", backChildren }: Props) => 
             <div aria-hidden style={{ width: 38, height: 10, opacity: 0.85, background: "repeating-linear-gradient(90deg, hsl(160 20% 16%) 0 1px, hsl(40 25% 92%) 1px 2px, hsl(160 20% 16%) 2px 4px, hsl(40 25% 92%) 4px 5px, hsl(160 20% 16%) 5px 6px, hsl(40 25% 92%) 6px 8px)" }} />
           </div>
         </div>
+
+        {/* Back face — content rendered at full panel size, counter-scaled so it appears 1:1 when the card is fully scaled up */}
+        <div
+          ref={backRef}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transformOrigin: "center center",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            pointerEvents: "none",
+            // width/height/transform set per-frame
+          }}
+        >
+          {backChildren}
+        </div>
       </div>
     </div>,
     document.body
