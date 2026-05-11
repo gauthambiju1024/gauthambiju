@@ -12,14 +12,6 @@ type HeroBadge = {
   ribbonRight?: string;
 };
 
-type HeroBack = {
-  statement?: string;
-  focus?: string;
-  basedIn?: string;
-  workingOn?: string;
-  contact?: string;
-};
-
 interface Props {
   /** Optional scroll progress 0..1 controlling slide-to-center, scale, and rotateY flip. */
   progressMV?: MotionValue<number>;
