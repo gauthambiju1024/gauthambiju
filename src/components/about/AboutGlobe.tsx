@@ -14,13 +14,18 @@ interface Props {
 }
 
 const AboutGlobe = ({ markers, selectedId, onMarkerClick }: Props) => {
+  const meanLat = markers.length ? markers.reduce((s, m) => s + m.location[0], 0) / markers.length : 20;
+  const meanLng = markers.length ? markers.reduce((s, m) => s + m.location[1], 0) / markers.length : 70;
+  const initialPhi = ((180 - meanLng) * Math.PI) / 180;
+  const initialTheta = ((meanLat * Math.PI) / 180) * 0.6;
+
   const config: COBEOptions = {
     width: 800,
     height: 800,
     onRender: () => {},
     devicePixelRatio: 2,
-    phi: 1.2,
-    theta: -0.3,
+    phi: initialPhi,
+    theta: initialTheta,
     dark: 0,
     diffuse: 1.2,
     mapSamples: 16000,
