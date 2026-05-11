@@ -1,133 +1,76 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-
-const strengths = [
-  { title: "Systems Thinking", desc: "I see connections between moving parts — business, product, user, tech — and design for the whole system, not just one surface." },
-  { title: "Fast Learning", desc: "I ramp up quickly on new domains, tools, and frameworks. From AI workflows to healthcare ops — I learn by building." },
-  { title: "Structured Problem Solving", desc: "I break ambiguity into frameworks, prioritize ruthlessly, and move from insight to action with clarity." },
-];
-
-const focusAreas = [
-  "Product Thinking",
-  "AI-Enabled Workflows",
-  "Business × UX Intersection",
-];
+import { useRef, useState } from "react";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import IdentityCard from "./about/IdentityCard";
+import JourneyGlobe from "./about/JourneyGlobe";
+import { journey } from "./about/journeyData";
 
 const AboutSection = () => {
-  const [hoveredStrength, setHoveredStrength] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const sp = useSpring(scrollYProgress, { stiffness: 60, damping: 20, mass: 0.6 });
+  const opacity = useTransform(sp, [0, 0.18, 0.82, 1], [0.92, 1, 1, 0.92]);
+  const y = useTransform(sp, [0, 0.18, 0.82, 1], [24, 0, 0, -24]);
+  const scale = useTransform(sp, [0, 0.18, 0.82, 1], [0.985, 1, 1, 0.985]);
 
   return (
-    <section className="px-6 md:px-16 py-6 md:py-8 h-full flex flex-col">
-      {/* Section label */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground font-mono">About</span>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-8 md:gap-12 flex-1 min-h-0">
-        {/* Left page — Narrative */}
+    <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
+      <section id="about" ref={sectionRef} className="relative w-full">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
+          style={
+            reduce
+              ? undefined
+              : { opacity, y, scale }
+          }
+          className="relative w-full rounded-md overflow-hidden"
         >
-          <h2 className="font-serif-display text-2xl md:text-3xl text-card-foreground mb-4 leading-tight">
-            Notes on How I Work
-          </h2>
-
-          <div className="space-y-3 font-body text-sm leading-relaxed text-card-foreground/70">
-            <p>
-              I'm a product-minded builder who operates at the intersection of technology, business, and design.
-              I don't just want to ship features — I want to understand <em className="text-card-foreground/90 not-italic border-b border-primary/30">why</em> something
-              should exist before figuring out <em className="text-card-foreground/90 not-italic border-b border-primary/30">how</em> to build it.
-            </p>
-            <p>
-              My approach is rooted in structured thinking — breaking complex problems into clear frameworks,
-              validating assumptions early, and iterating with intent.
-            </p>
-          </div>
-
-          {/* Philosophy quote */}
-          <div className="mt-5 pl-4 border-l-2 border-primary/20">
-            <p className="font-handwritten text-lg text-card-foreground/50 italic">
-              "Build with intent. Document deeply. Ship what matters."
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Right page — Structured breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="space-y-5"
-        >
-          {/* Strengths */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Traits</span>
+          <div
+            className="relative w-full px-6 md:px-12 py-10 md:py-14"
+            style={{
+              background:
+                "linear-gradient(180deg, hsl(40 28% 94%) 0%, hsl(40 24% 90%) 100%)",
+              border: "1px solid hsl(160 20% 16% / 0.15)",
+              boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            }}
+          >
+            {/* Section label */}
+            <div className="flex items-center gap-3 mb-6 md:mb-8">
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-card-foreground/60">
+                · 02 — About
+              </span>
+              <div className="h-px flex-1 bg-card-foreground/20" />
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-card-foreground/60">
+                Identity Passport
+              </span>
             </div>
-            <div className="space-y-1.5">
-              {strengths.map((s, i) => (
-                <motion.div
-                  key={s.title}
-                  className="group p-2.5 rounded-lg border border-transparent hover:border-border hover:bg-card/50 transition-all duration-300 cursor-default"
-                  onHoverStart={() => setHoveredStrength(i)}
-                  onHoverEnd={() => setHoveredStrength(null)}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-xs font-mono text-primary/60 mt-0.5">0{i + 1}</span>
-                    <div>
-                      <h4 className="font-display text-sm font-semibold text-card-foreground">{s.title}</h4>
-                      <motion.p
-                        initial={false}
-                        animate={{ height: hoveredStrength === i ? "auto" : 0, opacity: hoveredStrength === i ? 1 : 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden text-xs text-muted-foreground font-body mt-1 leading-relaxed"
-                      >
-                        {s.desc}
-                      </motion.p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
 
-          {/* Focus areas */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Focus</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {focusAreas.map((area) => (
-                <span
-                  key={area}
-                  className="px-3 py-1.5 text-xs font-mono tracking-wide bg-primary/5 text-primary border border-primary/10 rounded-sm"
-                >
-                  {area}
-                </span>
-              ))}
-            </div>
-          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-10 lg:gap-14 items-start">
+              {/* Left: ID card + tray */}
+              <div className="flex justify-center lg:justify-start">
+                <IdentityCard
+                  entries={journey}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                />
+              </div>
 
-          {/* Quick facts */}
-          <div>
-            <div className="inline-block px-3 py-1 border border-border rounded-sm mb-3">
-              <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-muted-foreground">Quick Facts</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-muted-foreground">
-              <div><span className="text-card-foreground/50">Based in</span> India</div>
-              <div><span className="text-card-foreground/50">Education</span> IIM Indore</div>
-              <div><span className="text-card-foreground/50">Focus</span> Product · Strategy</div>
-              <div><span className="text-card-foreground/50">Currently</span> Building</div>
+              {/* Right: Globe */}
+              <div className="flex flex-col items-center justify-center w-full">
+                <JourneyGlobe entries={journey} selectedId={selectedId} />
+                <p className="mt-5 font-mono text-[10px] tracking-[0.2em] uppercase text-card-foreground/55 text-center max-w-[420px]">
+                  Flip the card → tap an entry to highlight a place on the globe.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 };
 

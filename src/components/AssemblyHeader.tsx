@@ -146,10 +146,11 @@ const NAV = [
   { key: "work", label: "Work" },
   { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "path", label: "Path" },
   { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
+
+const STATION_COUNT = NAV.length; // 7
 
 function bbox(strokes: Stroke[]) {
   let mx = Infinity, my = Infinity, Mx = -Infinity, My = -Infinity;
@@ -203,9 +204,9 @@ function strokesToParts(strokes: Stroke[], scale: number): PartSegments {
         [(seg[1][0] - cx) * s, (seg[1][1] - cy) * s],
       ] as Segment
   );
-  const perPart = Math.ceil(normalized.length / 8);
+  const perPart = Math.ceil(normalized.length / STATION_COUNT);
   const parts: PartSegments = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < STATION_COUNT; i++) {
     parts.push(normalized.slice(i * perPart, (i + 1) * perPart));
   }
   return parts;
@@ -306,8 +307,9 @@ export function AssemblyHeader({ panelIds }: Props) {
     const rMarks = rollers.querySelectorAll<SVGLineElement>(".h7-rm");
 
     let stationsHtml = "";
-    for (let i = 0; i < 8; i++) {
-      const x = BS + 45 + (i / 7) * (BL - 90);
+    const SPAN_DEN = STATION_COUNT - 1;
+    for (let i = 0; i < STATION_COUNT; i++) {
+      const x = BS + 45 + (i / SPAN_DEN) * (BL - 90);
       stationsHtml += `<line x1="${x}" y1="36" x2="${x}" y2="40" stroke="${INK_BG}" stroke-width="0.35" opacity="0.6"/>`;
       stationsHtml += `<text class="h7-nv" data-i="${i}" data-jump="${i}" x="${x}" y="32" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-style="italic" font-size="16" letter-spacing="0.3" fill="${INK}" style="cursor:pointer">${NAV[i].label}</text>`;
       stationsHtml += `<line class="h7-nu" data-i="${i}" x1="${x - 16}" y1="35" x2="${x + 16}" y2="35" stroke="${INK_BRIGHT}" stroke-width="0.6" opacity="0"/>`;
@@ -332,9 +334,9 @@ export function AssemblyHeader({ panelIds }: Props) {
     });
 
     let armsHtml = "";
-    const stationSpacing = (BL - 90) / 7;
-    for (let i = 0; i < 7; i++) {
-      const x = BS + 45 + (i / 7) * (BL - 90) + stationSpacing / 2;
+    const stationSpacing = (BL - 90) / SPAN_DEN;
+    for (let i = 0; i < STATION_COUNT - 1; i++) {
+      const x = BS + 45 + (i / SPAN_DEN) * (BL - 90) + stationSpacing / 2;
       armsHtml += `<g class="h7-arm" data-x="${x}">`;
       armsHtml += `<line x1="${x - 3}" y1="18" x2="${x + 3}" y2="18" stroke="${METAL}" stroke-width="0.8" opacity="0.7"/>`;
       armsHtml += `<line x1="${x}" y1="18" x2="${x}" y2="36" stroke="${INK}" stroke-width="0.3" stroke-dasharray="1 1" opacity="0.35"/>`;
@@ -422,13 +424,13 @@ export function AssemblyHeader({ panelIds }: Props) {
       const prodX = BS + 45 + p * (BL - 90);
       prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
 
-      const stage = Math.min(7, Math.floor(p * 8));
-      const stageProg = p * 8 - stage;
+      const stage = Math.min(STATION_COUNT - 1, Math.floor(p * STATION_COUNT));
+      const stageProg = p * STATION_COUNT - stage;
       renderProduct(stage, stageProg);
       renderPreview(stage, stageProg);
 
       if (prtRef.current) {
-        const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
+        const partCount = Math.min(STATION_COUNT, stage + (stageProg > 0 ? 1 : 0));
         prtRef.current.textContent = String(partCount).padStart(2, "0");
       }
 
@@ -503,7 +505,7 @@ export function AssemblyHeader({ panelIds }: Props) {
           dispatchDotRef.current.setAttribute("opacity", "1");
           dispatchDotRef.current.setAttribute("r", "1.3");
         } else {
-          const fillAmount = stage / 8;
+          const fillAmount = stage / STATION_COUNT;
           dispatchDotRef.current.setAttribute("fill", INK_BRIGHT);
           dispatchDotRef.current.setAttribute("opacity", String(0.3 + fillAmount * 0.6));
           dispatchDotRef.current.setAttribute("r", String(0.8 + fillAmount * 0.5));
@@ -665,7 +667,7 @@ export function AssemblyHeader({ panelIds }: Props) {
               SRC·<tspan ref={srcRef} fill={INK_BRIGHT}>DRONE-V1</tspan>
             </text>
             <text x="317" y="8">
-              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
+              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/07
             </text>
             <text x="1390" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>
