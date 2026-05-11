@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MotionValue } from "framer-motion";
 import heroPortrait from "@/assets/hero-portrait.png";
@@ -17,6 +17,8 @@ interface Props {
   progressMV?: MotionValue<number>;
   /** Element id of the hero panel to anchor the lanyard against. */
   anchorId?: string;
+  /** Content rendered on the back of the card (revealed by the flip). */
+  backChildren?: ReactNode;
 }
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
