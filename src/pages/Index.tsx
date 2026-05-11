@@ -1,8 +1,8 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
-import AboutSection from "@/components/AboutSection";
 import ProjectsShelf from "@/components/ProjectsShelf";
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
+import JourneyTimeline from "@/components/JourneyTimeline";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
@@ -12,16 +12,16 @@ import { Entropy } from "@/components/ui/entropy";
 import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
+import ScrollFrame from "@/components/desk/frames/ScrollFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
-
-const PANEL_IDS = ["home", "about", "projects", "thinking", "skills", "writing", "contact"];
 
 const trailingStations = [
   { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
+  { id: "journey", Frame: ScrollFrame, Section: JourneyTimeline },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
   { id: "contact", Frame: LetterFrame, Section: ContactClosing },
 ] as const;
@@ -34,14 +34,12 @@ const Index = () => {
       <MarginDoodles />
 
       <div className="margin-content-wrapper relative z-[2]">
-        <AssemblyHeader panelIds={PANEL_IDS} />
+        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         <div className="block min-[800px]:hidden">
-          <AssemblyHeaderMobile panelIds={PANEL_IDS} />
+          <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","journey","writing","contact"]} />
         </div>
 
         <HeroAboutFlip />
-
-        <AboutSection />
 
         {trailingStations.map(({ id, Frame, Section }) => (
           <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
