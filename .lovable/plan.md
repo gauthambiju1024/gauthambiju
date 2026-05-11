@@ -1,36 +1,36 @@
-# Plan: Fix "nothing is visible" — decouple hero fade from card visibility
+## Goal
 
-## Cause
+Replace the current ID card back face with the About-section content imported from project "Remix of My Webpage (06)", keeping the same physical card size (260px) and the existing front face untouched.
 
-`HeroIdBadge` portals the card/lanyard to `<body>` and uses a per-frame loop that walks the `#home` element's parent chain multiplying opacities, then applies that to the stage. When `heroFade` drops `#home` to opacity 0, the card stage also goes to 0 — so the hero, the card, and the ribbon all disappear together.
+## Source content (from `@project:b957ca15` → `src/components/AboutSection.tsx`)
 
-## Fix
+- Narrative paragraphs (condensed) about being a product-minded builder operating at the intersection of tech, business, design — wanting to understand "why" before "how".
+- Philosophy quote: *"Build with intent. Document deeply. Ship what matters."*
+- **Traits**: Systems Thinking · Fast Learning · Structured Problem Solving
+- **Focus**: Product Thinking · AI-Enabled Workflows · Business × UX Intersection
+- **Quick Facts**: Based in India · IIM Indore · Product · Strategy · Building
 
-Apply `heroFade` to an inner wrapper that does NOT contain the `id="home"` anchor.
+## Changes
+
+### `src/components/HeroIdBadge.tsx`
+
+1. **Remove `back` data plumbing** — drop `HeroBack` type and the `back.*` defaults (`statement`, `focus`, `basedIn`, `workingOn`, `contact`). The new back is static, sourced from the imported About section.
+2. **Rewrite the back face JSX** (lines 352–402) to a single 260px-wide card with:
+   - Header row: `· ABOUT` (left) and `02 / 08` (right) in mono micro-type.
+   - Tight serif-italic intro line: "Product-minded builder. Tech × Business × Design."
+   - One-line condensed narrative referencing *why* before *how* (border-bottom emphasis on those two words to mirror the source's `<em>` styling).
+   - **TRAITS** block: 3 rows, each `0N` + title (no expanded descriptions — card is too small).
+   - **FOCUS** block: 3 small mono pill chips (Product Thinking · AI Workflows · Business × UX).
+   - **QUICK FACTS** block: 2-col mini grid (India · IIM Indore · Product/Strategy · Building).
+   - Dashed separator + handwritten-italic footer quote: *"Build with intent. Ship what matters."*
+3. Tune font sizes (7–10px), line-heights, and `gap` so everything fits the existing 260×~360px card without overflow. Keep the existing card chassis (background, slot at top, shadow, `rotateY(180deg)` transform, backface-visibility).
 
 ### `src/components/HeroAboutFlip.tsx`
 
-Move `id="home"` onto the always-opaque outer container; put `heroFade` only on the inner BlueprintFrame wrapper.
+No changes — flip behavior, hero-fade, and pin geometry already work.
 
-```
-<div id="home" className="absolute inset-0">
-  <motion.div className="absolute inset-0" style={{ opacity: heroFade }}>
-    <BlueprintFrame t={tDummy} active={true}>
-      <HeroSection />
-    </BlueprintFrame>
-  </motion.div>
-</div>
-```
+## Out of scope
 
-Now:
-- The `#home` anchor stays at opacity 1, so the card stage stays at opacity 1.
-- The blueprint visuals still fade to 0 between 0.30 → 0.55 as desired.
-- The card + lanyard remain fully visible across the entire flip.
-
-## Files
-
-- `src/components/HeroAboutFlip.tsx` only.
-
-## Acceptance
-
-- After the hero fades out, the ID card and ribbon are still clearly visible centered on the dark desk, then flip to reveal the back. No empty dark screen.
+- No admin/CMS field for the back (it becomes static, derived from the imported About content).
+- No edits to the front face of the card.
+- No changes to lanyard, scroll-flip math, or hero panel.
