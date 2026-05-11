@@ -64,8 +64,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     let lastW = 0, lastH = 0;
     const update = () => {
       const r = anchor.getBoundingClientRect();
-      stage.style.top = `${r.top}px`;
-      stage.style.left = `${r.left}px`;
+      stage.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
       stage.style.width = `${r.width}px`;
       stage.style.height = `${r.height}px`;
       let op = 1;
