@@ -299,8 +299,8 @@ const HeroSection = () => {
       {mounted && createPortal(
       <div
         ref={stageRef}
-        className="hidden md:block pointer-events-none"
-        style={{ position: "fixed", top: 0, left: 0, width: 0, height: 0, zIndex: 30, opacity: heroLoading ? 0 : 1, transition: "opacity 0.6s 0.4s" }}
+        className="hero-card-stage hidden md:block pointer-events-none"
+        style={{ position: "fixed", top: 0, left: 0, width: 0, height: 0, zIndex: 30, opacity: heroLoading ? 0 : 1, transition: "opacity 0.4s ease" }}
       >
         {/* (mat shadow now lives inside the card so it follows drag) */}
 
