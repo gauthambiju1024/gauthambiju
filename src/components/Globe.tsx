@@ -54,7 +54,7 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
 
   const onRender = useCallback(
     (state: Record<string, number>) => {
-      if (!pointerInteracting.current) phiRef.current += 0.004;
+      if (!pointerInteracting.current) phiRef.current += 0.0006;
       state.phi = phiRef.current + r;
       const w = widthRef.current * 2;
       state.width = w;
