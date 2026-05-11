@@ -21,10 +21,11 @@ const NAV = [
   { key: "work", label: "Work" },
   { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "path", label: "Path" },
   { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
+
+const STATION_COUNT = NAV.length;
 
 type Props = {
   panelIds: string[];
@@ -59,9 +60,9 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
     };
   }, [open]);
 
-  const stage = Math.min(7, Math.floor(progress * 8));
-  const stageProg = progress * 8 - stage;
-  const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
+  const stage = Math.min(STATION_COUNT - 1, Math.floor(progress * STATION_COUNT));
+  const stageProg = progress * STATION_COUNT - stage;
+  const partCount = Math.min(STATION_COUNT, stage + (stageProg > 0 ? 1 : 0));
   const activeLabel = NAV[stage]?.label ?? "Home";
 
   const jumpTo = (i: number) => {
