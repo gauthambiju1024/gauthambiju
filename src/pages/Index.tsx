@@ -45,8 +45,8 @@ const Index = () => {
         </div>
         <div className="pt-[88px]">
           {stations.map(({ id, Frame, Section }) => (
-            <section key={id} id={id} className="min-h-screen w-full px-0 py-3">
-              <div className="relative w-full" style={{ minHeight: "calc(100vh - 100px)" }}>
+            <section key={id} id={id} className="w-full px-0 py-3" style={{ height: "100vh" }}>
+              <div className="relative w-full h-full">
                 <Frame t={tDummy} active={true}>
                   <Section />
                 </Frame>
