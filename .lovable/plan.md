@@ -1,68 +1,74 @@
 
-# Fix: restore hero→about, drive fold phases off `bridge` again
+# Fix the fold: hide what's behind, drop the spine crossfade
 
-## What I broke and why
+## What's wrong in the screenshot
 
-The user's phase windows (0.04, 0.24, 0.30, 0.58, 0.74…) are meant **relative to the about→projects segment**, not the full page scroll. My last edit applied them to the **outer** `p`, which collides with the hero→about flip that lives at `p ∈ [0.35, 0.72]`.
+The folded packet shows the two dark wings closed over the centre, but the **AboutCardBack is still legible on the left and right** (`ABOUT … OVERVIEW … Notes on How I`, `EXPERIENCE … UX … matters.`). That's because:
 
-Concrete fallout:
+- Wings are an *overlay* sitting on top of `AboutCardBack`. When they rotate behind, they expose the unchanged full-width `AboutCardBack` underneath.
+- `AboutCardBack` is full-width with no clip — it just fades opacity later during TURN, which the user doesn't want anyway.
+- A separate `spineSkin` ramps in via opacity (the "crossfade") which the user explicitly doesn't want.
 
-1. **Hero→About flip destroyed.** `rotYFlip = p2*180 + eInOut(tTurn)*180` and `tTurn = seg(0.24, 0.56, p)`. By the time the About flip starts (`p=0.55`), `tTurn` is already ≈1, so the card snaps an extra 180° and ends front-facing (photo) instead of showing the About panel. That's the "you destroyed everything" symptom.
-2. **AboutCardBack invisible immediately.** `cardBackInnerRef.opacity = 1 - tTurn`. At `p=0.55` that's already ~0, so the back panel never reads.
-3. **Folded green spine replaced by the yellow ABOUT placeholder.** With the rotateY math broken, the spine back face never faces the camera. What the user sees in the slot is the static `<ProjectSpine data={ABOUT_SPINE_DATA} />` in `AboutToProjectsBridge` (gold-brown — "yellow ABOUT"). The folded card is technically there but oriented wrong, so the placeholder is what reads.
+The mental model the user wants is real paper: as the card folds in thirds, the **whole card visually narrows to its centre column**. The closed packet IS the spine. No crossfade, no peek-through.
 
 ## Fix
 
-Re-introduce a dedicated `bridge` driver for the **about→projects** segment only, and run all 5 spec phases against it. Leave the hero→about flip windows **exactly as they were before this thread**.
+Two structural changes in `HeroIdBadge.tsx`. No changes to `AboutToProjectsBridge.tsx`.
 
-```text
-Outer p:
-  p1 = smoothstep(0.35, 0.55, p)   slide hero card to centre   (unchanged)
-  p2 = smoothstep(0.55, 0.72, p)   About flip rotateY 0→180°    (unchanged)
+### 1. Clip the whole back face to its centre column as FOLD progresses
 
-bridge = smoothstep(0.72, 1.00, p)   about→projects segment
+Apply a `clip-path: inset(0 X% 0 X%)` on **both** `cardRef` (front) and `backFaceRef` (back), where `X = 33.333 * eInOut(tFold)`.
 
-Within bridge:
-  FOLD   seg(bridge, 0.04, 0.40)   wings fold behind centre
-  TURN   seg(bridge, 0.24, 0.56)   packet revolves 180°, spine on
-  COLL   seg(bridge, 0.30, 0.60)   shelf rule strokes outward
-  FILE   seg(bridge, 0.58, 0.86)   folded spine flies to its slot
-  ARCH   seg(bridge, 0.74, 1.00)   library spines rise
+- At `tFold = 0`: `inset(0 0 0 0)` → full card visible as today.
+- At `tFold = 1`: `inset(0 33.333% 0 33.333%)` → only the centre column (≈SPINE_WIDTH proportions) remains visible. Everything outside that band — including the `AboutCardBack` left/right thirds, the slot, the photo on the front — is geometrically clipped, not just faded. Nothing "behind" can leak.
+
+This makes the card *physically* shrink to spine-width as it folds. The clip is on the card itself, so:
+- `cardBackInnerRef` opacity ramp can be **removed** (no crossfade).
+- `backSlotRef` opacity ramp can be **removed**.
+- `spineSkinRef` opacity ramp can be **removed** — it's just always on.
+
+### 2. Wings become a pure visual flourish on top of the clipping card
+
+The wings (`foldLeftRef`, `foldRightRef`) keep folding behind around their inner edges, exactly as today. But their **front faces become near-transparent** (just a 1px inner-edge crease shadow, no cream fill). That way:
+
+- At rest (`tFold=0`, wings hidden via `volRef.opacity=0`), nothing changes.
+- During fold, the wings' rotation reveals their dark linen **backs** sweeping behind the shrinking centre column — selling the physical "tucking behind" without any cream wing covering live About content.
+- The clip on `backFaceRef` is what removes the left/right About content; the wings just add the 3D fold cue.
+
+### 3. SpineSkin always-on, sized to the surviving centre column
+
+`spineSkinRef` (the `<ProjectSpine>` back face) is repositioned to `left: 33.333%; width: 33.334%` so it lives exactly inside the unclipped band. It keeps `transform: rotateY(180deg) backface-visibility: hidden`.
+
+- Throughout FOLD: hidden via backface culling — camera sees the cream front of `backFace` (clipped centre column).
+- During TURN: the packet rotates 180°. The cream centre column rotates away; the `<ProjectSpine>` back face rotates into view. **No crossfade — the spine appears solely because the packet turned.**
+
+### 4. Remove the AboutCardBack & slot opacity ramps
+
+In `applyTransform`:
+- Delete the `cardBackInnerRef.style.opacity = 1 - tTurn` block.
+- Delete the `backSlotRef.style.opacity` block.
+- Delete the `spineSkinRef.style.opacity = tSpineLbl` line.
+- Remove the unused `tSpineLbl` variable.
+
+### 5. Apply the clip in `applyTransform`
+
+```ts
+const clipPct = (33.333 * fE).toFixed(3);
+const clipCSS = `inset(0 ${clipPct}% 0 ${clipPct}%)`;
+if (cardRef.current)     cardRef.current.style.clipPath = clipCSS;
+if (backFaceRef.current) backFaceRef.current.style.clipPath = clipCSS;
 ```
 
-## File changes
-
-### `src/components/HeroIdBadge.tsx` — `applyTransform`
-
-- Re-compute `bridge = smoothstep(0.72, 1.0, p)` (don't read `__bridgeProgress`; compute locally so the math is self-contained).
-- `tFold / tTurn / tFile / tSpineLbl` are now `seg(bridge, …)` not `seg(p, …)`.
-- **Single rotateY on `cardWrap`:** `rotY = p2*180 + eInOut(tTurn)*180`. Because `tTurn` starts at `bridge=0.24` (i.e. `p≈0.79`), it can no longer interfere with `p2` (which finishes at `p=0.72`). Spine ends camera-facing at `bridge=1`.
-- **AboutCardBack fade** gated on `tTurn` (now bridge-relative): it stays fully visible through the entire hero→about flip and only fades as the packet starts to revolve. Restores the readable About panel.
-- **`volRef.opacity`** gated on `tFold > 0.01` (bridge-relative), so wings stay hidden during the hero→about flip.
-- **FILE flight** uses bridge-relative `tFile`. Keep the single-scale approach (`min(fileScaleX, fileScaleY)`) so the wrap shrinks proportionally toward the slot.
-- **Hide wrap** at `tHide = seg(bridge, 0.86, 0.90)` so the folded card disappears exactly as the slot placeholder fades in.
-- **Lanyard / globe** fades remain tied to `p2` and `tFold` as before — restores the original hero→about feel.
-
-### `src/components/AboutToProjectsBridge.tsx`
-
-- Re-introduce the local `bridge = smoothstep(0.72, 1.0, t)` remap (use a local `seg`).
-- **COLL**: `strokeDashoffset = ledgeLen * (1 - seg(bridge, 0.30, 0.60))`.
-- **ARCH**: per-spine `k = eBack(seg(bridge, 0.74 + i*0.04, 0.98))` so the stagger fits inside ARCH.
-- **Slot placeholder hand-off**: keep the `<ProjectSpine>` inside `aboutSlotRef`, but its `opacity = seg(bridge, 0.86, 0.92)`. That way the gold ABOUT spine no longer "replaces" the folded green spine mid-flight — it only appears as the wrap fades.
-- Keep `__bridgeProgress` / `__bridgeSlotRect` publishing for FILE's flyDx/flyDy.
-
-### `.lovable/plan.md`
-- Replace with the corrected phase mapping (bridge-driven, hero→about untouched).
+Add `clipPath: "inset(0 0 0 0)"` to both elements' inline styles so the property is set at mount.
 
 ## Verification at 1001×769
 
-- `p=0–0.35`: hero panel + draggable card, unchanged.
-- `p=0.35–0.55`: card slides to centre, unchanged.
-- `p=0.55–0.72`: card flips, About panel becomes legible — **fixed**.
-- `p≈0.78` (`bridge≈0.20`): wings begin folding behind, About still visible.
-- `p≈0.86` (`bridge≈0.50`): packet half-turned, ProjectSpine back fading in, About fading out, shelf rule mid-stroke.
-- `p≈0.92` (`bridge≈0.72`): folded green spine arrives in slot, scaled to shelf size — **fold visible, not replaced by the gold placeholder**.
-- `p≈0.95` (`bridge≈0.82`): wrap fades; gold ABOUT slot placeholder fades in seamlessly.
-- `p=1.00`: full shelf, identical to current end-state.
+- `bridge=0`: card unchanged, About panel readable end-to-end.
+- `bridge≈0.10`: wings appear, beginning to rotate behind; card visibly starts narrowing — left/right About content slides out of view by clipping (not fading).
+- `bridge≈0.30`: card is now ~half-width, wings at ~45° behind, no About content peeks through the sides.
+- `bridge≈0.40` (FOLD done): card is exactly centre-column width, looks like a closed cream packet of the right spine proportions; wings hidden behind.
+- `bridge≈0.45`: TURN begins; packet rotates.
+- `bridge≈0.56` (TURN done): `<ProjectSpine>` back face is camera-facing, perfectly sized to the spine slot. No crossfade — it just appeared as the packet turned.
+- `bridge≈0.86`: FILE flight lands the spine in the shelf slot; placeholder fades in to take over at 0.86–0.92.
 
-Only `HeroIdBadge.tsx`, `AboutToProjectsBridge.tsx`, `.lovable/plan.md`. No backend, no deps.
+Files: `src/components/HeroIdBadge.tsx`, `.lovable/plan.md`. No backend.
