@@ -500,28 +500,79 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Spine-skin overlay — cross-fades in to make the card look like a shelf spine */}
+          {/* Trifold seam overlay — 3 cream panels; left/right rotate inward like a folding map */}
           <div
-            ref={spineSkinRef}
+            ref={foldSeamsRef}
             aria-hidden
             style={{
               position: "absolute",
               inset: 0,
               opacity: 0,
               pointerEvents: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 6,
+              zIndex: 5,
+              perspective: 1200,
               willChange: "opacity",
-              // The spine itself is fixed-size; the card scales down around it so they meet at the slot.
-              transformOrigin: "center center",
             }}
           >
-            {/* Render the spine at its native 78x200 footprint, centered inside the card */}
-            {/* Counter the rotateY(180) of the back face so the spine reads correctly */}
-            <div style={{ width: SPINE_WIDTH, height: SPINE_HEIGHT, transform: "rotateY(180deg)" }}>
-              <ProjectSpine data={ABOUT_SPINE_DATA} />
+            <div style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d" }}>
+              {/* Left panel — folds back-right (anchored to inner edge) */}
+              <div
+                ref={foldLeftRef}
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, bottom: 0,
+                  width: "33.333%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "right center",
+                  willChange: "transform, opacity",
+                  backfaceVisibility: "hidden",
+                }}
+              />
+              {/* Center panel — stays put, becomes the spine */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0, bottom: 0,
+                  left: "33.333%",
+                  width: "33.334%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                }}
+              >
+                {/* Spine-skin cross-fades over the center panel */}
+                <div
+                  ref={spineSkinRef}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    willChange: "opacity",
+                  }}
+                >
+                  {/* Counter rotateY(180) of back face so spine text reads correctly */}
+                  <div style={{ transform: "rotateY(180deg)", transformOrigin: "center center" }}>
+                    <ProjectSpine data={ABOUT_SPINE_DATA} />
+                  </div>
+                </div>
+              </div>
+              {/* Right panel — folds back-left (anchored to inner edge) */}
+              <div
+                ref={foldRightRef}
+                style={{
+                  position: "absolute",
+                  top: 0, right: 0, bottom: 0,
+                  width: "33.333%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "left center",
+                  willChange: "transform, opacity",
+                  backfaceVisibility: "hidden",
+                }}
+              />
             </div>
           </div>
         </div>
