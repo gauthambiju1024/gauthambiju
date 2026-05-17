@@ -1,39 +1,42 @@
-## Diagnosis
+## Plan
 
-The cream strip you see beside the green spine is the **back face of a folded wing**. Geometry is correct (25/50/25, wings fold to ~178°, packet then flips on Y to reveal the spine), but the wing's back face is painted with `CARD_BG` (cream). So when the whole packet rotates to show its back, you see:
+Fix the trifold animation so both 25% side wings physically fold inward onto the 50% center strip, preserving the existing 25/50/25 layout and everything else.
 
-- center back face → green spine (correct)
-- wing back faces → cream (wrong — should also be green)
+### What will change
 
-That's why image 2 shows green-on-left + cream-on-right: the right wing's cream back is exposed alongside the spine.
+1. **Correct the wing rotation directions**
+   - Left wing keeps folding inward from its right hinge.
+   - Right wing will be corrected to fold inward from its left hinge.
+   - The result should be a symmetrical fold toward the center, not one side folding outward or exposing the cream face incorrectly.
 
-The recent fix that gave the wing **outer wrapper** `background: CARD_BG` to stop transparency made this worse — it locked the wing to cream from any angle, including when the packet is flipped.
+```text
+Before fold:   [ left 25 ][ center 50 ][ right 25 ]
+During fold:        -> [ center 50 ] <-
+After fold:          [ green spine packet ]
+```
 
-## Fix (one file)
+2. **Preserve the current proportions**
+   - Keep the current 25% / 50% / 25% split exactly as requested.
+   - Do not change card size, spine size, bridge timing, shelf placement, or the project shelf animation.
 
-**`src/components/HeroIdBadge.tsx`** — wing markup (~lines 550–611)
+3. **Keep the faces fully visible and opaque**
+   - Front faces remain cream About-card slices during the fold.
+   - Back faces remain green so the final folded packet reads as one solid spine.
+   - No transparent half-card, no semi-visible starfield showing through the folded packet.
 
-1. **Outer wrapper of each wing**: keep `backfaceVisibility: hidden`, but change `background: CARD_BG` → `background: 'transparent'`. The opaque surfaces come from the inner front/back face divs, not the wrapper. (The wrapper background was the cause of the cream-strip-on-flip; removing it does NOT bring back the original transparency bug, because each face div is now itself opaque — see step 2.)
+4. **Keep the final result professional and concrete**
+   - The mid-fold should show both wings moving inward toward the center.
+   - The end state should show only the green spine surface, with no cream strip.
+   - Existing shelf drawing and animation timing fixes remain included and untouched.
 
-2. **Front face inner div** (cream side, faces camera before flip): give it an explicit `background: CARD_BG` and keep `backfaceVisibility: hidden`. This is the surface that must fully cover the green center during the fold.
+### Technical details
 
-3. **Back face inner div** (faces camera after flip): change its background from cream to the **spine green** (same token used by the spine center face, e.g. `SPINE_BG` / the green used in `ProjectSpine` for the about spine, ~`hsl(155 25% 22%)` — pull from the existing constant, do not hardcode). Keep `rotateY(180deg)` + inset shadow. Result: after the packet flips, the wings' back faces are green and blend seamlessly into the spine — no cream strip.
+- Update only `src/components/HeroIdBadge.tsx`.
+- Adjust the per-frame transform assignment for `foldRightRef` so its `rotateY(...)` direction matches a true inward fold relative to its left-side hinge.
+- Keep the current trifold DOM structure, `transformOrigin` values, 25/50/25 widths, backface visibility, and green back-face styling.
+- If needed, add a small `translateZ`/z-order adjustment only to prevent z-fighting while folded, without changing the visible layout or timing.
 
-4. Sanity: ensure no other layer (e.g. a sibling overlay or the packet container) paints cream on the back. If one exists, it gets the same green-on-back treatment via a second face div.
+### Validation
 
-## What this changes visually
-
-| Stage | Before | After |
-|---|---|---|
-| Mid-fold, front facing camera | cream wings cover green center | unchanged — still solid cream |
-| Mid-flip (image 2 moment) | green spine + cream wing strip | uniform green across spine + wing backs |
-| Fully flipped | green spine + faint cream edges | clean solid green spine |
-
-## Out of scope
-
-No changes to fold angles, wing widths (25/50/25 preserved), timing, the bridge file, shelf draw, or spine rise. Only the wing face colors.
-
-## Files
-
-- `src/components/HeroIdBadge.tsx` — wing wrapper background + back-face color
-- `.lovable/plan.md` — replace with this plan
+- Check the current preview stage shown in your screenshot: mid-fold should show left and right wings folding toward the center.
+- Confirm final folded state is a single green spine packet, with all project spine visuals intended for the shelf still visible after handoff.
