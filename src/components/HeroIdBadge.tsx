@@ -358,6 +358,27 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
   if (!mounted) return null;
 
+  const aboutSurface = (offsetX: number) => (
+    <div
+      style={{
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        padding: "20px 14px 14px",
+        transform: `translateX(${offsetX}px)`,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <AboutCardBack
+        data={journey}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        expandedId={expandedId}
+        setExpandedId={setExpandedId}
+      />
+    </div>
+  );
+
   return createPortal(
     <div
       ref={stageRef}
@@ -445,7 +466,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         style={{
           top: 90,
           right: 32,
-          width: 260,
+          width: CARD_WIDTH,
           transform: "rotate(8deg)",
           transformOrigin: "center center",
           transformStyle: "preserve-3d",
