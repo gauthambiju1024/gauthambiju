@@ -233,6 +233,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
       if (backFaceRef.current) {
         backFaceRef.current.style.background = `hsl(40 25% 92% / ${1 - tSeams})`;
+        const frameOpacity = 1 - smoothstep(0.20, 0.75, tShrink);
+        backFaceRef.current.style.boxShadow = `0 30px 40px -8px hsl(160 30% 4% / ${0.55 * frameOpacity}), 0 12px 24px -6px hsl(160 30% 4% / ${0.4 * frameOpacity}), inset 0 0 0 1px hsl(0 0% 100% / ${0.5 * frameOpacity})`;
       }
       if (backSlotRef.current) {
         backSlotRef.current.style.opacity = String(1 - tSeams);
@@ -254,13 +256,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         spineSkinRef.current.style.opacity = String(tSkin);
       }
       if (foldCenterRef.current) {
-        const centerScaleX = 1 + ((SPINE_WIDTH / (w / 3)) - 1) * tShrink;
-        const centerScaleY = 1 + ((SPINE_HEIGHT / h) - 1) * tShrink;
-        foldCenterRef.current.style.transform = `scaleX(${centerScaleX.toFixed(3)}) scaleY(${centerScaleY.toFixed(3)})`;
+        foldCenterRef.current.style.transform = "scaleX(1) scaleY(1)";
       }
 
-      const shrinkSx = 1;
-      const shrinkSy = 1;
+      const targetSx = SPINE_WIDTH / (w / 3);
+      const targetSy = SPINE_HEIGHT / h;
+      const shrinkSx = 1 + (targetSx - 1) * tShrink;
+      const shrinkSy = 1 + (targetSy - 1) * tShrink;
 
       // Compute drop translation to land on the shelf slot (viewport coords)
       let dropDx = 0, dropDy = 0;
@@ -294,7 +296,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = "1";
+      cardWrap.style.opacity = String(1 - smoothstep(0.985, 1.0, bridge));
       cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
