@@ -5,6 +5,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
 import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
+import ProjectSpine, { ABOUT_SPINE_DATA, SPINE_WIDTH, SPINE_HEIGHT } from "./projects/ProjectSpine";
 
 type HeroBadge = {
   name?: string;
@@ -86,11 +87,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
-  const flapLeftRef = useRef<HTMLDivElement>(null);
-  const flapCenterRef = useRef<HTMLDivElement>(null);
-  const flapRightRef = useRef<HTMLDivElement>(null);
-  const slabRef = useRef<HTMLDivElement>(null);
-  const flapsWrapRef = useRef<HTMLDivElement>(null);
+  const spineSkinRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -109,29 +106,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
     let lastW = 0, lastH = 0;
     const update = () => {
-      const bridgeActive = !!(window as any).__bridgeActive;
-      let r: { left: number; top: number; width: number; height: number };
-      if (bridgeActive) {
-        // Pin stage to viewport so the card+globe stay visible during the bridge
-        r = { left: 0, top: 100, width: window.innerWidth, height: window.innerHeight - 100 };
-      } else {
-        r = anchor.getBoundingClientRect();
-      }
+      const r = anchor.getBoundingClientRect();
       const tx = snap(r.left);
       const ty = snap(r.top);
       stage.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
       stage.style.width = `${snap(r.width)}px`;
       stage.style.height = `${snap(r.height)}px`;
       let op = 1;
-      if (!bridgeActive) {
-        let el: HTMLElement | null = anchor;
-        let depth = 0;
-        while (el && depth < 8) {
-          const o = parseFloat(getComputedStyle(el).opacity || "1");
-          if (!Number.isNaN(o)) op *= o;
-          el = el.parentElement;
-          depth++;
-        }
+      let el: HTMLElement | null = anchor;
+      let depth = 0;
+      while (el && depth < 8) {
+        const o = parseFloat(getComputedStyle(el).opacity || "1");
+        if (!Number.isNaN(o)) op *= o;
+        el = el.parentElement;
+        depth++;
       }
       stage.style.opacity = String(op);
       if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
@@ -196,7 +184,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     updateLanyardRef.current = updateLanyard;
 
     // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
-    // and the bridge fold/rotate/drop that turns the card into a shelved spine.
+    // and the bridge shrink/drop that turns the card into a shelved spine.
     const applyTransform = () => {
       const bridgeActive = !!(window as any).__bridgeActive;
       // While the bridge is on screen, hold the card at its end-of-flip pose
@@ -221,38 +209,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotYFlip = p2 * 180;
 
-      // ---- Bridge-driven fold / rotate-to-spine / drop-onto-shelf ----
+      // ---- Bridge-driven shrink-into-spine + drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? 0);
-      const tHide  = smoothstep(0.02, 0.10, bridge);  // back content fades, flaps appear
-      const tFold  = smoothstep(0.10, 0.40, bridge);  // tri-fold
-      const tRot   = smoothstep(0.40, 0.66, bridge);  // rotate to spine + walnut bg
-      const tDrop  = smoothstep(0.66, 1.00, bridge);  // translate down to shelf slot
+      // back content (globe + about) cross-fades into spine skin immediately
+      const tSkin = smoothstep(0.00, 0.15, bridge);
+      // card shrinks to spine size
+      const tShrink = smoothstep(0.15, 0.55, bridge);
+      // translate to the shelf slot
+      const tDrop = smoothstep(0.55, 1.00, bridge);
 
-      // Flap overlay panels (rendered inside the back-face, see below)
-      if (flapsWrapRef.current) {
-        flapsWrapRef.current.style.opacity = String(tHide);
-      }
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tHide);
-        cardBackInnerRef.current.style.pointerEvents = tHide > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tSkin);
+        cardBackInnerRef.current.style.pointerEvents = tSkin > 0.05 ? "none" : "auto";
       }
-      const flapAngle = tFold * 88;
-      if (flapLeftRef.current)   flapLeftRef.current.style.transform   = `rotateY(${flapAngle}deg)`;
-      if (flapRightRef.current)  flapRightRef.current.style.transform  = `rotateY(${-flapAngle}deg)`;
-      if (flapCenterRef.current) {
-        const cd = 0.12 + tFold * 0.32;
-        flapCenterRef.current.style.boxShadow =
-          `inset 6px 0 12px -6px rgba(0,0,0,${cd}), inset -6px 0 12px -6px rgba(0,0,0,${cd})`;
-      }
-      // Walnut spine slab fades in during rotation
-      if (slabRef.current) {
-        slabRef.current.style.opacity = String(tRot);
+      if (spineSkinRef.current) {
+        spineSkinRef.current.style.opacity = String(tSkin);
       }
 
-      // Compose card transform: extra scaleX shrink + rotateY (adds to flip) + drop
-      const sx = 1 - tFold * 0.88;            // tri-fold horizontal collapse
-      const extraRotY = tRot * 90;            // 0 → 90° (to edge-on, becomes spine)
-      const dropShrink = 1 - tDrop * 0.74;    // shrink whole card down to spine size
+      // Shrink card to spine dimensions (width 260 → 78, height 380 → 200)
+      const targetSx = SPINE_WIDTH / w;   // ≈ 0.30
+      const targetSy = SPINE_HEIGHT / h;  // ≈ 0.53
+      const shrinkSx = 1 + (targetSx - 1) * tShrink;
+      const shrinkSy = 1 + (targetSy - 1) * tShrink;
 
       // Compute drop translation to land on the shelf slot (viewport coords)
       let dropDx = 0, dropDy = 0;
@@ -260,8 +238,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          // current viewport center of the cardWrap pre-drop:
-          // stage top = stageRect.top; cardWrap center in stage = (restingCenterX + dxToCenter, restingCenterY + dyToCenter)
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top  + restingCenterY + dyToCenter;
           dropDx = (slotRect.cx - curCx) * tDrop;
@@ -271,25 +247,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const tx = snap(offsetX + dxToCenter + dropDx);
       const ty = snap(offsetY + dyToCenter + dropDy);
-      const s = Math.round(scale * dropShrink * 1000) / 1000;
+      const s = Math.round(scale * 1000) / 1000;
 
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) ` +
-        `scaleX(${sx.toFixed(3)}) rotateY(${(rotYFlip + extraRotY).toFixed(2)}deg)`;
+        `scaleX(${shrinkSx.toFixed(3)}) scaleY(${shrinkSy.toFixed(3)}) rotateY(${rotYFlip.toFixed(2)}deg)`;
 
-      // Existing fade behavior (lanyard, globe)
+      // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String(1 - p2);
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSkin));
       }
-      // Globe fades in with the flip, fades out as the bridge folding starts.
-      const globeFade = smoothstep(0.02, 0.14, bridge);
+      // Globe is visible only during the flip; the moment the bridge starts it disappears
       if (globeLayerRef.current) {
-        globeLayerRef.current.style.opacity = String(p2 * (1 - globeFade));
+        const globeOp = p2 * (1 - tSkin);
+        globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && globeFade < 0.2 ? "auto" : "none";
+          p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = "1"; // card stays visible — it becomes the spine
-      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.05 ? "none" : "auto";
+      cardWrap.style.opacity = "1";
+      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
@@ -496,44 +472,30 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Fold overlay — three flaps that hinge during the bridge */}
+          {/* Spine-skin overlay — cross-fades in to make the card look like a shelf spine */}
           <div
-            ref={flapsWrapRef}
+            ref={spineSkinRef}
             aria-hidden
             style={{
               position: "absolute",
               inset: 0,
               opacity: 0,
               pointerEvents: "none",
-              transformStyle: "preserve-3d",
-              perspective: "2200px",
-              zIndex: 5,
-              willChange: "opacity",
-            }}
-          >
-            <div ref={flapLeftRef} style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderLeft: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "right center", boxShadow: "inset -8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
-            <div ref={flapCenterRef} style={{ position: "absolute", top: 0, bottom: 0, left: "33.333%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "center", boxShadow: "inset 6px 0 12px -6px rgba(0,0,0,0.12), inset -6px 0 12px -6px rgba(0,0,0,0.12)", willChange: "box-shadow" }} />
-            <div ref={flapRightRef} style={{ position: "absolute", top: 0, bottom: 0, left: "66.666%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderRight: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "left center", boxShadow: "inset 8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
-          </div>
-
-          {/* Walnut spine slab — fades in during rotate-to-spine */}
-          <div
-            ref={slabRef}
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0,
-              pointerEvents: "none",
-              backgroundColor: "hsl(28 32% 24%)",
-              backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px)," +
-                "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px)",
-              boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.08), inset 0 -1px 0 hsl(0 0% 0% / 0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               zIndex: 6,
               willChange: "opacity",
+              // The spine itself is fixed-size; the card scales down around it so they meet at the slot.
+              transformOrigin: "center center",
             }}
-          />
+          >
+            {/* Render the spine at its native 78x200 footprint, centered inside the card */}
+            {/* Counter the rotateY(180) of the back face so the spine reads correctly */}
+            <div style={{ width: SPINE_WIDTH, height: SPINE_HEIGHT, transform: "rotateY(180deg)" }}>
+              <ProjectSpine data={ABOUT_SPINE_DATA} />
+            </div>
+          </div>
         </div>
       </div>
     </div>,

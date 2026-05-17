@@ -1,6 +1,6 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
 import AboutToProjectsBridge from "@/components/AboutToProjectsBridge";
-import ProjectsShelf from "@/components/ProjectsShelf";
+
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
 import WritingDesk from "@/components/WritingDesk";
@@ -9,7 +9,7 @@ import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
 import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
-import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
+
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
@@ -17,7 +17,6 @@ import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
 
 const trailingStations = [
-  { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
