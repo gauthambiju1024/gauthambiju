@@ -243,7 +243,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // FOLD — wings rotate flush behind the center strip
       const fE = eOut(tFold);
-      const flapAngle = fE * 180;
+      const flapAngle = fE * 178;
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
@@ -253,7 +253,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // TURN — center strip rotates internally; cross-fade about face → green spine across the rotation midpoint
       if (foldCenterRef.current) {
         const turnDeg = eOut(tTurn) * 180;
-        foldCenterRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
+        foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
       }
       const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
       const spineFaceEl = foldCenterRef.current?.lastElementChild as HTMLElement | null;
@@ -560,7 +560,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }}>
                 {aboutSurface(0)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "translateZ(-0.5px) rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: CARD_BG, boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08), inset 0 0 24px hsl(160 30% 4% / 0.06)" }} />
             </div>
 
             {/* CENTER third — turns internally into the green ABOUT spine */}
@@ -603,7 +603,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
                 {aboutSurface(-(CARD_WIDTH * 2) / 3)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "translateZ(-0.5px) rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: CARD_BG, boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08), inset 0 0 24px hsl(160 30% 4% / 0.06)" }} />
             </div>
           </div>
         </div>
