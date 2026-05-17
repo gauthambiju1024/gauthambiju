@@ -1,19 +1,20 @@
 import { useEffect, useRef } from "react";
 
 /**
- * AboutToProjectsBridge (v2)
+ * AboutToProjectsBridge (v3)
  * --------------------------
  * Scroll-pinned transition that continues directly from the About card.
- * No separate slab spawns. A cream-card clone is fixed-positioned over the
- * existing flipped ID-card back (measured every frame), and:
  *
- *   A 0.00–0.10  Globe fade   — HeroIdBadge reads window.__bridgeProgress
- *                               and fades the globe + original card together.
- *   B 0.10–0.40  Tri-fold     — left/right thirds rotateY ±88°, slab scaleX → 0.12
- *   C 0.40–0.65  Rotate       — rotateY 0→90°, cream → walnut spine color
- *   D 0.65–1.00  Shelve       — translate down to a drawn shelf ledge,
- *                               ledge draws L→R, walnut plank fades in beneath
+ *   A 0.00–0.14  Globe + original card fade out (HeroIdBadge reads
+ *                window.__bridgeProgress); clone fades in at the same spot.
+ *   B 0.14–0.42  Tri-fold     — left/right thirds rotateY ±88°.
+ *   C 0.42–0.66  Rotate       — rotateY 0→90°, cream → walnut spine color.
+ *   D 0.66–1.00  Shelve       — drop onto a drawn ledge; plank fades in
  *                               so it hands off into the ProjectsShelf below.
+ *
+ * While this section is on screen, window.__bridgeActive = true tells
+ * HeroIdBadge to pin its stage to the viewport (rather than tracking #home,
+ * which has already scrolled off), so the card stays visible to fade.
  *
  * Performance: single window scroll listener + rAF, direct ref mutation,
  * zero React re-renders during scroll.
@@ -23,7 +24,7 @@ const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const ease = (a: number, b: number, t: number) => clamp01((t - a) / (b - a));
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
-// Cream paper → walnut spine (matches SPINE_COLORS[0] in ProjectsShelf)
+// Cream paper → walnut spine
 const PAPER = { h: 40, s: 25, l: 92 };
 const SPINE = { h: 170, s: 25, l: 22 };
 const lerpHsl = (t: number) => {
@@ -33,7 +34,6 @@ const lerpHsl = (t: number) => {
   return `hsl(${h.toFixed(1)} ${s.toFixed(1)}% ${l.toFixed(1)}%)`;
 };
 
-// Cream paper grid (very faint notebook lines, matches AboutCardBack)
 const PAPER_GRID =
   "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px)," +
   "linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)";
@@ -76,6 +76,23 @@ const FlapPanel = ({
   );
 };
 
+// Compute the viewport rect of the about card at end-of-flip,
+// mirroring HeroIdBadge's math (stage = #home, ~vw × (vh-100), top 100).
+const cardViewportRect = () => {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const stageW = vw;
+  const stageH = Math.max(200, vh - 100);
+  const cardW0 = 260;
+  const cardH0 = 380;
+  const scale = Math.min((stageW * 0.45) / cardW0, (stageH * 0.78) / cardH0);
+  const w = cardW0 * scale;
+  const h = cardH0 * scale;
+  const cx = stageW * 0.74;
+  const cy = 100 + stageH / 2;
+  return { left: cx - w / 2, top: cy - h / 2, width: w, height: h };
+};
+
 const AboutToProjectsBridge = () => {
   const pinRef = useRef<HTMLElement>(null);
   const cloneRef = useRef<HTMLDivElement>(null);
@@ -102,29 +119,19 @@ const AboutToProjectsBridge = () => {
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Prep ledge dash for L→R draw-in
     let ledgeLen = 900;
     try { ledgeLen = ledgePath.getTotalLength() || 900; } catch { /* noop */ }
     ledgePath.style.strokeDasharray = String(ledgeLen);
     ledgePath.style.strokeDashoffset = String(ledgeLen);
 
-    // Fallback rect (in case the hero card wrap isn't found yet)
-    const fallbackRect = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const w = 260;
-      const h = 380;
-      return { left: vw / 2 - w / 2, top: vh / 2 - h / 2, width: w, height: h };
+    const positionClone = () => {
+      const r = cardViewportRect();
+      clone.style.left = `${r.left}px`;
+      clone.style.top = `${r.top}px`;
+      clone.style.width = `${r.width}px`;
+      clone.style.height = `${r.height}px`;
     };
-
-    const measureCard = () => {
-      const el = document.querySelector('[data-hero-card-wrap]') as HTMLElement | null;
-      if (!el) return fallbackRect();
-      const r = el.getBoundingClientRect();
-      // Skip absurd rects (element not yet positioned)
-      if (r.width < 20 || r.height < 20) return fallbackRect();
-      return { left: r.left, top: r.top, width: r.width, height: r.height };
-    };
+    positionClone();
 
     let ticking = false;
 
@@ -137,61 +144,43 @@ const AboutToProjectsBridge = () => {
       const scrolled = -rect.top;
       const t = clamp01(scrolled / travel);
 
-      // Publish progress so HeroIdBadge fades globe + original card
+      // Active flag = sticky stage is on screen
+      const active = rect.top <= 0 && rect.bottom >= vh * 0.5;
+      (window as any).__bridgeActive = active;
       (window as any).__bridgeProgress = t;
 
-      // Clone is visible only while bridge is active
-      const visible = t > 0.002 && t < 0.999;
-      clone.style.opacity = visible ? "1" : "0";
-      clone.style.pointerEvents = "none";
+      const visible = t > 0.001;
+      clone.style.opacity = visible ? String(clamp01(t / 0.14)) : "0";
 
-      // Mirror the original card's on-screen rect (so the fold starts in place)
-      const cr = measureCard();
-      // Position is locked to the rect captured at the start of phase B (so the
-      // card doesn't "follow" any residual motion of the original). We refresh
-      // every frame during phase A and freeze at fold-start to be safe.
-      if (t < 0.12) {
-        clone.style.left = `${cr.left}px`;
-        clone.style.top = `${cr.top}px`;
-        clone.style.width = `${cr.width}px`;
-        clone.style.height = `${cr.height}px`;
-      }
+      const tFold = ease(0.14, 0.42, t);
+      const tRot = ease(0.42, 0.66, t);
+      const tDrop = smooth(ease(0.66, 1.0, t));
+      const tLedge = ease(0.72, 0.98, t);
+      const tPlank = ease(0.80, 1.0, t);
 
-      const tFold = ease(0.10, 0.40, t);
-      const tRot = ease(0.40, 0.65, t);
-      const tDrop = smooth(ease(0.65, 1.0, t));
-      const tLedge = ease(0.70, 0.98, t);
-      const tPlank = ease(0.78, 1.0, t);
-
-      // Flap fold
       const flapAngle = tFold * 88;
       left.style.transform = `rotateY(${flapAngle}deg)`;
       right.style.transform = `rotateY(${-flapAngle}deg)`;
 
-      // Crease deepens
       const creaseDark = 0.12 + tFold * 0.28;
       center.style.boxShadow = `inset 6px 0 12px -6px rgba(0,0,0,${creaseDark}), inset -6px 0 12px -6px rgba(0,0,0,${creaseDark})`;
 
-      // Slab: scaleX collapse → rotateY 90° → drop
       const sx = 1 - tFold * 0.88;
       const ry = tRot * 90;
-      // Drop distance: bottom of viewport minus clone's current top
+      const cr = cardViewportRect();
       const dropPx = Math.max(0, vh * 0.72 - cr.top);
       const ty = tDrop * dropPx;
       slab.style.transform = `translate3d(0, ${ty.toFixed(2)}px, 0) scaleX(${sx.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
-
-      // Color lerp toward walnut spine during rotate
       slab.style.backgroundColor = lerpHsl(smooth(tRot));
 
-      // Ledge draws L→R; plank fades in beneath it
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
       ledgeWrap.style.opacity = String(Math.min(1, tLedge * 1.2));
       plank.style.opacity = tPlank.toFixed(3);
     };
 
     if (reduced) {
-      // Resolved end state
       (window as any).__bridgeProgress = 1;
+      (window as any).__bridgeActive = false;
       clone.style.opacity = "0";
       ledgePath.style.strokeDashoffset = "0";
       ledgeWrap.style.opacity = "1";
@@ -205,14 +194,16 @@ const AboutToProjectsBridge = () => {
         requestAnimationFrame(update);
       }
     };
+    const onResize = () => { positionClone(); onScroll(); };
 
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
       (window as any).__bridgeProgress = 0;
+      (window as any).__bridgeActive = false;
     };
   }, []);
 
@@ -221,10 +212,9 @@ const AboutToProjectsBridge = () => {
       ref={pinRef}
       id="about-projects-bridge"
       aria-hidden
-      style={{ height: "180vh" }}
+      style={{ height: "200vh" }}
       className="relative w-full"
     >
-      {/* Pinned ledge / plank stage (sits inside normal flow) */}
       <div
         className="sticky w-full overflow-hidden"
         style={{ top: 100, height: "calc(100vh - 100px)" }}
@@ -274,7 +264,7 @@ const AboutToProjectsBridge = () => {
         </div>
       </div>
 
-      {/* Folding clone — fixed to overlay the original about card */}
+      {/* Folding clone — fixed at the about-card's end-of-flip viewport position */}
       <div
         ref={cloneRef}
         aria-hidden
@@ -289,7 +279,7 @@ const AboutToProjectsBridge = () => {
           opacity: 0,
           perspective: "2200px",
           perspectiveOrigin: "50% 45%",
-          willChange: "opacity, left, top, width, height",
+          willChange: "opacity",
         }}
       >
         <div
