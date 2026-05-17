@@ -580,7 +580,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.22), transparent 22%, transparent 78%, hsl(160 30% 4% / 0.06))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)" }} />
+              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }} />
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
 
