@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
@@ -6,23 +6,20 @@ import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA
 import AboutPopup from "@/components/about/AboutPopup";
 
 /**
- * AboutToProjectsBridge (inline shelf layer)
- * --------------------------
- * The folding About card (from HeroIdBadge) parks into the rightmost slot
- * of this shelf, which IS the real Projects shelf — spines come from the DB.
+ * AboutToProjectsBridge — multi-row library shelf.
+ * Rows are grouped by project.category. The "MORE ABOUT ME" spine always
+ * sits at the right end of the top row (the flying card lands there).
+ * A toolbox sits on the bottom-right and scroll-zooms toward the next station.
  *
  * Publishes:
- *   window.__bridgeActive    boolean (stage is in view)
- *   window.__bridgeProgress  0..1 scroll-driven progress
+ *   window.__bridgeActive    boolean
+ *   window.__bridgeProgress  0..1
  *   window.__bridgeSlotRect  { left, top, width, height, cx, cy } of the About slot
  */
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-const ease = (a: number, b: number, t: number) => clamp01((t - a) / (b - a));
-const eBack = (t: number) => {
-  const c = 1.35, d = c + 1;
-  return 1 + d * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
-};
+
+const INK = "hsl(38 60% 52%)";
 
 interface Props {
   progressMV: MotionValue<number>;
@@ -31,28 +28,36 @@ interface Props {
 const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const pinRef = useRef<HTMLElement>(null);
   const shelfWrapRef = useRef<HTMLDivElement>(null);
-  const ledgePathRef = useRef<SVGPathElement>(null);
-  const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const aboutSlotRef = useRef<HTMLDivElement>(null);
   const aboutSpineRef = useRef<HTMLDivElement>(null);
+  const toolboxRef = useRef<HTMLAnchorElement>(null);
   const navigate = useNavigate();
   const [popupOpen, setPopupOpen] = useState(false);
 
   const { projects } = useProjects();
 
+  // Group by category, ordered by smallest sort_order in each group
+  const rows = useMemo(() => {
+    const groups = new Map<string, typeof projects>();
+    for (const p of projects) {
+      const cat = p.category || "General";
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(p);
+    }
+    const arr = Array.from(groups.entries()).map(([cat, items]) => ({
+      category: cat,
+      items: [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+      minOrder: Math.min(...items.map((i) => i.sort_order ?? 0)),
+    }));
+    arr.sort((a, b) => a.minOrder - b.minOrder);
+    return arr;
+  }, [projects]);
+
   useEffect(() => {
     const pin = pinRef.current;
-    const ledgePath = ledgePathRef.current;
     const shelfWrap = shelfWrapRef.current;
     const slot = aboutSlotRef.current;
-    if (!pin || !ledgePath || !shelfWrap || !slot) return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    let ledgeLen = 1000;
-    try { ledgeLen = ledgePath.getTotalLength() || 1000; } catch { /* noop */ }
-    ledgePath.style.strokeDasharray = String(ledgeLen);
-    ledgePath.style.strokeDashoffset = String(ledgeLen);
+    if (!pin || !shelfWrap || !slot) return;
 
     const publishSlotRect = () => {
       const r = slot.getBoundingClientRect();
@@ -71,28 +76,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // COLL — shelf rule strokes outward (bridge-relative)
-      const tColl = seg(0.30, 0.60, bridge);
-      ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tColl));
-
-      shelfWrap.style.opacity = String(clamp01(seg(0.30, 0.55, bridge)));
+      shelfWrap.style.opacity = String(clamp01(seg(0.30, 0.60, bridge)));
       shelfWrap.style.pointerEvents = bridge > 0.95 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
-      // ARCH — staggered within 0.74..1.0 of bridge
-      for (let i = 0; i < projects.length; i++) {
-        const el = spineRefs.current[i];
-        if (!el) continue;
-        const start = 0.74 + i * 0.04;
-        const k = eBack(seg(start, 0.98, bridge));
-        el.style.opacity = String(clamp01(k * 1.4));
-        el.style.transform = `translateY(${(1 - k) * 135}%)`;
-      }
-
-      // Slot: invisible geometry target. The real clickable About spine fades in at the end,
-      // replacing the flying card silently once it has fully settled.
       const settled = bridge > 0.96;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
@@ -102,28 +91,26 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       }
       slot.style.opacity = "0";
 
+      // Toolbox scroll-zoom toward the SkillsToolbox station
+      if (toolboxRef.current) {
+        // Use the pin section's bottom as the "exit" point; further scroll zooms.
+        const pinRect = pin.getBoundingClientRect();
+        const vh = window.innerHeight || 1;
+        // After pin exits the viewport (bottom < vh), grow toolbox over half a viewport.
+        const past = clamp01((vh - pinRect.bottom) / (vh * 0.5));
+        const scale = 1 + past * 0.8;
+        toolboxRef.current.style.transform = `scale(${scale.toFixed(3)})`;
+        toolboxRef.current.style.opacity = String(clamp01(seg(0.45, 0.75, bridge)));
+      }
+
       publishSlotRect();
     };
 
-    if (reduced) {
-      (window as any).__bridgeProgress = 1;
-      (window as any).__bridgeActive = false;
-      ledgePath.style.strokeDashoffset = "0";
-      shelfWrap.style.opacity = "1";
-      spineRefs.current.forEach((el) => {
-        if (el) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; }
-      });
-      slot.style.opacity = "0";
-      publishSlotRect();
-      return;
-    }
-
-    const onResize = () => { update(); publishSlotRect(); };
-
     update();
+    const onResize = () => { update(); publishSlotRect(); };
     window.addEventListener("resize", onResize);
     let raf = 0;
-    const loop = () => { update(); publishSlotRect(); raf = requestAnimationFrame(loop); };
+    const loop = () => { update(); raf = requestAnimationFrame(loop); };
     raf = requestAnimationFrame(loop);
 
     return () => {
@@ -135,82 +122,58 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
     };
   }, [projects, progressMV]);
 
-  const INK = "hsl(38 60% 52%)";
-  const INK_DIM = "hsl(38 45% 45%)";
-
-  return (
-    <section
-      ref={pinRef}
-      aria-label="Projects"
-      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-      className="w-full h-full"
-    >
-      <div
-        className="absolute inset-0 w-full overflow-hidden"
-        style={{ height: "100%" }}
-      >
-        {/* Drawn shelf: minimal line + project spines + landing slot for About */}
+  const Row = ({
+    category,
+    items,
+    isTop,
+    isBottom,
+    rowIndex,
+  }: {
+    category: string;
+    items: typeof projects;
+    isTop: boolean;
+    isBottom: boolean;
+    rowIndex: number;
+  }) => {
+    return (
+      <div className="relative flex flex-col" style={{ alignItems: "stretch" }}>
+        {/* spines */}
         <div
-          ref={shelfWrapRef}
-          className="absolute left-1/2"
+          className="flex items-end"
           style={{
-            bottom: "22%",
-            transform: "translateX(-50%)",
-            width: "min(88vw, 1180px)",
-            opacity: 0,
-            willChange: "opacity",
+            gap: 14,
+            paddingLeft: 24,
+            paddingRight: 24,
+            minHeight: SPINE_HEIGHT + 12,
           }}
         >
-          {/* spines row, sitting on top of the line */}
-          <div
-            className="absolute"
-            style={{
-              left: 0,
-              right: 0,
-              bottom: 8,
-              height: SPINE_HEIGHT + 12,
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "flex-start",
-              gap: 14,
-              paddingLeft: 24,
-              paddingRight: 24,
-              overflow: "visible",
-            }}
-          >
-            {projects.map((p, i) => (
-              <div
-                key={p.id}
-                ref={(el) => { spineRefs.current[i] = el; }}
-                style={{
-                  opacity: 0,
-                  transform: "translateY(8px)",
-                  willChange: "opacity, transform",
-                  flex: "0 0 auto",
+          {items.map((p, i) => (
+            <div key={p.id} style={{ flex: "0 0 auto" }}>
+              <ProjectSpine
+                data={{
+                  title: p.title,
+                  subtitle: p.subtitle ?? (p.tags ?? [])[0] ?? "",
+                  year: p.year,
+                  color: p.color,
                 }}
-              >
-                <ProjectSpine
-                  data={{
-                    title: p.title,
-                    subtitle: p.subtitle ?? (p.tags ?? [])[0] ?? "",
-                    year: p.year,
-                    color: p.color,
-                  }}
-                  fallbackColor={SPINE_COLORS[i % SPINE_COLORS.length]}
-                  interactive
-                  onClick={() => navigate(`/projects/${p.slug}`)}
-                />
-              </div>
-            ))}
+                fallbackColor={SPINE_COLORS[(rowIndex * 3 + i) % SPINE_COLORS.length]}
+                interactive
+                onClick={() => navigate(`/projects/${p.slug}`)}
+              />
+            </div>
+          ))}
 
-            {/* About-card landing slot: geometry target + clickable settled spine */}
+          {/* push trailing widgets to the right */}
+          <div style={{ flex: "1 1 auto" }} />
+
+          {/* About spine pinned to top row */}
+          {isTop && (
             <div
               style={{
                 position: "relative",
                 flex: "0 0 auto",
                 width: SPINE_WIDTH,
                 height: SPINE_HEIGHT,
-                marginLeft: 8,
               }}
             >
               <div
@@ -225,28 +188,117 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                 <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Minimal shelf line */}
-          <svg
-            width="100%"
-            height="8"
-            viewBox="0 0 1180 8"
-            preserveAspectRatio="none"
-            fill="none"
-            style={{ display: "block" }}
-          >
-            <path
-              ref={ledgePathRef}
-              d="M 0 4 L 1180 4"
-              stroke={INK}
-              strokeWidth="1"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
+          {/* Toolbox pinned to bottom row */}
+          {isBottom && (
+            <a
+              ref={toolboxRef}
+              href="#skills"
+              aria-label="Open toolbox"
+              style={{
+                flex: "0 0 auto",
+                width: 72,
+                height: 56,
+                display: "flex",
+                alignItems: "flex-end",
+                transformOrigin: "bottom right",
+                willChange: "transform, opacity",
+                pointerEvents: "auto",
+              }}
+            >
+              <svg width="72" height="56" viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* handle */}
+                <path d="M 22 14 Q 36 2 50 14" stroke={INK} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+                {/* body */}
+                <rect x="6" y="16" width="60" height="34" rx="2" stroke={INK} strokeWidth="1.4" fill="none" />
+                {/* latch */}
+                <rect x="30" y="22" width="12" height="6" stroke={INK} strokeWidth="1.2" fill="none" />
+                {/* tray line */}
+                <line x1="6" y1="32" x2="66" y2="32" stroke={INK} strokeWidth="1" opacity="0.5" />
+                {/* feet */}
+                <line x1="12" y1="50" x2="12" y2="54" stroke={INK} strokeWidth="1.2" />
+                <line x1="60" y1="50" x2="60" y2="54" stroke={INK} strokeWidth="1.2" />
+              </svg>
+            </a>
+          )}
+        </div>
+
+        {/* ledge line with inline category label */}
+        <div className="relative" style={{ height: 14 }}>
+          <svg width="100%" height="14" viewBox="0 0 1180 14" preserveAspectRatio="none" style={{ display: "block" }}>
+            <line x1="0" y1="6" x2="1180" y2="6" stroke={INK} strokeWidth="1" strokeLinecap="round" opacity="0.7" />
           </svg>
+          <span
+            className="font-mono uppercase"
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: 0,
+              transform: "translateX(-50%)",
+              padding: "0 10px",
+              background: "hsl(35 24% 8%)",
+              color: INK,
+              fontSize: 9,
+              letterSpacing: "1.8px",
+              lineHeight: "14px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {category} · {String(items.length).padStart(2, "0")}
+          </span>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <section
+      ref={pinRef}
+      aria-label="Projects"
+      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      className="w-full h-full"
+    >
+      <div className="absolute inset-0 w-full overflow-hidden" style={{ height: "100%" }}>
+        <div
+          ref={shelfWrapRef}
+          className="absolute left-1/2"
+          style={{
+            bottom: "14%",
+            transform: "translateX(-50%)",
+            width: "min(88vw, 1180px)",
+            opacity: 0,
+            willChange: "opacity",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          {/* PROJECTS heading */}
+          <div className="flex items-center justify-center" style={{ gap: 14 }}>
+            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
+            <span
+              className="font-mono uppercase"
+              style={{ color: INK, fontSize: 11, letterSpacing: "0.4em" }}
+            >
+              Projects
+            </span>
+            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
+          </div>
+
+          {rows.map((row, idx) => (
+            <Row
+              key={row.category}
+              category={row.category}
+              items={row.items}
+              isTop={idx === 0}
+              isBottom={idx === rows.length - 1}
+              rowIndex={idx}
+            />
+          ))}
+        </div>
+      </div>
+
       <AboutPopup open={popupOpen} onOpenChange={setPopupOpen} />
     </section>
   );

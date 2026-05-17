@@ -256,9 +256,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
       }
       const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
-      const spineFaceEl = foldCenterRef.current?.lastElementChild as HTMLElement | null;
-      if (aboutFaceEl) aboutFaceEl.style.opacity = String(1 - clamp(tTurn / 0.5));
-      if (spineFaceEl) spineFaceEl.style.opacity = String(clamp((tTurn - 0.4) / 0.6));
+      if (aboutFaceEl) aboutFaceEl.style.opacity = String(1 - clamp(tTurn / 0.6));
 
       // FILE — fly to slot + scale to spine dims (no arc, no wobble)
       const fileE = eOut(tFile);
@@ -576,6 +574,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "center center",
                 willChange: "transform, box-shadow",
+                background: "hsl(170 25% 28%)",
                 boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18)",
               }}
             >
