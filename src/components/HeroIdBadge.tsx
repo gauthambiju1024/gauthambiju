@@ -93,6 +93,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
   const updateLanyardRef = useRef<(() => void) | null>(null);
+  const leftFlapRef = useRef<HTMLDivElement>(null);
+  const rightFlapRef = useRef<HTMLDivElement>(null);
+  const spineLabelRef = useRef<HTMLDivElement>(null);
+  const backFaceRef = useRef<HTMLDivElement>(null);
+  const foldMV = useCardFold();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
