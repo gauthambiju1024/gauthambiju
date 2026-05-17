@@ -615,13 +615,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               </div>
             </div>
 
-            {/* SPINE face — real back face; appears naturally after the packet passes 90° */}
+            {/* SPINE face — real back face of the folded 50% packet; appears naturally after 90° */}
             <div
               ref={spineFaceRef}
               aria-hidden
               style={{
                 position: "absolute",
-                inset: 0,
+                top: 0, bottom: 0,
+                left: "25%",
+                width: "50%",
                 background: "hsl(170 25% 28%)",
                 boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
                 display: "flex",
