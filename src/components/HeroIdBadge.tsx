@@ -194,6 +194,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const bridgeActive = !!(window as any).__bridgeActive;
       // While the bridge is on screen, hold the card at its end-of-flip pose
       const t = bridgeActive ? 1 : (progressMV?.get() ?? 0);
+      const p1 = smoothstep(0.30, 0.55, t);
       const p2 = smoothstep(0.55, 0.92, t);
 
       const stageRect = stage.getBoundingClientRect();
