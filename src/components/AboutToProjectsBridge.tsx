@@ -203,19 +203,28 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
               </div>
             ))}
 
-            {/* About-card landing slot: invisible geometry only; no replacement spine */}
+            {/* About-card landing slot: geometry target + clickable settled spine */}
             <div
-              ref={aboutSlotRef}
-              aria-hidden
               style={{
+                position: "relative",
                 flex: "0 0 auto",
                 width: SPINE_WIDTH,
                 height: SPINE_HEIGHT,
                 marginLeft: 8,
-                opacity: 0,
-                visibility: "hidden",
               }}
-            />
+            >
+              <div
+                ref={aboutSlotRef}
+                aria-hidden
+                style={{ position: "absolute", inset: 0, opacity: 0, visibility: "hidden" }}
+              />
+              <div
+                ref={aboutSpineRef}
+                style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
+              >
+                <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
+              </div>
+            </div>
           </div>
 
           {/* Minimal shelf line */}
