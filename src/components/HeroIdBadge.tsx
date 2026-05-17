@@ -491,7 +491,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             }}
           >
             {/* Render the spine at its native 78x200 footprint, centered inside the card */}
-            <div style={{ width: SPINE_WIDTH, height: SPINE_HEIGHT }}>
+            {/* Counter the rotateY(180) of the back face so the spine reads correctly */}
+            <div style={{ width: SPINE_WIDTH, height: SPINE_HEIGHT, transform: "rotateY(180deg)" }}>
               <ProjectSpine data={ABOUT_SPINE_DATA} />
             </div>
           </div>
