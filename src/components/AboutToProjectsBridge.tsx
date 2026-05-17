@@ -71,19 +71,19 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeActive = b > 0 && b < 1;
       (window as any).__bridgeProgress = b;
 
-      const tLedge = ease(0.74, 1.0, b);
+      const tLedge = ease(0.42, 0.70, b);
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
 
-      shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.85, b) * 1.2));
+      shelfWrap.style.opacity = String(Math.min(1, ease(0.40, 0.60, b) * 1.2));
       shelfWrap.style.pointerEvents = b > 0.95 ? "auto" : "none";
 
       for (let i = 0; i < projects.length; i++) {
         const el = spineRefs.current[i];
         if (!el) continue;
-        const a = 0.20 + i * 0.06;
-        const k = ease(a, a + 0.12, b);
-        el.style.opacity = String(k);
-        el.style.transform = `translateY(${(1 - k) * 8}px)`;
+        const order = 0.70 + i * 0.03;
+        const k = eBack(ease(order, order + 0.36, b));
+        el.style.opacity = String(clamp01(k * 1.4));
+        el.style.transform = `translateY(${(1 - k) * 135}%)`;
       }
 
       slot.style.opacity = String(ease(0.998, 1.0, b));
