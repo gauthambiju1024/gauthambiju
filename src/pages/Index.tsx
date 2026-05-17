@@ -1,6 +1,6 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
 import AboutToProjectsBridge from "@/components/AboutToProjectsBridge";
-import ProjectsShelf from "@/components/ProjectsShelf";
+
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
 import WritingDesk from "@/components/WritingDesk";
