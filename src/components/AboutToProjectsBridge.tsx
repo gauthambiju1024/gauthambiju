@@ -32,11 +32,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const pinRef = useRef<HTMLElement>(null);
   const shelfWrapRef = useRef<HTMLDivElement>(null);
   const ledgePathRef = useRef<SVGPathElement>(null);
-  const ledgeTicksRef = useRef<SVGGElement>(null);
-  const dimsRef = useRef<HTMLDivElement>(null);
-  const topCapRef = useRef<HTMLDivElement>(null);
-  const subLblRef = useRef<HTMLDivElement>(null);
-  const botCapRef = useRef<HTMLDivElement>(null);
   const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const aboutSlotRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -46,14 +41,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   useEffect(() => {
     const pin = pinRef.current;
     const ledgePath = ledgePathRef.current;
-    const ledgeTicks = ledgeTicksRef.current;
-    const dims = dimsRef.current;
-    const topCap = topCapRef.current;
-    const subLbl = subLblRef.current;
-    const botCap = botCapRef.current;
     const shelfWrap = shelfWrapRef.current;
     const slot = aboutSlotRef.current;
-    if (!pin || !ledgePath || !ledgeTicks || !dims || !topCap || !subLbl || !botCap || !shelfWrap || !slot) return;
+    if (!pin || !ledgePath || !shelfWrap || !slot) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -72,32 +62,17 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
     const update = () => {
       const t = clamp01(progressMV.get());
-      // Local bridge progress, matches bookmarked choreography
       const b = ease(0.72, 1.0, t);
 
       (window as any).__bridgeActive = b > 0 && b < 1;
       (window as any).__bridgeProgress = b;
 
-      // Captions
-      topCap.style.opacity = String(1 - ease(0.0, 0.25, b));
-      subLbl.style.opacity = String(1 - ease(0.0, 0.25, b));
-      const bot = ease(0.86, 1.0, b);
-      botCap.style.opacity = String(bot);
-      botCap.style.transform = `translate(-50%, ${(1 - bot) * 8}px)`;
-
-      // Drawn ledge sweeps L→R in phase D
       const tLedge = ease(0.74, 1.0, b);
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
-      ledgeTicks.style.opacity = String(tLedge);
 
-      // Dimension marks fade in late
-      dims.style.opacity = String(ease(0.82, 1.0, b));
-
-      // Real shelf row fades in alongside the ledge
       shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.85, b) * 1.2));
       shelfWrap.style.pointerEvents = b > 0.95 ? "auto" : "none";
 
-      // Project spines stagger in
       for (let i = 0; i < projects.length; i++) {
         const el = spineRefs.current[i];
         if (!el) continue;
@@ -107,7 +82,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         el.style.transform = `translateY(${(1 - k) * 8}px)`;
       }
 
-      // About-slot placeholder reveals only after the moving card has landed
       slot.style.opacity = String(ease(0.998, 1.0, b));
 
       publishSlotRect();
@@ -117,11 +91,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeProgress = 1;
       (window as any).__bridgeActive = false;
       ledgePath.style.strokeDashoffset = "0";
-      ledgeTicks.style.opacity = "1";
-      dims.style.opacity = "1";
-      topCap.style.opacity = "0";
-      subLbl.style.opacity = "0";
-      botCap.style.opacity = "1";
       shelfWrap.style.opacity = "1";
       spineRefs.current.forEach((el) => {
         if (el) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; }
@@ -162,38 +131,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         className="absolute inset-0 w-full overflow-hidden"
         style={{ height: "100%" }}
       >
-        {/* Top caption — "Filing this away." */}
-        <div
-          ref={topCapRef}
-          className="absolute left-1/2 font-handwritten select-none pointer-events-none"
-          style={{
-            top: "12%",
-            transform: "translateX(-50%)",
-            fontSize: "clamp(1.1rem, 1.6vw, 1.5rem)",
-            color: "hsl(40 30% 85% / 0.75)",
-            letterSpacing: "0.02em",
-            willChange: "opacity",
-          }}
-        >
-          Filing this away.
-        </div>
-        <div
-          ref={subLblRef}
-          className="absolute left-1/2 font-mono select-none pointer-events-none"
-          style={{
-            top: "calc(12% + 28px)",
-            transform: "translateX(-50%)",
-            fontSize: "9px",
-            letterSpacing: "0.35em",
-            textTransform: "uppercase",
-            color: "hsl(40 30% 85% / 0.32)",
-            willChange: "opacity",
-          }}
-        >
-          FOLD · ROTATE · SHELVE
-        </div>
-
-        {/* Drawn shelf: warm-wood line + project spines + landing slot for About */}
+        {/* Drawn shelf: minimal line + project spines + landing slot for About */}
         <div
           ref={shelfWrapRef}
           className="absolute left-1/2"
@@ -264,142 +202,24 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             </div>
           </div>
 
-          {/* Drawn warm-wood ledge with tick marks */}
+          {/* Minimal shelf line */}
           <svg
             width="100%"
-            height="32"
-            viewBox="0 0 1180 32"
+            height="8"
+            viewBox="0 0 1180 8"
             preserveAspectRatio="none"
             fill="none"
             style={{ display: "block" }}
           >
             <path
               ref={ledgePathRef}
-              d="M 6 8 L 1174 8"
+              d="M 0 4 L 1180 4"
               stroke={INK}
-              strokeWidth="1.4"
+              strokeWidth="1"
               strokeLinecap="round"
-              opacity="0.85"
+              opacity="0.7"
             />
-            <g ref={ledgeTicksRef} opacity="0">
-              {Array.from({ length: 25 }).map((_, i) => {
-                const x = 6 + i * ((1174 - 6) / 24);
-                const major = i % 4 === 0;
-                return (
-                  <line
-                    key={i}
-                    x1={x}
-                    y1={8}
-                    x2={x}
-                    y2={major ? 20 : 14}
-                    stroke={INK_DIM}
-                    strokeWidth={major ? 1 : 0.6}
-                  />
-                );
-              })}
-              <line x1="6" y1="0" x2="6" y2="20" stroke={INK_DIM} strokeWidth="0.8" />
-              <line x1="1174" y1="0" x2="1174" y2="20" stroke={INK_DIM} strokeWidth="0.8" />
-            </g>
           </svg>
-        </div>
-
-        {/* Dimension marks + technical labels */}
-        <div
-          ref={dimsRef}
-          className="absolute inset-0 pointer-events-none"
-          style={{ opacity: 0, willChange: "opacity" }}
-        >
-          <div
-            className="absolute"
-            style={{
-              left: "calc(50% - min(38vw, 510px))",
-              bottom: "calc(22% + 44px)",
-              width: 16, height: 16,
-              borderTop: `1.2px solid ${INK}`,
-              borderLeft: `1.2px solid ${INK}`,
-              opacity: 0.7,
-            }}
-          />
-          <div
-            className="absolute"
-            style={{
-              right: "calc(50% - min(38vw, 510px))",
-              bottom: "calc(22% + 44px)",
-              width: 16, height: 16,
-              borderTop: `1.2px solid ${INK}`,
-              borderRight: `1.2px solid ${INK}`,
-              opacity: 0.7,
-            }}
-          />
-          <div
-            className="absolute font-mono"
-            style={{
-              left: "calc(50% - min(38vw, 510px) - 4px)",
-              bottom: "calc(22% - 28px)",
-              fontSize: 9,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              color: INK,
-              opacity: 0.65,
-            }}
-          >
-            SPINE_01 · W:78mm
-          </div>
-          <div
-            className="absolute font-mono"
-            style={{
-              right: "calc(50% - min(38vw, 510px) - 4px)",
-              bottom: "calc(22% - 28px)",
-              fontSize: 9,
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-              color: INK,
-              opacity: 0.65,
-            }}
-          >
-            REV: A · 2026
-          </div>
-          <div
-            className="absolute"
-            style={{
-              left: "50%",
-              bottom: "calc(22% + 16px)",
-              width: 1, height: 18,
-              background: INK,
-              opacity: 0.5,
-            }}
-          />
-          <div
-            className="absolute font-mono"
-            style={{
-              left: "50%",
-              bottom: "calc(22% + 38px)",
-              transform: "translateX(-50%)",
-              fontSize: 9,
-              letterSpacing: "0.4em",
-              color: INK,
-              opacity: 0.7,
-            }}
-          >
-            ⌖
-          </div>
-        </div>
-
-        {/* Bottom caption — "Selected work — pull a spine." */}
-        <div
-          ref={botCapRef}
-          className="absolute font-handwritten select-none pointer-events-none"
-          style={{
-            left: "50%",
-            bottom: "10%",
-            transform: "translate(-50%, 8px)",
-            fontSize: "clamp(1.1rem, 1.6vw, 1.5rem)",
-            color: "hsl(40 30% 85% / 0.78)",
-            opacity: 0,
-            willChange: "opacity, transform",
-          }}
-        >
-          Selected work — pull a spine.
         </div>
       </div>
     </section>
