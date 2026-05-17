@@ -603,7 +603,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
                 {aboutSurface(-(CARD_WIDTH * 2) / 3)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent" }} />
             </div>
           </div>
         </div>
