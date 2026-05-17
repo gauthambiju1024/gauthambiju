@@ -505,10 +505,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
+            transformStyle: "preserve-3d",
+            WebkitTransformStyle: "preserve-3d",
             pointerEvents: "auto",
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden",
+            overflow: "visible",
           }}
         >
           <div ref={backSlotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
