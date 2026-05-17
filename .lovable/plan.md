@@ -1,74 +1,93 @@
+## Goal
+Restore the transition so the About card itself becomes the shelf spine:
 
-# Fix the fold: hide what's behind, drop the spine crossfade
+- About content is visible during the About state.
+- The portrait/front face never reappears during the turn.
+- The green folded spine is not replaced by a yellow placeholder.
+- No crossfade, no fade-to-placeholder, no visual swap.
 
-## What's wrong in the screenshot
+## Current problems to fix
 
-The folded packet shows the two dark wings closed over the centre, but the **AboutCardBack is still legible on the left and right** (`ABOUT … OVERVIEW … Notes on How I`, `EXPERIENCE … UX … matters.`). That's because:
+1. The code clips the whole card/back face during fold, which can leave the About face looking blank instead of physically folded.
+2. `rotYFlip = p2 * 180 + tTurn * 180` rotates the whole card from 180° to 360°, so the portrait/front face becomes visible again during the turn.
+3. `cardWrap.style.opacity = 1 - tHide` hides the real folded card, while `aboutSlotRef` fades in a separate `ProjectSpine`; that is the replacement/crossfade the choreography should not have.
+4. `ABOUT_SPINE_DATA` is brown/yellow, so the landing spine reads as a different object instead of the folded green spine.
 
-- Wings are an *overlay* sitting on top of `AboutCardBack`. When they rotate behind, they expose the unchanged full-width `AboutCardBack` underneath.
-- `AboutCardBack` is full-width with no clip — it just fades opacity later during TURN, which the user doesn't want anyway.
-- A separate `spineSkin` ramps in via opacity (the "crossfade") which the user explicitly doesn't want.
+## Implementation plan
 
-The mental model the user wants is real paper: as the card folds in thirds, the **whole card visually narrows to its centre column**. The closed packet IS the spine. No crossfade, no peek-through.
+### 1. Keep hero → about exactly as-is
+Do not change the first transition windows:
 
-## Fix
-
-Two structural changes in `HeroIdBadge.tsx`. No changes to `AboutToProjectsBridge.tsx`.
-
-### 1. Clip the whole back face to its centre column as FOLD progresses
-
-Apply a `clip-path: inset(0 X% 0 X%)` on **both** `cardRef` (front) and `backFaceRef` (back), where `X = 33.333 * eInOut(tFold)`.
-
-- At `tFold = 0`: `inset(0 0 0 0)` → full card visible as today.
-- At `tFold = 1`: `inset(0 33.333% 0 33.333%)` → only the centre column (≈SPINE_WIDTH proportions) remains visible. Everything outside that band — including the `AboutCardBack` left/right thirds, the slot, the photo on the front — is geometrically clipped, not just faded. Nothing "behind" can leak.
-
-This makes the card *physically* shrink to spine-width as it folds. The clip is on the card itself, so:
-- `cardBackInnerRef` opacity ramp can be **removed** (no crossfade).
-- `backSlotRef` opacity ramp can be **removed**.
-- `spineSkinRef` opacity ramp can be **removed** — it's just always on.
-
-### 2. Wings become a pure visual flourish on top of the clipping card
-
-The wings (`foldLeftRef`, `foldRightRef`) keep folding behind around their inner edges, exactly as today. But their **front faces become near-transparent** (just a 1px inner-edge crease shadow, no cream fill). That way:
-
-- At rest (`tFold=0`, wings hidden via `volRef.opacity=0`), nothing changes.
-- During fold, the wings' rotation reveals their dark linen **backs** sweeping behind the shrinking centre column — selling the physical "tucking behind" without any cream wing covering live About content.
-- The clip on `backFaceRef` is what removes the left/right About content; the wings just add the 3D fold cue.
-
-### 3. SpineSkin always-on, sized to the surviving centre column
-
-`spineSkinRef` (the `<ProjectSpine>` back face) is repositioned to `left: 33.333%; width: 33.334%` so it lives exactly inside the unclipped band. It keeps `transform: rotateY(180deg) backface-visibility: hidden`.
-
-- Throughout FOLD: hidden via backface culling — camera sees the cream front of `backFace` (clipped centre column).
-- During TURN: the packet rotates 180°. The cream centre column rotates away; the `<ProjectSpine>` back face rotates into view. **No crossfade — the spine appears solely because the packet turned.**
-
-### 4. Remove the AboutCardBack & slot opacity ramps
-
-In `applyTransform`:
-- Delete the `cardBackInnerRef.style.opacity = 1 - tTurn` block.
-- Delete the `backSlotRef.style.opacity` block.
-- Delete the `spineSkinRef.style.opacity = tSpineLbl` line.
-- Remove the unused `tSpineLbl` variable.
-
-### 5. Apply the clip in `applyTransform`
-
-```ts
-const clipPct = (33.333 * fE).toFixed(3);
-const clipCSS = `inset(0 ${clipPct}% 0 ${clipPct}%)`;
-if (cardRef.current)     cardRef.current.style.clipPath = clipCSS;
-if (backFaceRef.current) backFaceRef.current.style.clipPath = clipCSS;
+```text
+0.35–0.55  card slides/scales to center
+0.55–0.72  card flips to About back face
 ```
 
-Add `clipPath: "inset(0 0 0 0)"` to both elements' inline styles so the property is set at mount.
+Only rebuild the `0.72–1.00` About → Projects choreography.
 
-## Verification at 1001×769
+### 2. Stop rotating the whole card back to the portrait
+In `HeroIdBadge.tsx`, keep the wrapper card rotation capped at the About-facing side:
 
-- `bridge=0`: card unchanged, About panel readable end-to-end.
-- `bridge≈0.10`: wings appear, beginning to rotate behind; card visibly starts narrowing — left/right About content slides out of view by clipping (not fading).
-- `bridge≈0.30`: card is now ~half-width, wings at ~45° behind, no About content peeks through the sides.
-- `bridge≈0.40` (FOLD done): card is exactly centre-column width, looks like a closed cream packet of the right spine proportions; wings hidden behind.
-- `bridge≈0.45`: TURN begins; packet rotates.
-- `bridge≈0.56` (TURN done): `<ProjectSpine>` back face is camera-facing, perfectly sized to the spine slot. No crossfade — it just appeared as the packet turned.
-- `bridge≈0.86`: FILE flight lands the spine in the shelf slot; placeholder fades in to take over at 0.86–0.92.
+```text
+card wrapper rotateY = p2 * 180
+```
 
-Files: `src/components/HeroIdBadge.tsx`, `.lovable/plan.md`. No backend.
+Remove the extra `+ tTurn * 180` from the wrapper. The TURN phase will happen inside the folded center spine, not by rotating the entire ID card back to its portrait face.
+
+### 3. Replace overlay folding with a real segmented card surface
+Rework the back face into three physical strips:
+
+```text
+[left third] [center spine third] [right third]
+```
+
+Each strip carries/clips the actual About-card surface, so at fold start it still looks like one intact About card. During FOLD:
+
+- left strip folds behind around its right edge
+- right strip folds behind around its left edge
+- center strip remains in place
+- hidden backfaces prevent About text/portrait from leaking through
+
+This removes the current “transparent wing overlay + global clip” model that makes the card look blank or fake.
+
+### 4. Make the center strip itself become the green spine
+Put the green `ProjectSpine` face on the back side of the center strip and rotate only that center strip during TURN.
+
+Result:
+
+```text
+About face visible → card folds → center strip turns → green ABOUT spine visible
+```
+
+The portrait face is never part of this second turn.
+
+### 5. Remove all replacement/fade behavior
+In `HeroIdBadge.tsx`:
+
+- remove `tHide`
+- do not fade `cardWrap` out after filing
+- keep the real folded card visible as the final shelf spine
+
+In `AboutToProjectsBridge.tsx`:
+
+- keep the About slot as an invisible layout/target only
+- never fade in the slot placeholder spine
+- continue publishing `__bridgeSlotRect` so the real folded card can fly into that reserved slot
+
+### 6. Make the landing dimensions match the shelf
+Update FILE scaling so the folded center strip lands as `SPINE_WIDTH × SPINE_HEIGHT`, using independent X/Y scale if needed. The visible folded spine should align with the reserved shelf slot instead of being replaced by another element.
+
+### 7. Keep the spine green
+Change the About spine color used by the moving card from the current brown/yellow tone to the existing green spine tone, so it reads as the same folded object throughout the choreography.
+
+## Expected choreography after the fix
+
+```text
+FOLD   0.04–0.40  actual About card folds into a narrow center strip
+TURN   0.24–0.56  center strip flips internally into the green ABOUT spine
+COLL   0.30–0.60  shelf rule strokes outward behind it
+FILE   0.58–0.86  that same green folded spine flies into the shelf slot
+ARCH   0.74–1.00  project spines rise around it
+```
+
+No crossfade. No yellow replacement. No portrait flash. The same card becomes the spine and lands in the shelf.
