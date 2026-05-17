@@ -15,7 +15,6 @@ import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
-import { CardFoldContext } from "@/components/cardFoldContext";
 
 const trailingStations = [
   { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
@@ -27,35 +26,32 @@ const trailingStations = [
 
 const Index = () => {
   const tDummy = useMotionValue(0.5);
-  const foldMV = useMotionValue(0);
   return (
-    <CardFoldContext.Provider value={foldMV}>
-      <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
-        <Entropy />
-        <MarginDoodles />
+    <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
+      <Entropy />
+      <MarginDoodles />
 
-        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
-        <div className="block min-[800px]:hidden">
-          <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
-        </div>
-
-        <div className="margin-content-wrapper relative z-[2]">
-          <HeroAboutFlip />
-
-          <AboutToProjectsBridge />
-
-          {trailingStations.map(({ id, Frame, Section }) => (
-            <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
-              <section id={id} className="relative w-full">
-                <Frame t={tDummy} active={true}>
-                  <Section />
-                </Frame>
-              </section>
-            </div>
-          ))}
-        </div>
+      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
+      <div className="block min-[800px]:hidden">
+        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
       </div>
-    </CardFoldContext.Provider>
+
+      <div className="margin-content-wrapper relative z-[2]">
+        <HeroAboutFlip />
+
+        <AboutToProjectsBridge />
+
+        {trailingStations.map(({ id, Frame, Section }) => (
+          <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
+            <section id={id} className="relative w-full">
+              <Frame t={tDummy} active={true}>
+                <Section />
+              </Frame>
+            </section>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
