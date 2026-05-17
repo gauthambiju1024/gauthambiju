@@ -255,7 +255,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
       const shrinkE = eOut(tShrink);
-      const targetSx = SPINE_WIDTH / (w / 2);
+      const targetSx = SPINE_WIDTH / (w / 3);
       const targetSy = SPINE_HEIGHT / h;
       const scaleX = Math.round((baseScale + (targetSx - baseScale) * shrinkE) * 1000) / 1000;
       const scaleY = Math.round((baseScale + (targetSy - baseScale) * shrinkE) * 1000) / 1000;
