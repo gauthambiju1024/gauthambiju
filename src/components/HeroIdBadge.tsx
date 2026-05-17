@@ -523,7 +523,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold packet — folds first (solid cream), then the whole packet flips to reveal the green spine */}
+          {/* Trifold packet — 3 real panels, wings fold behind center, then whole packet flips to reveal spine */}
           <div
             ref={volRef}
             aria-hidden
@@ -539,111 +539,92 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* Layer A: folding leaves — fades out as the final folded strip starts flipping */}
-            <div
-              ref={foldPacketRef}
-              style={{
-                position: "absolute",
-                inset: 0,
-                transformStyle: "preserve-3d",
-                WebkitTransformStyle: "preserve-3d",
-                willChange: "opacity",
-              }}
-            >
-              {/* CENTER — 50% of card; solid cream base */}
-              <div
-                ref={foldCenterRef}
-                style={{
-                  position: "absolute",
-                  top: 0, bottom: 0,
-                  left: "25%",
-                  width: "50%",
-                  background: CARD_BG,
-                  transform: "translateZ(0)",
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                  boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
-                }}
-              />
+            {(["l", "c", "r"] as const).map((side, i) => {
+              const ref = side === "l" ? panelLRef : side === "c" ? panelCRef : panelRRef;
+              const origin = side === "l" ? "right center" : side === "r" ? "left center" : "center center";
+              const cloneLeft = -i * (CARD_WIDTH / 3);
+              return (
+                <div
+                  key={side}
+                  ref={ref}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    height: "100%",
+                    left: `${(i * 100) / 3}%`,
+                    width: `${100 / 3}%`,
+                    transformStyle: "preserve-3d",
+                    WebkitTransformStyle: "preserve-3d",
+                    transformOrigin: origin,
+                    willChange: "transform",
+                  }}
+                >
+                  {/* FRONT — slice of the About card */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      overflow: "hidden",
+                      background: CARD_BG,
+                      boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.04)",
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: cloneLeft,
+                        width: CARD_WIDTH,
+                        height: CARD_HEIGHT,
+                        padding: "20px 14px 14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      <AboutCardBack
+                        data={journey}
+                        activeTab={activeTab}
+                        setActiveTab={() => {}}
+                        expandedId={expandedId}
+                        setExpandedId={() => {}}
+                      />
+                    </div>
+                  </div>
 
-              {/* LEFT wing — 25%; hinges on right edge, folds inward forward */}
-              <div
-                ref={foldLeftRef}
-                style={{
-                  position: "absolute",
-                  top: 0, bottom: 0, left: 0,
-                  width: "25%",
-                  transformStyle: "preserve-3d",
-                  WebkitTransformStyle: "preserve-3d",
-                  transformOrigin: "right center",
-                  willChange: "transform",
-                }}
-              >
-                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(0.8px)", boxShadow: "inset -10px 0 18px hsl(160 30% 4% / 0.12)" }} />
-                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(0.8px)", boxShadow: "inset 10px 0 18px hsl(160 30% 4% / 0.1)" }} />
-              </div>
-
-              {/* RIGHT wing — 25%; hinges on left edge, folds inward forward */}
-              <div
-                ref={foldRightRef}
-                style={{
-                  position: "absolute",
-                  top: 0, bottom: 0, left: "75%",
-                  width: "25%",
-                  transformStyle: "preserve-3d",
-                  WebkitTransformStyle: "preserve-3d",
-                  transformOrigin: "left center",
-                  willChange: "transform",
-                }}
-              >
-                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(0.8px)", boxShadow: "inset 10px 0 18px hsl(160 30% 4% / 0.12)" }} />
-                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(0.8px)", boxShadow: "inset -10px 0 18px hsl(160 30% 4% / 0.1)" }} />
-              </div>
-            </div>
-
-            {/* Layer B: final folded strip — cream front, green spine back, always centered and never blank */}
-            <div
-              ref={spineFaceRef}
-              aria-hidden
-              style={{
-                position: "absolute",
-                top: 0, bottom: 0,
-                left: "25%",
-                width: "50%",
-                transformStyle: "preserve-3d",
-                WebkitTransformStyle: "preserve-3d",
-                transformOrigin: "center center",
-                willChange: "transform",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: CARD_BG,
-                  boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                  transform: "translateZ(1px)",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "hsl(170 25% 28%)",
-                  boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
-                  display: "flex",
-                  alignItems: "stretch",
-                  justifyContent: "stretch",
-                  transform: "rotateY(180deg) translateZ(1px)",
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                }}
-              >
-                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
-              </div>
-            </div>
+                  {/* BACK — center panel shows the green spine; wings show a dark backing */}
+                  {side === "c" ? (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        transform: "rotateY(180deg)",
+                        background: "hsl(170 25% 28%)",
+                        boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        display: "flex",
+                      }}
+                    >
+                      <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        transform: "rotateY(180deg)",
+                        background: "linear-gradient(150deg, hsl(160 20% 14%), hsl(160 25% 9%))",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
