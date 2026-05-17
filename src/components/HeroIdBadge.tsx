@@ -229,14 +229,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Single rotateY driver: About flip + TURN
       const rotYFlip = p2 * 180 + eInOut(tTurn) * 180;
 
-      // AboutCardBack: fade with TURN only (legible during fold)
-      if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tTurn);
-        cardBackInnerRef.current.style.pointerEvents = tTurn > 0.05 ? "none" : "auto";
-      }
-      if (backSlotRef.current) {
-        backSlotRef.current.style.opacity = String(1 - tTurn);
-      }
       if (backFaceRef.current) {
         backFaceRef.current.style.background = "hsl(40 25% 92%)";
       }
@@ -247,9 +239,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         volRef.current.style.transform = "";
       }
 
-      // FOLD — wings rotate around inner edges
+      // FOLD — wings rotate around inner edges, card clips to centre column
       const fE = eInOut(tFold);
       const flapAngle = fE * 178;
+      const clipPct = (33.333 * fE).toFixed(3);
+      const clipCSS = `inset(0% ${clipPct}% 0% ${clipPct}%)`;
+      if (cardRef.current) {
+        cardRef.current.style.clipPath = clipCSS;
+        (cardRef.current.style as any).webkitClipPath = clipCSS;
+      }
+      if (backFaceRef.current) {
+        backFaceRef.current.style.clipPath = clipCSS;
+        (backFaceRef.current.style as any).webkitClipPath = clipCSS;
+      }
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
@@ -262,9 +264,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           `inset 8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset 0 0 0 1px hsl(0 0% 100% / 0.44)`;
-      }
-      if (spineSkinRef.current) {
-        spineSkinRef.current.style.opacity = String(tSpineLbl);
       }
 
       // FILE — fly to slot + scale down to spine dims
