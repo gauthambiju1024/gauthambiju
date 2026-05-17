@@ -71,6 +71,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const tLedge = ease(0.72, 0.90, t);
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
       shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.80, t) * 1.2));
+      shelfWrap.style.pointerEvents = t > 0.86 ? "auto" : "none";
 
       // Project spines stagger in
       for (let i = 0; i < projects.length; i++) {
