@@ -46,9 +46,14 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   useEffect(() => {
     const pin = pinRef.current;
     const ledgePath = ledgePathRef.current;
+    const ledgeTicks = ledgeTicksRef.current;
+    const dims = dimsRef.current;
+    const topCap = topCapRef.current;
+    const subLbl = subLblRef.current;
+    const botCap = botCapRef.current;
     const shelfWrap = shelfWrapRef.current;
     const slot = aboutSlotRef.current;
-    if (!pin || !ledgePath || !shelfWrap || !slot) return;
+    if (!pin || !ledgePath || !ledgeTicks || !dims || !topCap || !subLbl || !botCap || !shelfWrap || !slot) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -67,30 +72,43 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
     const update = () => {
       const t = clamp01(progressMV.get());
-      const foldT = ease(0.72, 1.0, t);
+      // Local bridge progress, matches bookmarked choreography
+      const b = ease(0.72, 1.0, t);
 
-      (window as any).__bridgeActive = foldT > 0 && foldT < 1;
-      (window as any).__bridgeProgress = foldT;
+      (window as any).__bridgeActive = b > 0 && b < 1;
+      (window as any).__bridgeProgress = b;
 
-      // Shelf line draw
-      const tLedge = ease(0.72, 0.90, t);
+      // Captions
+      topCap.style.opacity = String(1 - ease(0.0, 0.25, b));
+      subLbl.style.opacity = String(1 - ease(0.0, 0.25, b));
+      const bot = ease(0.86, 1.0, b);
+      botCap.style.opacity = String(bot);
+      botCap.style.transform = `translate(-50%, ${(1 - bot) * 8}px)`;
+
+      // Drawn ledge sweeps L→R in phase D
+      const tLedge = ease(0.74, 1.0, b);
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
-      shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.80, t) * 1.2));
-      shelfWrap.style.pointerEvents = t > 0.86 ? "auto" : "none";
+      ledgeTicks.style.opacity = String(tLedge);
+
+      // Dimension marks fade in late
+      dims.style.opacity = String(ease(0.82, 1.0, b));
+
+      // Real shelf row fades in alongside the ledge
+      shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.85, b) * 1.2));
+      shelfWrap.style.pointerEvents = b > 0.95 ? "auto" : "none";
 
       // Project spines stagger in
       for (let i = 0; i < projects.length; i++) {
         const el = spineRefs.current[i];
         if (!el) continue;
-        const a = 0.76 + i * 0.025;
-        const k = ease(a, a + 0.06, t);
+        const a = 0.20 + i * 0.06;
+        const k = ease(a, a + 0.12, b);
         el.style.opacity = String(k);
         el.style.transform = `translateY(${(1 - k) * 8}px)`;
       }
 
-      // The About-slot placeholder reveals only at the very end (card has landed)
-      const aboutReveal = ease(0.998, 1.0, t);
-      slot.style.opacity = String(aboutReveal);
+      // About-slot placeholder reveals only after the moving card has landed
+      slot.style.opacity = String(ease(0.998, 1.0, b));
 
       publishSlotRect();
     };
@@ -99,6 +117,11 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeProgress = 1;
       (window as any).__bridgeActive = false;
       ledgePath.style.strokeDashoffset = "0";
+      ledgeTicks.style.opacity = "1";
+      dims.style.opacity = "1";
+      topCap.style.opacity = "0";
+      subLbl.style.opacity = "0";
+      botCap.style.opacity = "1";
       shelfWrap.style.opacity = "1";
       spineRefs.current.forEach((el) => {
         if (el) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; }
