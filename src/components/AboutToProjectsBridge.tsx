@@ -64,7 +64,7 @@ const AboutToProjectsBridge = () => {
       ref={pinRef}
       id="about-projects-bridge"
       aria-hidden
-      style={{ height: "100vh" }}
+      style={{ height: "160vh" }}
       className="relative w-full hidden md:block"
     >
       <div className="sticky w-full pointer-events-none" style={{ top: 100, height: "calc(100vh - 100px)" }}>
