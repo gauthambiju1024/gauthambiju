@@ -540,7 +540,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold packet — left/right wings overlay + a project-spine back */}
+          {/* Trifold packet — the About surface itself split into three physical strips */}
           <div
             ref={volRef}
             aria-hidden
@@ -556,7 +556,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* LEFT wing — folds behind (origin: right edge) */}
+            {/* LEFT third — carries the actual left side of About and folds behind */}
             <div
               ref={foldLeftRef}
               style={{
@@ -569,13 +569,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              {/* front face — transparent (clip on card handles hiding About content) */}
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }} />
-              {/* back face — dark linen (visible once flap folds behind) */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+                {aboutSurface(0)}
+              </div>
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
 
-            {/* CENTER crease shadow only — no front face so live AboutCardBack stays visible */}
+            {/* CENTER third — turns internally into the green ABOUT spine */}
             <div
               ref={foldCenterRef}
               style={{
@@ -584,12 +584,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 left: "33.333%",
                 width: "33.334%",
                 pointerEvents: "none",
-                willChange: "box-shadow",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "center center",
+                willChange: "transform, box-shadow",
                 boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18)",
               }}
-            />
+            >
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+                {aboutSurface(-CARD_WIDTH / 3)}
+              </div>
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "stretch", justifyContent: "stretch" }}>
+                <ProjectSpine data={{ ...ABOUT_SPINE_DATA, color: "hsl(170 25% 28%)" }} style={{ width: "100%", height: "100%" }} />
+              </div>
+            </div>
 
-            {/* RIGHT wing — folds behind (origin: left edge) */}
+            {/* RIGHT third — carries the actual right side of About and folds behind */}
             <div
               ref={foldRightRef}
               style={{
@@ -602,34 +612,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }} />
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
-            </div>
-
-            {/* SPINE back face — real ProjectSpine markup, sized to fill 260×380 so FILE-phase
-                scaleX/Y (SPINE_WIDTH/260, SPINE_HEIGHT/380) collapses it to shelf-row dimensions. */}
-            <div
-              ref={spineSkinRef}
-              style={{
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                left: "33.333%",
-                width: "33.334%",
-                transform: "rotateY(180deg)",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
-              }}
-            >
-              <div style={{ width: "100%", height: "100%" }}>
-                <ProjectSpine
-                  data={ABOUT_SPINE_DATA}
-                  style={{ width: "100%", height: "100%" }}
-                />
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+                {aboutSurface(-(CARD_WIDTH * 2) / 3)}
               </div>
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
           </div>
         </div>
