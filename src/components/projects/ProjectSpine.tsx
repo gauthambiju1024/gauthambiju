@@ -31,7 +31,7 @@ export const ABOUT_SPINE_DATA = {
   title: "ABOUT",
   subtitle: "Portfolio · 2026",
   year: "2026",
-  color: "hsl(35 25% 30%)",
+  color: "hsl(170 25% 28%)",
 };
 
 export interface SpineContent {
