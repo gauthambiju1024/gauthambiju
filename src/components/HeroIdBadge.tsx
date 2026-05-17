@@ -96,6 +96,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const foldCenterRef = useRef<HTMLDivElement>(null);
   const foldLeftRef = useRef<HTMLDivElement>(null);
   const foldRightRef = useRef<HTMLDivElement>(null);
+  const foldPacketRef = useRef<HTMLDivElement>(null);
+  const spineFaceRef = useRef<HTMLDivElement>(null);
   const volRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
