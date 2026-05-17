@@ -1,29 +1,72 @@
-## Problem
+## Goal
 
-During the bridge from About → Projects, the cream packet appears to abruptly shrink to half width instead of visibly folding. Root cause is in `HeroIdBadge.tsx`:
+Delete the current "Layer A leaves + Layer B spine flip" packet in `HeroIdBadge.tsx` and replace it with the reference trifold pattern from `dossier-fold-transition-4.html`, where a real 3-panel volume folds its wings behind the center and then the whole packet revolves to reveal the spine.
 
-1. **Easing is front-loaded.** `flapAngle = eOut(tFold) * 178` uses `1 − (1−t)⁵`, so at tFold = 0.2 the wings are already at ~120° and at tFold = 0.4 they are essentially closed. The eye registers this as a sudden size change, not a fold.
-2. **Window is too short.** `tFold = smoothstep(0.00, 0.40, bridge)` inside a bridge of `smoothstep(0.72, 1.0, p)` gives only ~11% of total scroll for the entire fold motion.
-3. **No "settle" gap before the flip.** `tTurn` starts at bridge 0.42, immediately after the fold finishes, so the eye never sees the folded packet sit still as cream.
+## What is wrong with the current approach
 
-## Fix (HeroIdBadge.tsx only — no structural changes)
+The current code fakes the fold with two cream-only flap divs plus a separate "final folded strip" sitting on top. There is no true center panel showing the card's actual content, the wings fold to a blank cream, and the spine face is a sibling layer that has to be opacity-juggled. This is why every fix keeps breaking either the visibility of the middle, the post-flip face, or the perceived motion.
 
-1. **Re-ease the fold** — replace `eOut` with an ease-in-out (`t<0.5 ? 2t² : 1 − (−2t+2)²/2`) so the wings move with a slow start, full middle, slow end. The viewer reads it as rotating panels, not a width collapse.
-2. **Widen and re-phase the bridge windows:**
-   ```
-   tFold   = seg(0.00, 0.55, bridge)   // was 0.00–0.40
-   tTurn   = seg(0.62, 0.82, bridge)   // was 0.42–0.70 — adds a brief "cream packet rests" beat
-   tShrink = seg(0.82, 0.92, bridge)   // was 0.70–0.85
-   tFile   = seg(0.92, 1.00, bridge)   // was 0.85–1.00
-   ```
-3. **Cap the closed angle at 176°** instead of 178° so the wing's lit front face stays visible right up to the moment it lands — prevents the last frame from looking like a snap.
-4. **Tiny depth bump per wing** during the fold so the inward-traveling face catches a shadow edge: keep `translateZ(0.8px)` but add `boxShadow` opacity ramp tied to `tFold` (existing inset shadow values, just unchanged — already present, no new shadows).
-5. **No changes** to: Layer B (final folded strip), spine rotation, shrink target, fly-to-shelf, lanyard/globe fades, opacity handoff at `settled`.
+The reference is much simpler: 3 real `.panel` divs (l, c, r) inside one `.vol`. Each panel has a `.front` face that contains a clone of the **full card**, shifted so each panel only shows its own 1/3 strip. The wings rotate ±178° behind, then `.vol` rotates -180° to show the back of the center panel (the spine).
 
-## Verification
+## Plan
 
-- Scroll slowly through the About → Projects bridge: wings should be clearly visible rotating inward across roughly half the bridge length.
-- The folded cream packet should briefly sit still before the green ABOUT ME spine flips into view.
-- Final shrink + fly-to-shelf timing unchanged.
+### 1. Rebuild the packet markup inside `volRef` (Layer A + Layer B → one `vol`)
 
-No other files touched.
+Replace lines ~538–658 with this structure:
+
+```text
+volRef (perspective inherited from wrapper; preserve-3d)
+  panelL  (left:0,   w:33.33%, origin: right center)
+    .front  → clone of full About back; shifted left:0
+    .back   → dark backing
+  panelC  (left:33.33%, w:33.33%)
+    .front  → clone of full About back; shifted left:-100%
+    .spine  → green ProjectSpine, rotateY(180deg)  ← the back
+  panelR  (left:66.66%, w:33.33%, origin: left center)
+    .front  → clone of full About back; shifted left:-200%
+    .back   → dark backing
+```
+
+Each `.front` renders the same `AboutCardBack` content (read-only, `pointerEvents: none`) at full card width (`CARD_WIDTH`), positioned with negative `left` so only that panel's slice is visible. The `.front` has `backfaceVisibility: hidden`. The `.spine` on the center panel is `rotateY(180deg)` so it shows when the packet flips.
+
+(The interactive AboutCardBack below the packet still exists for the unfolded state. Once `foldActive`, we hide the live one — already done via `cardBackInnerRef.opacity = 0` — and the cloned panels carry the visuals.)
+
+### 2. Replace fold/turn math with the reference math
+
+In `applyTransform`, remove the Layer A / Layer B logic. Keep windows but use the reference's geometry:
+
+```ts
+// FOLD — wings rotate behind center
+const fE = eInOut(tFold);
+panelL.style.transform  = `rotateY(${ fE * 178}deg) translateZ(-5px)`;
+panelR.style.transform  = `rotateY(${-fE * 178}deg) translateZ(-5px)`;
+
+// TURN — whole packet revolves; spine (back of center) faces us
+const tE = eInOut(tTurn);
+volRef.style.transform = `rotateY(${-180 * tE}deg)`;
+```
+
+No more `spineFaceRef`, no `foldPacketRef` opacity juggling, no Layer-B cream/green pair. The center panel's `.spine` is its own back face — `backfaceVisibility: hidden` on `.front` does the swap automatically at 90°.
+
+Add `eInOut` helper (cubic in-out from the reference).
+
+### 3. Wrapper transform stays the same
+
+The cardWrap continues to own `translate / scale / tilt / rotateY(p2*180)`. The `vol` lives inside the existing back face, so the About flip still flips us into the trifold scene before fold begins.
+
+### 4. Refs and cleanup
+
+- Add `panelLRef`, `panelCRef`, `panelRRef`.
+- Remove `foldCenterRef`, `foldLeftRef`, `foldRightRef`, `foldPacketRef`, `spineFaceRef` and all transforms that referenced them.
+- Keep `volRef` (now used as the reference's `vol`).
+
+### 5. What stays unchanged
+
+- Pre-fold flow (slide to center, About flip)
+- Shrink + Fly-to-shelf (still operate on `cardWrap`)
+- Lanyard / globe fades, shelf handoff, opacity at `settled`
+- Window timings (`tFold`, `tTurn`, `tShrink`, `tFile`)
+
+## Files
+
+- `src/components/HeroIdBadge.tsx` — only file touched.
