@@ -564,26 +564,37 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   willChange: "transform",
                 }}
               >
-                {/* Spine-skin cross-fades over the center panel */}
+                {/* Vertical spine label on the center fold panel — fades in during rotate phase */}
                 <div
                   ref={spineSkinRef}
                   style={{
                     position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: "-100%",
-                    right: "-100%",
+                    inset: 0,
                     opacity: 0,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     willChange: "opacity",
+                    pointerEvents: "none",
                   }}
                 >
-                  {/* Counter rotateY(180) of back face so spine text reads correctly */}
-                  <div style={{ transform: `rotateY(180deg) scaleX(${260 / SPINE_WIDTH}) scaleY(${380 / SPINE_HEIGHT})`, transformOrigin: "center center" }}>
-                    <ProjectSpine data={ABOUT_SPINE_DATA} />
-                  </div>
+                  {/* Counter rotateY(180) so the label reads correctly on the (mirrored) back face */}
+                  <span
+                    className="font-serif-display"
+                    style={{
+                      transform: "rotateY(180deg)",
+                      writingMode: "vertical-rl",
+                      textOrientation: "mixed",
+                      color: "hsl(40 30% 92% / 0.92)",
+                      fontSize: "11px",
+                      letterSpacing: "0.38em",
+                      textTransform: "uppercase",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {badge.ribbonLeft} · 2026
+                  </span>
                 </div>
               </div>
               {/* Right panel — folds back-left (anchored to inner edge) */}
