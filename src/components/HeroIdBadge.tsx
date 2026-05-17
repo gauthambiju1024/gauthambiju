@@ -186,21 +186,23 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: combine drag offset, resting tilt, and scroll-driven (translate, scale, rotateY).
+    // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
+    // and the bridge fold-into-shelf phase.
     const applyTransform = () => {
       const t = progressMV?.get() ?? 0;
+      const f = foldMV?.get() ?? 0;
 
-      const p1 = smoothstep(0.30, 0.55, t);
-      const p2 = smoothstep(0.55, 0.92, t);
+      // Once we begin folding, anchor the About flip at its completed state.
+      const tEff = f > 0.001 ? Math.max(t, 0.92) : t;
+      const p1 = smoothstep(0.30, 0.55, tEff);
+      const p2 = smoothstep(0.55, 0.92, tEff);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
       const h = card.offsetHeight;
-      // Card is positioned right:32 top:90 by default — slide it left toward right-of-center
-      // so the globe has room on the left.
       const restingLeft = stageRect.width - 32 - w;
       const restingTop = 90;
-      const targetCenterX = stageRect.width * 0.74; // right side
+      const targetCenterX = stageRect.width * 0.74;
       const targetCenterY = stageRect.height / 2;
       const restingCenterX = restingLeft + w / 2;
       const restingCenterY = restingTop + h / 2;
@@ -212,22 +214,93 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotY = p2 * 180;
 
-      const tx = snap(offsetX + dxToCenter);
-      const ty = snap(offsetY + dyToCenter);
+      // ---- Fold phases ----
+      const fB1 = smoothstep(0.15, 0.30, f); // flap fold ±88°
+      const fB2 = smoothstep(0.30, 0.45, f); // scaleX collapse 1 → 0.18
+      const fC = smoothstep(0.45, 0.70, f);  // walnut color + spine label
+      const fD = smoothstep(0.70, 1.00, f);  // translate to landing slot
+
+      const sxFold = 1 - fB2 * 0.82;
+      const foldScale = f > 0.001 ? sxFold : 1;
+
+      // Translate to landing slot in stage-local coords.
+      let extraTx = 0;
+      let extraTy = 0;
+      if (f > 0.001) {
+        const slot = document.getElementById('projects-shelf-landing-slot');
+        if (slot) {
+          const sR = slot.getBoundingClientRect();
+          const slotCx = sR.left + sR.width / 2 - stageRect.left;
+          const slotCy = sR.top + sR.height / 2 - stageRect.top;
+          // Current center after About flip
+          const curCx = restingCenterX + dxToCenter;
+          const curCy = restingCenterY + dyToCenter;
+          extraTx = (slotCx - curCx) * fD;
+          extraTy = (slotCy - curCy) * fD;
+        } else {
+          // No slot yet — hold position; let fold visuals still play.
+        }
+      }
+
+      const tx = snap(offsetX + dxToCenter + extraTx);
+      const ty = snap(offsetY + dyToCenter + extraTy);
       const s = Math.round(scale * 1000) / 1000;
 
-      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg)`;
+      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg) scaleX(${foldScale.toFixed(3)})`;
 
+      // Flap visuals — appear only during fold.
+      if (leftFlapRef.current) {
+        leftFlapRef.current.style.opacity = f > 0.05 ? "1" : "0";
+        leftFlapRef.current.style.transform = `rotateY(${(-fB1 * 88).toFixed(2)}deg)`;
+      }
+      if (rightFlapRef.current) {
+        rightFlapRef.current.style.opacity = f > 0.05 ? "1" : "0";
+        rightFlapRef.current.style.transform = `rotateY(${(fB1 * 88).toFixed(2)}deg)`;
+      }
+
+      // Cream → walnut color lerp on both faces.
+      if (f > 0.001) {
+        // hsl(40 25% 92%) → hsl(28 35% 22%)
+        const h0 = 40, s0 = 25, l0 = 92;
+        const h1 = 28, s1 = 35, l1 = 22;
+        const hL = h0 + (h1 - h0) * fC;
+        const sL = s0 + (s1 - s0) * fC;
+        const lL = l0 + (l1 - l0) * fC;
+        const col = `hsl(${hL.toFixed(1)} ${sL.toFixed(1)}% ${lL.toFixed(1)}%)`;
+        if (card) card.style.backgroundColor = col;
+        if (backFaceRef.current) backFaceRef.current.style.backgroundColor = col;
+      } else {
+        if (card) card.style.backgroundColor = "";
+        if (backFaceRef.current) backFaceRef.current.style.backgroundColor = "";
+      }
+
+      // Spine label — counter-scale to remain readable through the collapsed wrap.
+      if (spineLabelRef.current) {
+        spineLabelRef.current.style.opacity = fC.toFixed(3);
+        const inv = foldScale > 0.01 ? 1 / foldScale : 1;
+        spineLabelRef.current.style.transform = `translate(-50%, -50%) scaleX(${inv.toFixed(3)})`;
+      }
+
+      // Lanyard fades out with About flip and stays hidden through fold.
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String(1 - p2);
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - Math.min(1, f * 4)));
       }
-      // Globe fades in as flip completes
+      // Globe fades in with flip, fades back out as fold begins.
       if (globeLayerRef.current) {
-        globeLayerRef.current.style.opacity = String(p2);
-        globeLayerRef.current.style.pointerEvents = p2 > 0.5 ? "auto" : "none";
+        const op = p2 * (1 - Math.min(1, f * 3));
+        globeLayerRef.current.style.opacity = String(op);
+        globeLayerRef.current.style.pointerEvents = op > 0.5 ? "auto" : "none";
       }
-      cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
-      cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
+      cardWrap.style.pointerEvents = (p1 > 0.05 || f > 0.01) ? "none" : "auto";
+      cardWrap.style.cursor = (p1 > 0.05 || f > 0.01) ? "default" : "grab";
+
+      // Body flag — lets the shelf swap its landing slot to a filled spine state.
+      if (f >= 0.98) {
+        if (document.body.getAttribute('data-card-landed') !== 'true')
+          document.body.setAttribute('data-card-landed', 'true');
+      } else if (document.body.getAttribute('data-card-landed') === 'true') {
+        document.body.removeAttribute('data-card-landed');
+      }
 
       updateLanyard();
     };
