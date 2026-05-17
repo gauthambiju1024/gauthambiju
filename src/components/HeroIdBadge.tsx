@@ -249,7 +249,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
       if (foldRightRef.current) {
-        foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
+        foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
       // TURN — center strip rotates internally; backface-visibility reveals green spine past 90°
       if (foldCenterRef.current) {
