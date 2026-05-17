@@ -242,7 +242,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
-      // FOLD — wings rotate flush behind the center strip
+      // FOLD — both wings rotate inward onto the cream center; packet stays solid cream
       const fE = eOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
@@ -251,14 +251,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (foldRightRef.current) {
         foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
-      // TURN — center strip rotates internally; backface-visibility reveals green spine past 90°
-      if (foldCenterRef.current) {
+      // TURN — the WHOLE folded packet flips as one unit, revealing the green spine on its back
+      if (volRef.current) {
         const turnDeg = eOut(tTurn) * 180;
-        foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
+        volRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
       }
-      // No cross-fade — about face uses backface-visibility:hidden to disappear naturally
-      const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
-      if (aboutFaceEl) aboutFaceEl.style.opacity = "1";
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
@@ -531,7 +528,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold packet — the About surface itself split into three physical strips */}
+          {/* Trifold packet — folds first (all cream), then the whole packet flips to reveal the green spine */}
           <div
             ref={volRef}
             aria-hidden
@@ -543,31 +540,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               zIndex: 5,
               transformStyle: "preserve-3d",
               WebkitTransformStyle: "preserve-3d",
-              perspective: 1400,
+              transformOrigin: "center center",
               willChange: "opacity, transform",
             }}
           >
-            {/* LEFT wing — 25% of card; folds behind to cover left half of center */}
+            {/* LEFT wing — 25% of card; folds inward onto the cream center */}
             <div
               ref={foldLeftRef}
               style={{
                 position: "absolute",
                 top: 0, bottom: 0, left: 0,
                 width: "25%",
-                background: "transparent",
+                background: CARD_BG,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "right center",
                 willChange: "transform",
+                boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)",
+                overflow: "hidden",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+              <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
                 {aboutSurface(0)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "hsl(170 25% 28%)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08)" }} />
             </div>
 
-            {/* CENTER — 50% of card; turns internally into the green ABOUT spine */}
+            {/* CENTER — 50% of card; stays cream during the fold, disappears when packet flips */}
             <div
               ref={foldCenterRef}
               style={{
@@ -576,40 +577,60 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 left: "25%",
                 width: "50%",
                 pointerEvents: "none",
-                transformStyle: "preserve-3d",
-                WebkitTransformStyle: "preserve-3d",
-                transformOrigin: "center center",
-                willChange: "transform, box-shadow",
-                background: "hsl(170 25% 28%)",
-                boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18)",
+                background: CARD_BG,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                overflow: "hidden",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+              <div style={{ position: "absolute", inset: 0, background: CARD_BG }}>
                 {aboutSurface(-CARD_WIDTH * 0.25)}
-              </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "stretch", justifyContent: "stretch" }}>
-                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
               </div>
             </div>
 
-            {/* RIGHT wing — 25% of card; folds behind to cover right half of center */}
+            {/* RIGHT wing — 25% of card; folds inward onto the cream center */}
             <div
               ref={foldRightRef}
               style={{
                 position: "absolute",
                 top: 0, bottom: 0, left: "75%",
                 width: "25%",
-                background: "transparent",
+                background: CARD_BG,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "left center",
                 willChange: "transform",
+                boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)",
+                overflow: "hidden",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+              <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
                 {aboutSurface(-CARD_WIDTH * 0.75)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "hsl(170 25% 28%)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08)" }} />
+            </div>
+
+            {/* SPINE — back face of the entire folded packet; only visible after the packet flips past 90° */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: 0, bottom: 0,
+                left: "25%",
+                width: "50%",
+                transform: "rotateY(180deg)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                background: "hsl(170 25% 28%)",
+                boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
+                display: "flex",
+                alignItems: "stretch",
+                justifyContent: "stretch",
+              }}
+            >
+              <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
             </div>
           </div>
         </div>
