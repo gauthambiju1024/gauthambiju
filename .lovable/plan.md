@@ -1,107 +1,68 @@
-# Fix blank fold + replace gold spine with project-spine style
 
-## Why the card looked blank
+# Rewrite the About → Shelf transition
 
-The new vol overlay renders 3 opaque cream panels in front of the live
-`AboutCardBack`. During `tSettle` the live content fades out, and the
-cloned `<AboutCardBack>` instances inside each panel don't fill their
-slots (parent uses `display:flex; flexDirection:column` without `flex:1`
-on the child, and `AboutCardBack` has no intrinsic height). Net result:
-3 blank cream rectangles covering everything.
+## What's broken today
 
-The clone approach is overkill anyway — we don't need 3 live copies of
-the about content to sell the fold. Simpler structure works better.
+The screenshot shows the end-state of the bridge: the live shelf is drawn, three spines (CLASSY, VAIDYA, and the static **ABOUT** placeholder) are visible — but the **folding ID card itself never appears in flight**. The "ABOUT" you're seeing is the static `<ProjectSpine data={ABOUT_SPINE_DATA} />` placeholder hard-coded into `AboutToProjectsBridge.tsx`, not the folded card.
 
-## New construction
+Root causes in current `HeroIdBadge.tsx`:
 
-Keep the live `AboutCardBack` as the CENTER panel's front. Only the two
-WINGS are added as new fold elements. The "spine" back-face is a
-ProjectSpine-styled element matching the shelf's other spines.
+1. **Phase windows are wrong.** Today: `tFold 0–0.36`, `tTurn 0.20–0.52`, `tFile 0.54–0.82` — all evaluated against `bridge` (which is itself a remap of the outer `0.72–1.0` scroll window). They don't match the spec.
+2. **No COLL/ARCH stage at all.** The shelf rule + library spines rise on completely different driver values (`AboutToProjectsBridge`'s own `eBack` / `ease(0.42,0.70)`), not synced to a shared `p` parameter.
+3. **Static ABOUT placeholder duplicates the folded card.** The `aboutSlotRef` in `AboutToProjectsBridge.tsx` always renders an ABOUT spine, so even when the fold never arrives the slot looks "full" — masking the bug and creating a double-spine when it does.
+4. **Wrap is hidden at the wrong time.** `cardWrap.opacity = 1 - smoothstep(0.996, 1, bridge)` plus the early `cardBackInnerRef` fade can leave the packet invisible mid-turn when wing/spine math goes wrong.
+5. **3D math is fragile.** `cardWrap` does the About-flip rotateY, then `volRef` does another rotateY inside an already-flipped `backFace`. Stacked transforms make the spine back face occasionally land away from the camera. Needs to be flattened to one rotateY driver per phase.
 
-```
-backFaceRef (cardWrap back; rotateY 180° + preserve-3d)
-├── live AboutCardBack             ← centre front, ALWAYS visible
-├── volRef                          ← preserve-3d, opacity ramps with tFold
-│   ├── leftWing                    ← absolute, off-screen at rest (left:-33.33%)
-│   │   slides in over [0, tFold start] then rotateY +178° (origin right)
-│   │   front: cream + crease shadow; back: dark linen
-│   ├── rightWing                   ← mirror of leftWing (right edge)
-│   └── spineBack                   ← absolute inset 0, transform rotateY(180°)
-│       backface-visibility hidden, scaled down on FILE phase so its
-│       visible footprint matches the shelf row's SPINE_HEIGHT.
-│       Uses the SAME ProjectSpine markup (cream/walnut linen, vertical
-│       "ABOUT" text, year cap, subtitle) — NO gold gradient, no
-│       crossfade-to-yellow.
-└── (slot, header decoration unchanged)
+## New design — single shared progress, five named phases
+
+One driver `p ∈ [0,1]` (the outer scroll, NOT bridge-remapped). All segments use the same `seg(p, a, b) = smoothstep(a, b, p)` helper, exactly matching the user's spec:
+
+```text
+FOLD   seg(p, 0.04, 0.40)   wings fold behind centre        (±0 → ±178°)
+TURN   seg(p, 0.24, 0.56)   packet revolves 180°, spine on  (0 → 180°)
+COLL   seg(p, 0.30, 0.60)   shelf rule strokes outward      (dashoffset → 0)
+FILE   seg(p, 0.58, 0.86)   folded spine flies to its slot  (arc + scale)
+ARCH   seg(p, 0.74, 1.00)   library spines rise into place  (translateY + opacity)
 ```
 
-Behavior:
-- At bridge = 0 → vol opacity 0, wings invisible, AboutCardBack visible
-  normally. The card preview matches today's About flip.
-- TRIFOLD (b 0–0.36): vol fades in. Wings slide from off-stage onto
-  left/right thirds of the card (so a tri-panel composition appears),
-  then rotate ±178° around their inner edges, folding behind. Wings carry
-  their own dark back so as they fold you SEE the dark backside (true
-  fold visual).
-- TURN (b 0.30–0.58): whole vol (and the AboutCardBack underneath) rotates
-  with cardWrap as currently. The spineBack inside vol is pre-rotated 180°
-  with `backface-visibility:hidden`, so it only appears when the packet's
-  back faces the camera — that's where the project-spine styled centre
-  shows up.
-- FILE (b 0.54–0.84): existing arc + scale to `SPINE_WIDTH × SPINE_HEIGHT`.
-  Because spineBack uses the same `<ProjectSpine>` proportions, the
-  shrunken visual lands matching the other shelf spines naturally — no
-  extra height fudging.
-- AboutCardBack fade: fade it out only on `tTurn > 0.5` (during the actual
-  turn, not during settle), so wings folding don't reveal a blank centre.
-  At that point the user is seeing the back side anyway.
-
-## Spine styling
-
-Use a real `<ProjectSpine>` for the back face, with
-`data={ABOUT_SPINE_DATA}`, `fallbackColor` left at default cream-walnut.
-Wrap it so it fills the full card footprint (260×380), then the FILE phase
-scaleX/Y collapses it to `SPINE_WIDTH/260 × SPINE_HEIGHT/380` — exactly
-matching the shelf row. No gold gradient, no yellow ABOUT label, no
-crossfade. It IS a project spine from the moment the back face shows.
+The pre-fold About flip (Hero→About card turnover) keeps its existing window `0.35–0.72`. The new transition starts immediately after, with FOLD opening at `p=0.04` so the wings are already a hair pre-loaded — that's fine because `bridge` isn't the driver anymore, the raw outer `p` is.
 
 ## File changes
 
-### `src/components/HeroIdBadge.tsx`
-- Remove all three cloned `<AboutCardBack>` instances from inside vol
-  panels.
-- Remove the gold `.pf.spine` styling block (cap, year, ABOUT typography,
-  PORTFOLIO subtitle, tick).
-- Replace centre panel's back face with `<ProjectSpine data={ABOUT_SPINE_DATA} />`
-  sized to fill 260×380 with `transform: rotateY(180deg)` and
-  `backface-visibility: hidden`.
-- Left/right wings: keep front (cream + crease shadow gradient + edge
-  shadow on the inner crease) and back (dark linen). Add a slide-in
-  transform on tSettle so wings come from off-stage to their thirds
-  before rotating, so the at-rest card stays clean.
-- AboutCardBack live fade: change from `1 - tSettle` to
-  `1 - ease(0.30, 0.55, b)` so it remains visible through TRIFOLD.
-- vol opacity: gate on `tFold > 0.01 ? 1 : 0` so at rest the wings are
-  hidden entirely.
+### `src/components/HeroIdBadge.tsx` — rewrite the `applyTransform` body
 
-### `src/components/AboutToProjectsBridge.tsx`
-- No change.
+- Drop `bridge / __bridgeProgress` as the driver for fold/turn/file. Use the outer `progressMV` directly.
+- Add one helper: `const seg = (a, b, x) => smoothstep(a, b, x);`
+- Compute `tFold, tTurn, tFile` from the spec windows above. Keep `tAboutFlip = smoothstep(0.55, 0.72, p)` for the existing rotateY card flip.
+- **Single rotateY driver on `cardWrap`:** `rotY = tAboutFlip*180 + tTurn*180`. Remove the second rotateY inside `volRef` entirely. This guarantees the spine back face is camera-facing at TURN=1 with no compound-matrix surprises.
+- **Wings live inside `backFace` (rotateY 180)** and only rotate themselves around their inner edges by `tFold * 178°` (left +, right −). They never move with TURN — TURN moves the whole `cardWrap`.
+- **`spineSkin` (the `<ProjectSpine>` back face)** stays rotated 180° inside `backFace`; its opacity ramps with `seg(0.30, 0.55, p)` (within TURN) so the cream→spine reveal lands on the way around.
+- **Fade AboutCardBack with TURN only:** `cardBackInnerRef.opacity = 1 - tTurn`. Not with fold. This guarantees the centre stays readable while wings fold.
+- **FILE flight:** unchanged math (arc + scale to `SPINE_WIDTH/SPINE_HEIGHT`) but driven by the new `tFile` window. Scale is applied on `cardWrap`, not `volRef`. Remove `volRef.style.transform` entirely (it's a static overlay container now).
+- **Hide the wrap only after FILE lands:** `cardWrap.opacity = 1 - seg(0.86, 0.88, p)` — sharp cut at the end of FILE so the wrap disappears exactly when the static slot spine takes over.
+- **Reduced-motion:** if `prefers-reduced-motion`, snap straight to end-state (cardWrap hidden, no fold animation), let the bridge shelf show as today.
+
+### `src/components/AboutToProjectsBridge.tsx` — sync COLL + ARCH to the same `p`
+
+- Replace the local `b = ease(0.72, 1.0, t)` remap with the raw `t = progressMV.get()` and the same `seg` helper.
+- **COLL** (shelf rule): `ledgePath.strokeDashoffset = ledgeLen * (1 - seg(0.30, 0.60, t))`.
+- **ARCH** (spines rise): for spine `i`, `k = eBack(seg(0.74 + i*0.02, 0.96, t))`. Stagger fits inside the ARCH window. Opacity = `clamp01(k*1.4)`, `translateY = (1-k)*135%`.
+- **Remove the static `aboutSlotRef` `<ProjectSpine>` content.** Keep the empty slot box (so layout/`__bridgeSlotRect` still publishes correct coords for FILE to fly to), but render nothing inside until `p >= 0.86`, then fade it in over `seg(0.86, 0.90, t)` as the wrap fades out. This eliminates the double-spine artefact and makes the hand-off invisible.
+- Keep `__bridgeSlotRect` publishing every frame — `HeroIdBadge` still reads it for FILE's flyDx/flyDy.
 
 ### `.lovable/plan.md`
-- Update notes to reflect: live AboutCardBack as centre, wings overlay,
-  ProjectSpine back face (no gold/yellow), height auto-matches shelf via
-  shared SPINE_WIDTH/HEIGHT scale.
 
-## Verification at 1001×769
+- Replace current notes with the 5-phase spec, the shared `p` driver, and the bridge-slot hand-off rule.
 
-- b = 0: card looks identical to current About flip — AboutCardBack
-  fully visible, no extra panels.
-- b ≈ 0.20: wings slid into place, beginning to rotate behind, centre
-  still showing AboutCardBack.
-- b ≈ 0.40: wings folded behind, dark backs visible, centre crease
-  shadowed, packet starting to turn.
-- b ≈ 0.60: packet mid-turn, ProjectSpine-styled back appearing.
-- b ≈ 0.85: dossier landed in shelf slot at exactly the other spines'
-  size, indistinguishable from neighbors.
+## Verification at 1001×769 (viewport)
 
-No backend changes. No new dependencies.
+- `p=0.00–0.30`: hero blueprint visible, card sits at rest, draggable.
+- `p≈0.45`: About flip mid-way, card centred, rotating to back face — AboutCardBack legible.
+- `p≈0.50`: wings begin folding behind, centre still shows AboutCardBack.
+- `p≈0.55`: shelf rule begins stroking out across the panel.
+- `p≈0.62`: packet half-turned, ProjectSpine back fading in, AboutCardBack fading out.
+- `p≈0.75`: packet has arrived at slot, scaled to spine size; first library spines starting to rise.
+- `p≈0.90`: wrap hides, static slot spine fades in seamlessly, all library spines settled.
+- `p=1.00`: indistinguishable from current end-state in the screenshot, but reached via a visible, continuous fold.
+
+No backend changes. No new dependencies. Only `HeroIdBadge.tsx`, `AboutToProjectsBridge.tsx`, and `.lovable/plan.md`.

@@ -64,29 +64,38 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       };
     };
 
+    const seg = (a: number, b: number, x: number) => {
+      const u = clamp01((x - a) / (b - a));
+      return u * u * (3 - 2 * u);
+    };
+
     const update = () => {
       const t = clamp01(progressMV.get());
-      const b = ease(0.72, 1.0, t);
 
-      (window as any).__bridgeActive = b > 0 && b < 1;
-      (window as any).__bridgeProgress = b;
+      // COLL — shelf rule strokes outward
+      const tColl = seg(0.30, 0.60, t);
+      ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tColl));
 
-      const tLedge = ease(0.42, 0.70, b);
-      ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
+      // Shelf wrap fades in with COLL
+      shelfWrap.style.opacity = String(clamp01(seg(0.30, 0.55, t)));
+      shelfWrap.style.pointerEvents = t > 0.95 ? "auto" : "none";
 
-      shelfWrap.style.opacity = String(Math.min(1, ease(0.40, 0.60, b) * 1.2));
-      shelfWrap.style.pointerEvents = b > 0.95 ? "auto" : "none";
+      // Publish for HeroIdBadge (FILE flight + visibility cuts)
+      (window as any).__bridgeActive = t > 0 && t < 1;
+      (window as any).__bridgeProgress = t;
 
+      // ARCH — spines rise, staggered within 0.74..1.0
       for (let i = 0; i < projects.length; i++) {
         const el = spineRefs.current[i];
         if (!el) continue;
-        const order = 0.70 + i * 0.03;
-        const k = eBack(ease(order, order + 0.36, b));
+        const start = 0.74 + i * 0.02;
+        const k = eBack(seg(start, 0.98, t));
         el.style.opacity = String(clamp01(k * 1.4));
         el.style.transform = `translateY(${(1 - k) * 135}%)`;
       }
 
-      slot.style.opacity = String(ease(0.998, 1.0, b));
+      // Slot spine: hidden until FILE lands, fades in as wrap fades out
+      slot.style.opacity = String(seg(0.86, 0.92, t));
 
       publishSlotRect();
     };

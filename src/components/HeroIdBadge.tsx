@@ -193,9 +193,21 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
     // and the bridge shrink/drop that turns the card into a shelved spine.
     const applyTransform = () => {
-      const t = progressMV?.get() ?? 0;
-      const p1 = smoothstep(0.35, 0.55, t);
-      const p2 = smoothstep(0.55, 0.72, t);
+      const p = progressMV?.get() ?? 0;
+      const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
+      const eInOut = (x: number) =>
+        x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+      // Pre-fold: hero→center slide and About flip (unchanged windows)
+      const p1 = seg(0.35, 0.55, p);
+      const p2 = seg(0.55, 0.72, p);
+
+      // Spec phases
+      const tFold = seg(0.04, 0.40, p);
+      const tTurn = seg(0.24, 0.56, p);
+      const tFile = seg(0.58, 0.86, p);
+      const tSpineLbl = seg(0.30, 0.55, p);
+      const tHide = seg(0.86, 0.88, p);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -211,41 +223,30 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const tilt = 8 * (1 - p1);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
-      const scale = 1 + (maxScale - 1) * p1;
-      const rotYFlip = p2 * 180;
+      const baseScale = 1 + (maxScale - 1) * p1;
 
-      // ---- Reference choreography (TRIFOLD · TURN · DRAW · FILE · ARCHIVE) ----
-      // local b mapped to [0.72, 1.0] of parent progress
-      const bridge = clamp((window as any).__bridgeProgress ?? smoothstep(0.72, 1.0, t));
-      const eRange = (a: number, b: number, x: number) => clamp((x - a) / (b - a));
-      const eInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      // Single rotateY driver: About flip + TURN
+      const rotYFlip = p2 * 180 + eInOut(tTurn) * 180;
 
-      const tSettle = eRange(0.00, 0.18, bridge);
-      const tFold   = eRange(0.00, 0.36, bridge);
-      const tTurn   = eRange(0.20, 0.52, bridge);
-      const tFile   = eRange(0.54, 0.82, bridge);
-      const tSpineLbl = eRange(0.30, 0.55, bridge);
-
-      // Keep AboutCardBack visible through TRIFOLD; only fade once packet starts to TURN
-      const tAboutFade = eRange(0.30, 0.55, bridge);
+      // AboutCardBack: fade with TURN only (legible during fold)
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tAboutFade);
-        cardBackInnerRef.current.style.pointerEvents = tAboutFade > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tTurn);
+        cardBackInnerRef.current.style.pointerEvents = tTurn > 0.05 ? "none" : "auto";
       }
       if (backSlotRef.current) {
-        backSlotRef.current.style.opacity = String(1 - tAboutFade);
+        backSlotRef.current.style.opacity = String(1 - tTurn);
       }
-
-      // Back face stays cream
       if (backFaceRef.current) {
         backFaceRef.current.style.background = "hsl(40 25% 92%)";
       }
 
-      // Wings only appear once TRIFOLD begins
+      // Wings overlay opacity
       if (volRef.current) {
         volRef.current.style.opacity = String(tFold > 0.01 ? 1 : 0);
+        volRef.current.style.transform = "";
       }
-      // TRIFOLD — flaps rotate behind to ±178°
+
+      // FOLD — wings rotate around inner edges
       const fE = eInOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
@@ -254,7 +255,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (foldRightRef.current) {
         foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
-      // Center crease shadow ramps over TRIFOLD
       if (foldCenterRef.current) {
         const cd = 0.18 + fE * 0.28;
         foldCenterRef.current.style.boxShadow =
@@ -262,22 +262,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset 0 0 0 1px hsl(0 0% 100% / 0.44)`;
       }
-      // Spine label fades in during TURN
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSpineLbl);
       }
 
-      // TURN — whole packet rotates -180° to present the centre back (the spine)
-      const turnDeg = -180 * eInOut(tTurn);
-
-      // FILE — arc flight + scale to spine dimensions + settle wobble
+      // FILE — fly to slot + scale down to spine dims
       const fileE = eInOut(tFile);
-      const targetSx = SPINE_WIDTH / w;   // ~0.30
-      const targetSy = SPINE_HEIGHT / h;  // ~0.526
-      const kx = 1 + (targetSx - 1) * fileE;
-      const ky = 1 + (targetSy - 1) * fileE;
+      const targetSx = SPINE_WIDTH / w;
+      const targetSy = SPINE_HEIGHT / h;
+      const fileScaleX = 1 + (targetSx - 1) * fileE;
+      const fileScaleY = 1 + (targetSy - 1) * fileE;
+      // Uniform scale via average (cardWrap holds single scale); use min to fit
+      const fileScale = Math.min(fileScaleX, fileScaleY);
       const arcY = Math.sin(tFile * Math.PI) * -60;
-      const settleDeg = tFile < 1 ? Math.sin(tFile * Math.PI) * -3 * (1 - tFile) : 0;
+      const settleDeg = tFile > 0 && tFile < 1 ? Math.sin(tFile * Math.PI) * -3 * (1 - tFile) : 0;
 
       let flyDx = 0, flyDy = 0;
       if (tFile > 0) {
@@ -285,7 +283,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           | { cx: number; cy: number } | null;
         if (slotRect) {
           const curCx = stageRect.left + restingCenterX + dxToCenter;
-          const curCy = stageRect.top  + restingCenterY + dyToCenter;
+          const curCy = stageRect.top + restingCenterY + dyToCenter;
           flyDx = (slotRect.cx - curCx) * fileE;
           flyDy = (slotRect.cy - curCy) * fileE + arcY;
         }
@@ -293,32 +291,24 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
-      const s = Math.round(scale * 1000) / 1000;
+      const s = Math.round(baseScale * fileScale * 1000) / 1000;
 
-      // CardWrap handles position + the About-flip Y rotation only
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + settleDeg).toFixed(2)}deg) scale(${s}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
-      // Vol owns the trifold scale + TURN. Origin = centre so spine collapses around midline.
-      if (volRef.current) {
-        volRef.current.style.transform =
-          `scaleX(${kx.toFixed(3)}) scaleY(${ky.toFixed(3)}) rotateY(${turnDeg.toFixed(2)}deg)`;
-      }
-
-      // Lanyard fades out with the flip
+      // Lanyard fades with the About flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSettle));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tFold));
       }
-      // Globe only during the flip; once bridge starts it disappears
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tSettle);
+        const globeOp = p2 * (1 - tFold);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
+          p2 > 0.5 && tFold < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = String(1 - smoothstep(0.996, 1.0, bridge));
-      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
+      cardWrap.style.opacity = String(1 - tHide);
+      cardWrap.style.pointerEvents = p1 > 0.05 || tFold > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
