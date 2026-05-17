@@ -17,7 +17,6 @@ import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
 
 const trailingStations = [
-  { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
