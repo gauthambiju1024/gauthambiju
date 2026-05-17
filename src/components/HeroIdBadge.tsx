@@ -574,6 +574,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "center center",
                 willChange: "transform, box-shadow",
+                background: "hsl(170 25% 28%)",
                 boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18)",
               }}
             >
