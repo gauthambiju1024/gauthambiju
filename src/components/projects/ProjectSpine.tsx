@@ -28,8 +28,8 @@ export const truncateWords = (text: string, max: number) => {
 };
 
 export const ABOUT_SPINE_DATA = {
-  title: "ABOUT",
-  subtitle: "Portfolio · 2026",
+  title: "MORE ABOUT ME",
+  subtitle: "Personal · 2026",
   year: "2026",
   color: "hsl(170 25% 28%)",
 };
