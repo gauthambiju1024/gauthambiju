@@ -1,63 +1,74 @@
-# Bridge polish — fold-then-flip, shelf isolation, visible spines, toolbox
+## Final concrete plan — bridge polish
 
-## 1. Fold THEN flip (sequential) — `HeroIdBadge.tsx`
+Three precise fixes, all in two files. Geometry, fold widths, and visual design stay exactly as they are now.
 
-Previous turn ran fold + flip in the same window. User wants them sequential: wings fully fold onto the center first, THEN the packet flips to reveal the spine.
+---
 
-New ramps (relative to `bridge = smoothstep(0.72, 1.0, p)`):
-- `tFold   = seg(0.00, 0.40, bridge)` — wings rotate 0 → 178°, settling flush behind the center
-- `tTurn   = seg(0.42, 0.70, bridge)` — center `rotateY 0 → 180°` (begins only after fold settles, with a small 0.02 hand-off pause)
-- `tShrink = seg(0.70, 0.85, bridge)` — packet scales down to spine footprint
-- `tFile   = seg(0.85, 1.00, bridge)` — flies to `__bridgeSlotRect`
+### Fix 1 — Left/right wings stay transparent when folded
+**File:** `src/components/HeroIdBadge.tsx` (wing markup, ~lines 550–611)
 
-Wing widths stay 25 / 50 / 25 so the two wings cover 100% of the center once folded. About-face opacity ramp stays removed (backface-visibility handles the reveal cleanly during tTurn).
+Root cause: each wing has a front face with `backfaceVisibility: hidden` and a back face at `translateZ(-0.5px) rotateY(180deg)` also with `backfaceVisibility: hidden`. At ~178° the front face culls, and the back face's z-offset + culling causes the wing to render as see-through against the green spine behind it.
 
-## 2. Shelf must not appear in the About section — `AboutToProjectsBridge.tsx`
+Change:
+- Add `background: CARD_BG` and `backfaceVisibility: hidden` to each wing's outer wrapper itself, so the wing is opaque cream from any angle.
+- Remove `translateZ(-0.5px)` and `backfaceVisibility: hidden` from the back-face inner div (keep its `rotateY(180deg)` + inset shadow) so it always paints as a solid cream panel with no z-fighting.
 
-Bug: I removed the wrap opacity ramp last turn, so the shelf is visible all the way through About.
+Result: when wings rotate to 178°, both fully cover the green center strip with solid cream.
 
-Fix: gate `shelfWrap.style.opacity` on bridge progress, but fade it in BEFORE the rule-draw animation so spines have a stage to rise onto:
-- `shelfWrap.style.opacity = seg(0.00, 0.10, bridge)`
-- `pointerEvents = bridge > 0.95 ? "auto" : "none"`
+---
 
-This keeps the shelf hidden during About (bridge=0) and revealed throughout the Projects pin.
+### Fix 2 — Project spines never appear
+**File:** `src/components/AboutToProjectsBridge.tsx` (~lines 70–74)
 
-## 3. Projects not visible — same file
+Root cause: this effect runs AFTER React has already populated the spine refs via the inline ref callbacks, wiping them back to empty arrays:
 
-Two root causes:
-- Spines initially sit at `translateY(135%)` AND the row uses `overflow:hidden`. If `archT` never reaches > `order` for a spine, it stays hidden. Today `archT = seg(0.40, 1.0, bridge)`, but with the staggered `order` formula a row-2 col-2 spine needs `archT > 0.22 + span` to land. When `bridge < 0.62` mid-row spines are still below the clip.
-- The `__bridgeProgress` published is `seg(0.72, 1.0, t)` smoothed; during the Projects pin segment `t` is at 1.0 so `bridge` is 1.0 and all spines should land. So the real-world bug is most likely the parent `<section style="position:absolute; inset:0">` being mounted inside the About stage container — projects render but at About's coordinates.
+```ts
+useEffect(() => {
+  rulePathRefs.current = new Array(rows.length).fill(null);
+  rulePathLens.current = new Array(rows.length).fill(0);
+  spineRefs.current = rows.map(() => []);   // erases populated refs
+}, [rows]);
+```
 
-Fixes:
-- Add the opacity gate above so the shelf cleanly fades in.
-- Compress `archT` so even with bridge ≈ 0.6 most spines are visible: `archT = seg(0.10, 0.80, bridge)`. This starts the rise the moment the shelf fades in and finishes well before scroll-end.
-- Drop the `overflow:hidden` ONLY on the spine row's outer flex if it's truncating projects horizontally on narrow viewports; instead set `overflow: hidden` on a fixed-height inner wrapper so the clip is only vertical (rises from "under the rule") and never clips horizontally.
+The rAF loop then iterates empty arrays, spines stay at `translateY(135%)`, clipped under the rule.
 
-## 4. About spine right after the project spines (not pushed to right edge) — same file
+Change:
+- Remove the `spineRefs.current` reset entirely. Let `registerSpine` populate it during render (ref callbacks fire on every render because a new function identity is returned).
+- Keep only `rulePathLens.current.length = rows.length` (don't null out paths either — same identity issue).
 
-Remove the `<div style={{ flex: "1 1 auto" }} />` spacer before the About-spine slot in the top row. Result: spine sits immediately to the right of the last project spine, with a normal `gap: 14` between them.
+---
 
-The slot rect publication still works — `aboutSlotRef.current.getBoundingClientRect()` already returns the correct landing target wherever it is.
+### Fix 3 — Shelf draw + spine build finish exactly when the About spine lands
+**File:** `src/components/AboutToProjectsBridge.tsx` (~lines 112–158)
 
-## 5. Realistic SVG toolbox at bottom-right — same file
+Today the draw uses `seg(0.10, 0.55, bridge)` and the spine rise uses `seg(0.10, 0.80, bridge)`. Both finish well before the About spine lands at `bridge ≈ 0.94`, so the shelf looks complete long before the packet arrives — inconsistent.
 
-Replace the line-drawing SVG with a richer 3D-ish illustration that still matches the warm-amber ink palette. Pieces:
-- Bottom box: rounded amber-tone body with a darker base shadow, light top edge highlight, two latches, brass clasps, and faint wood-grain stripes
-- Lid: separate flap with a hinge highlight
-- Curved metallic handle with two screw mounts
-- Foot shadow under the box
-- ~96 × 76 footprint so it reads at viewport scale
+Re-time everything to one synchronized landing window matching the badge's `tFile` (`seg(0.85, 1.00, bridge)`):
 
-Implementation: a single inline `<svg viewBox="0 0 96 76">` with multiple `<rect>`, `<path>`, gradient `<defs>`, and 1 thin highlight line. Uses the existing `INK` and a derived darker amber for shadow. Still wrapped in `<a href="#skills">` and still bottom-row last col so it rises with the shelf and zooms toward the Skills station.
+| Phase | New window | Notes |
+|---|---|---|
+| `shelfWrap` fade in | `seg(0.70, 0.80, bridge)` | appears just as the packet starts shrinking |
+| Rule draw `drawT` | `seg(0.78, 0.96, bridge)` | per-row stagger so all rules complete by 0.96 |
+| Spine rise `archT` | `seg(0.82, 0.98, bridge)` | row+col stagger so the last spine settles right before the About-spine landing |
+| About spine fade-in | `(bridge - 0.96) / 0.04` | lands on top of the slot right as `bridge → 1` |
 
-## Files
+Per-row stagger normalization: replace the current `start = (i / rowCount) * 0.55` with stagger inside the window length so the last row finishes exactly at the window end:
 
-- `src/components/HeroIdBadge.tsx` — retime `tFold` / `tTurn` / `tShrink` / `tFile` to sequential windows.
-- `src/components/AboutToProjectsBridge.tsx` — restore opacity gate on `shelfWrap`, compress `archT`, remove right-edge spacer before About spine, swap toolbox SVG for the realistic version, switch the row clip so it only hides vertical overflow (not horizontal).
-- `.lovable/plan.md` — append the sequential fold-then-flip and shelf-isolation notes.
+```ts
+const winLen = end - start;          // 0.18 for draw, 0.16 for arch
+const rowStagger = winLen * 0.3;     // 30% of window for stagger
+const perRow = (winLen - rowStagger) / Math.max(1, rowCount);
+```
 
-## Notes
+Same approach for spines: clamp `order` so even the last (row, col) finishes at the very end of the arch window.
 
-- No DB/RLS changes.
-- No new dependencies.
-- All transitions remain in the existing rAF loop — no React re-renders during the animation.
+Result: as the folded packet shrinks and flies to the shelf, the ledge draws in beneath it and the project spines rise to greet the About spine — completing as one motion.
+
+---
+
+### Files
+- `src/components/HeroIdBadge.tsx` — wing opacity fix
+- `src/components/AboutToProjectsBridge.tsx` — remove ref wipe; re-time draw/arch/fade windows
+- `.lovable/plan.md` — replace with this plan
+
+No new dependencies. No DB changes. No layout, fold geometry, or visual design changes beyond what's listed.
