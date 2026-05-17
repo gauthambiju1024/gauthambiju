@@ -500,7 +500,81 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             expandedId={expandedId}
             setExpandedId={setExpandedId}
           />
+
+        {/* Decorative tri-fold flaps — invisible until fold begins. Sit on top of both faces. */}
+        <div
+          ref={leftFlapRef}
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "33.334%",
+            height: 380,
+            background: "hsl(40 25% 92%)",
+            transformOrigin: "right center",
+            transformStyle: "preserve-3d",
+            backfaceVisibility: "visible",
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: 20,
+            boxShadow: "inset -10px 0 14px -10px rgba(0,0,0,0.55), inset 0 0 0 1px hsl(0 0% 0% / 0.06)",
+            willChange: "transform, opacity",
+          }}
+        />
+        <div
+          ref={rightFlapRef}
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "33.334%",
+            height: 380,
+            background: "hsl(40 25% 92%)",
+            transformOrigin: "left center",
+            transformStyle: "preserve-3d",
+            backfaceVisibility: "visible",
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: 20,
+            boxShadow: "inset 10px 0 14px -10px rgba(0,0,0,0.55), inset 0 0 0 1px hsl(0 0% 0% / 0.06)",
+            willChange: "transform, opacity",
+          }}
+        />
+
+        {/* Spine label — counter-scales x to remain legible during collapse */}
+        <div
+          ref={spineLabelRef}
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: 25,
+            willChange: "transform, opacity",
+          }}
+        >
+          <span
+            className="font-serif-display"
+            style={{
+              writingMode: "vertical-rl",
+              textOrientation: "mixed",
+              color: "hsl(var(--gold))",
+              fontSize: 11,
+              letterSpacing: "0.32em",
+              textTransform: "uppercase",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            GB · 0024 · Portfolio
+          </span>
         </div>
+      </div>
       </div>
     </div>,
     document.body
