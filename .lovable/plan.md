@@ -1,93 +1,70 @@
 ## Goal
-Restore the transition so the About card itself becomes the shelf spine:
+Polish the About→spine transition so it reads as a real "More About Me" project on the shelf, with cleaner, more intentional folding and a click-to-open About popup.
 
-- About content is visible during the About state.
-- The portrait/front face never reappears during the turn.
-- The green folded spine is not replaced by a yellow placeholder.
-- No crossfade, no fade-to-placeholder, no visual swap.
+## 1. Spine label: "MORE ABOUT ME"
 
-## Current problems to fix
+`src/components/projects/ProjectSpine.tsx`
+- Update `ABOUT_SPINE_DATA`:
+  - `title: "MORE ABOUT ME"`
+  - `subtitle: "Personal · 2026"`
+  - keep the green color `hsl(170 25% 28%)`.
+- Title rendering already uses vertical writing mode and tracks long strings; verify it fits inside `SPINE_HEIGHT = 200`. If tight, reduce font-size from `13px` to `11px` only for long titles (>12 chars) via a length check, so other project spines stay unchanged.
 
-1. The code clips the whole card/back face during fold, which can leave the About face looking blank instead of physically folded.
-2. `rotYFlip = p2 * 180 + tTurn * 180` rotates the whole card from 180° to 360°, so the portrait/front face becomes visible again during the turn.
-3. `cardWrap.style.opacity = 1 - tHide` hides the real folded card, while `aboutSlotRef` fades in a separate `ProjectSpine`; that is the replacement/crossfade the choreography should not have.
-4. `ABOUT_SPINE_DATA` is brown/yellow, so the landing spine reads as a different object instead of the folded green spine.
+## 2. Spine behaves like a project (click → About popup)
 
-## Implementation plan
+`src/components/AboutToProjectsBridge.tsx`
+- Re-introduce a real, clickable "More About Me" spine in the shelf row, rendered with the same `ProjectSpine` markup as other projects, using `ABOUT_SPINE_DATA`. It is hidden while the folding card is mid-flight and only shown once the choreography settles (`bridge > 0.95`).
+- Hook `onClick` on that spine to open an About popup (not navigate). State lives on the bridge.
+- The invisible `aboutSlotRef` stays as the geometry target for the flying card so the landing alignment still works.
 
-### 1. Keep hero → about exactly as-is
-Do not change the first transition windows:
+New component: `src/components/about/AboutPopup.tsx`
+- Uses existing `Dialog` (`@/components/ui/dialog`) with a wide, parchment-styled `DialogContent` matching the cream card aesthetic.
+- Renders `AboutGlobe` (left) + `AboutCardBack` (right) with the same shared `activeTab` / `expandedId` state used in `HeroIdBadge`.
+- Loads `journey` from `useSiteContent("about", "journey")`.
 
-```text
-0.35–0.55  card slides/scales to center
-0.55–0.72  card flips to About back face
-```
+Wiring:
+- `AboutToProjectsBridge` owns `popupOpen` state. The clickable About spine toggles it. The popup mounts inside the bridge.
+- The folded card itself (still visible in the shelf) also becomes clickable once it settles: tapping it opens the same popup.
 
-Only rebuild the `0.72–1.00` About → Projects choreography.
+## 3. More elegant folding — remove noise, keep intent
 
-### 2. Stop rotating the whole card back to the portrait
-In `HeroIdBadge.tsx`, keep the wrapper card rotation capped at the About-facing side:
+`src/components/HeroIdBadge.tsx`
 
-```text
-card wrapper rotateY = p2 * 180
-```
+Remove:
+- The unused `clipPath = "none"` / `webkitClipPath = "none"` writes on `backFaceRef` and `cardRef` every frame.
+- The per-frame `volRef.style.transform = ""` reset.
+- `cardWrap.style.opacity = "1"` reassignment every frame.
+- Arc bounce (`arcY = Math.sin(tFile*π) * -60`) — replace with a flat ease for a calmer file.
+- `settleDeg` micro-wobble during FILE — remove; the spine should land clean.
+- Dark linen back faces on left/right wings (lines 574, 617) — they're never seen once the wings fold flush behind the center. Replace with a simple transparent backface so the GPU has less to composite.
 
-Remove the extra `+ tTurn * 180` from the wrapper. The TURN phase will happen inside the folded center spine, not by rotating the entire ID card back to its portrait face.
+Tighten:
+- Shorten and overlap the windows so the motion is one continuous gesture, not three sequential ones:
+  - `tFold` 0.00–0.34
+  - `tTurn` 0.30–0.58 (starts as wings settle)
+  - `tFile` 0.55–0.90
+- Switch the easing for `tFold`, `tTurn`, `tFile` to a single shared `eOutQuint` (`1 - (1-x)^5`) so they share the same decay curve.
+- Cap `flapAngle` at exactly 180° (currently `178`) and use `transformOrigin` already correct on left/right wings.
+- Replace the inset shadow ramp on `foldCenterRef` with a single static inset edge highlight; the rotation alone reads as fold depth.
+- Add `transition: none` and keep transforms `translate3d` + `scale3d` for sub-pixel snapping.
+- During TURN, fade the cream `aboutSurface` inside the center strip from `1` → `0` over `tTurn 0..0.5` and the `ProjectSpine` backface from `0` → `1` over `tTurn 0.4..1`, so the swap happens behind the rotation midpoint and never shows the wrong face through subpixel bleed.
 
-### 3. Replace overlay folding with a real segmented card surface
-Rework the back face into three physical strips:
-
-```text
-[left third] [center spine third] [right third]
-```
-
-Each strip carries/clips the actual About-card surface, so at fold start it still looks like one intact About card. During FOLD:
-
-- left strip folds behind around its right edge
-- right strip folds behind around its left edge
-- center strip remains in place
-- hidden backfaces prevent About text/portrait from leaking through
-
-This removes the current “transparent wing overlay + global clip” model that makes the card look blank or fake.
-
-### 4. Make the center strip itself become the green spine
-Put the green `ProjectSpine` face on the back side of the center strip and rotate only that center strip during TURN.
-
-Result:
+Choreography summary after polish:
 
 ```text
-About face visible → card folds → center strip turns → green ABOUT spine visible
+0.72 → 0.84   wings fold flush behind center (no bounce, no shadow ramp)
+0.78 → 0.88   center strip rotates 180° → green spine face appears
+0.85 → 0.95   spine flies to shelf slot, scales to SPINE_WIDTH×SPINE_HEIGHT, lands flat
+0.95 → 1.00   shelf spines settle; "More About Me" spine becomes clickable
 ```
 
-The portrait face is never part of this second turn.
+## 4. Plan doc
 
-### 5. Remove all replacement/fade behavior
-In `HeroIdBadge.tsx`:
+Update `.lovable/plan.md` to reflect the final, polished choreography and the new popup interaction so future passes don't regress.
 
-- remove `tHide`
-- do not fade `cardWrap` out after filing
-- keep the real folded card visible as the final shelf spine
-
-In `AboutToProjectsBridge.tsx`:
-
-- keep the About slot as an invisible layout/target only
-- never fade in the slot placeholder spine
-- continue publishing `__bridgeSlotRect` so the real folded card can fly into that reserved slot
-
-### 6. Make the landing dimensions match the shelf
-Update FILE scaling so the folded center strip lands as `SPINE_WIDTH × SPINE_HEIGHT`, using independent X/Y scale if needed. The visible folded spine should align with the reserved shelf slot instead of being replaced by another element.
-
-### 7. Keep the spine green
-Change the About spine color used by the moving card from the current brown/yellow tone to the existing green spine tone, so it reads as the same folded object throughout the choreography.
-
-## Expected choreography after the fix
-
-```text
-FOLD   0.04–0.40  actual About card folds into a narrow center strip
-TURN   0.24–0.56  center strip flips internally into the green ABOUT spine
-COLL   0.30–0.60  shelf rule strokes outward behind it
-FILE   0.58–0.86  that same green folded spine flies into the shelf slot
-ARCH   0.74–1.00  project spines rise around it
-```
-
-No crossfade. No yellow replacement. No portrait flash. The same card becomes the spine and lands in the shelf.
+## Files touched
+- `src/components/projects/ProjectSpine.tsx` — label + subtitle
+- `src/components/AboutToProjectsBridge.tsx` — clickable About spine, popup state
+- `src/components/about/AboutPopup.tsx` — new component
+- `src/components/HeroIdBadge.tsx` — remove noise, retime windows, swap easings, clean center-strip face fade, make settled card clickable
+- `.lovable/plan.md` — updated notes
