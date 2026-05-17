@@ -241,8 +241,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       // Seams visible from start of fold
-      if (foldSeamsRef.current) {
-        foldSeamsRef.current.style.opacity = String(Math.max(tSettle, tFold > 0 ? 1 : 0));
+      if (volRef.current) {
+        volRef.current.style.opacity = String(Math.max(tSettle, tFold > 0 ? 1 : 0));
       }
       // TRIFOLD — flaps rotate behind to ±178°
       const fE = eInOut(tFold);
@@ -294,9 +294,16 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const ty = snap(offsetY + dyToCenter + flyDy);
       const s = Math.round(scale * 1000) / 1000;
 
+      // CardWrap handles position + the About-flip Y rotation only
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + settleDeg).toFixed(2)}deg) scale(${s}) ` +
-        `scaleX(${kx.toFixed(3)}) scaleY(${ky.toFixed(3)}) rotateY(${(rotYFlip + turnDeg).toFixed(2)}deg)`;
+        `rotateY(${rotYFlip.toFixed(2)}deg)`;
+
+      // Vol owns the trifold scale + TURN. Origin = centre so spine collapses around midline.
+      if (volRef.current) {
+        volRef.current.style.transform =
+          `scaleX(${kx.toFixed(3)}) scaleY(${ky.toFixed(3)}) rotateY(${turnDeg.toFixed(2)}deg)`;
+      }
 
       // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
