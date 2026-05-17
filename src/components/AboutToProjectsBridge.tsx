@@ -32,11 +32,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const pinRef = useRef<HTMLElement>(null);
   const shelfWrapRef = useRef<HTMLDivElement>(null);
   const ledgePathRef = useRef<SVGPathElement>(null);
-  const ledgeTicksRef = useRef<SVGGElement>(null);
-  const dimsRef = useRef<HTMLDivElement>(null);
-  const topCapRef = useRef<HTMLDivElement>(null);
-  const subLblRef = useRef<HTMLDivElement>(null);
-  const botCapRef = useRef<HTMLDivElement>(null);
   const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const aboutSlotRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
