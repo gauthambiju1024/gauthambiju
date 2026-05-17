@@ -344,7 +344,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       ro.disconnect();
       updateLanyardRef.current = null;
     };
-  }, [mounted, progressMV]);
+  }, [mounted, progressMV, foldMV]);
 
   if (!mounted) return null;
 
