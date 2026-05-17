@@ -87,6 +87,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
+  const backFaceRef = useRef<HTMLDivElement>(null);
+  const foldCenterRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const foldLeftRef = useRef<HTMLDivElement>(null);
   const foldRightRef = useRef<HTMLDivElement>(null);
@@ -228,6 +230,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(1 - tSeams);
         cardBackInnerRef.current.style.pointerEvents = tSeams > 0.05 ? "none" : "auto";
       }
+      if (backFaceRef.current) {
+        backFaceRef.current.style.background = `hsl(40 25% 92% / ${1 - tSeams})`;
+      }
       if (foldSeamsRef.current) {
         foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
       }
@@ -244,12 +249,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSkin);
       }
+      if (foldCenterRef.current) {
+        const centerScaleX = 1 + ((SPINE_WIDTH / (w / 3)) - 1) * tShrink;
+        const centerScaleY = 1 + ((SPINE_HEIGHT / h) - 1) * tShrink;
+        foldCenterRef.current.style.transform = `scaleX(${centerScaleX.toFixed(3)}) scaleY(${centerScaleY.toFixed(3)})`;
+      }
 
-      // The folded object is the center third of the card, so scale that third to spine width.
-      const targetSx = SPINE_WIDTH / (w / 3);
-      const targetSy = SPINE_HEIGHT / h;  // ≈ 0.53
-      const shrinkSx = 1 + (targetSx - 1) * tShrink;
-      const shrinkSy = 1 + (targetSy - 1) * tShrink;
+      const shrinkSx = 1;
+      const shrinkSy = 1;
 
       // Compute drop translation to land on the shelf slot (viewport coords)
       let dropDx = 0, dropDy = 0;
