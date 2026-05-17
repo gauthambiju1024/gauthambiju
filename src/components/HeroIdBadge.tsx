@@ -208,10 +208,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // about→projects segment driver; sequential fold → flip → shrink → fly
       const bridge = smoothstep(0.72, 1.0, p);
-      const tFold = seg(0.00, 0.40, bridge);
-      const tTurn = seg(0.42, 0.70, bridge);
-      const tShrink = seg(0.70, 0.85, bridge);
-      const tFile = seg(0.85, 1.00, bridge);
+      const tFold = seg(0.00, 0.55, bridge);
+      const tTurn = seg(0.62, 0.82, bridge);
+      const tShrink = seg(0.82, 0.92, bridge);
+      const tFile = seg(0.92, 1.00, bridge);
       const foldActive = bridge > 0.02;
       const settled = bridge > 0.96;
 
@@ -245,8 +245,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
       // FOLD — both wings rotate inward onto the center. Double cream faces keep the folded packet solid.
-      const fE = eOut(tFold);
-      const flapAngle = fE * 178;
+      const fE = tFold < 0.5 ? 2 * tFold * tFold : 1 - Math.pow(-2 * tFold + 2, 2) / 2;
+      const flapAngle = fE * 176;
       if (foldLeftRef.current) {
         // hinge = right edge; negative rotateY folds the left flap inward toward center
         foldLeftRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
