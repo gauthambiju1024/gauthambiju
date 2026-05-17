@@ -5,6 +5,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
 import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
+import { useCardFold } from "./cardFoldContext";
 
 type HeroBadge = {
   name?: string;
