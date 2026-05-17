@@ -106,20 +106,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
     let lastW = 0, lastH = 0;
     const update = () => {
-      const r = anchor.getBoundingClientRect();
+      const bridgeActive = !!(window as any).__bridgeActive;
+      let r: { left: number; top: number; width: number; height: number };
+      if (bridgeActive) {
+        r = { left: 0, top: 100, width: window.innerWidth, height: window.innerHeight - 100 };
+      } else {
+        r = anchor.getBoundingClientRect();
+      }
       const tx = snap(r.left);
       const ty = snap(r.top);
       stage.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
       stage.style.width = `${snap(r.width)}px`;
       stage.style.height = `${snap(r.height)}px`;
       let op = 1;
-      let el: HTMLElement | null = anchor;
-      let depth = 0;
-      while (el && depth < 8) {
-        const o = parseFloat(getComputedStyle(el).opacity || "1");
-        if (!Number.isNaN(o)) op *= o;
-        el = el.parentElement;
-        depth++;
+      if (!bridgeActive) {
+        let el: HTMLElement | null = anchor;
+        let depth = 0;
+        while (el && depth < 8) {
+          const o = parseFloat(getComputedStyle(el).opacity || "1");
+          if (!Number.isNaN(o)) op *= o;
+          el = el.parentElement;
+          depth++;
+        }
       }
       stage.style.opacity = String(op);
       if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
