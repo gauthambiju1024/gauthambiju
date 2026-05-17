@@ -214,20 +214,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotYFlip = p2 * 180;
 
-      // ---- Bookmarked choreography (applied to the ID card itself) ----
-      //   A 0.00–0.15  Settle    AboutCardBack fades out, seams revealed
-      //   B 0.15–0.45  Tri-fold  flaps rotateY ±88°, slab scaleX 1 → spine
-      //   C 0.45–0.70  Rotate    card color lerps to walnut/teal, spine label fades in
-      //   D 0.70–1.00  Land      smoothstepped drop into shelf slot
+      // ---- Dossier choreography (applied to the ID card itself) ----
+      //   P1 SETTLE   0.00–0.15  AboutCardBack fades out
+      //   P2 TRIFOLD  0.04–0.40  wings rotateY ±178° behind center
+      //   P3 TURN     0.24–0.56  packet revolves rotateY -180° → spine front
+      //   P4 FILE     0.58–0.86  arc into shelf slot, scale to spine dims
       const bridge = clamp((window as any).__bridgeProgress ?? smoothstep(0.72, 1.0, t));
       const eRange = (a: number, b: number, x: number) => clamp((x - a) / (b - a));
       const eSmooth = (x: number) => x * x * (3 - 2 * x);
+      const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
-      const tSettle = eRange(0.00, 0.15, bridge);   // back-face content clears
-      const tFold = eRange(0.15, 0.45, bridge);     // flaps + scaleX
-      const tRot = eRange(0.45, 0.70, bridge);      // color + spine label
-      const tDrop = eSmooth(eRange(0.70, 1.00, bridge)); // gravity to slot
-      const tSpineLbl = eRange(0.55, 0.80, bridge);
+      const tSettle = eRange(0.00, 0.15, bridge);
+      const tFold   = eInOut(eRange(0.04, 0.40, bridge));
+      const tTurn   = eInOut(eRange(0.24, 0.56, bridge));
+      const tRot    = eRange(0.40, 0.62, bridge);
+      const tFile   = eInOut(eRange(0.58, 0.86, bridge));
+      const tSpineLbl = eRange(0.48, 0.72, bridge);
 
       // Hide AboutCardBack content before folding begins
       if (cardBackInnerRef.current) {
@@ -239,25 +241,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       // Color lerp: cream paper → walnut/teal spine (matches SPINE_COLORS[0])
-      // hsl(40 25% 92%) → hsl(170 25% 28%)
       if (backFaceRef.current) {
         const c = eSmooth(tRot);
-        const h = 40 + (170 - 40) * c;
-        const s = 25;
-        const l = 92 + (28 - 92) * c;
-        backFaceRef.current.style.background = `hsl(${h.toFixed(1)} ${s}% ${l.toFixed(1)}%)`;
+        const hh = 40 + (170 - 40) * c;
+        const ll = 92 + (28 - 92) * c;
+        backFaceRef.current.style.background = `hsl(${hh.toFixed(1)} 25% ${ll.toFixed(1)}%)`;
       }
 
       // Trifold seams visible from settle through landing
       if (foldSeamsRef.current) {
         foldSeamsRef.current.style.opacity = String(Math.max(tSettle, tFold));
       }
-      const flapAngle = tFold * 88;
+      const flapAngle = tFold * 178;
       if (foldLeftRef.current) {
-        foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
+        foldLeftRef.current.style.transform =
+          `rotateY(${flapAngle.toFixed(2)}deg) translateZ(-5px)`;
       }
       if (foldRightRef.current) {
-        foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
+        foldRightRef.current.style.transform =
+          `rotateY(${(-flapAngle).toFixed(2)}deg) translateZ(-5px)`;
       }
       // Center crease shadow darkens through fold
       if (foldCenterRef.current) {
@@ -267,37 +269,47 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset 0 0 0 1px hsl(0 0% 100% / 0.44)`;
       }
-      // Vertical spine label on the center panel
+      // Vertical spine label fades in over the rotate window
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSpineLbl);
       }
 
-      // Slab scale: collapse to spine dimensions during fold (bookmark style)
-      const targetSx = SPINE_WIDTH / w;   // 78/260 ≈ 0.30
-      const targetSy = SPINE_HEIGHT / h;  // 200/380 ≈ 0.526
-      const shrinkSx = 1 + (targetSx - 1) * tFold;
-      const shrinkSy = 1 + (targetSy - 1) * tFold;
+      // Slab scale → spine dimensions, locked in during FILE (after the turn)
+      const targetSx = SPINE_WIDTH / w;   // ≈ 0.30
+      const targetSy = SPINE_HEIGHT / h;  // ≈ 0.526
+      // Begin shrinking late (after the trifold reads), complete by end of FILE
+      const tShrink = eInOut(eRange(0.40, 0.86, bridge));
+      const shrinkSx = 1 + (targetSx - 1) * tShrink;
+      const shrinkSy = 1 + (targetSy - 1) * tShrink;
 
-      // Drop to shelf slot (viewport coords) with smoothstep gravity
-      let dropDx = 0, dropDy = 0;
-      if (tDrop > 0) {
+      // FILE: arc into shelf slot
+      let dropDx = 0, dropDy = 0, arcLift = 0;
+      if (tFile > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top  + restingCenterY + dyToCenter;
-          dropDx = (slotRect.cx - curCx) * tDrop;
-          dropDy = (slotRect.cy - curCy) * tDrop;
+          dropDx = (slotRect.cx - curCx) * tFile;
+          dropDy = (slotRect.cy - curCy) * tFile;
+          // Sinusoidal lift over the arc (peaks mid-flight)
+          arcLift = Math.sin(tFile * Math.PI) * -60;
         }
       }
 
       const tx = snap(offsetX + dxToCenter + dropDx);
-      const ty = snap(offsetY + dyToCenter + dropDy);
+      const ty = snap(offsetY + dyToCenter + dropDy + arcLift);
       const s = Math.round(scale * 1000) / 1000;
+      // P3 TURN: additional half-revolution on top of the existing flip,
+      // so the packet reveals its spine face.
+      const turnDeg = -180 * tTurn;
+      const settle = tFile < 1 && tFile > 0 ? Math.sin(tFile * Math.PI) * -2 * (1 - tFile) : 0;
 
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${s}) ` +
-        `scaleX(${shrinkSx.toFixed(3)}) scaleY(${shrinkSy.toFixed(3)}) rotateY(${rotYFlip.toFixed(2)}deg)`;
+        `translate3d(${tx}px, ${ty}px, 0) ` +
+        `rotate(${(tilt + settle).toFixed(2)}deg) scale(${s}) ` +
+        `scaleX(${shrinkSx.toFixed(3)}) scaleY(${shrinkSy.toFixed(3)}) ` +
+        `rotateY(${(rotYFlip + turnDeg).toFixed(2)}deg)`;
 
       // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
@@ -309,6 +321,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
+        // Publish the globe rect so the bridge can mirror its collapse
+        const gr = globeLayerRef.current.getBoundingClientRect();
+        (window as any).__aboutGlobeRect = {
+          left: gr.left, top: gr.top, width: gr.width, height: gr.height,
+          cx: gr.left + gr.width / 2, cy: gr.top + gr.height / 2,
+          opacity: globeOp,
+        };
       }
       cardWrap.style.opacity = String(1 - smoothstep(0.996, 1.0, bridge));
       cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
