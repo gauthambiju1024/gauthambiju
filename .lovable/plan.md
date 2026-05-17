@@ -1,67 +1,39 @@
 ## Goal
-Make the exact same portal-mounted ID card continue its journey: hero ID card → flipped About card → same card tri-folds 90° into an About spine → drops onto the live Projects shelf. No duplicate About panel, no reappearance, no empty bridge gap.
+Restore the behavior you mean: the exact same ID/About card must visibly fold like the earlier preview, keep its border/frame during the fold, rotate naturally into a spine, then physically fall onto the shelf. It must not disappear and then reveal a shelf spine placeholder.
 
-## What is currently wrong
-- The fold is driven by `AboutToProjectsBridge`, a separate section after `HeroAboutFlip`, so the card finishes the About flip, then the page enters another tall sticky section before the shelf becomes visible.
-- `__bridgeActive` forces the card stage to a generic viewport rect instead of preserving the exact card/about viewport handoff, which makes it feel like a new/reappearing stage.
-- The trifold layer is only attached after the separate bridge begins, so it is not truly the same visual moment as the existing ID-card-to-About-card flip.
+## What is wrong now
+- The moving card is being faded out at the end while the static shelf placeholder fades in, so it reads as “disappears and appears.”
+- The card border/frame is intentionally faded before the fold (`backFace` background/boxShadow are reduced), which removes the physical paper/card edge too early.
+- The trifold is currently a flat overlay: left/right panels rotate, but the center does not behave like a rigid folded object with persistent seams, thickness, shadow, and edge continuity.
+- The drop math moves the full card wrapper while also scaling it, but the visible spine is only the center third, so the perceived landing target can feel like a swap instead of a continuous fall.
 
 ## Plan
-1. **Merge the scroll choreography into `HeroAboutFlip`**
-   - Extend the pinned `HeroAboutFlip` section so it owns the whole sequence in one sticky viewport.
-   - Use one scroll progress value for all phases:
-     ```text
-     0.00–0.35  hero ID card in original position
-     0.35–0.55  same card slides/scales to focus
-     0.55–0.72  same card flips 180° into About card
-     0.72–0.84  same About card holds briefly in that exact viewport
-     0.84–0.94  same card tri-folds 90° into spine
-     0.94–1.00  spine drops into shelf slot
-     ```
+1. **Keep the card physically visible throughout the fold**
+   - Do not fade out the moving card during the drop.
+   - Do not fade in the static About shelf placeholder until after the moving spine has already landed and fully overlaps it.
+   - Keep the moving spine visible at the shelf position for a short final hold so there is no visual pop.
 
-2. **Remove the separate visual bridge gap**
-   - Stop using `AboutToProjectsBridge` as its own tall empty-feeling scroll stage.
-   - Convert it into a shelf layer/component rendered inside the same sticky viewport, or replace it with an inline shelf layer inside `HeroAboutFlip`.
-   - The projects shelf appears behind/below the folding card before the drop begins, so the destination is visible.
+2. **Restore the border before and during folding**
+   - Keep the About card’s outer border/shadow visible through the start of the trifold.
+   - Convert the border into spine edge highlights only after the panels are mostly folded, instead of removing it early.
+   - Preserve seam lines as physical fold creases, not just a temporary overlay.
 
-3. **Use the actual same card DOM**
-   - Keep `HeroIdBadge` as the single real card instance.
-   - Do not render a replica About card for the fold.
-   - The existing front face, back/About face, and trifold panels all stay inside that same `cardWrapRef` transform chain.
+3. **Make the trifold natural**
+   - Split the back face into three rigid panels that each carry matching paper texture, edge shadows, and crease highlights.
+   - Left panel rotates inward to about `-88deg`; right panel rotates inward to about `88deg`.
+   - Center panel stays as the hinge/spine and only becomes the bookshelf spine after the side panels have mostly closed.
+   - Add small depth cues: side-panel shadows darken as they rotate, center seam thickens, and the folded object narrows before it falls.
 
-4. **Fix the trifold mechanics**
-   - During the fold phase, the back face splits visually into three vertical panels.
-   - Left panel rotates `rotateY(-90deg)` from its inner seam.
-   - Right panel rotates `rotateY(90deg)` from its inner seam.
-   - Center panel becomes the `ProjectSpine` skin and compresses to `SPINE_WIDTH × SPINE_HEIGHT`.
-   - The card’s global transform should not re-flip or re-anchor unexpectedly during this phase; it should continue from the exact final About-card pose.
+4. **Fix the drop as one continuous object**
+   - Compute the moving object center from the visible folded spine center, not from the original full card center.
+   - After fold completes, use a single transform path: folded card/spine center → shelf slot center.
+   - Add a slight gravity curve: small lift/tilt first, then downward fall/settle, instead of a linear diagonal translation.
 
-5. **Drop into the live database shelf**
-   - Keep `useProjects()` for the project spines.
-   - Publish the About slot rect from the shelf layer while it is visible in the same sticky viewport.
-   - Compute the drop translation from the current card center to that slot, then reveal the static About spine placeholder only after the moving card lands.
+5. **Prevent placeholder swap artifacts**
+   - The shelf About slot should remain invisible while the moving card is arriving.
+   - Once the moving spine is exactly on top of the slot, reveal the static spine underneath and fade out the moving card over only the final 1–2% of scroll, when they are perfectly aligned.
 
-6. **Preserve navigation anchors**
-   - `#about` should land on the flipped About-card phase.
-   - `#projects` should land near the beginning of the shelf/fold phase, not after a blank scroll gap.
-   - Keep the Assembly Header IDs intact.
-
-## Files to change
-- `src/components/HeroAboutFlip.tsx`
-  - Own the full pinned hero/about/fold/shelf sequence.
-  - Render or control the shelf layer in the same viewport.
-- `src/components/HeroIdBadge.tsx`
-  - Replace `__bridgeActive` stage override with same-pinned progress-driven folding.
-  - Use one continuous progress source instead of depending on a separate section becoming active.
-- `src/components/AboutToProjectsBridge.tsx`
-  - Simplify into a shelf layer, or remove its separate tall sticky behavior.
-- `src/pages/Index.tsx`
-  - Remove the separate bridge section if shelf is now rendered inside `HeroAboutFlip`.
-- `src/components/projects/ProjectSpine.tsx`
-  - Keep as the shared visual spine component; only adjust if needed for exact shelf matching.
-
-## Validation
-- Scroll from hero to projects at the current 1001×769 viewport.
-- Confirm the same visible ID card flips into About, then that exact About card folds without disappearing/reappearing.
-- Confirm there is no empty gap before the shelf.
-- Confirm the About spine lands aligned with the live database project spines.
+6. **Verify at the current preview size**
+   - Test at `1001×769`.
+   - Check three moments: About card before fold, mid-fold with border still visible, final landing on shelf.
+   - Confirm there is no blank frame, no early border removal, no disappearing/reappearing swap, and the fold reads as one continuous physical card.
