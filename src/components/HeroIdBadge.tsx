@@ -243,7 +243,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // FOLD — wings rotate flush behind the center strip
       const fE = eOut(tFold);
-      const flapAngle = fE * 180;
+      const flapAngle = fE * 178;
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
@@ -253,7 +253,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // TURN — center strip rotates internally; cross-fade about face → green spine across the rotation midpoint
       if (foldCenterRef.current) {
         const turnDeg = eOut(tTurn) * 180;
-        foldCenterRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
+        foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
       }
       const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
       const spineFaceEl = foldCenterRef.current?.lastElementChild as HTMLElement | null;
