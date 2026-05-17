@@ -594,7 +594,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 {aboutSurface(-CARD_WIDTH / 3)}
               </div>
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "stretch", justifyContent: "stretch" }}>
-                <ProjectSpine data={{ ...ABOUT_SPINE_DATA, color: "hsl(170 25% 28%)" }} style={{ width: "100%", height: "100%" }} />
+                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
               </div>
             </div>
 
