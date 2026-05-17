@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
@@ -38,11 +38,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
   const { projects } = useProjects();
 
-  const stagger = useMemo(
-    () => projects.map((_, i) => 0.60 + i * 0.04),
-    [projects]
-  );
-
   useEffect(() => {
     const pin = pinRef.current;
     const ledgePath = ledgePathRef.current;
@@ -65,9 +60,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       };
     };
 
-    let ticking = false;
     const update = () => {
-      ticking = false;
       const t = clamp01(progressMV.get());
       const foldT = ease(0.72, 1.0, t);
 
@@ -109,33 +102,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       return;
     }
 
-    const onScroll = () => {
-      if (!ticking) { ticking = true; requestAnimationFrame(update); }
-    };
     const onResize = () => { update(); publishSlotRect(); };
 
     update();
-    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     let raf = 0;
-    const loop = () => { publishSlotRect(); raf = requestAnimationFrame(loop); };
+    const loop = () => { update(); publishSlotRect(); raf = requestAnimationFrame(loop); };
     raf = requestAnimationFrame(loop);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-      cancelAnimationFrame(raf);
-      (window as any).__bridgeProgress = 0;
-      (window as any).__bridgeActive = false;
-      (window as any).__bridgeSlotRect = null;
-    };
-      ticking = false;
-      requestAnimationFrame(update);
-    });
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
       (window as any).__bridgeProgress = 0;
