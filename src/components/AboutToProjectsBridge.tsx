@@ -228,7 +228,8 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             let col = 0;
             return (
               <div key={row.category} className="relative flex flex-col" style={{ alignItems: "stretch" }}>
-                {/* clip-masked spine row */}
+                {/* spine row — vertical clip (overflow-y) so spines rise from under the rule
+                    without ever clipping horizontally */}
                 <div
                   className="flex items-end"
                   style={{
@@ -236,7 +237,8 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     paddingLeft: 24,
                     paddingRight: 24,
                     minHeight: SPINE_HEIGHT + 12,
-                    overflow: "hidden", // clip: spines start below this and rise into view
+                    overflowY: "hidden",
+                    overflowX: "visible",
                   }}
                 >
                   {row.items.map((p, i) => {
@@ -266,10 +268,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     );
                   })}
 
-                  {/* push trailing widgets to the right */}
-                  <div style={{ flex: "1 1 auto" }} />
-
-                  {/* About spine — top row, last col, rises with the rest */}
+                  {/* About spine — sits immediately after the last project spine */}
                   {isTop && (() => {
                     const myCol = col++;
                     return (
@@ -299,7 +298,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     );
                   })()}
 
-                  {/* Toolbox — bottom row, last col, also rises */}
+                  {/* spacer pushes toolbox to the right edge of the bottom row */}
+                  {isBottom && <div style={{ flex: "1 1 auto" }} />}
+
+                  {/* Realistic toolbox — bottom row, right edge */}
                   {isBottom && (() => {
                     const myCol = col++;
                     return (
@@ -316,21 +318,67 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           href="#skills"
                           aria-label="Open toolbox"
                           style={{
-                            display: "flex",
-                            alignItems: "flex-end",
-                            width: 72,
-                            height: 56,
+                            display: "block",
+                            width: 96,
+                            height: 76,
                             transformOrigin: "bottom right",
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="72" height="56" viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M 22 14 Q 36 2 50 14" stroke={INK} strokeWidth="1.4" fill="none" strokeLinecap="round" />
-                            <rect x="6" y="16" width="60" height="34" rx="2" stroke={INK} strokeWidth="1.4" fill="none" />
-                            <rect x="30" y="22" width="12" height="6" stroke={INK} strokeWidth="1.2" fill="none" />
-                            <line x1="6" y1="32" x2="66" y2="32" stroke={INK} strokeWidth="1" opacity="0.5" />
-                            <line x1="12" y1="50" x2="12" y2="54" stroke={INK} strokeWidth="1.2" />
-                            <line x1="60" y1="50" x2="60" y2="54" stroke={INK} strokeWidth="1.2" />
+                          <svg width="96" height="76" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                              <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stopColor="hsl(38 65% 58%)" />
+                                <stop offset="0.5" stopColor="hsl(34 60% 48%)" />
+                                <stop offset="1" stopColor="hsl(28 55% 32%)" />
+                              </linearGradient>
+                              <linearGradient id="tbLid" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stopColor="hsl(40 70% 62%)" />
+                                <stop offset="1" stopColor="hsl(32 60% 42%)" />
+                              </linearGradient>
+                              <linearGradient id="tbHandle" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stopColor="hsl(0 0% 78%)" />
+                                <stop offset="0.5" stopColor="hsl(0 0% 58%)" />
+                                <stop offset="1" stopColor="hsl(0 0% 38%)" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* ground shadow */}
+                            <ellipse cx="48" cy="72" rx="38" ry="2.5" fill="rgba(0,0,0,0.35)" />
+
+                            {/* handle */}
+                            <path d="M 30 22 Q 48 6 66 22" stroke="url(#tbHandle)" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            <circle cx="30" cy="22" r="2.2" fill="hsl(0 0% 28%)" />
+                            <circle cx="66" cy="22" r="2.2" fill="hsl(0 0% 28%)" />
+
+                            {/* lid */}
+                            <rect x="8" y="22" width="80" height="14" rx="2" fill="url(#tbLid)" stroke="hsl(28 50% 22%)" strokeWidth="1" />
+                            <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" />
+                            {/* hinge gap */}
+                            <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(28 55% 18%)" strokeWidth="1" />
+
+                            {/* body */}
+                            <rect x="8" y="36" width="80" height="32" rx="2" fill="url(#tbBody)" stroke="hsl(28 50% 20%)" strokeWidth="1" />
+                            {/* faint wood/metal stripes */}
+                            <line x1="10" y1="44" x2="86" y2="44" stroke="rgba(0,0,0,0.15)" strokeWidth="0.6" />
+                            <line x1="10" y1="56" x2="86" y2="56" stroke="rgba(0,0,0,0.18)" strokeWidth="0.6" />
+
+                            {/* latches */}
+                            <rect x="22" y="32" width="10" height="10" rx="1" fill="hsl(45 70% 55%)" stroke="hsl(28 50% 22%)" strokeWidth="0.8" />
+                            <rect x="64" y="32" width="10" height="10" rx="1" fill="hsl(45 70% 55%)" stroke="hsl(28 50% 22%)" strokeWidth="0.8" />
+                            <line x1="27" y1="34" x2="27" y2="40" stroke="hsl(28 55% 18%)" strokeWidth="0.8" />
+                            <line x1="69" y1="34" x2="69" y2="40" stroke="hsl(28 55% 18%)" strokeWidth="0.8" />
+
+                            {/* center label plaque */}
+                            <rect x="40" y="48" width="16" height="8" rx="1" fill="hsl(28 50% 22%)" />
+                            <text x="48" y="54" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 60% 70%)" letterSpacing="0.5">TOOLS</text>
+
+                            {/* feet */}
+                            <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(28 50% 18%)" />
+                            <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(28 50% 18%)" />
+
+                            {/* top edge highlight */}
+                            <line x1="10" y1="37" x2="86" y2="37" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
                           </svg>
                         </a>
                       </div>
