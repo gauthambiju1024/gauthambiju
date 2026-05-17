@@ -23,6 +23,10 @@ import ProjectSpine, {
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const ease = (a: number, b: number, t: number) => clamp01((t - a) / (b - a));
+const eBack = (t: number) => {
+  const c = 1.35, d = c + 1;
+  return 1 + d * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+};
 
 interface Props {
   progressMV: MotionValue<number>;
