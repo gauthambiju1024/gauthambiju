@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
-import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT } from "@/components/projects/ProjectSpine";
+import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
+import AboutPopup from "@/components/about/AboutPopup";
 
 /**
  * AboutToProjectsBridge (inline shelf layer)
@@ -33,7 +34,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const ledgePathRef = useRef<SVGPathElement>(null);
   const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const aboutSlotRef = useRef<HTMLDivElement>(null);
+  const aboutSpineRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [popupOpen, setPopupOpen] = useState(false);
 
   const { projects } = useProjects();
 
@@ -88,7 +91,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         el.style.transform = `translateY(${(1 - k) * 135}%)`;
       }
 
-      // Slot is only a geometry target; the real folded card remains visible here.
+      // Slot: invisible geometry target. The real clickable About spine fades in at the end,
+      // replacing the flying card silently once it has fully settled.
+      const settled = bridge > 0.96;
+      (window as any).__bridgeSettled = settled;
+      if (aboutSpineRef.current) {
+        const k = clamp01((bridge - 0.94) / 0.05);
+        aboutSpineRef.current.style.opacity = String(k);
+        aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
+      }
       slot.style.opacity = "0";
 
       publishSlotRect();
@@ -192,19 +203,28 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
               </div>
             ))}
 
-            {/* About-card landing slot: invisible geometry only; no replacement spine */}
+            {/* About-card landing slot: geometry target + clickable settled spine */}
             <div
-              ref={aboutSlotRef}
-              aria-hidden
               style={{
+                position: "relative",
                 flex: "0 0 auto",
                 width: SPINE_WIDTH,
                 height: SPINE_HEIGHT,
                 marginLeft: 8,
-                opacity: 0,
-                visibility: "hidden",
               }}
-            />
+            >
+              <div
+                ref={aboutSlotRef}
+                aria-hidden
+                style={{ position: "absolute", inset: 0, opacity: 0, visibility: "hidden" }}
+              />
+              <div
+                ref={aboutSpineRef}
+                style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
+              >
+                <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
+              </div>
+            </div>
           </div>
 
           {/* Minimal shelf line */}
@@ -227,6 +247,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           </svg>
         </div>
       </div>
+      <AboutPopup open={popupOpen} onOpenChange={setPopupOpen} />
     </section>
   );
 };

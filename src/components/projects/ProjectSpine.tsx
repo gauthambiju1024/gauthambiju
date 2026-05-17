@@ -28,8 +28,8 @@ export const truncateWords = (text: string, max: number) => {
 };
 
 export const ABOUT_SPINE_DATA = {
-  title: "ABOUT",
-  subtitle: "Portfolio · 2026",
+  title: "MORE ABOUT ME",
+  subtitle: "Personal · 2026",
   year: "2026",
   color: "hsl(170 25% 28%)",
 };
@@ -102,8 +102,8 @@ const ProjectSpine = forwardRef<HTMLDivElement, Props>(({
       {/* Vertical title */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="text-white/90 text-[13px] font-serif-display font-semibold tracking-[0.2em] uppercase"
-          style={{ writingMode: "vertical-lr", textOrientation: "mixed" }}
+          className="text-white/90 font-serif-display font-semibold tracking-[0.2em] uppercase"
+          style={{ writingMode: "vertical-lr", textOrientation: "mixed", fontSize: data.title.length > 12 ? 10 : 13 }}
         >
           {data.title}
         </span>

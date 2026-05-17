@@ -198,19 +198,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
-      const eInOut = (x: number) =>
-        x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      const eOut = (x: number) => 1 - Math.pow(1 - x, 5);
 
       // Pre-fold: hero→center slide and About flip (unchanged windows)
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
-      // about→projects segment driver; all 5 spec phases are bridge-relative
+      // about→projects segment driver; tightened, overlapping windows
       const bridge = smoothstep(0.72, 1.0, p);
-      const tFold = seg(0.04, 0.40, bridge);
-      const tTurn = seg(0.24, 0.56, bridge);
-      const tFile = seg(0.58, 0.86, bridge);
-      const foldActive = bridge > 0.04;
+      const tFold = seg(0.00, 0.34, bridge);
+      const tTurn = seg(0.30, 0.58, bridge);
+      const tFile = seg(0.55, 0.90, bridge);
+      const foldActive = bridge > 0.02;
+      const settled = bridge > 0.96;
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -228,56 +228,44 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
-      // Keep the wrapper capped on the About face; the center strip owns TURN.
+      // Wrapper rotation capped on About face; center strip owns the TURN.
       const rotYFlip = p2 * 180;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.background = foldActive ? "transparent" : CARD_BG;
         backFaceRef.current.style.boxShadow = foldActive ? "none" : CARD_SHADOW;
         backFaceRef.current.style.pointerEvents = foldActive ? "none" : "auto";
-        backFaceRef.current.style.clipPath = "none";
-        (backFaceRef.current.style as any).webkitClipPath = "none";
-      }
-      if (cardRef.current) {
-        cardRef.current.style.clipPath = "none";
-        (cardRef.current.style as any).webkitClipPath = "none";
       }
 
-      // Segmented physical card takes over at fold start; no crossfade, just the same surface split into strips.
       if (cardBackInnerRef.current) cardBackInnerRef.current.style.opacity = foldActive ? "0" : "1";
       if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
-      if (volRef.current) {
-        volRef.current.style.opacity = foldActive ? "1" : "0";
-        volRef.current.style.transform = "";
-      }
+      if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
-      // FOLD — the actual card strips rotate around their inner edges; the center strip stays as the carried object.
-      const fE = eInOut(tFold);
-      const flapAngle = fE * 178;
+      // FOLD — wings rotate flush behind the center strip
+      const fE = eOut(tFold);
+      const flapAngle = fE * 180;
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
       if (foldRightRef.current) {
         foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
+      // TURN — center strip rotates internally; cross-fade about face → green spine across the rotation midpoint
       if (foldCenterRef.current) {
-        const turnDeg = eInOut(tTurn) * 180;
-        const cd = 0.18 + fE * 0.28;
+        const turnDeg = eOut(tTurn) * 180;
         foldCenterRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
-        foldCenterRef.current.style.boxShadow =
-          `inset 8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
-          `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
-          `inset 0 0 0 1px hsl(0 0% 100% / 0.44)`;
       }
+      const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
+      const spineFaceEl = foldCenterRef.current?.lastElementChild as HTMLElement | null;
+      if (aboutFaceEl) aboutFaceEl.style.opacity = String(1 - clamp(tTurn / 0.5));
+      if (spineFaceEl) spineFaceEl.style.opacity = String(clamp((tTurn - 0.4) / 0.6));
 
-      // FILE — fly to slot + scale down to spine dims
-      const fileE = eInOut(tFile);
+      // FILE — fly to slot + scale to spine dims (no arc, no wobble)
+      const fileE = eOut(tFile);
       const targetSx = SPINE_WIDTH / (w / 3);
       const targetSy = SPINE_HEIGHT / h;
       const scaleX = Math.round((baseScale + (targetSx - baseScale) * fileE) * 1000) / 1000;
       const scaleY = Math.round((baseScale + (targetSy - baseScale) * fileE) * 1000) / 1000;
-      const arcY = Math.sin(tFile * Math.PI) * -60;
-      const settleDeg = tFile > 0 && tFile < 1 ? Math.sin(tFile * Math.PI) * -3 * (1 - tFile) : 0;
 
       let flyDx = 0, flyDy = 0;
       if (tFile > 0) {
@@ -287,14 +275,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
           flyDx = (slotRect.cx - curCx) * fileE;
-          flyDy = (slotRect.cy - curCy) * fileE + arcY;
+          flyDy = (slotRect.cy - curCy) * fileE;
         }
       }
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + settleDeg).toFixed(2)}deg) scale(${scaleX}, ${scaleY}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       // Lanyard fades with the About flip
@@ -307,7 +295,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && tFold < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = "1";
+      // Silently hand off to the clickable shelf spine once fully settled
+      cardWrap.style.opacity = settled ? "0" : "1";
       cardWrap.style.pointerEvents = p1 > 0.05 || tFold > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
@@ -571,7 +560,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }}>
                 {aboutSurface(0)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent" }} />
             </div>
 
             {/* CENTER third — turns internally into the green ABOUT spine */}
@@ -614,7 +603,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
                 {aboutSurface(-(CARD_WIDTH * 2) / 3)}
               </div>
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent" }} />
             </div>
           </div>
         </div>
