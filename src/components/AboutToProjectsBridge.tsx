@@ -66,11 +66,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   // The toolbox is appended as the last entry of the bottom row.
   const spineRefs = useRef<HTMLDivElement[][]>([]);
 
-  // Reset refs whenever the row shape changes
+  // Size the length array only; do NOT wipe ref arrays — React's ref
+  // callbacks have already populated them by the time this effect runs.
   useEffect(() => {
-    rulePathRefs.current = new Array(rows.length).fill(null);
-    rulePathLens.current = new Array(rows.length).fill(0);
-    spineRefs.current = rows.map(() => []);
+    rulePathLens.current.length = rows.length;
   }, [rows]);
 
   useEffect(() => {
@@ -113,44 +112,68 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // Shelf fades in just before the rules draw, hidden during About
-      shelfWrap.style.opacity = String(seg(0.00, 0.10, bridge));
-      shelfWrap.style.pointerEvents = bridge > 0.95 ? "auto" : "none";
+      // Shelf fades in just as the packet starts shrinking
+      shelfWrap.style.opacity = String(seg(0.70, 0.80, bridge));
+      shelfWrap.style.pointerEvents = bridge > 0.99 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
-      const settled = bridge > 0.96;
+      const settled = bridge > 0.97;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        const k = clamp01((bridge - 0.94) / 0.05);
+        const k = clamp01((bridge - 0.96) / 0.04);
         aboutSpineRef.current.style.opacity = String(k);
         aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
       }
       slot.style.opacity = "0";
 
-      // === DRAW: per-row rule stroke from center outward, staggered ===
-      const drawT = seg(0.10, 0.55, bridge);
+      // === DRAW: per-row rule stroke, staggered, completing by 0.96 ===
+      // Window 0.78 → 0.96 (length 0.18). Each row uses ~70% of the window
+      // for its own stroke, with 30% reserved for stagger so the last row
+      // finishes at the window end.
+      const drawWinStart = 0.78;
+      const drawWinEnd = 0.96;
+      const drawWinLen = drawWinEnd - drawWinStart;
       const rowCount = Math.max(1, rulePathRefs.current.length);
+      const drawStagger = drawWinLen * 0.3;
+      const drawPerRow = drawWinLen - drawStagger;
       rulePathRefs.current.forEach((path, i) => {
         if (!path) return;
         const L = rulePathLens.current[i] || 0;
         if (L <= 0) return;
-        const start = (i / rowCount) * 0.55;
-        const end = start + 0.55;
-        const d = clamp01((drawT - start) / (end - start));
+        const rowOff = rowCount > 1 ? (i / (rowCount - 1)) * drawStagger : 0;
+        const start = drawWinStart + rowOff;
+        const end = start + drawPerRow;
+        const d = clamp01((bridge - start) / (end - start));
         const e = easeInOut(d);
         path.style.strokeDashoffset = String(L * (1 - e));
       });
 
-      // === ARCHIVE: spines rise from under the rule, staggered by row+col ===
-      const archT = seg(0.10, 0.80, bridge);
+      // === ARCHIVE: spines rise from under the rule, finishing by 0.98 ===
+      const archWinStart = 0.82;
+      const archWinEnd = 0.98;
+      const archWinLen = archWinEnd - archWinStart;
+      // last (row,col) should finish at archWinEnd. Allocate ~60% of window
+      // to per-element span, ~40% to row+col stagger.
+      const archSpan = archWinLen * 0.6;
+      const archStaggerTotal = archWinLen - archSpan;
+      // Find total cells for normalization
+      let maxOrderRaw = 0;
+      spineRefs.current.forEach((row, r) => {
+        row.forEach((_, c) => {
+          const raw = r * 1.0 + c * 0.18; // row dominates, col adds within
+          if (raw > maxOrderRaw) maxOrderRaw = raw;
+        });
+      });
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
           if (!el) return;
-          const order = r * 0.16 + c * 0.03;
-          const span = 0.40;
-          const u = clamp01((archT - order) / span);
+          const raw = r * 1.0 + c * 0.18;
+          const norm = maxOrderRaw > 0 ? raw / maxOrderRaw : 0;
+          const start = archWinStart + norm * archStaggerTotal;
+          const end = start + archSpan;
+          const u = clamp01((bridge - start) / (end - start));
           const e = u <= 0 ? 0 : u >= 1 ? 1 : easeBack(u);
           const y = lerp(135, 0, e);
           el.style.transform = `translateY(${y.toFixed(2)}%)`;
