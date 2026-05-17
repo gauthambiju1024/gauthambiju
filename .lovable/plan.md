@@ -1,55 +1,35 @@
 
-## Goal
+## Problem
 
-1. The About card already visible at the end of the flip is the same card that folds — no globe/about re-appearance, no position jump.
-2. The folded card looks identical to a `ProjectsShelf` spine (78×200, linen texture, vertical title, year, color, edge highlights, bottom subtitle).
-3. The bridge shelf is the new Projects shelf — it pulls real projects from the database and replaces the standalone `ProjectsShelf` section.
+After removing the `__bridgeActive` stage pinning, `HeroIdBadge`'s stage tracks `#home`. By the time the user scrolls into `AboutToProjectsBridge`, `#home` is above the viewport, so the card has already scrolled off screen. The user sees empty space and then the shelf, with no fold.
 
-## Changes
+The earlier complaint ("globe and about reappears") was about the **globe** fading back in during the bridge, not about a card position jump. The stage-pinning itself was fine.
 
-### 1. `HeroIdBadge.tsx` — kill the visual jump + clean fold
+## Change (single file: `src/components/HeroIdBadge.tsx`)
 
-- Remove the `__bridgeActive` stage re-pinning branch in `update()`. The stage keeps tracking `#home` exactly as during the flip, so there is no teleport when the bridge starts. The bridge section (`#about-projects-bridge`) is sized so the user is still scrolled into the pinned `HeroAboutFlip` while bridge progress runs — we drive folding purely off `__bridgeProgress`, not stage repinning.
-- Remove the globe fade-back-in around `tHide`: when `__bridgeProgress > 0` we force globe opacity to `0` immediately and keep lanyard hidden. The back face stays as-is (it's already the visible state at end of flip).
-- Replace the tri-fold flap overlay with a **spine-skin overlay** rendered inside the card-back. As `bridge` advances:
-  - 0.00–0.15: `cardBackInnerRef` (globe + about content) fades to 0; `spineSkinRef` fades to 1 (covers the whole back face).
-  - 0.15–0.55: `cardWrap` `scaleX` collapses `1 → 78/cardWidth` (≈ 0.21) while `scaleY` collapses `1 → 200/cardHeight` (≈ 0.39). No extra rotateY — the card simply shrinks into a spine-shaped rectangle showing the spine artwork.
-  - 0.55–1.00: translate to `__bridgeSlotRect.cx/cy` (snaps into the shelf row).
-- `spineSkinRef` markup mirrors a `ProjectsShelf` spine exactly: 78×200 box, `linenTexture(color)`, left highlight + right shadow strips, vertical-lr title (`badge.name` or "ABOUT"), year on top, bottom subtitle band ("Portfolio · 2026" / `badge.title`). Color = a walnut from the same palette (`hsl(35 25% 30%)`).
-- Remove `flapLeftRef / flapCenterRef / flapRightRef / slabRef / flapsWrapRef` and their refs/JSX.
+Restore the bridge-active branch inside the stage `update()`:
 
-### 2. `AboutToProjectsBridge.tsx` — becomes the real Projects shelf
+```ts
+const bridgeActive = !!(window as any).__bridgeActive;
+let r: { left: number; top: number; width: number; height: number };
+if (bridgeActive) {
+  r = { left: 0, top: 100, width: window.innerWidth, height: window.innerHeight - 100 };
+} else {
+  r = anchor.getBoundingClientRect();
+}
+```
 
-- Replace the placeholder `SPINES` array with `useProjects()` from `@/hooks/useSiteData`.
-- Render one spine per project using **the same JSX/styles as `ProjectsShelf`** (78×200, `linenTexture(project.color)`, vertical title, year, subtitle, left/right edge strips). Extract a `<ProjectSpine project={p} />` helper that both this bridge and `ProjectsShelf` import, so they stay visually identical.
-- Shelf line: keep the single warm-wood drawn line, drawn `0.55 → 0.92` of bridge progress.
-- Spines fade/rise in staggered `0.60 + i·0.04`, sitting on the line.
-- The "landing slot" becomes the **About spine** at the end of the row. It's a real `ProjectSpine`-shaped placeholder (same 78×200 box, walnut color, "ABOUT / Portfolio · 2026" content) that starts at `opacity: 0` and stays invisible — its only job is to publish `__bridgeSlotRect` so the folding card from `HeroIdBadge` flies exactly into its position. Once `bridge >= 0.98`, fade the placeholder in so the real card "becomes" it and stays put after the user scrolls past.
-- Make the spine row left-aligned + horizontally scrollable on overflow, mirroring `ProjectsShelf`'s `overflow-x-auto`.
-- Make spines clickable: clicking opens the same detail card / link behavior as `ProjectsShelf` (reuse the existing inline expansion or just navigate to `/projects/:slug`). The About spine on the right is non-interactive.
+Keep the opacity calculation skipping the parent walk when `bridgeActive` (otherwise the faded blueprint frame would dim the pinned card).
 
-### 3. `Index.tsx` — remove the duplicate Projects section
+Leave everything else as-is:
+- `applyTransform` already holds `t = 1` when `bridgeActive`, so the card stays at center+flipped.
+- `__bridgeProgress` already drives spine-skin cross-fade, shrink, and drop to `__bridgeSlotRect`.
+- Globe stays hidden throughout the bridge (`globeLayerRef.opacity = p2 * (1 - tSkin)`).
 
-- Drop `{ id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf }` from `trailingStations`. The bridge IS the projects station now.
-- Add `id="projects"` to the sticky shelf container inside `AboutToProjectsBridge` (and add `scroll-margin-top: 100px` via inline style) so the Assembly Header "Projects" link scrolls here.
-- Increase bridge `height` from `200vh` to something like `260vh` so the shelf stays on screen long enough to read after the fold finishes (progress stays at 1, shelf is fully drawn, About spine is parked).
+## Why no visible jump this time
 
-### 4. Shared spine component
-
-- Add `src/components/projects/ProjectSpine.tsx` exporting:
-  - `ProjectSpine({ project, color?, onClick?, interactive? })` — the 78×200 spine JSX.
-  - `SPINE_COLORS` array (moved out of `ProjectsShelf`).
-  - `ABOUT_SPINE_DATA` (title "ABOUT", subtitle "Portfolio · 2026", year "2026", color walnut).
-- `ProjectsShelf.tsx` (still kept as the file, but no longer mounted on the page) imports from it. `AboutToProjectsBridge.tsx` and `HeroIdBadge.tsx` import from it.
-
-## Technical notes
-
-- The card-to-spine transform avoids any `rotateY` past 180°. We let the existing flip leave it at 180° and only add `scaleX`/`scaleY` + translate. That guarantees the back-face stays facing the viewer the whole way down.
-- `__bridgeSlotRect` is published every rAF (already implemented) so the card tracks the slot through scroll/resize.
-- `HeroIdBadge`'s drag handler is disabled whenever `bridge > 0.02` (already true via existing pointerEvents gate).
-- `prefers-reduced-motion`: skip all folding, just snap the About spine into place at `bridge = 1`.
+At the instant `bridgeActive` becomes true (top of the bridge section), `#home` inside the still-sticky `HeroAboutFlip` is at `{left:0, top:0, width:vw, height:vh}` with the inner content offset by `pt-[100px]` — which renders the card stage at the same coordinates as the pinned `{0, 100, vw, vh-100}`. The hand-off is seamless.
 
 ## Out of scope
 
-- ProjectsShelf inline-expand card UX (carries over unchanged into the new shelf if we keep it).
-- Mobile (< md): bridge stays hidden because `HeroIdBadge` is `hidden md:block`. Mobile uses the standard `ProjectsShelf` — for that we keep `ProjectsShelf` mounted only on mobile in `Index.tsx`.
+The shelf, spine component, bridge content, and `Index.tsx` are correct and untouched.
