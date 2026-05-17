@@ -220,18 +220,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotYFlip = p2 * 180;
 
-      // ---- Bridge-driven shrink-into-spine + drop-onto-shelf ----
+      // ---- Bridge-driven trifold + shrink-into-spine + drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? 0);
-      // back content (globe + about) cross-fades into spine skin immediately
-      const tSkin = smoothstep(0.00, 0.15, bridge);
-      // card shrinks to spine size
-      const tShrink = smoothstep(0.15, 0.55, bridge);
-      // translate to the shelf slot
-      const tDrop = smoothstep(0.55, 1.00, bridge);
+      // Phase 1: seams appear + AboutCardBack fades out, revealing 3 cream panels
+      const tSeams = smoothstep(0.02, 0.18, bridge);
+      // Phase 2: left/right panels rotate inward (true trifold)
+      const tFold = smoothstep(0.18, 0.45, bridge);
+      // Phase 3: center panel cross-fades into spine skin
+      const tSkin = smoothstep(0.40, 0.62, bridge);
+      // Phase 4: whole card shrinks card→spine size
+      const tShrink = smoothstep(0.55, 0.78, bridge);
+      // Phase 5: drop to shelf slot
+      const tDrop = smoothstep(0.72, 1.00, bridge);
 
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tSkin);
-        cardBackInnerRef.current.style.pointerEvents = tSkin > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tSeams);
+        cardBackInnerRef.current.style.pointerEvents = tSeams > 0.05 ? "none" : "auto";
+      }
+      if (foldSeamsRef.current) {
+        foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
+      }
+      if (foldLeftRef.current) {
+        const a = -tFold * 92; // rotates away from viewer to the left
+        foldLeftRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+        foldLeftRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
+      }
+      if (foldRightRef.current) {
+        const a = tFold * 92; // rotates away to the right
+        foldRightRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+        foldRightRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
       }
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSkin);
@@ -266,11 +283,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSkin));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSeams));
       }
       // Globe is visible only during the flip; the moment the bridge starts it disappears
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tSkin);
+        const globeOp = p2 * (1 - tSeams);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
