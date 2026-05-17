@@ -587,14 +587,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   position: "absolute",
                   top: 0, bottom: 0, left: 0,
                   width: "25%",
-                  background: CARD_BG,
                   transformStyle: "preserve-3d",
                   WebkitTransformStyle: "preserve-3d",
                   transformOrigin: "right center",
                   willChange: "transform",
-                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)",
                 }}
-              />
+              >
+                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(0.8px)", boxShadow: "inset -10px 0 18px hsl(160 30% 4% / 0.12)" }} />
+                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(0.8px)", boxShadow: "inset 10px 0 18px hsl(160 30% 4% / 0.1)" }} />
+              </div>
 
               {/* RIGHT wing — 25%; hinges on left edge, folds inward forward */}
               <div
@@ -603,32 +604,32 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   position: "absolute",
                   top: 0, bottom: 0, left: "75%",
                   width: "25%",
-                  background: CARD_BG,
                   transformStyle: "preserve-3d",
                   WebkitTransformStyle: "preserve-3d",
                   transformOrigin: "left center",
                   willChange: "transform",
-                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)",
                 }}
-              />
+              >
+                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(0.8px)", boxShadow: "inset 10px 0 18px hsl(160 30% 4% / 0.12)" }} />
+                <div style={{ position: "absolute", inset: 0, background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(0.8px)", boxShadow: "inset -10px 0 18px hsl(160 30% 4% / 0.1)" }} />
+              </div>
             </div>
 
-            {/* SPINE face — full green ABOUT ME spine; opacity-driven to appear after 90° of flip */}
+            {/* SPINE face — real back face; appears naturally after the packet passes 90° */}
             <div
               ref={spineFaceRef}
               aria-hidden
               style={{
                 position: "absolute",
-                top: 0, bottom: 0,
-                left: "25%",
-                width: "50%",
-                opacity: 0,
+                inset: 0,
                 background: "hsl(170 25% 28%)",
                 boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
                 display: "flex",
                 alignItems: "stretch",
                 justifyContent: "stretch",
-                willChange: "opacity",
+                transform: "rotateY(180deg) translateZ(1px)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
             >
               <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
