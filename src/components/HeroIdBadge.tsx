@@ -85,6 +85,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const globeLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
+  const cardBackInnerRef = useRef<HTMLDivElement>(null);
+  const flapLeftRef = useRef<HTMLDivElement>(null);
+  const flapCenterRef = useRef<HTMLDivElement>(null);
+  const flapRightRef = useRef<HTMLDivElement>(null);
+  const slabRef = useRef<HTMLDivElement>(null);
+  const flapsWrapRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -189,7 +195,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: combine drag offset, resting tilt, and scroll-driven (translate, scale, rotateY).
+    // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
+    // and the bridge fold/rotate/drop that turns the card into a shelved spine.
     const applyTransform = () => {
       const bridgeActive = !!(window as any).__bridgeActive;
       // While the bridge is on screen, hold the card at its end-of-flip pose
@@ -200,11 +207,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
       const h = card.offsetHeight;
-      // Card is positioned right:32 top:90 by default — slide it left toward right-of-center
-      // so the globe has room on the left.
       const restingLeft = stageRect.width - 32 - w;
       const restingTop = 90;
-      const targetCenterX = stageRect.width * 0.74; // right side
+      const targetCenterX = stageRect.width * 0.74;
       const targetCenterY = stageRect.height / 2;
       const restingCenterX = restingLeft + w / 2;
       const restingCenterY = restingTop + h / 2;
@@ -214,29 +219,77 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tilt = 8 * (1 - p1);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const scale = 1 + (maxScale - 1) * p1;
-      const rotY = p2 * 180;
+      const rotYFlip = p2 * 180;
 
-      const tx = snap(offsetX + dxToCenter);
-      const ty = snap(offsetY + dyToCenter);
-      const s = Math.round(scale * 1000) / 1000;
-
-      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg)`;
-
-      // Bridge progress: 0 = not in bridge, 1 = fully folded/shelved
+      // ---- Bridge-driven fold / rotate-to-spine / drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? 0);
-      const bridgeFade = clamp(bridge / 0.18); // fade card+globe across first 18% of bridge
-      const cardOpacity = 1 - bridgeFade;
+      const tHide  = smoothstep(0.02, 0.10, bridge);  // back content fades, flaps appear
+      const tFold  = smoothstep(0.10, 0.40, bridge);  // tri-fold
+      const tRot   = smoothstep(0.40, 0.66, bridge);  // rotate to spine + walnut bg
+      const tDrop  = smoothstep(0.66, 1.00, bridge);  // translate down to shelf slot
 
+      // Flap overlay panels (rendered inside the back-face, see below)
+      if (flapsWrapRef.current) {
+        flapsWrapRef.current.style.opacity = String(tHide);
+      }
+      if (cardBackInnerRef.current) {
+        cardBackInnerRef.current.style.opacity = String(1 - tHide);
+        cardBackInnerRef.current.style.pointerEvents = tHide > 0.05 ? "none" : "auto";
+      }
+      const flapAngle = tFold * 88;
+      if (flapLeftRef.current)   flapLeftRef.current.style.transform   = `rotateY(${flapAngle}deg)`;
+      if (flapRightRef.current)  flapRightRef.current.style.transform  = `rotateY(${-flapAngle}deg)`;
+      if (flapCenterRef.current) {
+        const cd = 0.12 + tFold * 0.32;
+        flapCenterRef.current.style.boxShadow =
+          `inset 6px 0 12px -6px rgba(0,0,0,${cd}), inset -6px 0 12px -6px rgba(0,0,0,${cd})`;
+      }
+      // Walnut spine slab fades in during rotation
+      if (slabRef.current) {
+        slabRef.current.style.opacity = String(tRot);
+      }
+
+      // Compose card transform: extra scaleX shrink + rotateY (adds to flip) + drop
+      const sx = 1 - tFold * 0.88;            // tri-fold horizontal collapse
+      const extraRotY = tRot * 90;            // 0 → 90° (to edge-on, becomes spine)
+      const dropShrink = 1 - tDrop * 0.74;    // shrink whole card down to spine size
+
+      // Compute drop translation to land on the shelf slot (viewport coords)
+      let dropDx = 0, dropDy = 0;
+      if (tDrop > 0) {
+        const slotRect = (window as any).__bridgeSlotRect as
+          | { cx: number; cy: number } | null;
+        if (slotRect) {
+          // current viewport center of the cardWrap pre-drop:
+          // stage top = stageRect.top; cardWrap center in stage = (restingCenterX + dxToCenter, restingCenterY + dyToCenter)
+          const curCx = stageRect.left + restingCenterX + dxToCenter;
+          const curCy = stageRect.top  + restingCenterY + dyToCenter;
+          dropDx = (slotRect.cx - curCx) * tDrop;
+          dropDy = (slotRect.cy - curCy) * tDrop;
+        }
+      }
+
+      const tx = snap(offsetX + dxToCenter + dropDx);
+      const ty = snap(offsetY + dyToCenter + dropDy);
+      const s = Math.round(scale * dropShrink * 1000) / 1000;
+
+      cardWrap.style.transform =
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) ` +
+        `scaleX(${sx.toFixed(3)}) rotateY(${(rotYFlip + extraRotY).toFixed(2)}deg)`;
+
+      // Existing fade behavior (lanyard, globe)
       if (lanyardLayerRef.current) {
         lanyardLayerRef.current.style.opacity = String(1 - p2);
       }
-      // Globe fades in as flip completes, then fades out as the bridge starts folding the card.
+      // Globe fades in with the flip, fades out as the bridge folding starts.
+      const globeFade = smoothstep(0.02, 0.14, bridge);
       if (globeLayerRef.current) {
-        globeLayerRef.current.style.opacity = String(p2 * (1 - bridgeFade));
-        globeLayerRef.current.style.pointerEvents = p2 > 0.5 && bridgeFade < 0.2 ? "auto" : "none";
+        globeLayerRef.current.style.opacity = String(p2 * (1 - globeFade));
+        globeLayerRef.current.style.pointerEvents =
+          p2 > 0.5 && globeFade < 0.2 ? "auto" : "none";
       }
-      cardWrap.style.opacity = String(cardOpacity);
-      cardWrap.style.pointerEvents = p1 > 0.05 || bridgeFade > 0.05 ? "none" : "auto";
+      cardWrap.style.opacity = "1"; // card stays visible — it becomes the spine
+      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
@@ -430,12 +483,56 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           }}
         >
           <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
-          <AboutCardBack
-            data={journey}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            expandedId={expandedId}
-            setExpandedId={setExpandedId}
+          <div
+            ref={cardBackInnerRef}
+            style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
+          >
+            <AboutCardBack
+              data={journey}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              expandedId={expandedId}
+              setExpandedId={setExpandedId}
+            />
+          </div>
+
+          {/* Fold overlay — three flaps that hinge during the bridge */}
+          <div
+            ref={flapsWrapRef}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              pointerEvents: "none",
+              transformStyle: "preserve-3d",
+              perspective: "2200px",
+              zIndex: 5,
+              willChange: "opacity",
+            }}
+          >
+            <div ref={flapLeftRef} style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderLeft: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "right center", boxShadow: "inset -8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
+            <div ref={flapCenterRef} style={{ position: "absolute", top: 0, bottom: 0, left: "33.333%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "center", boxShadow: "inset 6px 0 12px -6px rgba(0,0,0,0.12), inset -6px 0 12px -6px rgba(0,0,0,0.12)", willChange: "box-shadow" }} />
+            <div ref={flapRightRef} style={{ position: "absolute", top: 0, bottom: 0, left: "66.666%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderRight: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "left center", boxShadow: "inset 8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
+          </div>
+
+          {/* Walnut spine slab — fades in during rotate-to-spine */}
+          <div
+            ref={slabRef}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              pointerEvents: "none",
+              backgroundColor: "hsl(28 32% 24%)",
+              backgroundImage:
+                "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px)," +
+                "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px)",
+              boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.08), inset 0 -1px 0 hsl(0 0% 0% / 0.25)",
+              zIndex: 6,
+              willChange: "opacity",
+            }}
           />
         </div>
       </div>
