@@ -226,23 +226,24 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tFile   = eRange(0.54, 0.82, bridge);
       const tSpineLbl = eRange(0.30, 0.55, bridge);
 
-      // Hide AboutCardBack content before fold geometry kicks in
+      // Keep AboutCardBack visible through TRIFOLD; only fade once packet starts to TURN
+      const tAboutFade = eRange(0.30, 0.55, bridge);
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tSettle);
-        cardBackInnerRef.current.style.pointerEvents = tSettle > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tAboutFade);
+        cardBackInnerRef.current.style.pointerEvents = tAboutFade > 0.05 ? "none" : "auto";
       }
       if (backSlotRef.current) {
-        backSlotRef.current.style.opacity = String(1 - tSettle);
+        backSlotRef.current.style.opacity = String(1 - tAboutFade);
       }
 
-      // Back face stays cream — spine look comes from packet turning + label
+      // Back face stays cream
       if (backFaceRef.current) {
         backFaceRef.current.style.background = "hsl(40 25% 92%)";
       }
 
-      // Seams visible from start of fold
+      // Wings only appear once TRIFOLD begins
       if (volRef.current) {
-        volRef.current.style.opacity = String(Math.max(tSettle, tFold > 0 ? 1 : 0));
+        volRef.current.style.opacity = String(tFold > 0.01 ? 1 : 0);
       }
       // TRIFOLD — flaps rotate behind to ±178°
       const fE = eInOut(tFold);
