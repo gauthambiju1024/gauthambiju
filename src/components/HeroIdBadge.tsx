@@ -248,21 +248,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const fE = eOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
-        // hinge = right edge; positive rotateY swings the left flap inward over the center
-        foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
+        // hinge = right edge; negative rotateY folds the left flap inward toward center
+        foldLeftRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
       if (foldRightRef.current) {
-        // hinge = left edge; negative rotateY swings the right flap inward over the center
-        foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
+        // hinge = left edge; positive rotateY folds the right flap inward toward center
+        foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
-      // TURN — the WHOLE folded packet flips as one unit; the real back face is the green spine.
+      if (foldPacketRef.current) foldPacketRef.current.style.opacity = String(1 - tTurn);
+
+      // TURN — rotate the final 50%-wide folded strip only; front cream before 90°, green spine after 90°.
       const turnE = eOut(tTurn);
       const turnDeg = turnE * 180;
-      if (volRef.current) {
-        volRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
-      }
-      // Hide the front flaps once the packet has turned past edge-on, so the full spine owns the back.
-      if (foldPacketRef.current) foldPacketRef.current.style.visibility = turnDeg < 90 ? "visible" : "hidden";
+      if (volRef.current) volRef.current.style.transform = "none";
+      if (spineFaceRef.current) spineFaceRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.

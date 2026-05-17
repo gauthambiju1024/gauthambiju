@@ -1,20 +1,36 @@
-Fix only `src/components/HeroIdBadge.tsx` so the animation reads as a real folded packet:
+Do I know what the issue is? Yes.
 
-1. Make the fold visually dimensional again
-   - Keep the 25% / 50% / 25% tri-fold geometry.
-   - Add real front/back faces to each flap instead of single flat panels.
-   - During the fold, both flaps fold inward onto the front/center, with visible cream faces only.
-   - Add subtle cream shading on fold edges so it looks folded, not like pieces disappearing or flattening.
+The actual bug is in `src/components/HeroIdBadge.tsx`: the current fold uses the wrong hinge directions and then hides the entire cream packet at 90° with `visibility = hidden`. The green spine is also relying on nested 3D backface rendering inside an already-rotated card, so when the cream packet is hidden, nothing reliably replaces it. That is why the center disappears and the post-flip state can go blank.
 
-2. Remove the broken opacity swap
-   - Stop crossfading the whole cream packet to the spine, because that makes the fold look fake/flat.
-   - Use proper 3D backface visibility: the cream folded packet is the front face; the green spine is the back face of the same rotating packet.
+Plan:
 
-3. Make the full green spine appear during the flip, before shelf placement
-   - Put the spine face directly behind the folded packet with `rotateY(180deg)` and full back-face visibility behavior.
-   - Rotate the entire `volRef` packet as one unit.
-   - Before 90°: user sees only the folded cream packet.
-   - After 90°: user sees the full green ABOUT ME spine, not half spine and not only after landing on the shelf.
+1. Stop hiding the folded packet group
+   - Remove the `foldPacketRef.style.visibility = turnDeg < 90 ? ...` logic.
+   - No parent-level visibility cutoff during the flip.
 
-4. Preserve everything else
-   - Keep the existing hero-to-about flip timing, lanyard/globe fade, shrink, fly-to-shelf path, and shelf handoff unchanged.
+2. Rebuild the animation as two clear layers
+   - Layer A: folding leaves, used only while the card folds.
+   - Layer B: final folded packet strip, always centered at `left: 25%`, `width: 50%`.
+   - At the end of the fold, Layer B is a single solid cream strip, so the center cannot disappear.
+
+3. Fix inward fold directions
+   - Left flap hinges on its right edge and folds inward toward center.
+   - Right flap hinges on its left edge and folds inward toward center.
+   - Use double-sided cream faces on each flap so no dark/backside artifact appears.
+
+4. Make the flip deterministic instead of relying on fragile nested backface culling
+   - Rotate only the final 50%-wide folded packet strip as one unit.
+   - Before 90°: show only the cream front face.
+   - After 90°: show only the full green ABOUT ME spine face.
+   - The spine appears during the flip, before shelf placement.
+
+5. Keep the existing scroll timing and shelf handoff
+   - Do not change hero-to-about timing, lanyard/globe fade, shrink, fly-to-shelf, or shelf opacity timing.
+
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
+
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
