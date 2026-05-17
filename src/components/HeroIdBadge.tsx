@@ -254,7 +254,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         foldRightRef.current.style.opacity = String(1 - smoothstep(0.90, 1.0, tFold) * 0.18);
       }
       if (spineSkinRef.current) {
-        spineSkinRef.current.style.opacity = String(tSkin);
+        spineSkinRef.current.style.opacity = String(tSkin * smoothstep(0.12, 0.85, tShrink));
       }
       if (foldCenterRef.current) {
         foldCenterRef.current.style.transform = "scaleX(1) scaleY(1)";
@@ -532,7 +532,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   top: 0, left: 0, bottom: 0,
                   width: "33.333%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.08), transparent 18%, transparent 78%, hsl(0 0% 100% / 0.34))",
+                  boxShadow: "inset -2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), 10px 0 18px hsl(160 30% 4% / 0.18)",
                   transformOrigin: "right center",
                   willChange: "transform, opacity",
                   backfaceVisibility: "hidden",
@@ -547,7 +548,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   left: "33.333%",
                   width: "33.334%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.16), transparent 14%, transparent 86%, hsl(160 30% 4% / 0.16))",
+                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.24), inset 1px 0 0 hsl(160 30% 4% / 0.24), inset 0 0 0 1px hsl(0 0% 100% / 0.44)",
                   transformOrigin: "center center",
                   willChange: "transform",
                 }}
@@ -557,7 +559,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   ref={spineSkinRef}
                   style={{
                     position: "absolute",
-                    inset: 0,
+                    top: 0,
+                    bottom: 0,
+                    left: "-100%",
+                    right: "-100%",
                     opacity: 0,
                     display: "flex",
                     alignItems: "center",
@@ -566,7 +571,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   }}
                 >
                   {/* Counter rotateY(180) of back face so spine text reads correctly */}
-                  <div style={{ transform: "rotateY(180deg)", transformOrigin: "center center" }}>
+                  <div style={{ transform: `rotateY(180deg) scaleX(${260 / SPINE_WIDTH}) scaleY(${380 / SPINE_HEIGHT})`, transformOrigin: "center center" }}>
                     <ProjectSpine data={ABOUT_SPINE_DATA} />
                   </div>
                 </div>
@@ -579,7 +584,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   top: 0, right: 0, bottom: 0,
                   width: "33.333%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(0 0% 100% / 0.34), transparent 22%, transparent 82%, hsl(160 30% 4% / 0.08))",
+                  boxShadow: "inset 2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), -10px 0 18px hsl(160 30% 4% / 0.18)",
                   transformOrigin: "left center",
                   willChange: "transform, opacity",
                   backfaceVisibility: "hidden",
