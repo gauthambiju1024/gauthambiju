@@ -244,27 +244,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
-      // FOLD — both wings rotate inward (forward, over the center). Symmetric.
+      // FOLD — both wings rotate inward onto the center. Double cream faces keep the folded packet solid.
       const fE = eOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
-        // hinge = right edge; negative rotateY swings the left edge forward onto center
-        foldLeftRef.current.style.transform = `translateZ(0.5px) rotateY(${(-flapAngle).toFixed(2)}deg)`;
+        // hinge = right edge; positive rotateY swings the left flap inward over the center
+        foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
       if (foldRightRef.current) {
-        // hinge = left edge; positive rotateY swings the right edge forward onto center
-        foldRightRef.current.style.transform = `translateZ(0.5px) rotateY(${flapAngle.toFixed(2)}deg)`;
+        // hinge = left edge; negative rotateY swings the right flap inward over the center
+        foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
-      // TURN — the WHOLE folded packet flips as one unit; crossfade cream→green spine at 90°
+      // TURN — the WHOLE folded packet flips as one unit; the real back face is the green spine.
       const turnE = eOut(tTurn);
       const turnDeg = turnE * 180;
       if (volRef.current) {
         volRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
       }
-      // Cream packet visible until 90° of turn; spine visible after 90°.
-      const showSpine = turnDeg >= 90 ? 1 : 0;
-      if (foldPacketRef.current) foldPacketRef.current.style.opacity = String(1 - showSpine);
-      if (spineFaceRef.current) spineFaceRef.current.style.opacity = String(showSpine);
+      // Hide the front flaps once the packet has turned past edge-on, so the full spine owns the back.
+      if (foldPacketRef.current) foldPacketRef.current.style.visibility = turnDeg < 90 ? "visible" : "hidden";
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
