@@ -5,7 +5,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
 import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
-import { SPINE_WIDTH, SPINE_HEIGHT } from "./projects/ProjectSpine";
+import ProjectSpine, { SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "./projects/ProjectSpine";
 
 type HeroBadge = {
   name?: string;
