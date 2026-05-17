@@ -88,6 +88,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const backFaceRef = useRef<HTMLDivElement>(null);
+  const backSlotRef = useRef<HTMLDivElement>(null);
   const foldCenterRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const foldLeftRef = useRef<HTMLDivElement>(null);
@@ -232,6 +233,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
       if (backFaceRef.current) {
         backFaceRef.current.style.background = `hsl(40 25% 92% / ${1 - tSeams})`;
+      }
+      if (backSlotRef.current) {
+        backSlotRef.current.style.opacity = String(1 - tSeams);
       }
       if (foldSeamsRef.current) {
         foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
@@ -485,7 +489,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             overflow: "hidden",
           }}
         >
-          <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none", opacity: 1 - tSeams }} />
+          <div ref={backSlotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
           <div
             ref={cardBackInnerRef}
             style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
