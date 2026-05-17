@@ -483,12 +483,56 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           }}
         >
           <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
-          <AboutCardBack
-            data={journey}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            expandedId={expandedId}
-            setExpandedId={setExpandedId}
+          <div
+            ref={cardBackInnerRef}
+            style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
+          >
+            <AboutCardBack
+              data={journey}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              expandedId={expandedId}
+              setExpandedId={setExpandedId}
+            />
+          </div>
+
+          {/* Fold overlay — three flaps that hinge during the bridge */}
+          <div
+            ref={flapsWrapRef}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              pointerEvents: "none",
+              transformStyle: "preserve-3d",
+              perspective: "2200px",
+              zIndex: 5,
+              willChange: "opacity",
+            }}
+          >
+            <div ref={flapLeftRef} style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderLeft: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "right center", boxShadow: "inset -8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
+            <div ref={flapCenterRef} style={{ position: "absolute", top: 0, bottom: 0, left: "33.333%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "center", boxShadow: "inset 6px 0 12px -6px rgba(0,0,0,0.12), inset -6px 0 12px -6px rgba(0,0,0,0.12)", willChange: "box-shadow" }} />
+            <div ref={flapRightRef} style={{ position: "absolute", top: 0, bottom: 0, left: "66.666%", width: "33.334%", backgroundColor: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(hsl(160 20% 16% / 0.04) 1px, transparent 1px), linear-gradient(90deg, hsl(160 20% 16% / 0.04) 1px, transparent 1px)", backgroundSize: "14px 14px, 14px 14px", borderTop: "1px solid hsl(160 20% 16% / 0.18)", borderBottom: "1px solid hsl(160 20% 16% / 0.18)", borderRight: "1px solid hsl(160 20% 16% / 0.18)", backfaceVisibility: "hidden", transformOrigin: "left center", boxShadow: "inset 8px 0 12px -8px rgba(0,0,0,0.22)", willChange: "transform" }} />
+          </div>
+
+          {/* Walnut spine slab — fades in during rotate-to-spine */}
+          <div
+            ref={slabRef}
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0,
+              pointerEvents: "none",
+              backgroundColor: "hsl(28 32% 24%)",
+              backgroundImage:
+                "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px)," +
+                "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px)",
+              boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.08), inset 0 -1px 0 hsl(0 0% 0% / 0.25)",
+              zIndex: 6,
+              willChange: "opacity",
+            }}
           />
         </div>
       </div>
