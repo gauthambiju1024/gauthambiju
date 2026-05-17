@@ -1,36 +1,29 @@
-Do I know what the issue is? Yes.
+## Problem
 
-The actual bug is in `src/components/HeroIdBadge.tsx`: the current fold uses the wrong hinge directions and then hides the entire cream packet at 90° with `visibility = hidden`. The green spine is also relying on nested 3D backface rendering inside an already-rotated card, so when the cream packet is hidden, nothing reliably replaces it. That is why the center disappears and the post-flip state can go blank.
+During the bridge from About → Projects, the cream packet appears to abruptly shrink to half width instead of visibly folding. Root cause is in `HeroIdBadge.tsx`:
 
-Plan:
+1. **Easing is front-loaded.** `flapAngle = eOut(tFold) * 178` uses `1 − (1−t)⁵`, so at tFold = 0.2 the wings are already at ~120° and at tFold = 0.4 they are essentially closed. The eye registers this as a sudden size change, not a fold.
+2. **Window is too short.** `tFold = smoothstep(0.00, 0.40, bridge)` inside a bridge of `smoothstep(0.72, 1.0, p)` gives only ~11% of total scroll for the entire fold motion.
+3. **No "settle" gap before the flip.** `tTurn` starts at bridge 0.42, immediately after the fold finishes, so the eye never sees the folded packet sit still as cream.
 
-1. Stop hiding the folded packet group
-   - Remove the `foldPacketRef.style.visibility = turnDeg < 90 ? ...` logic.
-   - No parent-level visibility cutoff during the flip.
+## Fix (HeroIdBadge.tsx only — no structural changes)
 
-2. Rebuild the animation as two clear layers
-   - Layer A: folding leaves, used only while the card folds.
-   - Layer B: final folded packet strip, always centered at `left: 25%`, `width: 50%`.
-   - At the end of the fold, Layer B is a single solid cream strip, so the center cannot disappear.
+1. **Re-ease the fold** — replace `eOut` with an ease-in-out (`t<0.5 ? 2t² : 1 − (−2t+2)²/2`) so the wings move with a slow start, full middle, slow end. The viewer reads it as rotating panels, not a width collapse.
+2. **Widen and re-phase the bridge windows:**
+   ```
+   tFold   = seg(0.00, 0.55, bridge)   // was 0.00–0.40
+   tTurn   = seg(0.62, 0.82, bridge)   // was 0.42–0.70 — adds a brief "cream packet rests" beat
+   tShrink = seg(0.82, 0.92, bridge)   // was 0.70–0.85
+   tFile   = seg(0.92, 1.00, bridge)   // was 0.85–1.00
+   ```
+3. **Cap the closed angle at 176°** instead of 178° so the wing's lit front face stays visible right up to the moment it lands — prevents the last frame from looking like a snap.
+4. **Tiny depth bump per wing** during the fold so the inward-traveling face catches a shadow edge: keep `translateZ(0.8px)` but add `boxShadow` opacity ramp tied to `tFold` (existing inset shadow values, just unchanged — already present, no new shadows).
+5. **No changes** to: Layer B (final folded strip), spine rotation, shrink target, fly-to-shelf, lanyard/globe fades, opacity handoff at `settled`.
 
-3. Fix inward fold directions
-   - Left flap hinges on its right edge and folds inward toward center.
-   - Right flap hinges on its left edge and folds inward toward center.
-   - Use double-sided cream faces on each flap so no dark/backside artifact appears.
+## Verification
 
-4. Make the flip deterministic instead of relying on fragile nested backface culling
-   - Rotate only the final 50%-wide folded packet strip as one unit.
-   - Before 90°: show only the cream front face.
-   - After 90°: show only the full green ABOUT ME spine face.
-   - The spine appears during the flip, before shelf placement.
+- Scroll slowly through the About → Projects bridge: wings should be clearly visible rotating inward across roughly half the bridge length.
+- The folded cream packet should briefly sit still before the green ABOUT ME spine flips into view.
+- Final shrink + fly-to-shelf timing unchanged.
 
-5. Keep the existing scroll timing and shelf handoff
-   - Do not change hero-to-about timing, lanyard/globe fade, shrink, fly-to-shelf, or shelf opacity timing.
-
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
-
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+No other files touched.
