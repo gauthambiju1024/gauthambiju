@@ -241,7 +241,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         backSlotRef.current.style.opacity = String(1 - tSeams);
       }
       if (foldSeamsRef.current) {
-        foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
+        foldSeamsRef.current.style.opacity = String(tSeams * (1 - smoothstep(0.996, 1.0, bridge)));
       }
       if (foldLeftRef.current) {
         const a = -tFold * 88; // rotates away from viewer to the left
