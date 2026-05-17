@@ -84,7 +84,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       }
 
       // The About-slot placeholder reveals only at the very end (card has landed)
-      const aboutReveal = ease(0.985, 1.0, t);
+      const aboutReveal = ease(0.998, 1.0, t);
       slot.style.opacity = String(aboutReveal);
 
       publishSlotRect();
