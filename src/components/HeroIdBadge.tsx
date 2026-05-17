@@ -594,21 +594,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                     </div>
                   </div>
 
-                  {/* BACK — center panel shows the green spine; wings show a dark backing */}
+                  {/* BACK — center panel shows the exact shelf spine at native size; wings are transparent */}
                   {side === "c" ? (
                     <div
                       style={{
                         position: "absolute",
                         inset: 0,
                         transform: "rotateY(180deg)",
-                        background: "hsl(170 25% 28%)",
-                        boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
+                        background: "transparent",
                         backfaceVisibility: "hidden",
                         WebkitBackfaceVisibility: "hidden",
                         display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+                      <ProjectSpine data={ABOUT_SPINE_DATA} />
                     </div>
                   ) : (
                     <div
@@ -616,7 +617,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                         position: "absolute",
                         inset: 0,
                         transform: "rotateY(180deg)",
-                        background: "linear-gradient(150deg, hsl(160 20% 14%), hsl(160 25% 9%))",
+                        background: "transparent",
                         backfaceVisibility: "hidden",
                         WebkitBackfaceVisibility: "hidden",
                       }}
