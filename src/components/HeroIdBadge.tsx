@@ -212,15 +212,21 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg)`;
 
+      // Bridge progress: 0 = not in bridge, 1 = fully folded/shelved
+      const bridge = clamp((window as any).__bridgeProgress ?? 0);
+      const bridgeFade = clamp(bridge / 0.18); // fade card+globe across first 18% of bridge
+      const cardOpacity = 1 - bridgeFade;
+
       if (lanyardLayerRef.current) {
         lanyardLayerRef.current.style.opacity = String(1 - p2);
       }
-      // Globe fades in as flip completes
+      // Globe fades in as flip completes, then fades out as the bridge starts folding the card.
       if (globeLayerRef.current) {
-        globeLayerRef.current.style.opacity = String(p2);
-        globeLayerRef.current.style.pointerEvents = p2 > 0.5 ? "auto" : "none";
+        globeLayerRef.current.style.opacity = String(p2 * (1 - bridgeFade));
+        globeLayerRef.current.style.pointerEvents = p2 > 0.5 && bridgeFade < 0.2 ? "auto" : "none";
       }
-      cardWrap.style.pointerEvents = p1 > 0.05 ? "none" : "auto";
+      cardWrap.style.opacity = String(cardOpacity);
+      cardWrap.style.pointerEvents = p1 > 0.05 || bridgeFade > 0.05 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
@@ -351,6 +357,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       {/* ID Card wrapper — gets all transforms (drag + scroll-driven) */}
       <div
         ref={cardWrapRef}
+        data-hero-card-wrap
         className="absolute select-none"
         style={{
           top: 90,
