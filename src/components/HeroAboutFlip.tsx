@@ -3,12 +3,14 @@ import { useScroll, useMotionValue, motion, useTransform } from "framer-motion";
 import HeroSection from "./HeroSection";
 import BlueprintFrame from "./desk/frames/BlueprintFrame";
 import HeroIdBadge from "./HeroIdBadge";
+import AboutToProjectsBridge from "./AboutToProjectsBridge";
 
 /**
  * Pinned scroll-driven flip:
  * 0.00–0.30  Hero panel visible, real ID card draggable in its resting spot.
  * 0.30–0.55  Real ID card slides to viewport center and scales toward the viewer.
- * 0.55–0.80  Card 3D-flips on Y; back of the card shows a compact "about" blurb.
+ * 0.55–0.72  Card 3D-flips on Y; back of the card shows the About panel.
+ * 0.72–1.00  The same card folds into a spine and lands on the live shelf.
  */
 const HeroAboutFlip = () => {
   const tDummy = useMotionValue(0.5);
@@ -22,7 +24,7 @@ const HeroAboutFlip = () => {
   const heroFade = useTransform(scrollYProgress, [0.30, 0.55], [1, 0]);
 
   return (
-    <section ref={pinRef} id="home-about-pin" style={{ height: "135vh" }} className="relative">
+      <section ref={pinRef} id="home-about-pin" style={{ height: "340vh" }} className="relative">
       <div className="sticky top-0 w-full" style={{ height: "100vh" }}>
         <div className="w-full h-full pt-[100px]">
           <div className="relative w-full h-full">
@@ -34,12 +36,15 @@ const HeroAboutFlip = () => {
                 </BlueprintFrame>
               </motion.div>
             </div>
+
+            <AboutToProjectsBridge progressMV={scrollYProgress} />
           </div>
         </div>
       </div>
 
       {/* Anchor for the About nav link — placed past the flip midpoint so clicking it lands on the flipped state */}
-      <div id="about" style={{ position: "absolute", top: "65%", left: 0, width: 1, height: 1 }} aria-hidden />
+      <div id="about" style={{ position: "absolute", top: "55%", left: 0, width: 1, height: 1 }} aria-hidden />
+      <div id="projects" style={{ position: "absolute", top: "82%", left: 0, width: 1, height: 1 }} aria-hidden />
 
       {/* Lanyard + ID card overlay; back face is rendered inside HeroIdBadge */}
       <HeroIdBadge progressMV={scrollYProgress} anchorId="home" />

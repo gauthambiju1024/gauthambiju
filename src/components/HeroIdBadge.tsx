@@ -87,6 +87,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const slotRef = useRef<HTMLDivElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
+  const backFaceRef = useRef<HTMLDivElement>(null);
+  const backSlotRef = useRef<HTMLDivElement>(null);
+  const foldCenterRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const foldLeftRef = useRef<HTMLDivElement>(null);
   const foldRightRef = useRef<HTMLDivElement>(null);
@@ -109,28 +112,21 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
     let lastW = 0, lastH = 0;
     const update = () => {
-      const bridgeActive = !!(window as any).__bridgeActive;
       let r: { left: number; top: number; width: number; height: number };
-      if (bridgeActive) {
-        r = { left: 0, top: 100, width: window.innerWidth, height: window.innerHeight - 100 };
-      } else {
-        r = anchor.getBoundingClientRect();
-      }
+      r = anchor.getBoundingClientRect();
       const tx = snap(r.left);
       const ty = snap(r.top);
       stage.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
       stage.style.width = `${snap(r.width)}px`;
       stage.style.height = `${snap(r.height)}px`;
       let op = 1;
-      if (!bridgeActive) {
-        let el: HTMLElement | null = anchor;
-        let depth = 0;
-        while (el && depth < 8) {
-          const o = parseFloat(getComputedStyle(el).opacity || "1");
-          if (!Number.isNaN(o)) op *= o;
-          el = el.parentElement;
-          depth++;
-        }
+      let el: HTMLElement | null = anchor;
+      let depth = 0;
+      while (el && depth < 8) {
+        const o = parseFloat(getComputedStyle(el).opacity || "1");
+        if (!Number.isNaN(o)) op *= o;
+        el = el.parentElement;
+        depth++;
       }
       stage.style.opacity = String(op);
       if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
@@ -197,11 +193,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
     // and the bridge shrink/drop that turns the card into a shelved spine.
     const applyTransform = () => {
-      const bridgeActive = !!(window as any).__bridgeActive;
-      // While the bridge is on screen, hold the card at its end-of-flip pose
-      const t = bridgeActive ? 1 : (progressMV?.get() ?? 0);
-      const p1 = smoothstep(0.30, 0.55, t);
-      const p2 = smoothstep(0.55, 0.92, t);
+      const t = progressMV?.get() ?? 0;
+      const p1 = smoothstep(0.35, 0.55, t);
+      const p2 = smoothstep(0.55, 0.72, t);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -221,7 +215,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const rotYFlip = p2 * 180;
 
       // ---- Bridge-driven trifold + shrink-into-spine + drop-onto-shelf ----
-      const bridge = clamp((window as any).__bridgeProgress ?? 0);
+      const bridge = clamp((window as any).__bridgeProgress ?? smoothstep(0.72, 1.0, t));
       // Phase 1: seams appear + AboutCardBack fades out, revealing 3 cream panels
       const tSeams = smoothstep(0.02, 0.18, bridge);
       // Phase 2: left/right panels rotate inward (true trifold)
@@ -236,6 +230,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(1 - tSeams);
         cardBackInnerRef.current.style.pointerEvents = tSeams > 0.05 ? "none" : "auto";
+      }
+      if (backFaceRef.current) {
+        backFaceRef.current.style.background = `hsl(40 25% 92% / ${1 - tSeams})`;
+        const frameOpacity = 1 - smoothstep(0.20, 0.75, tShrink);
+        backFaceRef.current.style.boxShadow = `0 30px 40px -8px hsl(160 30% 4% / ${0.55 * frameOpacity}), 0 12px 24px -6px hsl(160 30% 4% / ${0.4 * frameOpacity}), inset 0 0 0 1px hsl(0 0% 100% / ${0.5 * frameOpacity})`;
+      }
+      if (backSlotRef.current) {
+        backSlotRef.current.style.opacity = String(1 - tSeams);
       }
       if (foldSeamsRef.current) {
         foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
@@ -253,10 +255,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSkin);
       }
+      if (foldCenterRef.current) {
+        foldCenterRef.current.style.transform = "scaleX(1) scaleY(1)";
+      }
 
-      // Shrink card to spine dimensions (width 260 → 78, height 380 → 200)
-      const targetSx = SPINE_WIDTH / w;   // ≈ 0.30
-      const targetSy = SPINE_HEIGHT / h;  // ≈ 0.53
+      const targetSx = SPINE_WIDTH / (w / 3);
+      const targetSy = SPINE_HEIGHT / h;
       const shrinkSx = 1 + (targetSx - 1) * tShrink;
       const shrinkSy = 1 + (targetSy - 1) * tShrink;
 
@@ -292,7 +296,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = "1";
+      cardWrap.style.opacity = String(1 - smoothstep(0.985, 1.0, bridge));
       cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
@@ -468,6 +472,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
         {/* Back face — Tabbed About panel */}
         <div
+          ref={backFaceRef}
           style={{
             position: "absolute",
             inset: 0,
@@ -486,7 +491,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             overflow: "hidden",
           }}
         >
-          <div aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
+          <div ref={backSlotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
           <div
             ref={cardBackInnerRef}
             style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
@@ -531,6 +536,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               />
               {/* Center panel — stays put, becomes the spine */}
               <div
+                ref={foldCenterRef}
                 style={{
                   position: "absolute",
                   top: 0, bottom: 0,
@@ -538,6 +544,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   width: "33.334%",
                   background: "hsl(40 25% 92%)",
                   boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "center center",
+                  willChange: "transform",
                 }}
               >
                 {/* Spine-skin cross-fades over the center panel */}

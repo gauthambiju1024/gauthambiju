@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, {
@@ -9,7 +10,7 @@ import ProjectSpine, {
 } from "@/components/projects/ProjectSpine";
 
 /**
- * AboutToProjectsBridge (v5)
+ * AboutToProjectsBridge (inline shelf layer)
  * --------------------------
  * The folding About card (from HeroIdBadge) parks into the rightmost slot
  * of this shelf, which IS the real Projects shelf — spines come from the DB.
@@ -23,7 +24,11 @@ import ProjectSpine, {
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const ease = (a: number, b: number, t: number) => clamp01((t - a) / (b - a));
 
-const AboutToProjectsBridge = () => {
+interface Props {
+  progressMV: MotionValue<number>;
+}
+
+const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const pinRef = useRef<HTMLElement>(null);
   const shelfWrapRef = useRef<HTMLDivElement>(null);
   const ledgePathRef = useRef<SVGPathElement>(null);
@@ -32,11 +37,6 @@ const AboutToProjectsBridge = () => {
   const navigate = useNavigate();
 
   const { projects } = useProjects();
-
-  const stagger = useMemo(
-    () => projects.map((_, i) => 0.60 + i * 0.04),
-    [projects]
-  );
 
   useEffect(() => {
     const pin = pinRef.current;
@@ -60,37 +60,31 @@ const AboutToProjectsBridge = () => {
       };
     };
 
-    let ticking = false;
     const update = () => {
-      ticking = false;
-      const rect = pin.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const travel = pin.offsetHeight - vh;
-      if (travel <= 0) return;
-      const scrolled = -rect.top;
-      const t = clamp01(scrolled / travel);
+      const t = clamp01(progressMV.get());
+      const foldT = ease(0.72, 1.0, t);
 
-      const active = rect.top <= 0 && rect.bottom >= vh * 0.5;
-      (window as any).__bridgeActive = active;
-      (window as any).__bridgeProgress = t;
+      (window as any).__bridgeActive = foldT > 0 && foldT < 1;
+      (window as any).__bridgeProgress = foldT;
 
       // Shelf line draw
-      const tLedge = ease(0.55, 0.92, t);
+      const tLedge = ease(0.72, 0.90, t);
       ledgePath.style.strokeDashoffset = String(ledgeLen * (1 - tLedge));
-      shelfWrap.style.opacity = String(Math.min(1, ease(0.50, 0.65, t) * 1.2));
+      shelfWrap.style.opacity = String(Math.min(1, ease(0.70, 0.80, t) * 1.2));
+      shelfWrap.style.pointerEvents = t > 0.86 ? "auto" : "none";
 
       // Project spines stagger in
       for (let i = 0; i < projects.length; i++) {
         const el = spineRefs.current[i];
         if (!el) continue;
-        const a = stagger[i] ?? (0.60 + i * 0.04);
+        const a = 0.76 + i * 0.025;
         const k = ease(a, a + 0.06, t);
         el.style.opacity = String(k);
         el.style.transform = `translateY(${(1 - k) * 8}px)`;
       }
 
       // The About-slot placeholder reveals only at the very end (card has landed)
-      const aboutReveal = ease(0.97, 1.0, t);
+      const aboutReveal = ease(0.985, 1.0, t);
       slot.style.opacity = String(aboutReveal);
 
       publishSlotRect();
@@ -109,39 +103,33 @@ const AboutToProjectsBridge = () => {
       return;
     }
 
-    const onScroll = () => {
-      if (!ticking) { ticking = true; requestAnimationFrame(update); }
-    };
     const onResize = () => { update(); publishSlotRect(); };
 
     update();
-    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     let raf = 0;
-    const loop = () => { publishSlotRect(); raf = requestAnimationFrame(loop); };
+    const loop = () => { update(); publishSlotRect(); raf = requestAnimationFrame(loop); };
     raf = requestAnimationFrame(loop);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
       (window as any).__bridgeProgress = 0;
       (window as any).__bridgeActive = false;
       (window as any).__bridgeSlotRect = null;
     };
-  }, [projects, stagger]);
+  }, [projects, progressMV]);
 
   return (
     <section
       ref={pinRef}
-      id="projects"
       aria-label="Projects"
-      style={{ height: "260vh", scrollMarginTop: 100 }}
-      className="relative w-full"
+      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      className="w-full h-full"
     >
       <div
-        className="sticky w-full overflow-hidden"
-        style={{ top: 100, height: "calc(100vh - 100px)" }}
+        className="absolute inset-0 w-full overflow-hidden"
+        style={{ height: "100%" }}
       >
         {/* Drawn shelf: warm-wood line + project spines + landing slot for About */}
         <div
