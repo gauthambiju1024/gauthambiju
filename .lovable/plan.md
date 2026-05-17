@@ -1,74 +1,39 @@
-## Final concrete plan — bridge polish
+## Diagnosis
 
-Three precise fixes, all in two files. Geometry, fold widths, and visual design stay exactly as they are now.
+The cream strip you see beside the green spine is the **back face of a folded wing**. Geometry is correct (25/50/25, wings fold to ~178°, packet then flips on Y to reveal the spine), but the wing's back face is painted with `CARD_BG` (cream). So when the whole packet rotates to show its back, you see:
 
----
+- center back face → green spine (correct)
+- wing back faces → cream (wrong — should also be green)
 
-### Fix 1 — Left/right wings stay transparent when folded
-**File:** `src/components/HeroIdBadge.tsx` (wing markup, ~lines 550–611)
+That's why image 2 shows green-on-left + cream-on-right: the right wing's cream back is exposed alongside the spine.
 
-Root cause: each wing has a front face with `backfaceVisibility: hidden` and a back face at `translateZ(-0.5px) rotateY(180deg)` also with `backfaceVisibility: hidden`. At ~178° the front face culls, and the back face's z-offset + culling causes the wing to render as see-through against the green spine behind it.
+The recent fix that gave the wing **outer wrapper** `background: CARD_BG` to stop transparency made this worse — it locked the wing to cream from any angle, including when the packet is flipped.
 
-Change:
-- Add `background: CARD_BG` and `backfaceVisibility: hidden` to each wing's outer wrapper itself, so the wing is opaque cream from any angle.
-- Remove `translateZ(-0.5px)` and `backfaceVisibility: hidden` from the back-face inner div (keep its `rotateY(180deg)` + inset shadow) so it always paints as a solid cream panel with no z-fighting.
+## Fix (one file)
 
-Result: when wings rotate to 178°, both fully cover the green center strip with solid cream.
+**`src/components/HeroIdBadge.tsx`** — wing markup (~lines 550–611)
 
----
+1. **Outer wrapper of each wing**: keep `backfaceVisibility: hidden`, but change `background: CARD_BG` → `background: 'transparent'`. The opaque surfaces come from the inner front/back face divs, not the wrapper. (The wrapper background was the cause of the cream-strip-on-flip; removing it does NOT bring back the original transparency bug, because each face div is now itself opaque — see step 2.)
 
-### Fix 2 — Project spines never appear
-**File:** `src/components/AboutToProjectsBridge.tsx` (~lines 70–74)
+2. **Front face inner div** (cream side, faces camera before flip): give it an explicit `background: CARD_BG` and keep `backfaceVisibility: hidden`. This is the surface that must fully cover the green center during the fold.
 
-Root cause: this effect runs AFTER React has already populated the spine refs via the inline ref callbacks, wiping them back to empty arrays:
+3. **Back face inner div** (faces camera after flip): change its background from cream to the **spine green** (same token used by the spine center face, e.g. `SPINE_BG` / the green used in `ProjectSpine` for the about spine, ~`hsl(155 25% 22%)` — pull from the existing constant, do not hardcode). Keep `rotateY(180deg)` + inset shadow. Result: after the packet flips, the wings' back faces are green and blend seamlessly into the spine — no cream strip.
 
-```ts
-useEffect(() => {
-  rulePathRefs.current = new Array(rows.length).fill(null);
-  rulePathLens.current = new Array(rows.length).fill(0);
-  spineRefs.current = rows.map(() => []);   // erases populated refs
-}, [rows]);
-```
+4. Sanity: ensure no other layer (e.g. a sibling overlay or the packet container) paints cream on the back. If one exists, it gets the same green-on-back treatment via a second face div.
 
-The rAF loop then iterates empty arrays, spines stay at `translateY(135%)`, clipped under the rule.
+## What this changes visually
 
-Change:
-- Remove the `spineRefs.current` reset entirely. Let `registerSpine` populate it during render (ref callbacks fire on every render because a new function identity is returned).
-- Keep only `rulePathLens.current.length = rows.length` (don't null out paths either — same identity issue).
-
----
-
-### Fix 3 — Shelf draw + spine build finish exactly when the About spine lands
-**File:** `src/components/AboutToProjectsBridge.tsx` (~lines 112–158)
-
-Today the draw uses `seg(0.10, 0.55, bridge)` and the spine rise uses `seg(0.10, 0.80, bridge)`. Both finish well before the About spine lands at `bridge ≈ 0.94`, so the shelf looks complete long before the packet arrives — inconsistent.
-
-Re-time everything to one synchronized landing window matching the badge's `tFile` (`seg(0.85, 1.00, bridge)`):
-
-| Phase | New window | Notes |
+| Stage | Before | After |
 |---|---|---|
-| `shelfWrap` fade in | `seg(0.70, 0.80, bridge)` | appears just as the packet starts shrinking |
-| Rule draw `drawT` | `seg(0.78, 0.96, bridge)` | per-row stagger so all rules complete by 0.96 |
-| Spine rise `archT` | `seg(0.82, 0.98, bridge)` | row+col stagger so the last spine settles right before the About-spine landing |
-| About spine fade-in | `(bridge - 0.96) / 0.04` | lands on top of the slot right as `bridge → 1` |
+| Mid-fold, front facing camera | cream wings cover green center | unchanged — still solid cream |
+| Mid-flip (image 2 moment) | green spine + cream wing strip | uniform green across spine + wing backs |
+| Fully flipped | green spine + faint cream edges | clean solid green spine |
 
-Per-row stagger normalization: replace the current `start = (i / rowCount) * 0.55` with stagger inside the window length so the last row finishes exactly at the window end:
+## Out of scope
 
-```ts
-const winLen = end - start;          // 0.18 for draw, 0.16 for arch
-const rowStagger = winLen * 0.3;     // 30% of window for stagger
-const perRow = (winLen - rowStagger) / Math.max(1, rowCount);
-```
+No changes to fold angles, wing widths (25/50/25 preserved), timing, the bridge file, shelf draw, or spine rise. Only the wing face colors.
 
-Same approach for spines: clamp `order` so even the last (row, col) finishes at the very end of the arch window.
+## Files
 
-Result: as the folded packet shrinks and flies to the shelf, the ledge draws in beneath it and the project spines rise to greet the About spine — completing as one motion.
-
----
-
-### Files
-- `src/components/HeroIdBadge.tsx` — wing opacity fix
-- `src/components/AboutToProjectsBridge.tsx` — remove ref wipe; re-time draw/arch/fade windows
+- `src/components/HeroIdBadge.tsx` — wing wrapper background + back-face color
 - `.lovable/plan.md` — replace with this plan
-
-No new dependencies. No DB changes. No layout, fold geometry, or visual design changes beyond what's listed.
