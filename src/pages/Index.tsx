@@ -9,7 +9,7 @@ import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
 import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
-import BookshelfFrame from "@/components/desk/frames/BookshelfFrame";
+
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
