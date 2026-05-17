@@ -590,14 +590,16 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               ref={spineSkinRef}
               style={{
                 position: "absolute",
-                inset: 0,
+                top: 0,
+                bottom: 0,
+                left: "33.333%",
+                width: "33.334%",
                 transform: "rotateY(180deg)",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 display: "flex",
                 alignItems: "stretch",
                 justifyContent: "stretch",
-                willChange: "opacity",
               }}
             >
               <div style={{ width: "100%", height: "100%" }}>
