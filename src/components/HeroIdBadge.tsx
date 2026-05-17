@@ -204,12 +204,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
-      // about→projects segment driver; shared fold+turn window, then shrink, then fly
+      // about→projects segment driver; sequential fold → flip → shrink → fly
       const bridge = smoothstep(0.72, 1.0, p);
-      const tFold = seg(0.00, 0.50, bridge);
-      const tTurn = seg(0.00, 0.50, bridge);
-      const tShrink = seg(0.50, 0.70, bridge);
-      const tFile = seg(0.70, 1.00, bridge);
+      const tFold = seg(0.00, 0.40, bridge);
+      const tTurn = seg(0.42, 0.70, bridge);
+      const tShrink = seg(0.70, 0.85, bridge);
+      const tFile = seg(0.85, 1.00, bridge);
       const foldActive = bridge > 0.02;
       const settled = bridge > 0.96;
 

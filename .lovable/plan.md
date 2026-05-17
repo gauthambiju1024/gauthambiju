@@ -1,88 +1,63 @@
-# Bridge fix — reference shelf ANIMATION + same fold physics
+# Bridge polish — fold-then-flip, shelf isolation, visible spines, toolbox
 
-Reference HTML is used **only for the shelf-build animation**. Visual style of spines and rows stays as-is (the current bridge styling). Fold/flip physics stays as planned in the previous turn.
+## 1. Fold THEN flip (sequential) — `HeroIdBadge.tsx`
 
-## 1. Shelf build animation (from `dossier-fold-transition-3.html`)
+Previous turn ran fold + flip in the same window. User wants them sequential: wings fully fold onto the center first, THEN the packet flips to reveal the spine.
 
-Two new behaviors on `AboutToProjectsBridge.tsx`, driven by the existing `bridge = seg(0.72, 1.0, t)` progress and tied to the same rAF loop:
+New ramps (relative to `bridge = smoothstep(0.72, 1.0, p)`):
+- `tFold   = seg(0.00, 0.40, bridge)` — wings rotate 0 → 178°, settling flush behind the center
+- `tTurn   = seg(0.42, 0.70, bridge)` — center `rotateY 0 → 180°` (begins only after fold settles, with a small 0.02 hand-off pause)
+- `tShrink = seg(0.70, 0.85, bridge)` — packet scales down to spine footprint
+- `tFile   = seg(0.85, 1.00, bridge)` — flies to `__bridgeSlotRect`
 
-### a. Rule "draw-in" stroke
-Each row's horizontal ledge becomes an SVG `<path>` with `stroke-dasharray = L; stroke-dashoffset = L`, where `L` is the path length. As the shelf phase fires, each row's rule strokes outward from the center, staggered per row:
+Wing widths stay 25 / 50 / 25 so the two wings cover 100% of the center once folded. About-face opacity ramp stays removed (backface-visibility handles the reveal cleanly during tTurn).
 
-```text
-draw  = seg(bridge, 0.10, 0.55)
-for each row i:
-    d = seg(draw, i*0.15, 0.55 + i*0.15)
-    path.style.strokeDashoffset = L * (1 - easeInOut(d))
-```
+## 2. Shelf must not appear in the About section — `AboutToProjectsBridge.tsx`
 
-### b. Spines rise from under the rule (clip-masked)
-Each row is wrapped in a `.rowClip` div with `overflow: hidden` whose top edge sits on the rule. Spines are positioned with `bottom: 0` inside the clip and start at `translateY(135%)` (fully hidden below the clip). As the archive phase fires, each spine rises into place with a back-overshoot ease, staggered by row+col:
+Bug: I removed the wrap opacity ramp last turn, so the shelf is visible all the way through About.
 
-```text
-arch = seg(bridge, 0.55, 1.00)
-for each spine at (row, col):
-    order = row * 0.16 + col * 0.03
-    e     = easeBack(seg(arch, order, order + 0.40))
-    spine.style.transform = `translateY(${lerp(135, 0, e)}%)`
-```
+Fix: gate `shelfWrap.style.opacity` on bridge progress, but fade it in BEFORE the rule-draw animation so spines have a stage to rise onto:
+- `shelfWrap.style.opacity = seg(0.00, 0.10, bridge)`
+- `pointerEvents = bridge > 0.95 ? "auto" : "none"`
 
-`easeBack(t) = t*t*((s+1)*t - s)` with `s = 1.4` (standard back-out, matches ref).
+This keeps the shelf hidden during About (bridge=0) and revealed throughout the Projects pin.
 
-Notes:
-- All updates happen inside the existing rAF block — no React re-renders, consistent with the project's animation core rule.
-- The About slot at row 1's right end is also a `.rowClip` child; the landed packet's vertical position is `0` so it visually merges with the staggered rise.
-- Toolbox stays bottom-right; it also rises from under the bottom rule with the same `eBack` stagger, slotted at the highest order so it lands last.
+## 3. Projects not visible — same file
 
-### c. Remove the prior "spines rise on bridge>0.3" translateY ramp
-The simple staggered translateY fade that's currently in `AboutToProjectsBridge.tsx` is replaced by the clip-mask rise above so the motion matches the reference exactly.
+Two root causes:
+- Spines initially sit at `translateY(135%)` AND the row uses `overflow:hidden`. If `archT` never reaches > `order` for a spine, it stays hidden. Today `archT = seg(0.40, 1.0, bridge)`, but with the staggered `order` formula a row-2 col-2 spine needs `archT > 0.22 + span` to land. When `bridge < 0.62` mid-row spines are still below the clip.
+- The `__bridgeProgress` published is `seg(0.72, 1.0, t)` smoothed; during the Projects pin segment `t` is at 1.0 so `bridge` is 1.0 and all spines should land. So the real-world bug is most likely the parent `<section style="position:absolute; inset:0">` being mounted inside the About stage container — projects render but at About's coordinates.
 
-## 2. Fold + flip physics (`HeroIdBadge.tsx`) — same as previously planned
+Fixes:
+- Add the opacity gate above so the shelf cleanly fades in.
+- Compress `archT` so even with bridge ≈ 0.6 most spines are visible: `archT = seg(0.10, 0.80, bridge)`. This starts the rise the moment the shelf fades in and finishes well before scroll-end.
+- Drop the `overflow:hidden` ONLY on the spine row's outer flex if it's truncating projects horizontally on narrow viewports; instead set `overflow: hidden` on a fixed-height inner wrapper so the clip is only vertical (rises from "under the rule") and never clips horizontally.
 
-No change from the last plan version:
+## 4. About spine right after the project spines (not pushed to right edge) — same file
 
-```text
-Card width = 260
-  ┌──── 25% ────┬──── 50% ────┬──── 25% ────┐
-  │   LEFT wing │   CENTER     │  RIGHT wing │
-  └─────────────┴──────────────┴─────────────┘
-```
+Remove the `<div style={{ flex: "1 1 auto" }} />` spacer before the About-spine slot in the top row. Result: spine sits immediately to the right of the last project spine, with a normal `gap: 14` between them.
 
-- LEFT: `left:0; width:25%`, `aboutSurface(0)`
-- CENTER: `left:25%; width:50%`, `aboutSurface(-CARD_WIDTH*0.25)`
-- RIGHT: `left:75%; width:25%`, `aboutSurface(-CARD_WIDTH*0.75)`
-- Shared timing so fold and flip happen together:
-  - `tFold = seg(bridge, 0.00, 0.50)` — wings rotate `0 → 90°`
-  - `tTurn = seg(bridge, 0.00, 0.50)` — center `rotateY 0 → 180°`
-- Remove the about-face opacity cross-fade. Both faces keep `backface-visibility:hidden`; the green spine becomes visible naturally past 90°.
-- Shrink the fold layer to spine footprint before flight:
-  - `tShrink = seg(bridge, 0.50, 0.70)`
-  - `scaleX = lerp(1, SPINE_WIDTH/(CARD_WIDTH*0.5), tShrink)`
-  - `scaleY = lerp(1, SPINE_HEIGHT/CARD_HEIGHT, tShrink)`
-- Translate-to-slot gated until `tShrink >= 1`, so the packet flies as a spine-sized green spine.
+The slot rect publication still works — `aboutSlotRef.current.getBoundingClientRect()` already returns the correct landing target wherever it is.
 
-Sequence:
+## 5. Realistic SVG toolbox at bottom-right — same file
 
-```text
-bridge 0.00 → 0.50 : wings fold + center flips (green spine appears via backface)
-bridge 0.50 → 0.70 : packet shrinks to spine footprint
-bridge 0.70 → 1.00 : spine flies to __bridgeSlotRect AND shelf rules draw + spines rise
-bridge ≈ 1.0       : everything settled; ghost slot's About spine fades in
-```
+Replace the line-drawing SVG with a richer 3D-ish illustration that still matches the warm-amber ink palette. Pieces:
+- Bottom box: rounded amber-tone body with a darker base shadow, light top edge highlight, two latches, brass clasps, and faint wood-grain stripes
+- Lid: separate flap with a hinge highlight
+- Curved metallic handle with two screw mounts
+- Foot shadow under the box
+- ~96 × 76 footprint so it reads at viewport scale
+
+Implementation: a single inline `<svg viewBox="0 0 96 76">` with multiple `<rect>`, `<path>`, gradient `<defs>`, and 1 thin highlight line. Uses the existing `INK` and a derived darker amber for shadow. Still wrapped in `<a href="#skills">` and still bottom-row last col so it rises with the shelf and zooms toward the Skills station.
 
 ## Files
 
-- `src/components/AboutToProjectsBridge.tsx`
-  - Wrap each row in `.rowClip` (`overflow:hidden`).
-  - Replace plain horizontal rule with an SVG path; cache `pathLength` per row in refs.
-  - Inside the existing rAF, drive `strokeDashoffset` (draw) and per-spine `translateY%` (archive) using the formulas above.
-  - Add refs array for all spines + the toolbox so the rAF can mutate them directly.
-  - Remove the old per-spine staggered translateY/opacity ramp.
-- `src/components/HeroIdBadge.tsx` — 25/50/25 wings, shared `tFold`/`tTurn`, drop face opacity ramp, add `tShrink` scaleX/scaleY, gate translate.
-- `.lovable/plan.md` — append shelf-animation + fold-physics notes.
+- `src/components/HeroIdBadge.tsx` — retime `tFold` / `tTurn` / `tShrink` / `tFile` to sequential windows.
+- `src/components/AboutToProjectsBridge.tsx` — restore opacity gate on `shelfWrap`, compress `archT`, remove right-edge spacer before About spine, swap toolbox SVG for the realistic version, switch the row clip so it only hides vertical overflow (not horizontal).
+- `.lovable/plan.md` — append the sequential fold-then-flip and shelf-isolation notes.
 
 ## Notes
 
 - No DB/RLS changes.
 - No new dependencies.
-- Spine and row **visual styling stays unchanged** — only motion is updated.
+- All transitions remain in the existing rAF loop — no React re-renders during the animation.
