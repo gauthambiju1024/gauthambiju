@@ -1,41 +1,31 @@
-# About → Projects Bridge: Revised v2
+## Why it's invisible today
 
-The bridge now visually continues **from the existing about card** (the flipped ID-badge back rendered by `HeroIdBadge`) — no separate slab spawns in the middle of the screen, no captions.
+- `HeroIdBadge` positions its fixed stage by tracking the `#home` panel's rect (inside `HeroAboutFlip`, a 135vh pin).
+- The bridge section starts *after* that pin ends, so by the time `__bridgeProgress` rises from 0, `#home` has scrolled above the viewport. The original card and the bridge's clone (which mirrors `[data-hero-card-wrap]`) are both positioned far above the screen.
+- Result: fold, rotate, drop, ledge draw, and plank all run correctly — just off-screen. Globe fade is invisible for the same reason.
 
-## Choreography (scroll-pinned)
+## Fix
 
-```
-0.00–0.15  Globe fade   AboutGlobe fades to 0 and gently translates aside.
-                        About card stays put at its current position/scale.
-0.15–0.45  Tri-fold     Card's left + right thirds rotateY ±88° inward.
-                        Card scaleX → 0.12. Card content fades out by 0.30.
-                        Crease shading deepens. Position unchanged.
-0.45–0.70  Rotate       Folded slab rotateY 0→90°. Cream paper edge lerps
-                        to walnut spine color (hsl 170 25% 22%).
-0.70–1.00  Shelve       Spine translates from its origin down to a drawn
-                        shelf ledge near the bottom of the pinned panel.
-                        Ledge draws L→R as a single warm wood line, and a
-                        short walnut plank fades in beneath it so the
-                        ProjectsShelf below reads as the same library.
-```
+Keep the about card visually pinned at its end-of-flip position for the full duration of the bridge, then fold *that* card down onto a shelf inside the bridge's sticky stage.
 
-`prefers-reduced-motion` → 200ms cross-fade.
+### 1. `AboutToProjectsBridge.tsx`
+- Publish both `window.__bridgeProgress` (0..1) and `window.__bridgeActive` (boolean — true while the sticky stage is on screen, even at progress 0).
+- Stop measuring `[data-hero-card-wrap]`. Instead, anchor the folding clone *inside the sticky container* at the same on-screen coordinates the flipped card occupies at end-of-flip (right-of-center, ~74% x, vertically centered, 260×380). This is a fixed layout — no per-frame DOM measurement needed.
+- Choreography unchanged:
+  - 0.00–0.10: globe + original card fade out (driven by HeroIdBadge reading `__bridgeProgress`); clone fades in at the same anchor so the handoff is seamless.
+  - 0.10–0.40: tri-fold.
+  - 0.40–0.65: rotateY 0→90°, cream → walnut.
+  - 0.65–1.00: drop onto the drawn ledge; plank fades in beneath as the handoff into `ProjectsShelf`.
+- Slight bump: increase pin height to `200vh` and give phase A a bit more room (0.00–0.14) so the fade is perceptible.
 
-## What changes
+### 2. `HeroIdBadge.tsx`
+- When `window.__bridgeActive` is true, override the stage-tracking transform: instead of following `#home`'s rect, lock the stage to the viewport (`translate3d(0, 0, 0)`, full viewport width/height) so the card and globe stay visible during the bridge.
+- Keep the existing `bridgeFade` (already wired) — it fades both the globe layer and the card wrap to 0 across `__bridgeProgress` 0→0.18. By the time the bridge clone starts folding, the originals are invisible and the clone has taken over in the exact same spot.
+- Disable pointer events on the card while `__bridgeActive` is true (already partly handled).
 
-- `AboutToProjectsBridge.tsx` is rewritten to:
-  - **Anchor the folding object at the same on-screen rect as the about card** (back of `HeroIdBadge`), not at the viewport center. The bridge measures that rect on mount + resize and positions its 3 flap panels there.
-  - **Replace the blueprint skin with the cream card skin** (`hsl(40 25% 92%)` paper, ink border, subtle shadow, faint notebook grid) so the folding object is visually identical to the about card the user just left.
-  - **Fade the globe** by dispatching a scroll-driven CSS variable (`--about-globe-opacity`) that `HeroIdBadge`'s globe layer already reads, OR — simpler — by toggling a body-level class that the existing globe wrapper subscribes to via a 1-line opacity binding. Implementation will use whichever hook already exists; if neither does, add a minimal `data-bridge-progress` attribute on `<html>` and a single CSS rule on the globe wrapper.
-  - **Remove all captions, brackets, dimension lines, tick marks, and labels.**
-  - **Keep**: tri-fold → 90° rotate → drop choreography, walnut spine color target, single drawn ledge line, walnut plank handoff, performance pattern (window scroll + rAF + ref mutation, zero React re-renders).
+### 3. No other files change
+- `HeroAboutFlip.tsx`, `AboutSection.tsx`, `AboutCardBack.tsx`, `HeroSection.tsx`, `Index.tsx`, `ProjectsShelf.tsx`, `AssemblyHeader.tsx`: untouched.
+- ID card front and its flip transition: untouched.
 
-- `HeroIdBadge.tsx`: add a single opacity binding on the existing globe wrapper to a CSS variable the bridge writes. No layout changes. The flipped card itself fades out at 0.15 so the bridge's clone takes over seamlessly (eye sees one continuous object).
-
-- No changes to `Index.tsx`, `HeroAboutFlip.tsx`, `AboutSection.tsx`, `AboutCardBack.tsx`, `ProjectsShelf.tsx`, `AssemblyHeader.tsx`, or the front of the ID card.
-
-## Notes
-
-- The fold originates from the card's current rect, not a new center stage — this is the key visual fix.
-- Globe fade and card-fold are driven by the same scroll progress so they read as one continuous gesture.
-- Shelf ledge is positioned to sit flush with the top of `ProjectsShelf` so the bookcase below feels like the same physical shelf the spine just landed on.
+### Performance
+Single window scroll listener + rAF in the bridge; HeroIdBadge keeps its existing per-frame loop and just adds a branch on `__bridgeActive`. Zero React re-renders during scroll.
