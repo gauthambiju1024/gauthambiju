@@ -1,35 +1,29 @@
+## Plan
 
-## Problem
+Restore the interaction to match your intent: the ID card becomes the About panel in the hero viewport, then that exact visible About panel folds in place into a project-style spine before it moves to the shelf.
 
-After removing the `__bridgeActive` stage pinning, `HeroIdBadge`'s stage tracks `#home`. By the time the user scrolls into `AboutToProjectsBridge`, `#home` is above the viewport, so the card has already scrolled off screen. The user sees empty space and then the shelf, with no fold.
+### What will change
 
-The earlier complaint ("globe and about reappears") was about the **globe** fading back in during the bridge, not about a card position jump. The stage-pinning itself was fine.
+1. **Use the same viewport for the whole handoff**
+   - Extend the existing `HeroAboutFlip` pinned section so the About panel remains sticky and visible after the ID card has merged into it.
+   - Remove the big empty bridge feeling caused by the separate `AboutToProjectsBridge` pin taking over too late.
 
-## Change (single file: `src/components/HeroIdBadge.tsx`)
+2. **Bring back the trifold animation on the actual About panel**
+   - Replace the current simple “crossfade + shrink” with a true three-panel fold.
+   - The center panel becomes the book spine; left and right panels rotate inward like the earlier trifold.
+   - This happens from the same final About-card viewport, not from a reappeared/new section.
 
-Restore the bridge-active branch inside the stage `update()`:
+3. **Make the folded result match shelf spines**
+   - At the end of the trifold, the visible center spine uses the same `ProjectSpine` visual as the database project shelf.
+   - The folded About spine lands in the shelf as one of the spines.
 
-```ts
-const bridgeActive = !!(window as any).__bridgeActive;
-let r: { left: number; top: number; width: number; height: number };
-if (bridgeActive) {
-  r = { left: 0, top: 100, width: window.innerWidth, height: window.innerHeight - 100 };
-} else {
-  r = anchor.getBoundingClientRect();
-}
-```
+4. **Keep the shelf database-linked**
+   - Continue using `useProjects()` for real project spines.
+   - The shelf line and project spines will reveal inside the same pinned handoff viewport, so the About spine parks directly into the live projects shelf.
 
-Keep the opacity calculation skipping the parent walk when `bridgeActive` (otherwise the faded blueprint frame would dim the pinned card).
+### Technical notes
 
-Leave everything else as-is:
-- `applyTransform` already holds `t = 1` when `bridgeActive`, so the card stays at center+flipped.
-- `__bridgeProgress` already drives spine-skin cross-fade, shrink, and drop to `__bridgeSlotRect`.
-- Globe stays hidden throughout the bridge (`globeLayerRef.opacity = p2 * (1 - tSkin)`).
-
-## Why no visible jump this time
-
-At the instant `bridgeActive` becomes true (top of the bridge section), `#home` inside the still-sticky `HeroAboutFlip` is at `{left:0, top:0, width:vw, height:vh}` with the inner content offset by `pt-[100px]` — which renders the card stage at the same coordinates as the pinned `{0, 100, vw, vh-100}`. The hand-off is seamless.
-
-## Out of scope
-
-The shelf, spine component, bridge content, and `Index.tsx` are correct and untouched.
+- `HeroIdBadge.tsx` will regain a real trifold layer instead of only `spineSkinRef` opacity and `scaleX/scaleY` shrink.
+- `HeroAboutFlip.tsx` will own the combined scroll sequence: hero → card flip/about → trifold → shelf park.
+- `AboutToProjectsBridge.tsx` will be simplified to provide shelf slot coordinates and shelf reveal, not a separate empty-feeling scroll stage.
+- `Index.tsx` will keep the section order, but the projects handoff will visually start immediately from the About viewport.
