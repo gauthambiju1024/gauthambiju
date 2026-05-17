@@ -473,6 +473,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
         {/* Back face — Tabbed About panel */}
         <div
+          ref={backFaceRef}
           style={{
             position: "absolute",
             inset: 0,
