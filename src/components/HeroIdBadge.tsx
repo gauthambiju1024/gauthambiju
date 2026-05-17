@@ -215,38 +215,47 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const rotY = p2 * 180;
 
       // ---- Fold phases ----
-      const fB1 = smoothstep(0.15, 0.30, f); // flap fold ±88°
-      const fB2 = smoothstep(0.30, 0.45, f); // scaleX collapse 1 → 0.18
-      const fC = smoothstep(0.45, 0.70, f);  // walnut color + spine label
+      // f 0.00-0.15: hold (About fully visible)
+      // f 0.15-0.40: tri-fold flaps + scaleX collapse (becomes thin)
+      // f 0.40-0.70: overall scale-down to spine size + walnut color + spine label
+      // f 0.70-1.00: translate to landing slot
+      const fB1 = smoothstep(0.15, 0.30, f); // flap rotate
+      const fB2 = smoothstep(0.18, 0.40, f); // scaleX collapse
+      const fC = smoothstep(0.40, 0.70, f);  // overall shrink + walnut + spine label
       const fD = smoothstep(0.70, 1.00, f);  // translate to landing slot
 
-      const sxFold = 1 - fB2 * 0.82;
-      const foldScale = f > 0.001 ? sxFold : 1;
+      // Landing slot dims (fallback to known spine size 78x200)
+      let slotW = 78, slotH = 200;
+      const slotEl = f > 0.001 ? document.getElementById('projects-shelf-landing-slot') : null;
+      if (slotEl) {
+        const sR = slotEl.getBoundingClientRect();
+        if (sR.width > 4 && sR.height > 4) { slotW = sR.width; slotH = sR.height; }
+      }
+      // After fold, want card visual size to match slot.
+      // Width: w * scale * scaleX_fold = slotW  →  scaleX_fold ≈ slotW / (w*scale*sShrink)
+      const sShrinkTarget = slotH / h;                          // overall scale to match slot height
+      const sShrink = 1 + (sShrinkTarget - 1) * fC;
+      const scaleXFoldTarget = slotW / (w * sShrink);           // final scaleX to match slot width
+      const sxFold = 1 + (scaleXFoldTarget - 1) * fB2;
 
       // Translate to landing slot in stage-local coords.
       let extraTx = 0;
       let extraTy = 0;
-      if (f > 0.001) {
-        const slot = document.getElementById('projects-shelf-landing-slot');
-        if (slot) {
-          const sR = slot.getBoundingClientRect();
-          const slotCx = sR.left + sR.width / 2 - stageRect.left;
-          const slotCy = sR.top + sR.height / 2 - stageRect.top;
-          // Current center after About flip
-          const curCx = restingCenterX + dxToCenter;
-          const curCy = restingCenterY + dyToCenter;
-          extraTx = (slotCx - curCx) * fD;
-          extraTy = (slotCy - curCy) * fD;
-        } else {
-          // No slot yet — hold position; let fold visuals still play.
-        }
+      if (slotEl && f > 0.001) {
+        const sR = slotEl.getBoundingClientRect();
+        const slotCx = sR.left + sR.width / 2 - stageRect.left;
+        const slotCy = sR.top + sR.height / 2 - stageRect.top;
+        const curCx = restingCenterX + dxToCenter;
+        const curCy = restingCenterY + dyToCenter;
+        extraTx = (slotCx - curCx) * fD;
+        extraTy = (slotCy - curCy) * fD;
       }
 
       const tx = snap(offsetX + dxToCenter + extraTx);
       const ty = snap(offsetY + dyToCenter + extraTy);
-      const s = Math.round(scale * 1000) / 1000;
+      const sCombined = Math.round(scale * sShrink * 1000) / 1000;
 
-      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) rotateY(${rotY}deg) scaleX(${foldScale.toFixed(3)})`;
+      cardWrap.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt * (1 - fC)).toFixed(2)}deg) scale(${sCombined}) rotateY(${rotY}deg) scaleX(${sxFold.toFixed(3)})`;
 
       // Flap visuals — appear only during fold.
       if (leftFlapRef.current) {
