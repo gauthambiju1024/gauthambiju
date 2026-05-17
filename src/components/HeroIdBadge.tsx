@@ -466,6 +466,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
         {/* Back face — Tabbed About panel */}
         <div
+          ref={backFaceRef}
           style={{
             position: "absolute",
             inset: 0,
@@ -529,6 +530,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               />
               {/* Center panel — stays put, becomes the spine */}
               <div
+                ref={foldCenterRef}
                 style={{
                   position: "absolute",
                   top: 0, bottom: 0,
@@ -536,6 +538,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   width: "33.334%",
                   background: "hsl(40 25% 92%)",
                   boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "center center",
+                  willChange: "transform",
                 }}
               >
                 {/* Spine-skin cross-fades over the center panel */}
