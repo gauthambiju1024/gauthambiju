@@ -576,7 +576,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           </span>
         </div>
       </div>
-      </div>
     </div>,
     document.body
   );
