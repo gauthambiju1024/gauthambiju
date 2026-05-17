@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
-import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT } from "@/components/projects/ProjectSpine";
+import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
+import AboutPopup from "@/components/about/AboutPopup";
 
 /**
  * AboutToProjectsBridge (inline shelf layer)
