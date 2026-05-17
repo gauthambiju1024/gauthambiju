@@ -242,24 +242,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
-      // FOLD — both wings rotate inward onto the center. Double cream faces keep the folded packet solid.
-      const fE = tFold < 0.5 ? 2 * tFold * tFold : 1 - Math.pow(-2 * tFold + 2, 2) / 2;
-      const flapAngle = fE * 176;
-      if (foldLeftRef.current) {
-        // hinge = right edge; negative rotateY folds the left flap inward toward center
-        foldLeftRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
-      }
-      if (foldRightRef.current) {
-        // hinge = left edge; positive rotateY folds the right flap inward toward center
-        foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
-      }
-      if (foldPacketRef.current) foldPacketRef.current.style.opacity = String(1 - tTurn);
+      // FOLD — wings rotate behind center (reference geometry)
+      const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      const fE = eInOut(tFold);
+      if (panelLRef.current) panelLRef.current.style.transform = `rotateY(${(fE * 178).toFixed(2)}deg) translateZ(-5px)`;
+      if (panelRRef.current) panelRRef.current.style.transform = `rotateY(${(-fE * 178).toFixed(2)}deg) translateZ(-5px)`;
 
-      // TURN — rotate the final 50%-wide folded strip only; front cream before 90°, green spine after 90°.
-      const turnE = eOut(tTurn);
-      const turnDeg = turnE * 180;
-      if (volRef.current) volRef.current.style.transform = "none";
-      if (spineFaceRef.current) spineFaceRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
+      // TURN — whole packet revolves; back of center panel (spine) faces us
+      const tE = eInOut(tTurn);
+      if (volRef.current) volRef.current.style.transform = `rotateY(${(-180 * tE).toFixed(2)}deg)`;
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
