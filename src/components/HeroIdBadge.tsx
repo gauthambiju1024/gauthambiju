@@ -500,6 +500,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             expandedId={expandedId}
             setExpandedId={setExpandedId}
           />
+        </div>
 
         {/* Decorative tri-fold flaps — invisible until fold begins. Sit on top of both faces. */}
         <div
