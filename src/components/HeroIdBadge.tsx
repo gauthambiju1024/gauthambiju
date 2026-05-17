@@ -207,7 +207,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tFold = seg(0.04, 0.40, bridge);
       const tTurn = seg(0.24, 0.56, bridge);
       const tFile = seg(0.58, 0.86, bridge);
-      const tSpineLbl = seg(0.30, 0.55, bridge);
+      
       const tHide = seg(0.86, 0.90, bridge);
 
       const stageRect = stage.getBoundingClientRect();
@@ -229,14 +229,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Single rotateY driver: About flip + TURN
       const rotYFlip = p2 * 180 + eInOut(tTurn) * 180;
 
-      // AboutCardBack: fade with TURN only (legible during fold)
-      if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tTurn);
-        cardBackInnerRef.current.style.pointerEvents = tTurn > 0.05 ? "none" : "auto";
-      }
-      if (backSlotRef.current) {
-        backSlotRef.current.style.opacity = String(1 - tTurn);
-      }
       if (backFaceRef.current) {
         backFaceRef.current.style.background = "hsl(40 25% 92%)";
       }
@@ -247,9 +239,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         volRef.current.style.transform = "";
       }
 
-      // FOLD — wings rotate around inner edges
+      // FOLD — wings rotate around inner edges, card clips to centre column
       const fE = eInOut(tFold);
       const flapAngle = fE * 178;
+      const clipPct = (33.333 * fE).toFixed(3);
+      const clipCSS = `inset(0% ${clipPct}% 0% ${clipPct}%)`;
+      if (cardRef.current) {
+        cardRef.current.style.clipPath = clipCSS;
+        (cardRef.current.style as any).webkitClipPath = clipCSS;
+      }
+      if (backFaceRef.current) {
+        backFaceRef.current.style.clipPath = clipCSS;
+        (backFaceRef.current.style as any).webkitClipPath = clipCSS;
+      }
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
@@ -262,9 +264,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           `inset 8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset 0 0 0 1px hsl(0 0% 100% / 0.44)`;
-      }
-      if (spineSkinRef.current) {
-        spineSkinRef.current.style.opacity = String(tSpineLbl);
       }
 
       // FILE — fly to slot + scale down to spine dims
@@ -548,8 +547,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              {/* front face — cream paper that hides the left third of AboutCardBack as it folds */}
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.06), transparent 22%, transparent 78%, hsl(160 30% 4% / 0.22))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)" }} />
+              {/* front face — transparent (clip on card handles hiding About content) */}
+              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }} />
               {/* back face — dark linen (visible once flap folds behind) */}
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
@@ -581,7 +580,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)", backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.22), transparent 22%, transparent 78%, hsl(160 30% 4% / 0.06))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)" }} />
+              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }} />
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
 
@@ -591,14 +590,16 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               ref={spineSkinRef}
               style={{
                 position: "absolute",
-                inset: 0,
+                top: 0,
+                bottom: 0,
+                left: "33.333%",
+                width: "33.334%",
                 transform: "rotateY(180deg)",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 display: "flex",
                 alignItems: "stretch",
                 justifyContent: "stretch",
-                willChange: "opacity",
               }}
             >
               <div style={{ width: "100%", height: "100%" }}>
