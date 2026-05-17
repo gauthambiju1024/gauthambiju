@@ -190,11 +190,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
     // and the bridge shrink/drop that turns the card into a shelved spine.
     const applyTransform = () => {
-      const bridgeActive = !!(window as any).__bridgeActive;
-      // While the bridge is on screen, hold the card at its end-of-flip pose
-      const t = bridgeActive ? 1 : (progressMV?.get() ?? 0);
-      const p1 = smoothstep(0.30, 0.55, t);
-      const p2 = smoothstep(0.55, 0.92, t);
+      const t = progressMV?.get() ?? 0;
+      const p1 = smoothstep(0.35, 0.55, t);
+      const p2 = smoothstep(0.55, 0.72, t);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -214,7 +212,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const rotYFlip = p2 * 180;
 
       // ---- Bridge-driven trifold + shrink-into-spine + drop-onto-shelf ----
-      const bridge = clamp((window as any).__bridgeProgress ?? 0);
+      const bridge = clamp((window as any).__bridgeProgress ?? smoothstep(0.72, 1.0, t));
       // Phase 1: seams appear + AboutCardBack fades out, revealing 3 cream panels
       const tSeams = smoothstep(0.02, 0.18, bridge);
       // Phase 2: left/right panels rotate inward (true trifold)
@@ -247,8 +245,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         spineSkinRef.current.style.opacity = String(tSkin);
       }
 
-      // Shrink card to spine dimensions (width 260 → 78, height 380 → 200)
-      const targetSx = SPINE_WIDTH / w;   // ≈ 0.30
+      // The folded object is the center third of the card, so scale that third to spine width.
+      const targetSx = SPINE_WIDTH / (w / 3);
       const targetSy = SPINE_HEIGHT / h;  // ≈ 0.53
       const shrinkSx = 1 + (targetSx - 1) * tShrink;
       const shrinkSy = 1 + (targetSy - 1) * tShrink;
