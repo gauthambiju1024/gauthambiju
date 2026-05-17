@@ -1,6 +1,6 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
 import AboutToProjectsBridge from "@/components/AboutToProjectsBridge";
-import ProjectsShelf from "@/components/ProjectsShelf";
+import ProjectsShelfMinimal from "@/components/ProjectsShelfMinimal";
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
 import WritingDesk from "@/components/WritingDesk";
@@ -15,9 +15,10 @@ import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
+import { CardFoldContext } from "@/components/cardFoldContext";
 
 const trailingStations = [
-  { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelf },
+  { id: "projects", Frame: BookshelfFrame, Section: ProjectsShelfMinimal },
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
@@ -26,32 +27,35 @@ const trailingStations = [
 
 const Index = () => {
   const tDummy = useMotionValue(0.5);
+  const foldMV = useMotionValue(0);
   return (
-    <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
-      <Entropy />
-      <MarginDoodles />
+    <CardFoldContext.Provider value={foldMV}>
+      <div className="min-h-screen" style={{ background: 'hsl(var(--background))' }}>
+        <Entropy />
+        <MarginDoodles />
 
-      <AssemblyHeader panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
-      <div className="block min-[800px]:hidden">
-        <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
+        <AssemblyHeader panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
+        <div className="block min-[800px]:hidden">
+          <AssemblyHeaderMobile panelIds={["home","about","projects","thinking","skills","writing","contact"]} />
+        </div>
+
+        <div className="margin-content-wrapper relative z-[2]">
+          <HeroAboutFlip />
+
+          <AboutToProjectsBridge />
+
+          {trailingStations.map(({ id, Frame, Section }) => (
+            <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
+              <section id={id} className="relative w-full">
+                <Frame t={tDummy} active={true}>
+                  <Section />
+                </Frame>
+              </section>
+            </div>
+          ))}
+        </div>
       </div>
-
-      <div className="margin-content-wrapper relative z-[2]">
-        <HeroAboutFlip />
-
-        <AboutToProjectsBridge />
-
-        {trailingStations.map(({ id, Frame, Section }) => (
-          <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
-            <section id={id} className="relative w-full">
-              <Frame t={tDummy} active={true}>
-                <Section />
-              </Frame>
-            </section>
-          </div>
-        ))}
-      </div>
-    </div>
+    </CardFoldContext.Provider>
   );
 };
 
