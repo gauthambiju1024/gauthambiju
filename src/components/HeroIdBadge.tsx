@@ -633,6 +633,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
             </div>
           </div>
+        </div>
+      </div>
     </div>,
     document.body
   );
