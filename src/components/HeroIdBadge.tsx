@@ -216,50 +216,51 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // ---- Bridge-driven trifold + shrink-into-spine + drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? smoothstep(0.72, 1.0, t));
-      // Phase 1: seams appear + AboutCardBack fades out, revealing 3 cream panels
-      const tSeams = smoothstep(0.02, 0.18, bridge);
+      // Phase 1: seams appear + AboutCardBack fades out, revealing the actual folded card panels
+      const tSeams = smoothstep(0.04, 0.22, bridge);
       // Phase 2: left/right panels rotate inward (true trifold)
-      const tFold = smoothstep(0.18, 0.45, bridge);
-      // Phase 3: center panel cross-fades into spine skin
-      const tSkin = smoothstep(0.40, 0.62, bridge);
-      // Phase 4: whole card shrinks card→spine size
-      const tShrink = smoothstep(0.55, 0.78, bridge);
-      // Phase 5: drop to shelf slot
-      const tDrop = smoothstep(0.72, 1.00, bridge);
+      const tFold = smoothstep(0.18, 0.54, bridge);
+      // Phase 3: center panel cross-fades into the bookshelf spine skin after the side panels are closing
+      const tSkin = smoothstep(0.52, 0.74, bridge);
+      // Phase 4: whole folded card compresses to spine dimensions
+      const tShrink = smoothstep(0.66, 0.86, bridge);
+      // Phase 5: gravity drop to shelf slot
+      const tDrop = smoothstep(0.82, 1.00, bridge);
 
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(1 - tSeams);
         cardBackInnerRef.current.style.pointerEvents = tSeams > 0.05 ? "none" : "auto";
       }
       if (backFaceRef.current) {
-        backFaceRef.current.style.background = `hsl(40 25% 92% / ${1 - tSeams})`;
-        const frameOpacity = 1 - smoothstep(0.20, 0.75, tShrink);
+        const frameOpacity = 1 - smoothstep(0.90, 0.995, bridge);
+        const paperOpacity = 1 - smoothstep(0.88, 0.99, bridge);
+        backFaceRef.current.style.background = `hsl(40 25% 92% / ${paperOpacity})`;
         backFaceRef.current.style.boxShadow = `0 30px 40px -8px hsl(160 30% 4% / ${0.55 * frameOpacity}), 0 12px 24px -6px hsl(160 30% 4% / ${0.4 * frameOpacity}), inset 0 0 0 1px hsl(0 0% 100% / ${0.5 * frameOpacity})`;
       }
       if (backSlotRef.current) {
         backSlotRef.current.style.opacity = String(1 - tSeams);
       }
       if (foldSeamsRef.current) {
-        foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
+        foldSeamsRef.current.style.opacity = String(tSeams * (1 - smoothstep(0.996, 1.0, bridge)));
       }
       if (foldLeftRef.current) {
-        const a = -tFold * 92; // rotates away from viewer to the left
+        const a = -tFold * 88; // rotates away from viewer to the left
         foldLeftRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
-        foldLeftRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
+        foldLeftRef.current.style.opacity = String(1 - smoothstep(0.90, 1.0, tFold) * 0.18);
       }
       if (foldRightRef.current) {
-        const a = tFold * 92; // rotates away to the right
+        const a = tFold * 88; // rotates away to the right
         foldRightRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
-        foldRightRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
+        foldRightRef.current.style.opacity = String(1 - smoothstep(0.90, 1.0, tFold) * 0.18);
       }
       if (spineSkinRef.current) {
-        spineSkinRef.current.style.opacity = String(tSkin);
+        spineSkinRef.current.style.opacity = String(tSkin * smoothstep(0.12, 0.85, tShrink));
       }
       if (foldCenterRef.current) {
         foldCenterRef.current.style.transform = "scaleX(1) scaleY(1)";
       }
 
-      const targetSx = SPINE_WIDTH / (w / 3);
+      const targetSx = SPINE_WIDTH / w;
       const targetSy = SPINE_HEIGHT / h;
       const shrinkSx = 1 + (targetSx - 1) * tShrink;
       const shrinkSy = 1 + (targetSy - 1) * tShrink;
@@ -272,8 +273,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         if (slotRect) {
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top  + restingCenterY + dyToCenter;
-          dropDx = (slotRect.cx - curCx) * tDrop;
-          dropDy = (slotRect.cy - curCy) * tDrop;
+          const fall = tDrop * tDrop * (3 - 2 * tDrop);
+          const lift = -34 * Math.sin(Math.PI * tDrop);
+          dropDx = (slotRect.cx - curCx) * fall;
+          dropDy = (slotRect.cy - curCy) * fall + lift;
         }
       }
 
@@ -281,8 +284,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const ty = snap(offsetY + dyToCenter + dropDy);
       const s = Math.round(scale * 1000) / 1000;
 
+      const dropTilt = -5 * Math.sin(Math.PI * tDrop);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + dropTilt).toFixed(2)}deg) scale(${s}) ` +
         `scaleX(${shrinkSx.toFixed(3)}) scaleY(${shrinkSy.toFixed(3)}) rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       // Lanyard fades out with the flip
@@ -296,7 +300,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = String(1 - smoothstep(0.985, 1.0, bridge));
+      cardWrap.style.opacity = String(1 - smoothstep(0.996, 1.0, bridge));
       cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
@@ -528,7 +532,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   top: 0, left: 0, bottom: 0,
                   width: "33.333%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.08), transparent 18%, transparent 78%, hsl(0 0% 100% / 0.34))",
+                  boxShadow: "inset -2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), 10px 0 18px hsl(160 30% 4% / 0.18)",
                   transformOrigin: "right center",
                   willChange: "transform, opacity",
                   backfaceVisibility: "hidden",
@@ -543,7 +548,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   left: "33.333%",
                   width: "33.334%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.16), transparent 14%, transparent 86%, hsl(160 30% 4% / 0.16))",
+                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.24), inset 1px 0 0 hsl(160 30% 4% / 0.24), inset 0 0 0 1px hsl(0 0% 100% / 0.44)",
                   transformOrigin: "center center",
                   willChange: "transform",
                 }}
@@ -553,7 +559,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   ref={spineSkinRef}
                   style={{
                     position: "absolute",
-                    inset: 0,
+                    top: 0,
+                    bottom: 0,
+                    left: "-100%",
+                    right: "-100%",
                     opacity: 0,
                     display: "flex",
                     alignItems: "center",
@@ -562,7 +571,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   }}
                 >
                   {/* Counter rotateY(180) of back face so spine text reads correctly */}
-                  <div style={{ transform: "rotateY(180deg)", transformOrigin: "center center" }}>
+                  <div style={{ transform: `rotateY(180deg) scaleX(${260 / SPINE_WIDTH}) scaleY(${380 / SPINE_HEIGHT})`, transformOrigin: "center center" }}>
                     <ProjectSpine data={ABOUT_SPINE_DATA} />
                   </div>
                 </div>
@@ -575,7 +584,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   top: 0, right: 0, bottom: 0,
                   width: "33.333%",
                   background: "hsl(40 25% 92%)",
-                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  backgroundImage: "linear-gradient(90deg, hsl(0 0% 100% / 0.34), transparent 22%, transparent 82%, hsl(160 30% 4% / 0.08))",
+                  boxShadow: "inset 2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), -10px 0 18px hsl(160 30% 4% / 0.18)",
                   transformOrigin: "left center",
                   willChange: "transform, opacity",
                   backfaceVisibility: "hidden",
