@@ -207,7 +207,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tFold = seg(0.04, 0.40, bridge);
       const tTurn = seg(0.24, 0.56, bridge);
       const tFile = seg(0.58, 0.86, bridge);
-      const tSpineLbl = seg(0.30, 0.55, bridge);
+      
       const tHide = seg(0.86, 0.90, bridge);
 
       const stageRect = stage.getBoundingClientRect();
