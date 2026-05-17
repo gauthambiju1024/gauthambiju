@@ -286,7 +286,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Spine label — counter-scale to remain readable through the collapsed wrap.
       if (spineLabelRef.current) {
         spineLabelRef.current.style.opacity = fC.toFixed(3);
-        const inv = foldScale > 0.01 ? 1 / foldScale : 1;
+        const inv = sxFold > 0.01 ? 1 / sxFold : 1;
         spineLabelRef.current.style.transform = `translate(-50%, -50%) scaleX(${inv.toFixed(3)})`;
       }
 
