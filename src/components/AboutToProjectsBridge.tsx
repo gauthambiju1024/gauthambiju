@@ -2,12 +2,7 @@ import { useEffect, useRef } from "react";
 import { MotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
-import ProjectSpine, {
-  SPINE_COLORS,
-  ABOUT_SPINE_DATA,
-  SPINE_WIDTH,
-  SPINE_HEIGHT,
-} from "@/components/projects/ProjectSpine";
+import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT } from "@/components/projects/ProjectSpine";
 
 /**
  * AboutToProjectsBridge (inline shelf layer)
@@ -93,8 +88,8 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         el.style.transform = `translateY(${(1 - k) * 135}%)`;
       }
 
-      // Slot placeholder fades in only after the folded green spine has landed
-      slot.style.opacity = String(seg(0.86, 0.92, bridge));
+      // Slot is only a geometry target; the real folded card remains visible here.
+      slot.style.opacity = "0";
 
       publishSlotRect();
     };
@@ -107,7 +102,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       spineRefs.current.forEach((el) => {
         if (el) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; }
       });
-      slot.style.opacity = "1";
+      slot.style.opacity = "0";
       publishSlotRect();
       return;
     }
@@ -197,7 +192,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
               </div>
             ))}
 
-            {/* About-card landing slot (placeholder; the real card flies here) */}
+            {/* About-card landing slot: invisible geometry only; no replacement spine */}
             <div
               ref={aboutSlotRef}
               aria-hidden
@@ -207,11 +202,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                 height: SPINE_HEIGHT,
                 marginLeft: 8,
                 opacity: 0,
-                willChange: "opacity",
+                visibility: "hidden",
               }}
-            >
-              <ProjectSpine data={ABOUT_SPINE_DATA} />
-            </div>
+            />
           </div>
 
           {/* Minimal shelf line */}

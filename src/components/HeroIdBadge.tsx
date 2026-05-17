@@ -28,6 +28,10 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 const snap = (v: number, q = 0.5) => Math.round(v / q) * q;
+const CARD_WIDTH = 260;
+const CARD_HEIGHT = 380;
+const CARD_BG = "hsl(40 25% 92%)";
+const CARD_SHADOW = "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)";
 
 const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const { value: heroData, loading: heroLoading } = useSiteContent("hero", "main");
@@ -90,7 +94,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const backFaceRef = useRef<HTMLDivElement>(null);
   const backSlotRef = useRef<HTMLDivElement>(null);
   const foldCenterRef = useRef<HTMLDivElement>(null);
-  const spineSkinRef = useRef<HTMLDivElement>(null);
   const foldLeftRef = useRef<HTMLDivElement>(null);
   const foldRightRef = useRef<HTMLDivElement>(null);
   const volRef = useRef<HTMLDivElement>(null);
@@ -207,8 +210,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tFold = seg(0.04, 0.40, bridge);
       const tTurn = seg(0.24, 0.56, bridge);
       const tFile = seg(0.58, 0.86, bridge);
-      
-      const tHide = seg(0.86, 0.90, bridge);
+      const foldActive = bridge > 0.04;
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -226,32 +228,32 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
-      // Single rotateY driver: About flip + TURN
-      const rotYFlip = p2 * 180 + eInOut(tTurn) * 180;
+      // Keep the wrapper capped on the About face; the center strip owns TURN.
+      const rotYFlip = p2 * 180;
 
       if (backFaceRef.current) {
-        backFaceRef.current.style.background = "hsl(40 25% 92%)";
+        backFaceRef.current.style.background = foldActive ? "transparent" : CARD_BG;
+        backFaceRef.current.style.boxShadow = foldActive ? "none" : CARD_SHADOW;
+        backFaceRef.current.style.pointerEvents = foldActive ? "none" : "auto";
+        backFaceRef.current.style.clipPath = "none";
+        (backFaceRef.current.style as any).webkitClipPath = "none";
+      }
+      if (cardRef.current) {
+        cardRef.current.style.clipPath = "none";
+        (cardRef.current.style as any).webkitClipPath = "none";
       }
 
-      // Wings overlay opacity
+      // Segmented physical card takes over at fold start; no crossfade, just the same surface split into strips.
+      if (cardBackInnerRef.current) cardBackInnerRef.current.style.opacity = foldActive ? "0" : "1";
+      if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
       if (volRef.current) {
-        volRef.current.style.opacity = String(tFold > 0.01 ? 1 : 0);
+        volRef.current.style.opacity = foldActive ? "1" : "0";
         volRef.current.style.transform = "";
       }
 
-      // FOLD — wings rotate around inner edges, card clips to centre column
+      // FOLD — the actual card strips rotate around their inner edges; the center strip stays as the carried object.
       const fE = eInOut(tFold);
       const flapAngle = fE * 178;
-      const clipPct = (33.333 * fE).toFixed(3);
-      const clipCSS = `inset(0% ${clipPct}% 0% ${clipPct}%)`;
-      if (cardRef.current) {
-        cardRef.current.style.clipPath = clipCSS;
-        (cardRef.current.style as any).webkitClipPath = clipCSS;
-      }
-      if (backFaceRef.current) {
-        backFaceRef.current.style.clipPath = clipCSS;
-        (backFaceRef.current.style as any).webkitClipPath = clipCSS;
-      }
       if (foldLeftRef.current) {
         foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
@@ -259,7 +261,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
       if (foldCenterRef.current) {
+        const turnDeg = eInOut(tTurn) * 180;
         const cd = 0.18 + fE * 0.28;
+        foldCenterRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
         foldCenterRef.current.style.boxShadow =
           `inset 8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
           `inset -8px 0 14px -8px hsl(160 30% 4% / ${cd.toFixed(3)}), ` +
@@ -268,12 +272,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // FILE — fly to slot + scale down to spine dims
       const fileE = eInOut(tFile);
-      const targetSx = SPINE_WIDTH / w;
+      const targetSx = SPINE_WIDTH / (w / 3);
       const targetSy = SPINE_HEIGHT / h;
-      const fileScaleX = 1 + (targetSx - 1) * fileE;
-      const fileScaleY = 1 + (targetSy - 1) * fileE;
-      // Uniform scale via average (cardWrap holds single scale); use min to fit
-      const fileScale = Math.min(fileScaleX, fileScaleY);
+      const scaleX = Math.round((baseScale + (targetSx - baseScale) * fileE) * 1000) / 1000;
+      const scaleY = Math.round((baseScale + (targetSy - baseScale) * fileE) * 1000) / 1000;
       const arcY = Math.sin(tFile * Math.PI) * -60;
       const settleDeg = tFile > 0 && tFile < 1 ? Math.sin(tFile * Math.PI) * -3 * (1 - tFile) : 0;
 
@@ -291,10 +293,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
-      const s = Math.round(baseScale * fileScale * 1000) / 1000;
-
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + settleDeg).toFixed(2)}deg) scale(${s}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + settleDeg).toFixed(2)}deg) scale(${scaleX}, ${scaleY}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       // Lanyard fades with the About flip
@@ -307,7 +307,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && tFold < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = String(1 - tHide);
+      cardWrap.style.opacity = "1";
       cardWrap.style.pointerEvents = p1 > 0.05 || tFold > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
@@ -356,6 +356,27 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   }, [mounted, progressMV]);
 
   if (!mounted) return null;
+
+  const aboutSurface = (offsetX: number) => (
+    <div
+      style={{
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        padding: "20px 14px 14px",
+        transform: `translateX(${offsetX}px)`,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <AboutCardBack
+        data={journey}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        expandedId={expandedId}
+        setExpandedId={setExpandedId}
+      />
+    </div>
+  );
 
   return createPortal(
     <div
@@ -444,7 +465,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         style={{
           top: 90,
           right: 32,
-          width: 260,
+          width: CARD_WIDTH,
           transform: "rotate(8deg)",
           transformOrigin: "center center",
           transformStyle: "preserve-3d",
@@ -458,12 +479,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <div
           ref={cardRef}
           style={{
-            width: 260,
-            height: 380,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
             padding: "12px 14px 16px",
-            background: "hsl(40 25% 92%)",
+            background: CARD_BG,
             borderRadius: 4,
-            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             position: "relative",
@@ -487,12 +508,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           style={{
             position: "absolute",
             inset: 0,
-            width: 260,
-            height: 380,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
             padding: "20px 14px 14px",
-            background: "hsl(40 25% 92%)",
+            background: CARD_BG,
             borderRadius: 4,
-            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
@@ -518,7 +539,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold packet — left/right wings overlay + a project-spine back */}
+          {/* Trifold packet — the About surface itself split into three physical strips */}
           <div
             ref={volRef}
             aria-hidden
@@ -534,7 +555,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* LEFT wing — folds behind (origin: right edge) */}
+            {/* LEFT third — carries the actual left side of About and folds behind */}
             <div
               ref={foldLeftRef}
               style={{
@@ -547,13 +568,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              {/* front face — transparent (clip on card handles hiding About content) */}
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }} />
-              {/* back face — dark linen (visible once flap folds behind) */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+                {aboutSurface(0)}
+              </div>
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
 
-            {/* CENTER crease shadow only — no front face so live AboutCardBack stays visible */}
+            {/* CENTER third — turns internally into the green ABOUT spine */}
             <div
               ref={foldCenterRef}
               style={{
@@ -562,12 +583,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 left: "33.333%",
                 width: "33.334%",
                 pointerEvents: "none",
-                willChange: "box-shadow",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "center center",
+                willChange: "transform, box-shadow",
                 boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18)",
               }}
-            />
+            >
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+                {aboutSurface(-CARD_WIDTH / 3)}
+              </div>
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "stretch", justifyContent: "stretch" }}>
+                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+              </div>
+            </div>
 
-            {/* RIGHT wing — folds behind (origin: left edge) */}
+            {/* RIGHT third — carries the actual right side of About and folds behind */}
             <div
               ref={foldRightRef}
               style={{
@@ -580,34 +611,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 willChange: "transform",
               }}
             >
-              <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "transparent", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }} />
-              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
-            </div>
-
-            {/* SPINE back face — real ProjectSpine markup, sized to fill 260×380 so FILE-phase
-                scaleX/Y (SPINE_WIDTH/260, SPINE_HEIGHT/380) collapses it to shelf-row dimensions. */}
-            <div
-              ref={spineSkinRef}
-              style={{
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                left: "33.333%",
-                width: "33.334%",
-                transform: "rotateY(180deg)",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
-              }}
-            >
-              <div style={{ width: "100%", height: "100%" }}>
-                <ProjectSpine
-                  data={ABOUT_SPINE_DATA}
-                  style={{ width: "100%", height: "100%" }}
-                />
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
+                {aboutSurface(-(CARD_WIDTH * 2) / 3)}
               </div>
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
           </div>
         </div>
