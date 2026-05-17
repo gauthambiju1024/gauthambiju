@@ -251,21 +251,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (foldRightRef.current) {
         foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
-      // TURN — center strip rotates internally; cross-fade about face → green spine across the rotation midpoint
+      // TURN — center strip rotates internally; backface-visibility reveals green spine past 90°
       if (foldCenterRef.current) {
         const turnDeg = eOut(tTurn) * 180;
         foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
       }
+      // No cross-fade — about face uses backface-visibility:hidden to disappear naturally
       const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
-      if (aboutFaceEl) aboutFaceEl.style.opacity = String(1 - clamp(tTurn / 0.6));
+      if (aboutFaceEl) aboutFaceEl.style.opacity = "1";
 
-      // FILE — fly to slot + scale to spine dims (no arc, no wobble)
-      const fileE = eOut(tFile);
-      const targetSx = SPINE_WIDTH / (w / 3);
+      // SHRINK — packet scales down to spine footprint BEFORE the fly
+      // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
+      const shrinkE = eOut(tShrink);
+      const targetSx = SPINE_WIDTH / (w / 2);
       const targetSy = SPINE_HEIGHT / h;
-      const scaleX = Math.round((baseScale + (targetSx - baseScale) * fileE) * 1000) / 1000;
-      const scaleY = Math.round((baseScale + (targetSy - baseScale) * fileE) * 1000) / 1000;
+      const scaleX = Math.round((baseScale + (targetSx - baseScale) * shrinkE) * 1000) / 1000;
+      const scaleY = Math.round((baseScale + (targetSy - baseScale) * shrinkE) * 1000) / 1000;
 
+      // FILE — fly to slot, only after shrink completes
+      const fileE = eOut(tFile);
       let flyDx = 0, flyDy = 0;
       if (tFile > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
