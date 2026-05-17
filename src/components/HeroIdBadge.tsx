@@ -202,12 +202,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
-      // Spec phases
-      const tFold = seg(0.04, 0.40, p);
-      const tTurn = seg(0.24, 0.56, p);
-      const tFile = seg(0.58, 0.86, p);
-      const tSpineLbl = seg(0.30, 0.55, p);
-      const tHide = seg(0.86, 0.88, p);
+      // about→projects segment driver; all 5 spec phases are bridge-relative
+      const bridge = smoothstep(0.72, 1.0, p);
+      const tFold = seg(0.04, 0.40, bridge);
+      const tTurn = seg(0.24, 0.56, bridge);
+      const tFile = seg(0.58, 0.86, bridge);
+      const tSpineLbl = seg(0.30, 0.55, bridge);
+      const tHide = seg(0.86, 0.90, bridge);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
