@@ -247,6 +247,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           </svg>
         </div>
       </div>
+      <AboutPopup open={popupOpen} onOpenChange={setPopupOpen} />
     </section>
   );
 };
