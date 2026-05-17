@@ -242,7 +242,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
-      // FOLD — wings rotate flush behind the center strip
+      // FOLD — both wings rotate inward onto the cream center; packet stays solid cream
       const fE = eOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
@@ -251,14 +251,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (foldRightRef.current) {
         foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
-      // TURN — center strip rotates internally; backface-visibility reveals green spine past 90°
-      if (foldCenterRef.current) {
+      // TURN — the WHOLE folded packet flips as one unit, revealing the green spine on its back
+      if (volRef.current) {
         const turnDeg = eOut(tTurn) * 180;
-        foldCenterRef.current.style.transform = `translateZ(1px) rotateY(${turnDeg.toFixed(2)}deg)`;
+        volRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
       }
-      // No cross-fade — about face uses backface-visibility:hidden to disappear naturally
-      const aboutFaceEl = foldCenterRef.current?.firstElementChild as HTMLElement | null;
-      if (aboutFaceEl) aboutFaceEl.style.opacity = "1";
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
