@@ -612,7 +612,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               </div>
             </div>
 
-            {/* SPINE face — real back face of the folded 50% packet; appears naturally after 90° */}
+            {/* Layer B: final folded strip — cream front, green spine back, always centered and never blank */}
             <div
               ref={spineFaceRef}
               aria-hidden
@@ -621,17 +621,39 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 top: 0, bottom: 0,
                 left: "25%",
                 width: "50%",
-                background: "hsl(170 25% 28%)",
-                boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
-                transform: "rotateY(180deg) translateZ(1px)",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "center center",
+                willChange: "transform",
               }}
             >
-              <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: CARD_BG,
+                  boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "translateZ(1px)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "hsl(170 25% 28%)",
+                  boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
+                  display: "flex",
+                  alignItems: "stretch",
+                  justifyContent: "stretch",
+                  transform: "rotateY(180deg) translateZ(1px)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                }}
+              >
+                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+              </div>
             </div>
           </div>
         </div>
