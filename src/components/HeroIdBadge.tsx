@@ -184,7 +184,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     updateLanyardRef.current = updateLanyard;
 
     // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
-    // and the bridge fold/rotate/drop that turns the card into a shelved spine.
+    // and the bridge shrink/drop that turns the card into a shelved spine.
     const applyTransform = () => {
       const bridgeActive = !!(window as any).__bridgeActive;
       // While the bridge is on screen, hold the card at its end-of-flip pose
@@ -209,38 +209,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotYFlip = p2 * 180;
 
-      // ---- Bridge-driven fold / rotate-to-spine / drop-onto-shelf ----
+      // ---- Bridge-driven shrink-into-spine + drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? 0);
-      const tHide  = smoothstep(0.02, 0.10, bridge);  // back content fades, flaps appear
-      const tFold  = smoothstep(0.10, 0.40, bridge);  // tri-fold
-      const tRot   = smoothstep(0.40, 0.66, bridge);  // rotate to spine + walnut bg
-      const tDrop  = smoothstep(0.66, 1.00, bridge);  // translate down to shelf slot
+      // back content (globe + about) cross-fades into spine skin immediately
+      const tSkin = smoothstep(0.00, 0.15, bridge);
+      // card shrinks to spine size
+      const tShrink = smoothstep(0.15, 0.55, bridge);
+      // translate to the shelf slot
+      const tDrop = smoothstep(0.55, 1.00, bridge);
 
-      // Flap overlay panels (rendered inside the back-face, see below)
-      if (flapsWrapRef.current) {
-        flapsWrapRef.current.style.opacity = String(tHide);
-      }
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tHide);
-        cardBackInnerRef.current.style.pointerEvents = tHide > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tSkin);
+        cardBackInnerRef.current.style.pointerEvents = tSkin > 0.05 ? "none" : "auto";
       }
-      const flapAngle = tFold * 88;
-      if (flapLeftRef.current)   flapLeftRef.current.style.transform   = `rotateY(${flapAngle}deg)`;
-      if (flapRightRef.current)  flapRightRef.current.style.transform  = `rotateY(${-flapAngle}deg)`;
-      if (flapCenterRef.current) {
-        const cd = 0.12 + tFold * 0.32;
-        flapCenterRef.current.style.boxShadow =
-          `inset 6px 0 12px -6px rgba(0,0,0,${cd}), inset -6px 0 12px -6px rgba(0,0,0,${cd})`;
-      }
-      // Walnut spine slab fades in during rotation
-      if (slabRef.current) {
-        slabRef.current.style.opacity = String(tRot);
+      if (spineSkinRef.current) {
+        spineSkinRef.current.style.opacity = String(tSkin);
       }
 
-      // Compose card transform: extra scaleX shrink + rotateY (adds to flip) + drop
-      const sx = 1 - tFold * 0.88;            // tri-fold horizontal collapse
-      const extraRotY = tRot * 90;            // 0 → 90° (to edge-on, becomes spine)
-      const dropShrink = 1 - tDrop * 0.74;    // shrink whole card down to spine size
+      // Shrink card to spine dimensions (width 260 → 78, height 380 → 200)
+      const targetSx = SPINE_WIDTH / w;   // ≈ 0.30
+      const targetSy = SPINE_HEIGHT / h;  // ≈ 0.53
+      const shrinkSx = 1 + (targetSx - 1) * tShrink;
+      const shrinkSy = 1 + (targetSy - 1) * tShrink;
 
       // Compute drop translation to land on the shelf slot (viewport coords)
       let dropDx = 0, dropDy = 0;
@@ -248,8 +238,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          // current viewport center of the cardWrap pre-drop:
-          // stage top = stageRect.top; cardWrap center in stage = (restingCenterX + dxToCenter, restingCenterY + dyToCenter)
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top  + restingCenterY + dyToCenter;
           dropDx = (slotRect.cx - curCx) * tDrop;
@@ -259,25 +247,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const tx = snap(offsetX + dxToCenter + dropDx);
       const ty = snap(offsetY + dyToCenter + dropDy);
-      const s = Math.round(scale * dropShrink * 1000) / 1000;
+      const s = Math.round(scale * 1000) / 1000;
 
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt}deg) scale(${s}) ` +
-        `scaleX(${sx.toFixed(3)}) rotateY(${(rotYFlip + extraRotY).toFixed(2)}deg)`;
+        `scaleX(${shrinkSx.toFixed(3)}) scaleY(${shrinkSy.toFixed(3)}) rotateY(${rotYFlip.toFixed(2)}deg)`;
 
-      // Existing fade behavior (lanyard, globe)
+      // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String(1 - p2);
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSkin));
       }
-      // Globe fades in with the flip, fades out as the bridge folding starts.
-      const globeFade = smoothstep(0.02, 0.14, bridge);
+      // Globe is visible only during the flip; the moment the bridge starts it disappears
       if (globeLayerRef.current) {
-        globeLayerRef.current.style.opacity = String(p2 * (1 - globeFade));
+        const globeOp = p2 * (1 - tSkin);
+        globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && globeFade < 0.2 ? "auto" : "none";
+          p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = "1"; // card stays visible — it becomes the spine
-      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.05 ? "none" : "auto";
+      cardWrap.style.opacity = "1";
+      cardWrap.style.pointerEvents = p1 > 0.05 || bridge > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
