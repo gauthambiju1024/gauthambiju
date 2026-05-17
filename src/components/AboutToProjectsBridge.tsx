@@ -34,7 +34,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const ledgePathRef = useRef<SVGPathElement>(null);
   const spineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const aboutSlotRef = useRef<HTMLDivElement>(null);
+  const aboutSpineRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [popupOpen, setPopupOpen] = useState(false);
 
   const { projects } = useProjects();
 
