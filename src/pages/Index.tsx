@@ -1,4 +1,5 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
+import AboutToProjectsBridge from "@/components/AboutToProjectsBridge";
 import ProjectsShelf from "@/components/ProjectsShelf";
 import ThinkingWall from "@/components/ThinkingWall";
 import SkillsToolbox from "@/components/SkillsToolbox";
@@ -37,6 +38,8 @@ const Index = () => {
 
       <div className="margin-content-wrapper relative z-[2]">
         <HeroAboutFlip />
+
+        <AboutToProjectsBridge />
 
         {trailingStations.map(({ id, Frame, Section }) => (
           <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
