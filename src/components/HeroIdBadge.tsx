@@ -248,21 +248,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const fE = eOut(tFold);
       const flapAngle = fE * 178;
       if (foldLeftRef.current) {
-        // hinge = right edge; positive rotateY swings the left flap inward over the center
-        foldLeftRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
+        // hinge = right edge; negative rotateY folds the left flap inward toward center
+        foldLeftRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
       }
       if (foldRightRef.current) {
-        // hinge = left edge; negative rotateY swings the right flap inward over the center
-        foldRightRef.current.style.transform = `rotateY(${(-flapAngle).toFixed(2)}deg)`;
+        // hinge = left edge; positive rotateY folds the right flap inward toward center
+        foldRightRef.current.style.transform = `rotateY(${flapAngle.toFixed(2)}deg)`;
       }
-      // TURN — the WHOLE folded packet flips as one unit; the real back face is the green spine.
+      if (foldPacketRef.current) foldPacketRef.current.style.opacity = String(1 - tTurn);
+
+      // TURN — rotate the final 50%-wide folded strip only; front cream before 90°, green spine after 90°.
       const turnE = eOut(tTurn);
       const turnDeg = turnE * 180;
-      if (volRef.current) {
-        volRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
-      }
-      // Hide the front flaps once the packet has turned past edge-on, so the full spine owns the back.
-      if (foldPacketRef.current) foldPacketRef.current.style.visibility = turnDeg < 90 ? "visible" : "hidden";
+      if (volRef.current) volRef.current.style.transform = "none";
+      if (spineFaceRef.current) spineFaceRef.current.style.transform = `rotateY(${turnDeg.toFixed(2)}deg)`;
 
       // SHRINK — packet scales down to spine footprint BEFORE the fly
       // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
@@ -551,7 +550,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* Cream packet group — true front face of the folding packet */}
+            {/* Layer A: folding leaves — fades out as the final folded strip starts flipping */}
             <div
               ref={foldPacketRef}
               style={{
@@ -559,9 +558,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 inset: 0,
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-                willChange: "visibility",
+                willChange: "opacity",
               }}
             >
               {/* CENTER — 50% of card; solid cream base */}
@@ -573,7 +570,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   left: "25%",
                   width: "50%",
                   background: CARD_BG,
-                  transform: "translateZ(-0.4px)",
+                  transform: "translateZ(0)",
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
                   boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
@@ -615,7 +612,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               </div>
             </div>
 
-            {/* SPINE face — real back face of the folded 50% packet; appears naturally after 90° */}
+            {/* Layer B: final folded strip — cream front, green spine back, always centered and never blank */}
             <div
               ref={spineFaceRef}
               aria-hidden
@@ -624,17 +621,39 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 top: 0, bottom: 0,
                 left: "25%",
                 width: "50%",
-                background: "hsl(170 25% 28%)",
-                boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
-                transform: "rotateY(180deg) translateZ(1px)",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "center center",
+                willChange: "transform",
               }}
             >
-              <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: CARD_BG,
+                  boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "translateZ(1px)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "hsl(170 25% 28%)",
+                  boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.18), inset 0 0 24px hsl(160 30% 4% / 0.12)",
+                  display: "flex",
+                  alignItems: "stretch",
+                  justifyContent: "stretch",
+                  transform: "rotateY(180deg) translateZ(1px)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                }}
+              >
+                <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
+              </div>
             </div>
           </div>
         </div>
