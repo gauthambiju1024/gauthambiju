@@ -88,6 +88,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
+  const foldLeftRef = useRef<HTMLDivElement>(null);
+  const foldRightRef = useRef<HTMLDivElement>(null);
+  const foldSeamsRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -217,18 +220,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const scale = 1 + (maxScale - 1) * p1;
       const rotYFlip = p2 * 180;
 
-      // ---- Bridge-driven shrink-into-spine + drop-onto-shelf ----
+      // ---- Bridge-driven trifold + shrink-into-spine + drop-onto-shelf ----
       const bridge = clamp((window as any).__bridgeProgress ?? 0);
-      // back content (globe + about) cross-fades into spine skin immediately
-      const tSkin = smoothstep(0.00, 0.15, bridge);
-      // card shrinks to spine size
-      const tShrink = smoothstep(0.15, 0.55, bridge);
-      // translate to the shelf slot
-      const tDrop = smoothstep(0.55, 1.00, bridge);
+      // Phase 1: seams appear + AboutCardBack fades out, revealing 3 cream panels
+      const tSeams = smoothstep(0.02, 0.18, bridge);
+      // Phase 2: left/right panels rotate inward (true trifold)
+      const tFold = smoothstep(0.18, 0.45, bridge);
+      // Phase 3: center panel cross-fades into spine skin
+      const tSkin = smoothstep(0.40, 0.62, bridge);
+      // Phase 4: whole card shrinks card→spine size
+      const tShrink = smoothstep(0.55, 0.78, bridge);
+      // Phase 5: drop to shelf slot
+      const tDrop = smoothstep(0.72, 1.00, bridge);
 
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(1 - tSkin);
-        cardBackInnerRef.current.style.pointerEvents = tSkin > 0.05 ? "none" : "auto";
+        cardBackInnerRef.current.style.opacity = String(1 - tSeams);
+        cardBackInnerRef.current.style.pointerEvents = tSeams > 0.05 ? "none" : "auto";
+      }
+      if (foldSeamsRef.current) {
+        foldSeamsRef.current.style.opacity = String(tSeams * (1 - tSkin));
+      }
+      if (foldLeftRef.current) {
+        const a = -tFold * 92; // rotates away from viewer to the left
+        foldLeftRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+        foldLeftRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
+      }
+      if (foldRightRef.current) {
+        const a = tFold * 92; // rotates away to the right
+        foldRightRef.current.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+        foldRightRef.current.style.opacity = String(1 - smoothstep(0.85, 1.0, tFold) * 0.4);
       }
       if (spineSkinRef.current) {
         spineSkinRef.current.style.opacity = String(tSkin);
@@ -263,11 +283,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       // Lanyard fades out with the flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSkin));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSeams));
       }
       // Globe is visible only during the flip; the moment the bridge starts it disappears
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tSkin);
+        const globeOp = p2 * (1 - tSeams);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && bridge < 0.02 ? "auto" : "none";
@@ -480,28 +500,79 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Spine-skin overlay — cross-fades in to make the card look like a shelf spine */}
+          {/* Trifold seam overlay — 3 cream panels; left/right rotate inward like a folding map */}
           <div
-            ref={spineSkinRef}
+            ref={foldSeamsRef}
             aria-hidden
             style={{
               position: "absolute",
               inset: 0,
               opacity: 0,
               pointerEvents: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 6,
+              zIndex: 5,
+              perspective: 1200,
               willChange: "opacity",
-              // The spine itself is fixed-size; the card scales down around it so they meet at the slot.
-              transformOrigin: "center center",
             }}
           >
-            {/* Render the spine at its native 78x200 footprint, centered inside the card */}
-            {/* Counter the rotateY(180) of the back face so the spine reads correctly */}
-            <div style={{ width: SPINE_WIDTH, height: SPINE_HEIGHT, transform: "rotateY(180deg)" }}>
-              <ProjectSpine data={ABOUT_SPINE_DATA} />
+            <div style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d" }}>
+              {/* Left panel — folds back-right (anchored to inner edge) */}
+              <div
+                ref={foldLeftRef}
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, bottom: 0,
+                  width: "33.333%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "right center",
+                  willChange: "transform, opacity",
+                  backfaceVisibility: "hidden",
+                }}
+              />
+              {/* Center panel — stays put, becomes the spine */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0, bottom: 0,
+                  left: "33.333%",
+                  width: "33.334%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                }}
+              >
+                {/* Spine-skin cross-fades over the center panel */}
+                <div
+                  ref={spineSkinRef}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    willChange: "opacity",
+                  }}
+                >
+                  {/* Counter rotateY(180) of back face so spine text reads correctly */}
+                  <div style={{ transform: "rotateY(180deg)", transformOrigin: "center center" }}>
+                    <ProjectSpine data={ABOUT_SPINE_DATA} />
+                  </div>
+                </div>
+              </div>
+              {/* Right panel — folds back-left (anchored to inner edge) */}
+              <div
+                ref={foldRightRef}
+                style={{
+                  position: "absolute",
+                  top: 0, right: 0, bottom: 0,
+                  width: "33.333%",
+                  background: "hsl(40 25% 92%)",
+                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)",
+                  transformOrigin: "left center",
+                  willChange: "transform, opacity",
+                  backfaceVisibility: "hidden",
+                }}
+              />
             </div>
           </div>
         </div>
