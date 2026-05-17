@@ -1,138 +1,107 @@
-# Replicate the reference's trifold construction exactly
+# Fix blank fold + replace gold spine with project-spine style
 
-The current implementation cheats: the "fold" is an opaque cream overlay
-placed on top of the back face. When flaps rotate, they don't reveal anything
-underneath because they ARE the surface. The reference does something
-fundamentally different — it builds a real 3-panel volume where each panel
-has its own front and back face, and the spine is the *back of the centre
-panel* (not an overlay).
+## Why the card looked blank
 
-## How the reference builds it
+The new vol overlay renders 3 opaque cream panels in front of the live
+`AboutCardBack`. During `tSettle` the live content fades out, and the
+cloned `<AboutCardBack>` instances inside each panel don't fill their
+slots (parent uses `display:flex; flexDirection:column` without `flex:1`
+on the child, and `AboutCardBack` has no intrinsic height). Net result:
+3 blank cream rectangles covering everything.
 
-```
-#dossier (perspective host)
-└── .vol                            ← the whole "packet"; gets rotateY(-180) on TURN
-    ├── .panel.l   width:140  origin: right center
-    │   ├── .pf.front  ← carries a 420×560 .clone of the card, shifted left:0
-    │   └── .pf.back   ← dark linen
-    ├── .panel.c   width:140  left:140
-    │   ├── .pf.front  ← .clone shifted left:-140 (shows centre third)
-    │   └── .pf.spine  ← gold gradient + vertical "ABOUT" text   ← the SPINE
-    └── .panel.r   width:140  left:280  origin: left center
-        ├── .pf.front  ← .clone shifted left:-280
-        └── .pf.back   ← dark linen
-```
+The clone approach is overkill anyway — we don't need 3 live copies of
+the about content to sell the fold. Simpler structure works better.
 
-Critical rules:
-- Each `.pf` has `backface-visibility:hidden`.
-- `.pf.back` and `.pf.spine` are pre-rotated `rotateY(180deg)` so they sit
-  on the opposite face of their panel.
-- TRIFOLD rotates only `.panel.l` (+178°) and `.panel.r` (−178°). Because
-  the wings carry their own front+back, when they fold behind the centre,
-  they show their dark back side from the camera's perspective — exactly
-  what the user described as "folding".
-- TURN rotates the whole `.vol` by −180°. Now we see the *backs* of all
-  three panels. The centre back is `.pf.spine` (gold + ABOUT label), the
-  L/R backs are dark — together they form the spine of a filed dossier.
+## New construction
 
-Our overlay approach can't ever look like that because:
-1. There's no per-panel back face, so folding wings reveal nothing.
-2. The "spine label" sits on the front of the centre panel rotated 180°,
-   so it never enters the camera correctly.
-3. There's no whole-packet TURN, so we never get the dossier-becomes-spine
-   reveal.
-
-## Plan
-
-### `src/components/HeroIdBadge.tsx` — rebuild the fold packet
-
-Replace the `foldSeamsRef` overlay (lines 521–615) with a true `.vol`
-construction layered over the existing back face. Wrap the three panels
-in a `volRef` div so we can apply the TURN.
-
-Structure (260×380 to match the card; panel width = 86.66):
+Keep the live `AboutCardBack` as the CENTER panel's front. Only the two
+WINGS are added as new fold elements. The "spine" back-face is a
+ProjectSpine-styled element matching the shelf's other spines.
 
 ```
-<div volRef                              transformStyle: preserve-3d
-     style={transform: rotateY(turnDeg)}>
-  <div leftPanelRef   w:33.33%  origin:right center  preserve-3d>
-    <div .pf.front>   {clone of back-face slice, left:0}
-    <div .pf.back     transform:rotateY(180deg)>  dark linen
-  </div>
-  <div centerPanelRef w:33.34%  left:33.33%        preserve-3d>
-    <div .pf.front>   {clone of back-face slice, left:-86.66}
-    <div .pf.spine    transform:rotateY(180deg)>
-       <span vertical>{badge.ribbonLeft} · 2026</span>
-       crease shadow + cap + tick like reference
-    </div>
-  </div>
-  <div rightPanelRef  w:33.33%  left:66.67%  origin:left center  preserve-3d>
-    <div .pf.front>   {clone of back-face slice, left:-173.33}
-    <div .pf.back     transform:rotateY(180deg)>  dark linen
-  </div>
-</div>
+backFaceRef (cardWrap back; rotateY 180° + preserve-3d)
+├── live AboutCardBack             ← centre front, ALWAYS visible
+├── volRef                          ← preserve-3d, opacity ramps with tFold
+│   ├── leftWing                    ← absolute, off-screen at rest (left:-33.33%)
+│   │   slides in over [0, tFold start] then rotateY +178° (origin right)
+│   │   front: cream + crease shadow; back: dark linen
+│   ├── rightWing                   ← mirror of leftWing (right edge)
+│   └── spineBack                   ← absolute inset 0, transform rotateY(180°)
+│       backface-visibility hidden, scaled down on FILE phase so its
+│       visible footprint matches the shelf row's SPINE_HEIGHT.
+│       Uses the SAME ProjectSpine markup (cream/walnut linen, vertical
+│       "ABOUT" text, year cap, subtitle) — NO gold gradient, no
+│       crossfade-to-yellow.
+└── (slot, header decoration unchanged)
 ```
 
-The `.pf.front` of each panel uses a CSS mask or `overflow:hidden` + a
-positioned clone of the back-face DOM (or a snapshot — see note below).
+Behavior:
+- At bridge = 0 → vol opacity 0, wings invisible, AboutCardBack visible
+  normally. The card preview matches today's About flip.
+- TRIFOLD (b 0–0.36): vol fades in. Wings slide from off-stage onto
+  left/right thirds of the card (so a tri-panel composition appears),
+  then rotate ±178° around their inner edges, folding behind. Wings carry
+  their own dark back so as they fold you SEE the dark backside (true
+  fold visual).
+- TURN (b 0.30–0.58): whole vol (and the AboutCardBack underneath) rotates
+  with cardWrap as currently. The spineBack inside vol is pre-rotated 180°
+  with `backface-visibility:hidden`, so it only appears when the packet's
+  back faces the camera — that's where the project-spine styled centre
+  shows up.
+- FILE (b 0.54–0.84): existing arc + scale to `SPINE_WIDTH × SPINE_HEIGHT`.
+  Because spineBack uses the same `<ProjectSpine>` proportions, the
+  shrunken visual lands matching the other shelf spines naturally — no
+  extra height fudging.
+- AboutCardBack fade: fade it out only on `tTurn > 0.5` (during the actual
+  turn, not during settle), so wings folding don't reveal a blank centre.
+  At that point the user is seeing the back side anyway.
 
-**Clone strategy** — since `AboutCardBack` is a React component with state,
-we don't want to literally duplicate it 3× and animate state mismatches.
-Two cheap options:
-- (A) Render `AboutCardBack` once inside an invisible source div; the three
-  `.pf.front` slices use `background-image` from a static cream colour plus
-  a CSS-only "page rule" pattern. This keeps the fold visually convincing
-  without DOM duplication — but loses the actual content imagery.
-- (B) Render `AboutCardBack` three times (same props), each inside its
-  panel's `.pf.front`, positioned via `left:0 / -86.66 / -173.33` so they
-  reassemble to one continuous card. State is held in the parent
-  (`activeTab`, `expandedId`), so all three stay in sync.
+## Spine styling
 
-I'll use **(B)**. It matches the reference exactly, content survives the
-fold, and the panels overflow:hidden so each shows its third.
+Use a real `<ProjectSpine>` for the back face, with
+`data={ABOUT_SPINE_DATA}`, `fallbackColor` left at default cream-walnut.
+Wrap it so it fills the full card footprint (260×380), then the FILE phase
+scaleX/Y collapses it to `SPINE_WIDTH/260 × SPINE_HEIGHT/380` — exactly
+matching the shelf row. No gold gradient, no yellow ABOUT label, no
+crossfade. It IS a project spine from the moment the back face shows.
 
-### Phase math
+## File changes
 
-Keep the four ranges already in place, with one addition for TURN:
-
-```
-TRIFOLD  b 0.00–0.36   leftPanel rotateY(+178·eInOut(tFold))
-                       rightPanel rotateY(-178·eInOut(tFold))
-                       crease shadow on centerPanel ramps 0.18 → 0.46
-TURN     b 0.30–0.58   vol rotateY(-180·eInOut(tTurn))
-                       spine label opacity = ease(0.40, 0.58, b)
-FILE     b 0.54–0.84   arc flight + scale(kx,ky) + settle wobble (unchanged)
-ARCHIVE  b 0.70–1.00   shelf spines rise (in AboutToProjectsBridge, unchanged)
-```
-
-Remove the `rotYFlip` chain from `cardWrap.transform` during bridge: the
-TURN lives on `volRef` now, so the wrap stays at its post-flip orientation
-(rotateY(180°) from the About flip). Equivalently: keep `rotYFlip` as-is
-(it was already 180° by t≈0.72) and apply the vol TURN on top.
-
-Remove the FILE-phase scaleX/Y from `cardWrap` and apply it to `volRef`
-together with the TURN, so the shrinking spine and the rotation share one
-transform origin.
+### `src/components/HeroIdBadge.tsx`
+- Remove all three cloned `<AboutCardBack>` instances from inside vol
+  panels.
+- Remove the gold `.pf.spine` styling block (cap, year, ABOUT typography,
+  PORTFOLIO subtitle, tick).
+- Replace centre panel's back face with `<ProjectSpine data={ABOUT_SPINE_DATA} />`
+  sized to fill 260×380 with `transform: rotateY(180deg)` and
+  `backface-visibility: hidden`.
+- Left/right wings: keep front (cream + crease shadow gradient + edge
+  shadow on the inner crease) and back (dark linen). Add a slide-in
+  transform on tSettle so wings come from off-stage to their thirds
+  before rotating, so the at-rest card stays clean.
+- AboutCardBack live fade: change from `1 - tSettle` to
+  `1 - ease(0.30, 0.55, b)` so it remains visible through TRIFOLD.
+- vol opacity: gate on `tFold > 0.01 ? 1 : 0` so at rest the wings are
+  hidden entirely.
 
 ### `src/components/AboutToProjectsBridge.tsx`
-
-No structural change. The existing shelf line + eBack stagger already
-matches the reference's DRAW + ARCHIVE.
+- No change.
 
 ### `.lovable/plan.md`
+- Update notes to reflect: live AboutCardBack as centre, wings overlay,
+  ProjectSpine back face (no gold/yellow), height auto-matches shelf via
+  shared SPINE_WIDTH/HEIGHT scale.
 
-Update the canonical phase table to describe the new packet construction
-(vol + 3 panels with real backs).
+## Verification at 1001×769
 
-## Verification
+- b = 0: card looks identical to current About flip — AboutCardBack
+  fully visible, no extra panels.
+- b ≈ 0.20: wings slid into place, beginning to rotate behind, centre
+  still showing AboutCardBack.
+- b ≈ 0.40: wings folded behind, dark backs visible, centre crease
+  shadowed, packet starting to turn.
+- b ≈ 0.60: packet mid-turn, ProjectSpine-styled back appearing.
+- b ≈ 0.85: dossier landed in shelf slot at exactly the other spines'
+  size, indistinguishable from neighbors.
 
-At 1001×769, step through bridge progress:
-- 0.10: wings starting to fold; centre crease darkening; back-face content
-  still visible across all three panels (they reassemble seamlessly)
-- 0.36: wings fully folded behind; dark backs visible from the side as the
-  TURN begins
-- 0.50: vol mid-turn; spine label appearing on the centre back
-- 0.84: dossier landed as a spine in the shelf slot
-- 1.00: all shelf spines settled, slot placeholder revealed
-
-No new dependencies. No backend changes.
+No backend changes. No new dependencies.
