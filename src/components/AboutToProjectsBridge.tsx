@@ -144,7 +144,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       });
 
       // === ARCHIVE: spines rise from under the rule, staggered by row+col ===
-      const archT = seg(0.40, 1.0, bridge);
+      const archT = seg(0.10, 0.80, bridge);
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
           if (!el) return;
