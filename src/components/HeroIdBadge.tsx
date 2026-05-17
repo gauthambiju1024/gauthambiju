@@ -525,9 +525,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold seam overlay — 3 cream panels; left/right rotate inward like a folding map */}
+          {/* Trifold packet — true 3-panel volume; each panel carries its own front + back */}
           <div
-            ref={foldSeamsRef}
+            ref={volRef}
             aria-hidden
             style={{
               position: "absolute",
@@ -535,89 +535,120 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               opacity: 0,
               pointerEvents: "none",
               zIndex: 5,
-              perspective: 1200,
-              willChange: "opacity",
+              transformStyle: "preserve-3d",
+              WebkitTransformStyle: "preserve-3d",
+              perspective: 1400,
+              willChange: "opacity, transform",
             }}
           >
-            <div style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d" }}>
-              {/* Left panel — folds back-right (anchored to inner edge) */}
-              <div
-                ref={foldLeftRef}
-                style={{
-                  position: "absolute",
-                  top: 0, left: 0, bottom: 0,
-                  width: "33.333%",
-                  background: "hsl(40 25% 92%)",
-                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.08), transparent 18%, transparent 78%, hsl(0 0% 100% / 0.34))",
-                  boxShadow: "inset -2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), 10px 0 18px hsl(160 30% 4% / 0.18)",
-                  transformOrigin: "right center",
-                  willChange: "transform, opacity",
-                  backfaceVisibility: "hidden",
-                }}
-              />
-              {/* Center panel — stays put, becomes the spine */}
-              <div
-                ref={foldCenterRef}
-                style={{
-                  position: "absolute",
-                  top: 0, bottom: 0,
-                  left: "33.333%",
-                  width: "33.334%",
-                  background: "hsl(40 25% 92%)",
-                  backgroundImage: "linear-gradient(90deg, hsl(160 30% 4% / 0.16), transparent 14%, transparent 86%, hsl(160 30% 4% / 0.16))",
-                  boxShadow: "inset -1px 0 0 hsl(160 30% 4% / 0.24), inset 1px 0 0 hsl(160 30% 4% / 0.24), inset 0 0 0 1px hsl(0 0% 100% / 0.44)",
-                  transformOrigin: "center center",
-                  willChange: "transform",
-                }}
-              >
-                {/* Vertical spine label on the center fold panel — fades in during rotate phase */}
-                <div
-                  ref={spineSkinRef}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    opacity: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    willChange: "opacity",
-                    pointerEvents: "none",
-                  }}
-                >
-                  {/* Counter rotateY(180) so the label reads correctly on the (mirrored) back face */}
-                  <span
-                    className="font-serif-display"
-                    style={{
-                      transform: "rotateY(180deg)",
-                      writingMode: "vertical-rl",
-                      textOrientation: "mixed",
-                      color: "hsl(40 30% 92% / 0.92)",
-                      fontSize: "11px",
-                      letterSpacing: "0.38em",
-                      textTransform: "uppercase",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {badge.ribbonLeft} · 2026
-                  </span>
+            {/* LEFT panel — folds behind (origin: right edge) */}
+            <div
+              ref={foldLeftRef}
+              style={{
+                position: "absolute",
+                top: 0, bottom: 0, left: 0,
+                width: "33.333%",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "right center",
+                willChange: "transform",
+              }}
+            >
+              {/* front face — slice of the back-of-card content */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)", boxShadow: "inset -2px 0 8px hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, width: 260, height: 380, padding: "20px 14px 14px", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
+                  <AboutCardBack data={journey} activeTab={activeTab} setActiveTab={() => {}} expandedId={expandedId} setExpandedId={() => {}} />
                 </div>
               </div>
-              {/* Right panel — folds back-left (anchored to inner edge) */}
+              {/* back face — dark linen (visible once flap folds behind) */}
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
+            </div>
+
+            {/* CENTER panel — becomes the spine after TURN */}
+            <div
+              ref={foldCenterRef}
+              style={{
+                position: "absolute",
+                top: 0, bottom: 0,
+                left: "33.333%",
+                width: "33.334%",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                willChange: "box-shadow",
+                boxShadow: "inset 8px 0 14px -8px hsl(160 30% 4% / 0.18), inset -8px 0 14px -8px hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.44)",
+              }}
+            >
+              {/* front face — middle slice of the card content */}
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)" }}>
+                <div style={{ position: "absolute", top: 0, left: "-86.667px", width: 260, height: 380, padding: "20px 14px 14px", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
+                  <AboutCardBack data={journey} activeTab={activeTab} setActiveTab={() => {}} expandedId={expandedId} setExpandedId={() => {}} />
+                </div>
+              </div>
+              {/* back face — SPINE (gold gradient + vertical title) */}
               <div
-                ref={foldRightRef}
+                ref={spineSkinRef}
                 style={{
-                  position: "absolute",
-                  top: 0, right: 0, bottom: 0,
-                  width: "33.333%",
-                  background: "hsl(40 25% 92%)",
-                  backgroundImage: "linear-gradient(90deg, hsl(0 0% 100% / 0.34), transparent 22%, transparent 82%, hsl(160 30% 4% / 0.08))",
-                  boxShadow: "inset 2px 0 0 hsl(160 30% 4% / 0.22), inset 0 0 0 1px hsl(0 0% 100% / 0.46), -10px 0 18px hsl(160 30% 4% / 0.18)",
-                  transformOrigin: "left center",
-                  willChange: "transform, opacity",
+                  position: "absolute", inset: 0,
+                  transform: "rotateY(180deg)",
                   backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  background: "linear-gradient(150deg, hsl(35 45% 26%) 0%, hsl(40 60% 44%) 34%, hsl(35 42% 30%) 64%, hsl(32 38% 16%) 100%)",
+                  boxShadow: "inset 0 0 0 1px hsl(0 0% 0% / 0.25), inset 1px 0 0 hsl(0 0% 0% / 0.18), inset -1px 0 0 hsl(0 0% 0% / 0.18)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  willChange: "opacity",
                 }}
-              />
+              >
+                {/* cap */}
+                <div aria-hidden style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, hsl(40 70% 70%), hsl(45 90% 92%))" }} />
+                {/* hairline grain */}
+                <div aria-hidden style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(90deg, hsl(0 0% 0% / 0.07) 0 1px, transparent 1px 4px)", mixBlendMode: "multiply", opacity: 0.6, pointerEvents: "none" }} />
+                {/* year */}
+                <div aria-hidden style={{ position: "absolute", top: 14, left: 0, right: 0, textAlign: "center", fontFamily: "JetBrains Mono, monospace", fontSize: 8, letterSpacing: "0.28em", color: "hsl(40 60% 92% / 0.45)" }}>2026</div>
+                {/* title */}
+                <span
+                  className="font-serif-display"
+                  style={{
+                    writingMode: "vertical-rl",
+                    transform: "rotate(180deg)",
+                    color: "hsl(40 55% 96%)",
+                    fontSize: 22,
+                    letterSpacing: "0.42em",
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    textShadow: "0 1px 3px hsl(0 0% 0% / 0.45)",
+                  }}
+                >
+                  ABOUT
+                </span>
+                {/* tick + subtitle */}
+                <div aria-hidden style={{ position: "absolute", bottom: 30, left: "50%", width: 14, height: 1, marginLeft: -7, background: "hsl(40 55% 96% / 0.42)" }} />
+                <div aria-hidden style={{ position: "absolute", bottom: 12, left: 0, right: 0, textAlign: "center", fontFamily: "JetBrains Mono, monospace", fontSize: 7, letterSpacing: "0.18em", color: "hsl(40 55% 96% / 0.55)" }}>PORTFOLIO</div>
+              </div>
+            </div>
+
+            {/* RIGHT panel — folds behind (origin: left edge) */}
+            <div
+              ref={foldRightRef}
+              style={{
+                position: "absolute",
+                top: 0, bottom: 0, left: "66.667%",
+                width: "33.333%",
+                transformStyle: "preserve-3d",
+                WebkitTransformStyle: "preserve-3d",
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+            >
+              <div style={{ position: "absolute", inset: 0, overflow: "hidden", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "hsl(40 25% 92%)", boxShadow: "inset 2px 0 8px hsl(160 30% 4% / 0.18), inset 0 0 0 1px hsl(0 0% 100% / 0.4)" }}>
+                <div style={{ position: "absolute", top: 0, left: "-173.333px", width: 260, height: 380, padding: "20px 14px 14px", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
+                  <AboutCardBack data={journey} activeTab={activeTab} setActiveTab={() => {}} expandedId={expandedId} setExpandedId={() => {}} />
+                </div>
+              </div>
+              <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: "linear-gradient(150deg, hsl(160 18% 14%), hsl(160 24% 8%))", boxShadow: "inset 0 0 0 1px hsl(0 0% 100% / 0.06)" }} />
             </div>
           </div>
         </div>
