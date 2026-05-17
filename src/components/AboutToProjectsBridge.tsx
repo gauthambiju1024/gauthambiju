@@ -113,8 +113,8 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // Shelf wrap is always visible — reveal is driven by rule draw + spine rise
-      shelfWrap.style.opacity = "1";
+      // Shelf fades in just before the rules draw, hidden during About
+      shelfWrap.style.opacity = String(seg(0.00, 0.10, bridge));
       shelfWrap.style.pointerEvents = bridge > 0.95 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
