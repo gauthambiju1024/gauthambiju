@@ -547,13 +547,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* LEFT third — carries the actual left side of About and folds behind */}
+            {/* LEFT wing — 25% of card; folds behind to cover left half of center */}
             <div
               ref={foldLeftRef}
               style={{
                 position: "absolute",
                 top: 0, bottom: 0, left: 0,
-                width: "33.333%",
+                width: "25%",
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "right center",
@@ -566,14 +566,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               <div style={{ position: "absolute", inset: 0, transform: "translateZ(-0.5px) rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: CARD_BG, boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08), inset 0 0 24px hsl(160 30% 4% / 0.06)" }} />
             </div>
 
-            {/* CENTER third — turns internally into the green ABOUT spine */}
+            {/* CENTER — 50% of card; turns internally into the green ABOUT spine */}
             <div
               ref={foldCenterRef}
               style={{
                 position: "absolute",
                 top: 0, bottom: 0,
-                left: "33.333%",
-                width: "33.334%",
+                left: "25%",
+                width: "50%",
                 pointerEvents: "none",
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
@@ -584,20 +584,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               }}
             >
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
-                {aboutSurface(-CARD_WIDTH / 3)}
+                {aboutSurface(-CARD_WIDTH * 0.25)}
               </div>
               <div style={{ position: "absolute", inset: 0, transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "stretch", justifyContent: "stretch" }}>
                 <ProjectSpine data={ABOUT_SPINE_DATA} style={{ width: "100%", height: "100%" }} />
               </div>
             </div>
 
-            {/* RIGHT third — carries the actual right side of About and folds behind */}
+            {/* RIGHT wing — 25% of card; folds behind to cover right half of center */}
             <div
               ref={foldRightRef}
               style={{
                 position: "absolute",
-                top: 0, bottom: 0, left: "66.667%",
-                width: "33.333%",
+                top: 0, bottom: 0, left: "75%",
+                width: "25%",
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
                 transformOrigin: "left center",
@@ -605,7 +605,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               }}
             >
               <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: CARD_BG, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.18)" }}>
-                {aboutSurface(-(CARD_WIDTH * 2) / 3)}
+                {aboutSurface(-CARD_WIDTH * 0.75)}
               </div>
               <div style={{ position: "absolute", inset: 0, transform: "translateZ(-0.5px) rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", background: CARD_BG, boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.08), inset 0 0 24px hsl(160 30% 4% / 0.06)" }} />
             </div>
