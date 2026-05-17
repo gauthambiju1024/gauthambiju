@@ -551,7 +551,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "opacity, transform",
             }}
           >
-            {/* Cream packet group — fades out at 90° of the packet flip */}
+            {/* Cream packet group — true front face of the folding packet */}
             <div
               ref={foldPacketRef}
               style={{
@@ -559,7 +559,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 inset: 0,
                 transformStyle: "preserve-3d",
                 WebkitTransformStyle: "preserve-3d",
-                willChange: "opacity",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                willChange: "visibility",
               }}
             >
               {/* CENTER — 50% of card; solid cream base */}
@@ -571,7 +573,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                   left: "25%",
                   width: "50%",
                   background: CARD_BG,
-                  boxShadow: "inset 1px 0 0 hsl(160 30% 4% / 0.08), inset -1px 0 0 hsl(160 30% 4% / 0.08)",
+                  transform: "translateZ(-0.4px)",
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  boxShadow: "inset 8px 0 18px hsl(160 30% 4% / 0.08), inset -8px 0 18px hsl(160 30% 4% / 0.08)",
                 }}
               />
 
