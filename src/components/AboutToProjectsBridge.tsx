@@ -91,7 +91,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         el.style.transform = `translateY(${(1 - k) * 135}%)`;
       }
 
-      // Slot is only a geometry target; the real folded card remains visible here.
+      // Slot: invisible geometry target. The real clickable About spine fades in at the end,
+      // replacing the flying card silently once it has fully settled.
+      const settled = bridge > 0.96;
+      (window as any).__bridgeSettled = settled;
+      if (aboutSpineRef.current) {
+        const k = clamp01((bridge - 0.94) / 0.05);
+        aboutSpineRef.current.style.opacity = String(k);
+        aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
+      }
       slot.style.opacity = "0";
 
       publishSlotRect();
