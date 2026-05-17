@@ -459,12 +459,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <div
           ref={cardRef}
           style={{
-            width: 260,
-            height: 380,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
             padding: "12px 14px 16px",
-            background: "hsl(40 25% 92%)",
+            background: CARD_BG,
             borderRadius: 4,
-            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             position: "relative",
@@ -488,12 +488,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           style={{
             position: "absolute",
             inset: 0,
-            width: 260,
-            height: 380,
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
             padding: "20px 14px 14px",
-            background: "hsl(40 25% 92%)",
+            background: CARD_BG,
             borderRadius: 4,
-            boxShadow: "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)",
+            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
