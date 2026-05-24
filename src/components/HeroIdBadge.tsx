@@ -428,6 +428,27 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
       </div>
 
+      {/* Flying spine — clean narrow element that handles the visible card→shelf handoff */}
+      <div
+        ref={flyingSpineRef}
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: BOOK_SPINE_W,
+          height: SPINE_HEIGHT,
+          opacity: 0,
+          visibility: "hidden",
+          pointerEvents: "none",
+          zIndex: 12,
+          willChange: "transform, opacity",
+        }}
+      >
+        <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+      </div>
+
+
       {/* Lanyard layer (fades out as card travels) */}
       <div ref={lanyardLayerRef} className="absolute inset-0" style={{ pointerEvents: "none" }}>
         <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 5, overflow: "visible" }} xmlns="http://www.w3.org/2000/svg">
