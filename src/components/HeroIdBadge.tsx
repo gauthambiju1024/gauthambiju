@@ -223,7 +223,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const baseScale = 1 + (maxScale - 1) * p1;
 
       // 0 → 180 (About flip) → 360 (second flip lands back face → spine)
-      const rotYFlip = p2 * 180 + tSpine * 180;
+      const rotYFlip = p2 * 180;
 
       const backVisible = p2 > 0.5;
       const aboutOpacity = backVisible ? (1 - eInOut(tSpine)) : 0;
