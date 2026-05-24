@@ -30,6 +30,7 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
 const snap = (v: number, q = 0.5) => Math.round(v / q) * q;
 const CARD_WIDTH = 260;
 const CARD_HEIGHT = 380;
+const BOOK_SPINE_W = 28;
 const CARD_BG = "hsl(40 25% 92%)";
 const CARD_SHADOW = "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)";
 
