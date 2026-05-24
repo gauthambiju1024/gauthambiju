@@ -513,6 +513,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "transform",
             }}
           >
+            {/* Page-block — visible "pages" along the cover's right edge (opposite the hinge) */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                right: -3,
+                top: 6,
+                bottom: 6,
+                width: 3,
+                background:
+                  "linear-gradient(to right, hsl(40 30% 88%), hsl(40 25% 78%) 50%, hsl(40 22% 70%))",
+                boxShadow:
+                  "inset 0 1px 0 hsl(40 30% 95% / 0.8), inset 0 -1px 0 hsl(30 20% 55% / 0.5)",
+                borderRadius: "0 1px 1px 0",
+                transform: "translateZ(-1px)",
+                pointerEvents: "none",
+              }}
+            >
+              <div style={{ position: "absolute", left: 0, top: "33%", right: 0, height: 1, background: "hsl(30 20% 55% / 0.45)" }} />
+              <div style={{ position: "absolute", left: 0, top: "66%", right: 0, height: 1, background: "hsl(30 20% 55% / 0.35)" }} />
+            </div>
+
             {/* #book-cover — About content lives on the cover face */}
             <div
               ref={cardBackInnerRef}
@@ -522,13 +544,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 padding: "20px 14px 14px",
                 background: CARD_BG,
                 borderRadius: 4,
-                boxShadow: CARD_SHADOW,
+                boxShadow: `${CARD_SHADOW}, inset -1px 0 0 hsl(0 0% 100% / 0.45)`,
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 transformOrigin: "0% 50%",
                 display: "flex",
                 flexDirection: "column",
-                willChange: "opacity, background",
+                willChange: "opacity",
               }}
             >
               <AboutCardBack
@@ -540,16 +562,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               />
             </div>
 
-            {/* #book-spine — perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
+            {/* Closed-cover face — spine art rendered at the cover's local rect, fades in during close beat */}
+            <div
+              ref={closedSpineRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0,
+                visibility: "hidden",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transformOrigin: "0% 50%",
+                pointerEvents: "none",
+                willChange: "opacity",
+              }}
+            >
+              <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+            </div>
+
+            {/* #book-spine — full-height perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
             <div
               ref={spineSkinRef}
               aria-hidden
               style={{
                 position: "absolute",
-                left: -SPINE_WIDTH,
-                top: (CARD_HEIGHT - SPINE_HEIGHT) / 2,
-                width: SPINE_WIDTH,
-                height: SPINE_HEIGHT,
+                left: -BOOK_SPINE_W,
+                top: 0,
+                width: BOOK_SPINE_W,
+                height: CARD_HEIGHT,
                 transformOrigin: "100% 50%",
                 transform: "rotateY(-90deg)",
                 backfaceVisibility: "hidden",
@@ -557,7 +598,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 pointerEvents: "none",
               }}
             >
-              <ProjectSpine data={ABOUT_SPINE_DATA} />
+              <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
             </div>
           </div>
         </div>
