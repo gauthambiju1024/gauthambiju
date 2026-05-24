@@ -190,20 +190,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: drag + tilt + slide/scale/flip + rotate-to-spine + fall onto shelf.
-    const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    // Per-frame: drag + tilt + slide/scale/flip + 3D book hinge reveal + file to shelf.
+    const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const eOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
-      const eOut = (x: number) => 1 - Math.pow(1 - x, 5);
 
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
       const bridge = smoothstep(0.72, 1.0, p);
-      const tSpine = seg(0.00, 0.45, bridge);
-      const tFall  = seg(0.55, 1.00, bridge);
-      const spineActive = tSpine > 0.02;
+      const revealT = seg(0.00, 0.60, bridge);
+      const fileT = seg(0.70, 1.00, bridge);
       const settled = bridge > 0.96;
 
       const stageRect = stage.getBoundingClientRect();
@@ -222,67 +221,64 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
-      // 0 → 180 (About flip) → 360 (second flip lands back face → spine)
       const rotYFlip = p2 * 180;
 
+      // Book hinge: 0° (cover faces camera) → 90° (spine faces camera).
+      const bookRotate = 90 * eInOutCubic(revealT);
+      const coverFacing = Math.cos(bookRotate * Math.PI / 180); // 1 → 0
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? (1 - eInOut(tSpine)) : 0;
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) : 0;
+      const paperFade = 1 - smoothstep(0.5, 0.95, revealT);
+
       if (backFaceRef.current) {
-        backFaceRef.current.style.background = tSpine > 0.6 ? "transparent" : CARD_BG;
-        backFaceRef.current.style.boxShadow = tSpine > 0.6 ? "none" : CARD_SHADOW;
-        backFaceRef.current.style.pointerEvents = spineActive ? "none" : "auto";
+        backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
         backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
+      }
+      if (bookRef.current) {
+        bookRef.current.style.transform = `rotateY(${bookRotate.toFixed(2)}deg)`;
       }
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
-      }
-      if (backSlotRef.current) backSlotRef.current.style.opacity = String(aboutOpacity);
-
-      if (spineSkinRef.current) {
-        const tS = eInOut(tSpine);
-        const invX = (CARD_WIDTH / SPINE_WIDTH) * (1 - tS) + tS;
-        const invY = (CARD_HEIGHT / SPINE_HEIGHT) * (1 - tS) + tS;
-        spineSkinRef.current.style.opacity = String(tS);
-        spineSkinRef.current.style.transform =
-          `translate(-50%, -50%) scale(${invX.toFixed(3)}, ${invY.toFixed(3)})`;
+        cardBackInnerRef.current.style.background = paperFade > 0.02 ? CARD_BG : "transparent";
+        cardBackInnerRef.current.style.boxShadow = paperFade > 0.02 ? CARD_SHADOW : "none";
       }
 
-      const tSx = eInOut(tSpine);
-      const tSy = eOut(tFall);
-      const scaleX = baseScale + (SPINE_WIDTH / w  - baseScale) * tSx;
-      const scaleY = baseScale + (SPINE_HEIGHT / h - baseScale) * tSy;
-      const rotZ = -6 * (tFall * (1 - tFall) * 4);
+      // Scale toward spine footprint during file phase.
+      const fE = eOutQuart(fileT);
+      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * fE;
+      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * fE;
 
       let flyDx = 0, flyDy = 0;
-      if (tFall > 0) {
+      if (fileT > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          const curCx = stageRect.left + restingCenterX + dxToCenter;
+          // After 90° hinge, the spine sits at local x = -SPINE_WIDTH/2 relative to wrap center.
+          const curCx = stageRect.left + restingCenterX + dxToCenter + (-SPINE_WIDTH / 2) * sX;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * tSy;
-          flyDy = (slotRect.cy - curCy) * tSy;
+          flyDx = (slotRect.cx - curCx) * fE;
+          flyDy = (slotRect.cy - curCy) * fE;
         }
       }
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)}) ` +
-        `rotateY(${rotYFlip.toFixed(2)}deg) rotateZ(${rotZ.toFixed(2)}deg)`;
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) ` +
+        `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSpine));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - revealT));
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tSpine);
+        const globeOp = p2 * (1 - revealT);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && tSpine < 0.02 ? "auto" : "none";
+          p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
       }
       cardWrap.style.opacity = settled ? "0" : "1";
-      cardWrap.style.pointerEvents = p1 > 0.05 || spineActive ? "none" : "auto";
+      cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
