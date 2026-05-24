@@ -527,7 +527,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               pointerEvents: "none",
               zIndex: 6,
               transformOrigin: "center center",
-              transform: `translate(-50%, -50%) rotateY(180deg) scale(${CARD_WIDTH / SPINE_WIDTH}, ${CARD_HEIGHT / SPINE_HEIGHT})`,
+              transform: `translate(-50%, -50%) scale(${CARD_WIDTH / SPINE_WIDTH}, ${CARD_HEIGHT / SPINE_HEIGHT})`,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               willChange: "opacity, transform",
