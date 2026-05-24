@@ -48,6 +48,8 @@ interface Props {
   interactive?: boolean;
   style?: CSSProperties;
   selected?: boolean;
+  /** When true, the spine fills its parent (width/height: 100%) instead of the native 78×200. */
+  fullHeight?: boolean;
 }
 
 /**
@@ -62,6 +64,7 @@ const ProjectSpine = forwardRef<HTMLDivElement, Props>(({
   interactive = false,
   style,
   selected = false,
+  fullHeight = false,
 }, ref) => {
   const color = data.color || fallbackColor;
   return (
@@ -70,8 +73,8 @@ const ProjectSpine = forwardRef<HTMLDivElement, Props>(({
       onClick={onClick}
       className={`relative rounded-sm overflow-hidden ${interactive ? "cursor-pointer" : ""}`}
       style={{
-        width: SPINE_WIDTH,
-        height: SPINE_HEIGHT,
+        width: fullHeight ? "100%" : SPINE_WIDTH,
+        height: fullHeight ? "100%" : SPINE_HEIGHT,
         ...linenTexture(color),
         boxShadow: selected
           ? `0 0 24px 6px ${color}24, 4px 4px 16px rgba(0,0,0,0.45)`

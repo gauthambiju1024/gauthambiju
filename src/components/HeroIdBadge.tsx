@@ -30,6 +30,7 @@ const smoothstep = (edge0: number, edge1: number, x: number) => {
 const snap = (v: number, q = 0.5) => Math.round(v / q) * q;
 const CARD_WIDTH = 260;
 const CARD_HEIGHT = 380;
+const BOOK_SPINE_W = 28;
 const CARD_BG = "hsl(40 25% 92%)";
 const CARD_SHADOW = "0 30px 40px -8px hsl(160 30% 4% / 0.55), 0 12px 24px -6px hsl(160 30% 4% / 0.4), inset 0 0 0 1px hsl(0 0% 100% / 0.5)";
 
@@ -94,6 +95,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const backFaceRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
+  const closedSpineRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -223,12 +225,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const rotYFlip = p2 * 180;
 
-      // Book hinge: 0° (cover faces camera) → 90° (spine faces camera).
-      const bookRotate = 90 * eInOutCubic(revealT);
-      const coverFacing = Math.cos(bookRotate * Math.PI / 180); // 1 → 0
+      // File phase split: close (90°→180° cover swing) then slide+fit into shelf.
+      const closeT = seg(0.00, 0.35, fileT);
+      const slideT = seg(0.35, 1.00, fileT);
+
+      // Book hinge: reveal 0°→90°, then close adds 90°→180°.
+      const bookRotate = 90 * eInOutCubic(revealT) + 90 * eInOutCubic(closeT);
+      const coverFacing = Math.cos(bookRotate * Math.PI / 180);
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) : 0;
-      const paperFade = 1 - smoothstep(0.5, 0.95, revealT);
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
@@ -240,25 +245,29 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
-        cardBackInnerRef.current.style.background = paperFade > 0.02 ? CARD_BG : "transparent";
-        cardBackInnerRef.current.style.boxShadow = paperFade > 0.02 ? CARD_SHADOW : "none";
+      }
+      if (closedSpineRef.current) {
+        // Closed-cover face: fades in across the close beat so the closed book reads as spine-faced.
+        const closedOp = eInOutCubic(closeT);
+        closedSpineRef.current.style.opacity = String(closedOp);
+        closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
       }
 
-      // Scale toward spine footprint during file phase.
-      const fE = eOutQuart(fileT);
-      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * fE;
-      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * fE;
+      // Wrapper scale: stays at baseScale during reveal+close; downscales toward slot during slide.
+      const sE = eOutQuart(slideT);
+      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * sE;
+      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
 
       let flyDx = 0, flyDy = 0;
-      if (fileT > 0) {
+      if (slideT > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          // After 90° hinge, the spine sits at local x = -SPINE_WIDTH/2 relative to wrap center.
-          const curCx = stageRect.left + restingCenterX + dxToCenter + (-SPINE_WIDTH / 2) * sX;
+          // After close, the closed-book spine is centered at local x = -BOOK_SPINE_W/2 relative to wrap center.
+          const curCx = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * sX;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * fE;
-          flyDy = (slotRect.cy - curCy) * fE;
+          flyDx = (slotRect.cx - curCx) * sE;
+          flyDy = (slotRect.cy - curCy) * sE;
         }
       }
 
@@ -268,11 +277,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
+      // Lanyard + globe clear out before the cover swings (sharpened gating).
+      const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - revealT));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * chromeFade);
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - revealT);
+        const globeOp = p2 * chromeFade;
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
@@ -358,7 +369,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         zIndex: 3,
         opacity: heroLoading ? 0 : 1,
         transition: "opacity 0.4s ease",
-        perspective: 1800,
+        perspective: 2200,
         willChange: "transform",
       }}
     >
@@ -502,6 +513,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               willChange: "transform",
             }}
           >
+            {/* Page-block — visible "pages" along the cover's right edge (opposite the hinge) */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                right: -3,
+                top: 6,
+                bottom: 6,
+                width: 3,
+                background:
+                  "linear-gradient(to right, hsl(40 30% 88%), hsl(40 25% 78%) 50%, hsl(40 22% 70%))",
+                boxShadow:
+                  "inset 0 1px 0 hsl(40 30% 95% / 0.8), inset 0 -1px 0 hsl(30 20% 55% / 0.5)",
+                borderRadius: "0 1px 1px 0",
+                transform: "translateZ(-1px)",
+                pointerEvents: "none",
+              }}
+            >
+              <div style={{ position: "absolute", left: 0, top: "33%", right: 0, height: 1, background: "hsl(30 20% 55% / 0.45)" }} />
+              <div style={{ position: "absolute", left: 0, top: "66%", right: 0, height: 1, background: "hsl(30 20% 55% / 0.35)" }} />
+            </div>
+
             {/* #book-cover — About content lives on the cover face */}
             <div
               ref={cardBackInnerRef}
@@ -511,13 +544,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 padding: "20px 14px 14px",
                 background: CARD_BG,
                 borderRadius: 4,
-                boxShadow: CARD_SHADOW,
+                boxShadow: `${CARD_SHADOW}, inset -1px 0 0 hsl(0 0% 100% / 0.45)`,
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 transformOrigin: "0% 50%",
                 display: "flex",
                 flexDirection: "column",
-                willChange: "opacity, background",
+                willChange: "opacity",
               }}
             >
               <AboutCardBack
@@ -529,16 +562,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               />
             </div>
 
-            {/* #book-spine — perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
+            {/* Closed-cover face — spine art rendered at the cover's local rect, fades in during close beat */}
+            <div
+              ref={closedSpineRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0,
+                visibility: "hidden",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transformOrigin: "0% 50%",
+                pointerEvents: "none",
+                willChange: "opacity",
+              }}
+            >
+              <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+            </div>
+
+            {/* #book-spine — full-height perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
             <div
               ref={spineSkinRef}
               aria-hidden
               style={{
                 position: "absolute",
-                left: -SPINE_WIDTH,
-                top: (CARD_HEIGHT - SPINE_HEIGHT) / 2,
-                width: SPINE_WIDTH,
-                height: SPINE_HEIGHT,
+                left: -BOOK_SPINE_W,
+                top: 0,
+                width: BOOK_SPINE_W,
+                height: CARD_HEIGHT,
                 transformOrigin: "100% 50%",
                 transform: "rotateY(-90deg)",
                 backfaceVisibility: "hidden",
@@ -546,7 +598,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 pointerEvents: "none",
               }}
             >
-              <ProjectSpine data={ABOUT_SPINE_DATA} />
+              <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
             </div>
           </div>
         </div>
