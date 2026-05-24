@@ -245,7 +245,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         const invY = (CARD_HEIGHT / SPINE_HEIGHT) * (1 - tS) + tS;
         spineSkinRef.current.style.opacity = String(tS);
         spineSkinRef.current.style.transform =
-          `translate(-50%, -50%) rotateY(180deg) scale(${invX.toFixed(3)}, ${invY.toFixed(3)})`;
+          `translate(-50%, -50%) scale(${invX.toFixed(3)}, ${invY.toFixed(3)})`;
       }
 
       const tSx = eInOut(tSpine);
