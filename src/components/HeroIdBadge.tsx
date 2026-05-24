@@ -513,109 +513,27 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             />
           </div>
 
-          {/* Trifold packet — 3 real panels, wings fold behind center, then whole packet flips to reveal spine */}
+          {/* Spine skin overlay — counter-scales so the spine art stays correctly sized as the card narrows */}
           <div
-            ref={volRef}
+            ref={spineSkinRef}
             aria-hidden
             style={{
               position: "absolute",
-              inset: 0,
+              top: "50%",
+              left: "50%",
+              width: SPINE_WIDTH,
+              height: SPINE_HEIGHT,
               opacity: 0,
               pointerEvents: "none",
-              zIndex: 5,
-              transformStyle: "preserve-3d",
-              WebkitTransformStyle: "preserve-3d",
+              zIndex: 6,
               transformOrigin: "center center",
+              transform: `translate(-50%, -50%) rotateY(180deg) scale(${CARD_WIDTH / SPINE_WIDTH}, ${CARD_HEIGHT / SPINE_HEIGHT})`,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
               willChange: "opacity, transform",
             }}
           >
-            {(["l", "c", "r"] as const).map((side, i) => {
-              const ref = side === "l" ? panelLRef : side === "c" ? panelCRef : panelRRef;
-              const origin = side === "l" ? "right center" : side === "r" ? "left center" : "center center";
-              const cloneLeft = -i * (CARD_WIDTH / 3);
-              return (
-                <div
-                  key={side}
-                  ref={ref}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    height: "100%",
-                    left: `${(i * 100) / 3}%`,
-                    width: `${100 / 3}%`,
-                    transformStyle: "preserve-3d",
-                    WebkitTransformStyle: "preserve-3d",
-                    transformOrigin: origin,
-                    willChange: "transform",
-                  }}
-                >
-                  {/* FRONT — slice of the About card */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      overflow: "hidden",
-                      background: CARD_BG,
-                      boxShadow: "inset 0 0 0 1px hsl(160 30% 4% / 0.04)",
-                      backfaceVisibility: "hidden",
-                      WebkitBackfaceVisibility: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: cloneLeft,
-                        width: CARD_WIDTH,
-                        height: CARD_HEIGHT,
-                        padding: "20px 14px 14px",
-                        display: "flex",
-                        flexDirection: "column",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <AboutCardBack
-                        data={journey}
-                        activeTab={activeTab}
-                        setActiveTab={() => {}}
-                        expandedId={expandedId}
-                        setExpandedId={() => {}}
-                      />
-                    </div>
-                  </div>
-
-                  {/* BACK — center panel shows the exact shelf spine at native size; wings are transparent */}
-                  {side === "c" ? (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        transform: "rotateY(180deg)",
-                        background: "transparent",
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <ProjectSpine data={ABOUT_SPINE_DATA} />
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        transform: "rotateY(180deg)",
-                        background: "transparent",
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+            <ProjectSpine data={ABOUT_SPINE_DATA} />
           </div>
         </div>
       </div>
