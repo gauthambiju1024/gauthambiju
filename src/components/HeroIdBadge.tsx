@@ -232,14 +232,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Wrapper rotation capped on About face; center strip owns the TURN.
       const rotYFlip = p2 * 180;
 
+      const backVisible = p2 > 0.5 && !foldActive;
       if (backFaceRef.current) {
         backFaceRef.current.style.background = foldActive ? "transparent" : CARD_BG;
         backFaceRef.current.style.boxShadow = foldActive ? "none" : CARD_SHADOW;
         backFaceRef.current.style.pointerEvents = foldActive ? "none" : "auto";
+        backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
       }
 
-      if (cardBackInnerRef.current) cardBackInnerRef.current.style.opacity = foldActive ? "0" : "1";
-      if (backSlotRef.current) backSlotRef.current.style.opacity = foldActive ? "0" : "1";
+      if (cardBackInnerRef.current) {
+        cardBackInnerRef.current.style.opacity = backVisible ? "1" : "0";
+        cardBackInnerRef.current.style.visibility = backVisible ? "visible" : "hidden";
+      }
+      if (backSlotRef.current) backSlotRef.current.style.opacity = backVisible ? "1" : "0";
       if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
 
       // FOLD — wings rotate behind center (reference geometry)
