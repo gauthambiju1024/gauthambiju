@@ -225,15 +225,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const rotYFlip = p2 * 180;
 
-      // File phase split: close (90°→180° cover swing) then slide+fit into shelf.
-      const closeT = seg(0.00, 0.35, fileT);
-      const slideT = seg(0.35, 1.00, fileT);
+      // Single-beat file: cover swings 90°→180°, closed face fades in, wrapper shrinks uniformly to slot.
+      const fE = eInOutCubic(fileT);
+      const sE = eOutQuart(fileT);
 
-      // Book hinge: reveal 0°→90°, then close adds 90°→180°.
-      const bookRotate = 90 * eInOutCubic(revealT) + 90 * eInOutCubic(closeT);
+      const bookRotate = 90 * eInOutCubic(revealT) + 90 * fE;
       const coverFacing = Math.cos(bookRotate * Math.PI / 180);
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - fileT) : 0;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
@@ -247,24 +246,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
       if (closedSpineRef.current) {
-        // Closed-cover face: fades in across the close beat so the closed book reads as spine-faced.
-        const closedOp = eInOutCubic(closeT);
+        const closedOp = fE;
         closedSpineRef.current.style.opacity = String(closedOp);
         closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
       }
 
-      // Wrapper scale: stays at baseScale during reveal+close; downscales toward slot during slide.
-      const sE = eOutQuart(slideT);
-      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * sE;
-      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
+      // Uniform scale: match shelf height; thickness (BOOK_SPINE_W) stays narrow.
+      const s = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
 
       let flyDx = 0, flyDy = 0;
-      if (slideT > 0) {
+      if (fileT > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          // After close, the closed-book spine is centered at local x = -BOOK_SPINE_W/2 relative to wrap center.
-          const curCx = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * sX;
+          const curCx = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
           flyDx = (slotRect.cx - curCx) * sE;
           flyDy = (slotRect.cy - curCy) * sE;
@@ -274,8 +269,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${s.toFixed(3)}, ${s.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
+
 
       // Lanyard + globe clear out before the cover swings (sharpened gating).
       const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
