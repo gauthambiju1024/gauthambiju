@@ -48,6 +48,8 @@ interface Props {
   interactive?: boolean;
   style?: CSSProperties;
   selected?: boolean;
+  /** When true, the spine fills its parent (width/height: 100%) instead of the native 78×200. */
+  fullHeight?: boolean;
 }
 
 /**
