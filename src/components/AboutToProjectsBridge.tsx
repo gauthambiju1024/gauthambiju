@@ -122,23 +122,22 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
-      const settled = bridge > 0.97;
+      const settled = bridge > 0.98;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        // Fade shelf About spine in across the final filing window so the
-        // hero card hand-off is invisible (no abrupt pop at `settled`).
-        const k = clamp01((bridge - 0.90) / 0.07);
+        // Fade shelf About spine in across the final arrival window of the
+        // flying hero spine (flyT in HeroIdBadge: bridge 0.74→0.96, arrival 0.92→0.96).
+        // We fade in 0.92→0.96 so the shelf spine is fully opaque exactly as the
+        // flying spine reaches the slot — invisible hand-off, no width/position pop.
+        const k = clamp01((bridge - 0.92) / 0.04);
         aboutSpineRef.current.style.opacity = String(k);
         aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
       }
       slot.style.opacity = "0";
 
-      // === DRAW: per-row rule stroke, staggered, completing by 0.96 ===
-      // Window 0.78 → 0.96 (length 0.18). Each row uses ~70% of the window
-      // for its own stroke, with 30% reserved for stagger so the last row
-      // finishes at the window end.
-      const drawWinStart = 0.78;
-      const drawWinEnd = 0.96;
+      // === DRAW: per-row rule stroke, staggered, completing well before About lands ===
+      const drawWinStart = 0.74;
+      const drawWinEnd = 0.92;
       const drawWinLen = drawWinEnd - drawWinStart;
       const rowCount = Math.max(1, rulePathRefs.current.length);
       const drawStagger = drawWinLen * 0.3;
@@ -155,17 +154,19 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         path.style.strokeDashoffset = String(L * (1 - e));
       });
 
-      // === ARCHIVE: project spines rise only AFTER About has landed ===
-      const archWinStart = 0.97;
+      // === ARCHIVE: project spines rise gradually AFTER About has fully landed.
+      // Bridge only reaches 1.0 at the very end, so we cannot extend beyond it.
+      // We rely on a longer per-spine span (0.55 of the window) with stagger to
+      // give a soft, sequential rise rather than a synchronized pop.
+      const archWinStart = 0.965;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.6;
+      const archSpan = archWinLen * 0.55;
       const archStaggerTotal = archWinLen - archSpan;
-      // Find total cells for normalization
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
         row.forEach((_, c) => {
-          const raw = r * 1.0 + c * 0.18; // row dominates, col adds within
+          const raw = r * 1.0 + c * 0.18;
           if (raw > maxOrderRaw) maxOrderRaw = raw;
         });
       });
@@ -182,6 +183,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           el.style.transform = `translateY(${y.toFixed(2)}%)`;
         });
       });
+
 
       publishSlotRect();
     };
