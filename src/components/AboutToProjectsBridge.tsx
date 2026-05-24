@@ -5,6 +5,9 @@ import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
 
+/** Narrow spine width used by the hero filing animation; About spine stays this wide forever. */
+const ABOUT_SPINE_W = 28;
+
 /**
  * AboutToProjectsBridge — multi-row library shelf.
  * Animation pattern (from dossier-fold-transition-3 reference, applied to motion ONLY):
@@ -122,7 +125,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const settled = bridge > 0.97;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        const k = clamp01((bridge - 0.96) / 0.04);
+        // Fade shelf About spine in across the final filing window so the
+        // hero card hand-off is invisible (no abrupt pop at `settled`).
+        const k = clamp01((bridge - 0.90) / 0.07);
         aboutSpineRef.current.style.opacity = String(k);
         aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
       }
@@ -150,12 +155,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         path.style.strokeDashoffset = String(L * (1 - e));
       });
 
-      // === ARCHIVE: spines rise from under the rule, finishing by 0.98 ===
-      const archWinStart = 0.82;
-      const archWinEnd = 0.98;
+      // === ARCHIVE: project spines rise only AFTER About has landed ===
+      const archWinStart = 0.97;
+      const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      // last (row,col) should finish at archWinEnd. Allocate ~60% of window
-      // to per-element span, ~40% to row+col stagger.
       const archSpan = archWinLen * 0.6;
       const archStaggerTotal = archWinLen - archSpan;
       // Find total cells for normalization
@@ -264,13 +267,14 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     overflowX: "visible",
                   }}
                 >
-                  {/* About spine — fixed first slot on the top shelf, used as the filing target */}
+                  {/* About spine — narrow first slot on the top shelf, used as the filing target.
+                      Same width as the hero filing spine (no abrupt width change at landing). */}
                   {isTop && (
                     <div
                       style={{
                         position: "relative",
                         flex: "0 0 auto",
-                        width: SPINE_WIDTH,
+                        width: ABOUT_SPINE_W,
                         height: SPINE_HEIGHT,
                       }}
                     >
@@ -283,7 +287,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         ref={aboutSpineRef}
                         style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
                       >
-                        <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
+                        <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} fullHeight />
                       </div>
                     </div>
                   )}
