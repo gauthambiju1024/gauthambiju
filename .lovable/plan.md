@@ -1,158 +1,60 @@
-# Hero ID Badge → Shelf Spine — Complete Animation Spec
 
-This is everything needed to rebuild the animation cleanly in Claude, plus a fix for the reversed text bleeding through the front of the ID card on the home page.
+## Goal
 
----
+Replace the current trifold-into-spine animation with a cleaner, more cinematic transition: after the About-face flip completes, the ID card **rotates in place to reveal its spine**, **narrows to spine width**, then **falls onto the shelf slot** with a subtle tumble. The shelf spine on landing is the same `ProjectSpine` already used on the bookshelf (with text).
 
-## Part A — Bug fix on `/`
-
-**Symptom:** On the home page (before any scroll), the back-of-card content (`OVERVIEW`, `ABOUT`, `EDUCATION`, `EXPERIENCE`, footer quote) is visible *mirrored* through the front of the card.
-
-**Root cause:** The back face uses `transform: rotateY(180deg)` + `backfaceVisibility: hidden`. That hides the back face's own surface when facing away, but its *child DOM* (the `AboutCardBack` tree containing `framer-motion` `<motion.div>` elements with `AnimatePresence`) creates nested transform contexts that flatten and re-render on top of the card regardless of the parent's backface rule. Browsers (especially Safari/Chrome with `will-change` on inner motion divs) bleed children through.
-
-**Fix:** Drive the back-face inner visibility from rotation progress `p2` instead of the unrelated `foldActive` flag.
-
-In `HeroIdBadge.tsx` `applyTransform`:
-
-```ts
-// Hide back-of-card content until the card has actually flipped past 90°
-const backVisible = p2 > 0.5 && !foldActive;
-if (cardBackInnerRef.current) {
-  cardBackInnerRef.current.style.opacity = backVisible ? "1" : "0";
-  cardBackInnerRef.current.style.visibility = backVisible ? "visible" : "hidden";
-}
-if (backSlotRef.current) {
-  backSlotRef.current.style.opacity = backVisible ? "1" : "0";
-}
-```
-
-Also harden the back face so even if a child paints, it can't show through the front:
-
-```ts
-backFaceRef.current.style.visibility = (p2 > 0.01) ? "visible" : "hidden";
-```
-
-That kills the home-page bleed-through completely.
-
----
-
-## Part B — Complete animation context (for rebuild)
-
-### Scene composition
-
-- **Pin section** (`HeroAboutFlip.tsx`): `height: 340vh`, contains a `sticky top-0 h-screen` stage. `useScroll` produces a single `scrollYProgress` MotionValue `p` ∈ [0..1] across the whole pin.
-- **Hero panel** (`HeroSection` inside `BlueprintFrame`) sits inside the sticky stage and fades out 0.30→0.55.
-- **`AboutToProjectsBridge`** is mounted inside the same sticky stage; it owns the shelf that the card eventually files into.
-- **`HeroIdBadge`** is portaled to `document.body` as a `position: fixed` stage that **tracks the hero panel's `getBoundingClientRect()`** every frame via `transform: translate3d(...)` so the badge appears to live inside the hero panel without jitter.
-
-### Constants
-
-- `CARD_WIDTH = 260`, `CARD_HEIGHT = 380`
-- `CARD_BG = hsl(40 25% 92%)` (cream)
-- `SPINE_WIDTH = 78`, `SPINE_HEIGHT = 200` (matches the shelf spine exactly)
-- Resting card position: `top: 90, right: 32, rotate: 8deg` (tilted, hanging from lanyard)
-
-### Driver windows (all on the single `p` ∈ [0..1])
+## Animation timeline (driven by `bridge = smoothstep(0.72, 1.0, p)`)
 
 ```text
-p ∈ [0.00, 0.30]   Idle. Card draggable; lanyard live.
-p ∈ [0.30, 0.55]   p1 = smoothstep(.35,.55,p) — slide-to-center + scale-up
-p ∈ [0.55, 0.72]   p2 = smoothstep(.55,.72,p) — rotateY 0→180 (About flip)
-p ∈ [0.72, 1.00]   bridge = smoothstep(.72,1.0,p) — fold→turn→shrink→fly
-                     tFold   = smoothstep(.00, .55, bridge)
-                     tTurn   = smoothstep(.62, .82, bridge)
-                     tShrink = smoothstep(.82, .92, bridge)
-                     tFile   = smoothstep(.92, 1.0, bridge)
-                     foldActive = bridge > 0.02
-                     settled    = bridge > 0.96
+bridge   0.00 ─────── 0.45 ─── 0.55 ─────────── 1.00
+         │   spine     │  hold  │   fall to slot │
+         │  reveal     │        │   + tumble     │
+         │ (rotateY    │        │                │
+         │  +180°,     │        │                │
+         │  narrow X,  │        │                │
+         │  crossfade) │        │                │
 ```
 
-### Per-frame transform on the card wrapper
+- **tSpine (0.00 → 0.45)** — `scaleX` lerps `1 → SPINE_WIDTH/CARD_WIDTH` (~0.30). Wrapper rotates an additional `+180°` on Y on top of the About flip (so total rotateY goes 180° → 360°, landing back face-forward but now showing the spine skin). Card-back content (`AboutCardBack`) cross-fades **out**, `ProjectSpine` overlay cross-fades **in**.
+- **0.45 → 0.55** — brief hold so the eye registers the spine.
+- **tFall (0.55 → 1.00)** — fly to `__bridgeSlotRect.cx/cy` with `eOut` easing; `scaleY` lerps to `SPINE_HEIGHT/CARD_HEIGHT`; add a small `rotateZ` wobble (-6° → 0°) for the tumble.
+- **settled (≥ 0.96)** — hand off to the live shelf spine (cardWrap opacity → 0).
 
-The wrapper (`cardWrapRef`) gets ONE composite transform every frame inside an rAF loop:
+## Spine skin (on back face)
 
-```ts
-cardWrap.style.transform =
-  `translate3d(${tx}px, ${ty}px, 0) ` +
-  `rotate(${tilt}deg) ` +              // 8° resting → 0° as p1 ramps
-  `scale(${scaleX}, ${scaleY}) ` +     // grows for p1, then shrinks to spine for tShrink
-  `rotateY(${p2 * 180}deg)`;           // About flip
-```
+A new `spineSkinRef` layer inside the back face:
+- Renders `<ProjectSpine data={ABOUT_SPINE_DATA} />` at its native 78×200.
+- Absolutely centered, scaled UP to fill the card via `scale(CARD_WIDTH/SPINE_WIDTH, CARD_HEIGHT/SPINE_HEIGHT)` at `tSpine=0`, lerping to `scale(1,1)` at `tSpine=1` — counteracting the wrapper's narrowing so the spine art stays correctly sized as the card shrinks.
+- Opacity: `eInOut(tSpine)` (fades in as About fades out).
 
-Where:
-- `tx, ty` = drag offset + slide-to-center delta + fly-to-slot delta (`tFile` driven).
-- `tilt = 8 * (1 - p1)`.
-- `baseScale = 1 + (maxScale - 1) * p1`, capped so card fits in `45% × 78%` of stage.
-- `targetSx = SPINE_WIDTH / (w/3)`, `targetSy = SPINE_HEIGHT / h` (note `w/3` because after the fold only the center wing is visible).
-- `scaleX = lerp(baseScale, targetSx, easeOut(tShrink))`, same for Y.
+## Back-face content gating
 
-### The trifold packet (inside the back face)
+- `cardBackInnerRef` opacity = `(p2 > 0.5 ? 1 : 0) * (1 - tSpine)` → About content visible only between flip-complete and spine-reveal-start.
+- `backSlotRef` opacity = same (slot hides as we become a spine).
+- `backFaceRef.background/shadow` → keep CARD_BG/shadow during tSpine ramp, fade to transparent at `tSpine > 0.6` so only the spine art remains.
 
-The back face contains an extra layer `volRef` that is **opacity 0** until `foldActive`, then **opacity 1**. Inside `volRef`:
+## Code changes (single file: `src/components/HeroIdBadge.tsx`)
 
-```text
-volRef (perspective from wrapper; transformStyle: preserve-3d; rotateY animates -180° on tTurn)
-  panel L  (left:0%,    width:33.33%, transformOrigin: right center)
-    .front  → cream slice — clones <AboutCardBack> at CARD_WIDTH shifted left:0    (backface hidden)
-    .back   → transparent (rotateY 180, backface hidden)
-  panel C  (left:33.33%, width:33.33%, transformOrigin: center)
-    .front  → cream slice — clone shifted left:-CARD_WIDTH/3       (backface hidden)
-    .back   → <ProjectSpine data={ABOUT_SPINE_DATA} /> at native 78×200,
-              wrapped in rotateY(180) + flex-center, transparent bg (backface hidden)
-  panel R  (left:66.66%, width:33.33%, transformOrigin: left center)
-    .front  → cream slice — clone shifted left:-2*CARD_WIDTH/3   (backface hidden)
-    .back   → transparent
-```
+1. **Remove** `volRef`, `panelLRef`, `panelCRef`, `panelRRef` refs and the entire trifold packet JSX block (lines 531–634).
+2. **Remove** `tFold`, `tTurn`, `tShrink`, `tFile`, `foldActive`, `eInOut` (local fold version) — keep one shared `eInOut`.
+3. **Add** `spineSkinRef` (HTMLDivElement). Render a sibling to `cardBackInnerRef` containing `<ProjectSpine data={ABOUT_SPINE_DATA} />` wrapped in a centering/scaling div.
+4. **Rewrite** the per-frame section after `p2`:
+   - `const tSpine = seg(0.00, 0.45, bridge);`
+   - `const tFall  = seg(0.55, 1.00, bridge);`
+   - `const settled = bridge > 0.96;`
+   - `rotYFlip = p2 * 180 + tSpine * 180;`
+   - `scaleX = baseScale + (SPINE_WIDTH/CARD_WIDTH  - baseScale) * eInOut(tSpine);`
+   - `scaleY = baseScale + (SPINE_HEIGHT/CARD_HEIGHT - baseScale) * eOut(tFall);`
+   - `rotZ   = -6 * tFall * (1 - tFall) * 4;` (peaks mid-fall, returns to 0)
+   - Fly offsets gated by `tFall > 0` using existing `__bridgeSlotRect`.
+5. **Update** back-face style gating to use `tSpine` (replace all `foldActive` references).
+6. **Update** spine skin transform per-frame:
+   - `spineSkinRef.style.opacity = eInOut(tSpine).toString();`
+   - inverse-scale: `scale(${CARD_WIDTH/SPINE_WIDTH * (1 - tSpine) + tSpine}, ${CARD_HEIGHT/SPINE_HEIGHT * (1 - tSpine) + tSpine})`
+7. **Keep** unchanged: slide-to-center (p1), About flip (p2), lanyard/globe fades (now gated by `tSpine` instead of `tFold`), drag, `__bridgeSlotRect` contract with `AboutToProjectsBridge`, shelf hand-off via `settled`.
 
-### Fold + turn math
+## Out of scope
 
-```ts
-const eInOut = x => x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
-
-// Wings rotate behind center
-panelL.transform = `rotateY(${ eInOut(tFold)*178}deg) translateZ(-5px)`;
-panelR.transform = `rotateY(${-eInOut(tFold)*178}deg) translateZ(-5px)`;
-
-// Whole packet revolves; center panel's back (the spine) faces camera
-vol.transform = `rotateY(${-180 * eInOut(tTurn)}deg)`;
-```
-
-Because `backfaceVisibility: hidden` is set on every `.front`, the cream slices disappear past 90°; the center panel's `.back` (the `ProjectSpine`) appears automatically. The wings have transparent backs so they fade into space.
-
-### Shrink + fly to shelf
-
-- During `tShrink`, the wrapper's `scaleX,scaleY` lerps from `baseScale` to `(SPINE_WIDTH/(w/3), SPINE_HEIGHT/h)` — the visible center-third collapses to exactly the spine footprint.
-- During `tFile`, the wrapper translates from current center to `window.__bridgeSlotRect.{cx,cy}` (published every frame by `AboutToProjectsBridge` from the `aboutSlotRef` DOM rect).
-- `settled` (`bridge > 0.96`) → wrapper `opacity: 0`, shelf `aboutSpineRef` opacity ramps `0→1` over the same window for an invisible handoff.
-
-### Lanyard + globe layers
-
-- Lanyard SVG paths recomputed every frame from `slotRef.getBoundingClientRect()` (two bezier strands from the top of stage to the metal clip above the card slot). Fades out as `(1 - p2) * (1 - tFold)`.
-- Globe (`AboutGlobe`) sits left of card, opacity = `p2 * (1 - tFold)`. Becomes pointer-interactive only when `p2 > 0.5 && tFold < 0.02`.
-- Globe markers ↔ tabs: clicking a marker switches `activeTab` and expands the matching entry by `markerId`.
-
-### Refs at a glance
-
-`stageRef, cardRef, cardWrapRef, lanyardLayerRef, globeLayerRef, slotRef, clipRef, cardBackInnerRef, backFaceRef, backSlotRef, volRef, panelLRef, panelCRef, panelRRef` + 6 SVG path refs for the lanyard strokes/textPaths.
-
-### Inter-component contract
-
-- `window.__bridgeSlotRect`  — published by bridge, read by badge for fly target.
-- `window.__bridgeProgress`, `__bridgeActive`, `__bridgeSettled` — diagnostic flags.
-
-### Files involved (read order for the rebuild)
-
-```text
-src/components/HeroAboutFlip.tsx          ← pin + scroll source
-src/components/HeroIdBadge.tsx            ← the card + lanyard + trifold + fly
-src/components/AboutToProjectsBridge.tsx  ← shelf + slot rect publisher
-src/components/projects/ProjectSpine.tsx  ← shared spine visual (back of center panel = same component)
-src/components/about/AboutCardBack.tsx    ← content cloned into all 3 front slices
-src/components/about/AboutGlobe.tsx       ← side-panel globe
-```
-
----
-
-## Files to change in this repo
-
-- `src/components/HeroIdBadge.tsx` — apply the Part-A back-face visibility fix only. No other changes.
+- `AboutToProjectsBridge.tsx` (already publishes slot rect; no changes).
+- `ProjectSpine.tsx` (reused as-is).
+- Mobile (`hidden md:block` stage unchanged).
