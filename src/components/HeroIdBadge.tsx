@@ -472,7 +472,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           </div>
         </div>
 
-        {/* Back face — Tabbed About panel */}
+        {/* Back face — transparent 3D container hosting the book (cover + perpendicular spine) */}
         <div
           ref={backFaceRef}
           style={{
@@ -480,56 +480,74 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             inset: 0,
             width: CARD_WIDTH,
             height: CARD_HEIGHT,
-            padding: "20px 14px 14px",
-            background: CARD_BG,
-            borderRadius: 4,
-            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
             transformStyle: "preserve-3d",
             WebkitTransformStyle: "preserve-3d",
             pointerEvents: "auto",
-            display: "flex",
-            flexDirection: "column",
             overflow: "visible",
           }}
         >
-          <div ref={backSlotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
+          {/* #book — rigid wrapper that rotates 0°→90° around the cover's left edge */}
           <div
-            ref={cardBackInnerRef}
-            style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
-          >
-            <AboutCardBack
-              data={journey}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-            />
-          </div>
-
-          {/* Spine skin overlay — counter-scales so the spine art stays correctly sized as the card narrows */}
-          <div
-            ref={spineSkinRef}
-            aria-hidden
+            ref={bookRef}
             style={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: SPINE_WIDTH,
-              height: SPINE_HEIGHT,
-              opacity: 0,
-              pointerEvents: "none",
-              zIndex: 6,
-              transformOrigin: "center center",
-              transform: `translate(-50%, -50%) scale(${CARD_WIDTH / SPINE_WIDTH}, ${CARD_HEIGHT / SPINE_HEIGHT})`,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-              willChange: "opacity, transform",
+              inset: 0,
+              transformStyle: "preserve-3d",
+              WebkitTransformStyle: "preserve-3d",
+              transformOrigin: "0% 50%",
+              transform: "rotateY(0deg)",
+              willChange: "transform",
             }}
           >
-            <ProjectSpine data={ABOUT_SPINE_DATA} />
+            {/* #book-cover — About content lives on the cover face */}
+            <div
+              ref={cardBackInnerRef}
+              style={{
+                position: "absolute",
+                inset: 0,
+                padding: "20px 14px 14px",
+                background: CARD_BG,
+                borderRadius: 4,
+                boxShadow: CARD_SHADOW,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transformOrigin: "0% 50%",
+                display: "flex",
+                flexDirection: "column",
+                willChange: "opacity, background",
+              }}
+            >
+              <AboutCardBack
+                data={journey}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                expandedId={expandedId}
+                setExpandedId={setExpandedId}
+              />
+            </div>
+
+            {/* #book-spine — perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
+            <div
+              ref={spineSkinRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: -SPINE_WIDTH,
+                top: (CARD_HEIGHT - SPINE_HEIGHT) / 2,
+                width: SPINE_WIDTH,
+                height: SPINE_HEIGHT,
+                transformOrigin: "100% 50%",
+                transform: "rotateY(-90deg)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                pointerEvents: "none",
+              }}
+            >
+              <ProjectSpine data={ABOUT_SPINE_DATA} />
+            </div>
           </div>
         </div>
       </div>
