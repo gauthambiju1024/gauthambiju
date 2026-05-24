@@ -96,6 +96,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
+  const fileTargetRef = useRef<{ dx: number; dy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -255,14 +256,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const s = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
 
       let flyDx = 0, flyDy = 0;
-      if (fileT > 0) {
-        const slotRect = (window as any).__bridgeSlotRect as
-          | { cx: number; cy: number } | null;
-        if (slotRect) {
-          const curCx = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
-          const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * sE;
-          flyDy = (slotRect.cy - curCy) * sE;
+      if (fileT <= 0) {
+        fileTargetRef.current = null;
+      } else {
+        if (!fileTargetRef.current) {
+          const slotRect = (window as any).__bridgeSlotRect as
+            | { cx: number; cy: number } | null;
+          if (slotRect) {
+            const sFinal = SPINE_HEIGHT / h;
+            const curCx0 = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * sFinal;
+            const curCy0 = stageRect.top + restingCenterY + dyToCenter;
+            fileTargetRef.current = { dx: slotRect.cx - curCx0, dy: slotRect.cy - curCy0 };
+          }
+        }
+        if (fileTargetRef.current) {
+          flyDx = fileTargetRef.current.dx * sE;
+          flyDy = fileTargetRef.current.dy * sE;
         }
       }
 
