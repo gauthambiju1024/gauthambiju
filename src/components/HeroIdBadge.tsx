@@ -96,7 +96,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
-  const fileTargetRef = useRef<{ dx: number; dy: number } | null>(null);
+  const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -263,15 +263,18 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const slotRect = (window as any).__bridgeSlotRect as
             | { cx: number; cy: number } | null;
           if (slotRect) {
-            const sFinal = SPINE_HEIGHT / h;
-            const curCx0 = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * sFinal;
-            const curCy0 = stageRect.top + restingCenterY + dyToCenter;
-            fileTargetRef.current = { dx: slotRect.cx - curCx0, dy: slotRect.cy - curCy0 };
+            const startCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
+            const startCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
+            fileTargetRef.current = { startCx, startCy, targetCx: slotRect.cx, targetCy: slotRect.cy };
           }
         }
         if (fileTargetRef.current) {
-          flyDx = fileTargetRef.current.dx * sE;
-          flyDy = fileTargetRef.current.dy * sE;
+          const currentBaseCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
+          const currentBaseCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
+          const desiredCx = fileTargetRef.current.startCx + (fileTargetRef.current.targetCx - fileTargetRef.current.startCx) * sE;
+          const desiredCy = fileTargetRef.current.startCy + (fileTargetRef.current.targetCy - fileTargetRef.current.startCy) * sE;
+          flyDx = desiredCx - currentBaseCx;
+          flyDy = desiredCy - currentBaseCy;
         }
       }
 

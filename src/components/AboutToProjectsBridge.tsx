@@ -264,6 +264,30 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     overflowX: "visible",
                   }}
                 >
+                  {/* About spine — fixed first slot on the top shelf, used as the filing target */}
+                  {isTop && (
+                    <div
+                      style={{
+                        position: "relative",
+                        flex: "0 0 auto",
+                        width: SPINE_WIDTH,
+                        height: SPINE_HEIGHT,
+                      }}
+                    >
+                      <div
+                        ref={aboutSlotRef}
+                        aria-hidden
+                        style={{ position: "absolute", inset: 0, opacity: 0, visibility: "hidden" }}
+                      />
+                      <div
+                        ref={aboutSpineRef}
+                        style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
+                      >
+                        <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
+                      </div>
+                    </div>
+                  )}
+
                   {row.items.map((p, i) => {
                     const myCol = col++;
                     return (
@@ -290,36 +314,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                       </div>
                     );
                   })}
-
-                  {/* About spine — sits immediately after the last project spine */}
-                  {isTop && (() => {
-                    const myCol = col++;
-                    return (
-                      <div
-                        ref={registerSpine(rowIndex, myCol)}
-                        style={{
-                          position: "relative",
-                          flex: "0 0 auto",
-                          width: SPINE_WIDTH,
-                          height: SPINE_HEIGHT,
-                          transform: "translateY(135%)",
-                          willChange: "transform",
-                        }}
-                      >
-                        <div
-                          ref={aboutSlotRef}
-                          aria-hidden
-                          style={{ position: "absolute", inset: 0, opacity: 0, visibility: "hidden" }}
-                        />
-                        <div
-                          ref={aboutSpineRef}
-                          style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
-                        >
-                          <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} />
-                        </div>
-                      </div>
-                    );
-                  })()}
 
                   {/* spacer pushes toolbox to the right edge of the bottom row */}
                   {isBottom && <div style={{ flex: "1 1 auto" }} />}
