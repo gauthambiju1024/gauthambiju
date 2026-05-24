@@ -92,7 +92,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const backFaceRef = useRef<HTMLDivElement>(null);
-  const backSlotRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
@@ -190,20 +190,19 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: drag + tilt + slide/scale/flip + rotate-to-spine + fall onto shelf.
-    const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    // Per-frame: drag + tilt + slide/scale/flip + 3D book hinge reveal + file to shelf.
+    const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const eOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
-      const eOut = (x: number) => 1 - Math.pow(1 - x, 5);
 
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
       const bridge = smoothstep(0.72, 1.0, p);
-      const tSpine = seg(0.00, 0.45, bridge);
-      const tFall  = seg(0.55, 1.00, bridge);
-      const spineActive = tSpine > 0.02;
+      const revealT = seg(0.00, 0.60, bridge);
+      const fileT = seg(0.70, 1.00, bridge);
       const settled = bridge > 0.96;
 
       const stageRect = stage.getBoundingClientRect();
@@ -222,67 +221,64 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
-      // 0 → 180 (About flip) → 360 (second flip lands back face → spine)
       const rotYFlip = p2 * 180;
 
+      // Book hinge: 0° (cover faces camera) → 90° (spine faces camera).
+      const bookRotate = 90 * eInOutCubic(revealT);
+      const coverFacing = Math.cos(bookRotate * Math.PI / 180); // 1 → 0
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? (1 - eInOut(tSpine)) : 0;
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) : 0;
+      const paperFade = 1 - smoothstep(0.5, 0.95, revealT);
+
       if (backFaceRef.current) {
-        backFaceRef.current.style.background = tSpine > 0.6 ? "transparent" : CARD_BG;
-        backFaceRef.current.style.boxShadow = tSpine > 0.6 ? "none" : CARD_SHADOW;
-        backFaceRef.current.style.pointerEvents = spineActive ? "none" : "auto";
+        backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
         backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
+      }
+      if (bookRef.current) {
+        bookRef.current.style.transform = `rotateY(${bookRotate.toFixed(2)}deg)`;
       }
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
-      }
-      if (backSlotRef.current) backSlotRef.current.style.opacity = String(aboutOpacity);
-
-      if (spineSkinRef.current) {
-        const tS = eInOut(tSpine);
-        const invX = (CARD_WIDTH / SPINE_WIDTH) * (1 - tS) + tS;
-        const invY = (CARD_HEIGHT / SPINE_HEIGHT) * (1 - tS) + tS;
-        spineSkinRef.current.style.opacity = String(tS);
-        spineSkinRef.current.style.transform =
-          `translate(-50%, -50%) scale(${invX.toFixed(3)}, ${invY.toFixed(3)})`;
+        cardBackInnerRef.current.style.background = paperFade > 0.02 ? CARD_BG : "transparent";
+        cardBackInnerRef.current.style.boxShadow = paperFade > 0.02 ? CARD_SHADOW : "none";
       }
 
-      const tSx = eInOut(tSpine);
-      const tSy = eOut(tFall);
-      const scaleX = baseScale + (SPINE_WIDTH / w  - baseScale) * tSx;
-      const scaleY = baseScale + (SPINE_HEIGHT / h - baseScale) * tSy;
-      const rotZ = -6 * (tFall * (1 - tFall) * 4);
+      // Scale toward spine footprint during file phase.
+      const fE = eOutQuart(fileT);
+      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * fE;
+      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * fE;
 
       let flyDx = 0, flyDy = 0;
-      if (tFall > 0) {
+      if (fileT > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          const curCx = stageRect.left + restingCenterX + dxToCenter;
+          // After 90° hinge, the spine sits at local x = -SPINE_WIDTH/2 relative to wrap center.
+          const curCx = stageRect.left + restingCenterX + dxToCenter + (-SPINE_WIDTH / 2) * sX;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * tSy;
-          flyDy = (slotRect.cy - curCy) * tSy;
+          flyDx = (slotRect.cx - curCx) * fE;
+          flyDy = (slotRect.cy - curCy) * fE;
         }
       }
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)}) ` +
-        `rotateY(${rotYFlip.toFixed(2)}deg) rotateZ(${rotZ.toFixed(2)}deg)`;
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) ` +
+        `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSpine));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - revealT));
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tSpine);
+        const globeOp = p2 * (1 - revealT);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && tSpine < 0.02 ? "auto" : "none";
+          p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
       }
       cardWrap.style.opacity = settled ? "0" : "1";
-      cardWrap.style.pointerEvents = p1 > 0.05 || spineActive ? "none" : "auto";
+      cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
@@ -476,7 +472,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           </div>
         </div>
 
-        {/* Back face — Tabbed About panel */}
+        {/* Back face — transparent 3D container hosting the book (cover + perpendicular spine) */}
         <div
           ref={backFaceRef}
           style={{
@@ -484,56 +480,74 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             inset: 0,
             width: CARD_WIDTH,
             height: CARD_HEIGHT,
-            padding: "20px 14px 14px",
-            background: CARD_BG,
-            borderRadius: 4,
-            boxShadow: CARD_SHADOW,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
             transformStyle: "preserve-3d",
             WebkitTransformStyle: "preserve-3d",
             pointerEvents: "auto",
-            display: "flex",
-            flexDirection: "column",
             overflow: "visible",
           }}
         >
-          <div ref={backSlotRef} aria-hidden style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", width: 38, height: 7, borderRadius: 4, background: "hsl(160 30% 6%)", boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.6), 0 1px 0 hsl(0 0% 100% / 0.7)", zIndex: 2, pointerEvents: "none" }} />
+          {/* #book — rigid wrapper that rotates 0°→90° around the cover's left edge */}
           <div
-            ref={cardBackInnerRef}
-            style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, willChange: "opacity" }}
-          >
-            <AboutCardBack
-              data={journey}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-            />
-          </div>
-
-          {/* Spine skin overlay — counter-scales so the spine art stays correctly sized as the card narrows */}
-          <div
-            ref={spineSkinRef}
-            aria-hidden
+            ref={bookRef}
             style={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: SPINE_WIDTH,
-              height: SPINE_HEIGHT,
-              opacity: 0,
-              pointerEvents: "none",
-              zIndex: 6,
-              transformOrigin: "center center",
-              transform: `translate(-50%, -50%) scale(${CARD_WIDTH / SPINE_WIDTH}, ${CARD_HEIGHT / SPINE_HEIGHT})`,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-              willChange: "opacity, transform",
+              inset: 0,
+              transformStyle: "preserve-3d",
+              WebkitTransformStyle: "preserve-3d",
+              transformOrigin: "0% 50%",
+              transform: "rotateY(0deg)",
+              willChange: "transform",
             }}
           >
-            <ProjectSpine data={ABOUT_SPINE_DATA} />
+            {/* #book-cover — About content lives on the cover face */}
+            <div
+              ref={cardBackInnerRef}
+              style={{
+                position: "absolute",
+                inset: 0,
+                padding: "20px 14px 14px",
+                background: CARD_BG,
+                borderRadius: 4,
+                boxShadow: CARD_SHADOW,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transformOrigin: "0% 50%",
+                display: "flex",
+                flexDirection: "column",
+                willChange: "opacity, background",
+              }}
+            >
+              <AboutCardBack
+                data={journey}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                expandedId={expandedId}
+                setExpandedId={setExpandedId}
+              />
+            </div>
+
+            {/* #book-spine — perpendicular panel pre-rotated -90° around its right edge (the hinge) */}
+            <div
+              ref={spineSkinRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: -SPINE_WIDTH,
+                top: (CARD_HEIGHT - SPINE_HEIGHT) / 2,
+                width: SPINE_WIDTH,
+                height: SPINE_HEIGHT,
+                transformOrigin: "100% 50%",
+                transform: "rotateY(-90deg)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                pointerEvents: "none",
+              }}
+            >
+              <ProjectSpine data={ABOUT_SPINE_DATA} />
+            </div>
           </div>
         </div>
       </div>
