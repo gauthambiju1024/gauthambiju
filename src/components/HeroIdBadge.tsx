@@ -296,7 +296,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = settled ? "0" : "1";
+      cardWrap.style.opacity = String(1 - smoothstep(0.85, 1.0, fileT));
       cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
