@@ -263,15 +263,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const slotRect = (window as any).__bridgeSlotRect as
             | { cx: number; cy: number } | null;
           if (slotRect) {
-            const sFinal = SPINE_HEIGHT / h;
-            const startCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * sFinal;
+            const startCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
             const startCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
             fileTargetRef.current = { startCx, startCy, targetCx: slotRect.cx, targetCy: slotRect.cy };
           }
         }
         if (fileTargetRef.current) {
-          const sFinal = SPINE_HEIGHT / h;
-          const currentBaseCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * sFinal;
+          const currentBaseCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
           const currentBaseCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
           const desiredCx = fileTargetRef.current.startCx + (fileTargetRef.current.targetCx - fileTargetRef.current.startCx) * sE;
           const desiredCy = fileTargetRef.current.startCy + (fileTargetRef.current.targetCy - fileTargetRef.current.startCy) * sE;
