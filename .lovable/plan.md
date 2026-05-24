@@ -1,22 +1,25 @@
 Plan
 
-1. Make the shelf target deterministic
-- In `src/components/AboutToProjectsBridge.tsx`, move the About spine slot to the start of the top shelf row instead of appending it after the project spines.
-- This makes “MORE ABOUT ME” the first spine on the topmost shelf every time.
+1. About spine stays narrow everywhere
+- In `src/components/projects/ProjectSpine.tsx`, accept an optional `width` override (or a `narrow` variant) so the About spine renders at `BOOK_SPINE_W` (28) instead of `SPINE_WIDTH` (78).
+- The shelf-resident About spine in `AboutToProjectsBridge.tsx` uses this narrow width.
+- The hero filing animation already uses the same 28 width, so the visual width is identical from flight → landing → resting click target. No abrupt width change at any point.
 
-2. Publish a fixed top-shelf target
-- Keep `aboutSlotRef`, but it will now represent that first top-shelf slot.
-- Publish that slot rect as the filing target, not a later/dynamic project-relative position.
-- The target will remain tied to the fixed top-shelf slot, so the hero spine does not chase shifting row/project layout.
+2. Filing target = narrow shelf slot
+- In `AboutToProjectsBridge.tsx`, the About landing slot becomes a 28-wide, full-height container at the start of the top shelf row.
+- `__bridgeSlotRect` is published from this narrow slot, so the hero spine flies to and parks exactly on it.
 
-3. Simplify the hero filing motion
-- In `src/components/HeroIdBadge.tsx`, keep the target snapshot once when filing begins.
-- Fly the spine in one straight eased movement to the fixed first top-shelf slot.
-- Use the same easing for translate and shrink so it does not dip, rise, or disintegrate.
+3. Gradual placement, no final pop
+- In `src/components/HeroIdBadge.tsx`, keep the single eased translate+shrink path to the slot.
+- Remove the abrupt `settled` opacity flip: the hero card wrap fades smoothly across the final portion of `fileT` while the shelf About spine fades in over the same window, so the handoff is invisible.
+- No extra "snap into place" action at the end.
 
-4. Preserve current scope
-- No U-shaped filing motion.
-- No width increase.
-- Keep shelf spine height matching existing project spines.
-- Keep mobile behavior unchanged.
-- Do not touch `HeroAboutFlip.tsx`, `AboutCardBack.tsx`, or unrelated sections.
+4. Other project spines appear only after About is placed
+- In `AboutToProjectsBridge.tsx`, shift the ARCHIVE window so all non-About project spines start rising only after the bridge filing is essentially complete (e.g. archive window starts at ~0.97 instead of 0.82, finishing just after).
+- Shelf rules can still draw earlier so the shelves exist when the About spine lands.
+- About spine itself becomes interactive at the end of filing, before/while the other projects rise.
+
+5. Out of scope
+- No changes to mobile.
+- No changes to `HeroAboutFlip.tsx`, `AboutCardBack.tsx`, hero lanyard, globe, or unrelated sections.
+- No backend/data changes.
