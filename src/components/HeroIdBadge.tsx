@@ -190,24 +190,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: combine drag offset, resting tilt, scroll-driven (translate, scale, rotateY),
-    // and the bridge shrink/drop that turns the card into a shelved spine.
+    // Per-frame: drag + tilt + slide/scale/flip + rotate-to-spine + fall onto shelf.
+    const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
       const eOut = (x: number) => 1 - Math.pow(1 - x, 5);
 
-      // Pre-fold: hero→center slide and About flip (unchanged windows)
       const p1 = seg(0.35, 0.55, p);
       const p2 = seg(0.55, 0.72, p);
 
-      // about→projects segment driver; sequential fold → flip → shrink → fly
       const bridge = smoothstep(0.72, 1.0, p);
-      const tFold = seg(0.00, 0.55, bridge);
-      const tTurn = seg(0.62, 0.82, bridge);
-      const tShrink = seg(0.82, 0.92, bridge);
-      const tFile = seg(0.92, 1.00, bridge);
-      const foldActive = bridge > 0.02;
+      const tSpine = seg(0.00, 0.45, bridge);
+      const tFall  = seg(0.55, 1.00, bridge);
+      const spineActive = tSpine > 0.02;
       const settled = bridge > 0.96;
 
       const stageRect = stage.getBoundingClientRect();
@@ -226,75 +222,67 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
-      // Wrapper rotation capped on About face; center strip owns the TURN.
-      const rotYFlip = p2 * 180;
+      // 0 → 180 (About flip) → 360 (second flip lands back face → spine)
+      const rotYFlip = p2 * 180 + tSpine * 180;
 
-      const backVisible = p2 > 0.5 && !foldActive;
+      const backVisible = p2 > 0.5;
+      const aboutOpacity = backVisible ? (1 - eInOut(tSpine)) : 0;
       if (backFaceRef.current) {
-        backFaceRef.current.style.background = foldActive ? "transparent" : CARD_BG;
-        backFaceRef.current.style.boxShadow = foldActive ? "none" : CARD_SHADOW;
-        backFaceRef.current.style.pointerEvents = foldActive ? "none" : "auto";
+        backFaceRef.current.style.background = tSpine > 0.6 ? "transparent" : CARD_BG;
+        backFaceRef.current.style.boxShadow = tSpine > 0.6 ? "none" : CARD_SHADOW;
+        backFaceRef.current.style.pointerEvents = spineActive ? "none" : "auto";
         backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
       }
-
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = backVisible ? "1" : "0";
-        cardBackInnerRef.current.style.visibility = backVisible ? "visible" : "hidden";
+        cardBackInnerRef.current.style.opacity = String(aboutOpacity);
+        cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
-      if (backSlotRef.current) backSlotRef.current.style.opacity = backVisible ? "1" : "0";
-      if (volRef.current) volRef.current.style.opacity = foldActive ? "1" : "0";
+      if (backSlotRef.current) backSlotRef.current.style.opacity = String(aboutOpacity);
 
-      // FOLD — wings rotate behind center (reference geometry)
-      const eInOut = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-      const fE = eInOut(tFold);
-      if (panelLRef.current) panelLRef.current.style.transform = `rotateY(${(fE * 178).toFixed(2)}deg) translateZ(-5px)`;
-      if (panelRRef.current) panelRRef.current.style.transform = `rotateY(${(-fE * 178).toFixed(2)}deg) translateZ(-5px)`;
+      if (spineSkinRef.current) {
+        const tS = eInOut(tSpine);
+        const invX = (CARD_WIDTH / SPINE_WIDTH) * (1 - tS) + tS;
+        const invY = (CARD_HEIGHT / SPINE_HEIGHT) * (1 - tS) + tS;
+        spineSkinRef.current.style.opacity = String(tS);
+        spineSkinRef.current.style.transform =
+          `translate(-50%, -50%) rotateY(180deg) scale(${invX.toFixed(3)}, ${invY.toFixed(3)})`;
+      }
 
-      // TURN — whole packet revolves; back of center panel (spine) faces us
-      const tE = eInOut(tTurn);
-      if (volRef.current) volRef.current.style.transform = `rotateY(${(-180 * tE).toFixed(2)}deg)`;
+      const tSx = eInOut(tSpine);
+      const tSy = eOut(tFall);
+      const scaleX = baseScale + (SPINE_WIDTH / w  - baseScale) * tSx;
+      const scaleY = baseScale + (SPINE_HEIGHT / h - baseScale) * tSy;
+      const rotZ = -6 * (tFall * (1 - tFall) * 4);
 
-      // SHRINK — packet scales down to spine footprint BEFORE the fly
-      // Center wing is 50% of card width, so target scaleX uses w/2 as the visible width.
-      const shrinkE = eOut(tShrink);
-      const targetSx = SPINE_WIDTH / (w / 3);
-      const targetSy = SPINE_HEIGHT / h;
-      const scaleX = Math.round((baseScale + (targetSx - baseScale) * shrinkE) * 1000) / 1000;
-      const scaleY = Math.round((baseScale + (targetSy - baseScale) * shrinkE) * 1000) / 1000;
-
-      // FILE — fly to slot, only after shrink completes
-      const fileE = eOut(tFile);
       let flyDx = 0, flyDy = 0;
-      if (tFile > 0) {
+      if (tFall > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
           const curCx = stageRect.left + restingCenterX + dxToCenter;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * fileE;
-          flyDy = (slotRect.cy - curCy) * fileE;
+          flyDx = (slotRect.cx - curCx) * tSy;
+          flyDy = (slotRect.cy - curCy) * tSy;
         }
       }
 
       const tx = snap(offsetX + dxToCenter + flyDx);
       const ty = snap(offsetY + dyToCenter + flyDy);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY}) ` +
-        `rotateY(${rotYFlip.toFixed(2)}deg)`;
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)}) ` +
+        `rotateY(${rotYFlip.toFixed(2)}deg) rotateZ(${rotZ.toFixed(2)}deg)`;
 
-      // Lanyard fades with the About flip
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tFold));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - tSpine));
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - tFold);
+        const globeOp = p2 * (1 - tSpine);
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && tFold < 0.02 ? "auto" : "none";
+          p2 > 0.5 && tSpine < 0.02 ? "auto" : "none";
       }
-      // Silently hand off to the clickable shelf spine once fully settled
       cardWrap.style.opacity = settled ? "0" : "1";
-      cardWrap.style.pointerEvents = p1 > 0.05 || tFold > 0.02 ? "none" : "auto";
+      cardWrap.style.pointerEvents = p1 > 0.05 || spineActive ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
