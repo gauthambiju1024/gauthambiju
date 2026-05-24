@@ -225,12 +225,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const rotYFlip = p2 * 180;
 
-      // Book hinge: 0° (cover faces camera) → 90° (spine faces camera).
-      const bookRotate = 90 * eInOutCubic(revealT);
-      const coverFacing = Math.cos(bookRotate * Math.PI / 180); // 1 → 0
+      // File phase split: close (90°→180° cover swing) then slide+fit into shelf.
+      const closeT = seg(0.00, 0.35, fileT);
+      const slideT = seg(0.35, 1.00, fileT);
+
+      // Book hinge: reveal 0°→90°, then close adds 90°→180°.
+      const bookRotate = 90 * eInOutCubic(revealT) + 90 * eInOutCubic(closeT);
+      const coverFacing = Math.cos(bookRotate * Math.PI / 180);
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) : 0;
-      const paperFade = 1 - smoothstep(0.5, 0.95, revealT);
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
@@ -242,25 +245,29 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (cardBackInnerRef.current) {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
-        cardBackInnerRef.current.style.background = paperFade > 0.02 ? CARD_BG : "transparent";
-        cardBackInnerRef.current.style.boxShadow = paperFade > 0.02 ? CARD_SHADOW : "none";
+      }
+      if (closedSpineRef.current) {
+        // Closed-cover face: fades in across the close beat so the closed book reads as spine-faced.
+        const closedOp = eInOutCubic(closeT);
+        closedSpineRef.current.style.opacity = String(closedOp);
+        closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
       }
 
-      // Scale toward spine footprint during file phase.
-      const fE = eOutQuart(fileT);
-      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * fE;
-      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * fE;
+      // Wrapper scale: stays at baseScale during reveal+close; downscales toward slot during slide.
+      const sE = eOutQuart(slideT);
+      const sX = baseScale + (SPINE_WIDTH / w - baseScale) * sE;
+      const sY = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
 
       let flyDx = 0, flyDy = 0;
-      if (fileT > 0) {
+      if (slideT > 0) {
         const slotRect = (window as any).__bridgeSlotRect as
           | { cx: number; cy: number } | null;
         if (slotRect) {
-          // After 90° hinge, the spine sits at local x = -SPINE_WIDTH/2 relative to wrap center.
-          const curCx = stageRect.left + restingCenterX + dxToCenter + (-SPINE_WIDTH / 2) * sX;
+          // After close, the closed-book spine is centered at local x = -BOOK_SPINE_W/2 relative to wrap center.
+          const curCx = stageRect.left + restingCenterX + dxToCenter + (-BOOK_SPINE_W / 2) * sX;
           const curCy = stageRect.top + restingCenterY + dyToCenter;
-          flyDx = (slotRect.cx - curCx) * fE;
-          flyDy = (slotRect.cy - curCy) * fE;
+          flyDx = (slotRect.cx - curCx) * sE;
+          flyDy = (slotRect.cy - curCy) * sE;
         }
       }
 
@@ -270,11 +277,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
+      // Lanyard + globe clear out before the cover swings (sharpened gating).
+      const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * (1 - revealT));
+        lanyardLayerRef.current.style.opacity = String((1 - p2) * chromeFade);
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * (1 - revealT);
+        const globeOp = p2 * chromeFade;
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
