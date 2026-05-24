@@ -93,10 +93,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const backFaceRef = useRef<HTMLDivElement>(null);
   const backSlotRef = useRef<HTMLDivElement>(null);
-  const volRef = useRef<HTMLDivElement>(null);
-  const panelLRef = useRef<HTMLDivElement>(null);
-  const panelCRef = useRef<HTMLDivElement>(null);
-  const panelRRef = useRef<HTMLDivElement>(null);
+  const spineSkinRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
