@@ -197,6 +197,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: drag + tilt + slide/scale/flip + 3D book hinge reveal + file to shelf.
     const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     const eOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
@@ -205,9 +206,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const p2 = seg(0.55, 0.72, p);
 
       const bridge = smoothstep(0.72, 1.0, p);
-      const revealT = seg(0.00, 0.60, bridge);
-      const fileT = seg(0.70, 1.00, bridge);
-      const settled = bridge > 0.96;
+      const revealT = seg(0.00, 0.55, bridge);
+      // Split file into two sub-beats: book close, then spine handoff + fly to slot.
+      const closeT = seg(0.62, 0.78, bridge);
+      const flyT = seg(0.74, 0.96, bridge);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -227,22 +229,21 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const rotYFlip = p2 * 180;
 
-      // Single-beat file: cover swings 90°→180°, closed face fades in, wrapper shrinks uniformly to slot.
-      const fE = eInOutCubic(fileT);
-      const sE = eOutQuart(fileT);
+      const cE = eInOutCubic(closeT);
+      const fE = eInOutCubic(flyT);
 
-      const bookRotate = 90 * eInOutCubic(revealT) + 90 * fE;
+      // Book closes during closeT; stays closed after.
+      const bookRotate = 90 * eInOutCubic(revealT) + 90 * cE;
       const coverFacing = Math.cos(bookRotate * Math.PI / 180);
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - fileT) : 0;
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
         backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
       }
       if (cardRef.current) {
-        // Hide the front face (portrait/name) as soon as the cover begins swinging,
-        // so it can never bleed through the closed spine during filing.
+        // Hide the front face (portrait/name) as soon as the cover begins swinging.
         const frontHidden = revealT > 0;
         cardRef.current.style.opacity = frontHidden ? "0" : "1";
         cardRef.current.style.visibility = frontHidden ? "hidden" : "visible";
@@ -254,46 +255,65 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
+      // Closed-cover face stays hidden — we hand off to a clean external flying spine.
       if (closedSpineRef.current) {
-        const closedOp = fE;
-        closedSpineRef.current.style.opacity = String(closedOp);
-        closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
+        closedSpineRef.current.style.opacity = "0";
+        closedSpineRef.current.style.visibility = "hidden";
       }
 
-      // Uniform scale: match shelf height; thickness (BOOK_SPINE_W) stays narrow.
-      const s = baseScale + (SPINE_HEIGHT / h - baseScale) * sE;
-
-      let flyDx = 0, flyDy = 0;
-      if (fileT <= 0) {
-        fileTargetRef.current = null;
-      } else {
-        if (!fileTargetRef.current) {
-          const slotRect = (window as any).__bridgeSlotRect as
-            | { cx: number; cy: number } | null;
-          if (slotRect) {
-            const startCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
-            const startCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
-            fileTargetRef.current = { startCx, startCy, targetCx: slotRect.cx, targetCy: slotRect.cy };
-          }
-        }
-        if (fileTargetRef.current) {
-          const currentBaseCx = stageRect.left + restingCenterX + offsetX + dxToCenter + (-BOOK_SPINE_W / 2) * s;
-          const currentBaseCy = stageRect.top + restingCenterY + offsetY + dyToCenter;
-          const desiredCx = fileTargetRef.current.startCx + (fileTargetRef.current.targetCx - fileTargetRef.current.startCx) * sE;
-          const desiredCy = fileTargetRef.current.startCy + (fileTargetRef.current.targetCy - fileTargetRef.current.startCy) * sE;
-          flyDx = desiredCx - currentBaseCx;
-          flyDy = desiredCy - currentBaseCy;
-        }
-      }
-
-      const tx = snap(offsetX + dxToCenter + flyDx);
-      const ty = snap(offsetY + dyToCenter + flyDy);
+      // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
+      const tx = snap(offsetX + dxToCenter);
+      const ty = snap(offsetY + dyToCenter);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${s.toFixed(3)}, ${s.toFixed(3)}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${baseScale.toFixed(3)}, ${baseScale.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
+      // ============== FLYING SPINE HANDOFF ==============
+      // Once the book has visually closed (closeT > 0.6), fade out the card wrap
+      // and reveal a clean narrow spine at the same on-screen position. That spine
+      // then flies to the shelf About slot during flyT.
+      const handoffStart = 0.55;
+      const handoffT = clamp((closeT - handoffStart) / (1 - handoffStart));
+      cardWrap.style.opacity = String(1 - handoffT);
 
-      // Lanyard + globe clear out before the cover swings (sharpened gating).
+      if (flyingSpineRef.current) {
+        const visible = handoffT > 0.001;
+        flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
+
+        if (visible) {
+          // Pin start point at the card's centered on-screen position (left-edge / hinge of book).
+          if (!fileTargetRef.current) {
+            const startCx = targetCenterX - (w * baseScale) / 2; // hinge x, in stage coords
+            const startCy = targetCenterY;
+            const slotRect = (window as any).__bridgeSlotRect as
+              | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+            if (slotRect) {
+              fileTargetRef.current = {
+                startCx,
+                startCy,
+                targetCx: slotRect.cx - stageRect.left,
+                targetCy: slotRect.cy - stageRect.top,
+              };
+            }
+          }
+          const t = fileTargetRef.current;
+          if (t) {
+            const cx = lerp(t.startCx, t.targetCx, fE);
+            const cy = lerp(t.startCy, t.targetCy, fE);
+            // Fade in fast at handoff, fade out only at the very end as the shelf About spine takes over.
+            const fadeIn = seg(0, 0.25, handoffT);
+            const fadeOut = 1 - seg(0.92, 1.0, flyT);
+            flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            flyingSpineRef.current.style.transform =
+              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+          }
+        } else {
+          flyingSpineRef.current.style.opacity = "0";
+          fileTargetRef.current = null;
+        }
+      }
+
+      // Lanyard + globe clear out before the cover swings.
       const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
       if (lanyardLayerRef.current) {
         lanyardLayerRef.current.style.opacity = String((1 - p2) * chromeFade);
@@ -304,12 +324,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         globeLayerRef.current.style.pointerEvents =
           p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.opacity = String(1 - smoothstep(0.85, 1.0, fileT));
       cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
       updateLanyard();
     };
+
 
     let raf = 0;
     const loop = () => { applyTransform(); raf = requestAnimationFrame(loop); };
