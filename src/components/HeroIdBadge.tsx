@@ -96,6 +96,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
+  const flyingSpineRef = useRef<HTMLDivElement>(null);
   const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
