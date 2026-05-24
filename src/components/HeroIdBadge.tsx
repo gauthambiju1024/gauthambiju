@@ -239,6 +239,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
         backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
       }
+      if (cardRef.current) {
+        // Hide the front face (portrait/name) as soon as the cover begins swinging,
+        // so it can never bleed through the closed spine during filing.
+        const frontHidden = revealT > 0;
+        cardRef.current.style.opacity = frontHidden ? "0" : "1";
+        cardRef.current.style.visibility = frontHidden ? "hidden" : "visible";
+      }
       if (bookRef.current) {
         bookRef.current.style.transform = `rotateY(${bookRotate.toFixed(2)}deg)`;
       }
@@ -570,18 +577,21 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               />
             </div>
 
-            {/* Closed-cover face — spine art rendered at the cover's local rect, fades in during close beat */}
+            {/* Closed-cover face — narrow spine art positioned at the hinge,
+                matches the perpendicular #book-spine geometry so the closed book reads as a true spine. */}
             <div
               ref={closedSpineRef}
               aria-hidden
               style={{
                 position: "absolute",
-                inset: 0,
+                left: -BOOK_SPINE_W,
+                top: 0,
+                width: BOOK_SPINE_W,
+                height: CARD_HEIGHT,
                 opacity: 0,
                 visibility: "hidden",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
-                transformOrigin: "0% 50%",
                 pointerEvents: "none",
                 willChange: "opacity",
               }}
