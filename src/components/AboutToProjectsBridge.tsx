@@ -125,13 +125,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const settled = bridge > 0.98;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        // Fade shelf About spine in across the final arrival window of the
-        // flying hero spine (flyT in HeroIdBadge: bridge 0.74→0.96, arrival 0.92→0.96).
-        // We fade in 0.92→0.96 so the shelf spine is fully opaque exactly as the
-        // flying spine reaches the slot — invisible hand-off, no width/position pop.
-        const k = clamp01((bridge - 0.92) / 0.04);
-        aboutSpineRef.current.style.opacity = String(k);
-        aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
+        // The hero flying spine IS the About spine after landing — keep this duplicate hidden.
+        aboutSpineRef.current.style.opacity = "0";
+        aboutSpineRef.current.style.pointerEvents = "none";
       }
       slot.style.opacity = "0";
 
@@ -206,6 +202,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeSlotRect = null;
     };
   }, [projects, progressMV, rows.length]);
+
+  useEffect(() => {
+    const onOpen = () => setPopupOpen(true);
+    window.addEventListener("open-about-popup", onOpen);
+    return () => window.removeEventListener("open-about-popup", onOpen);
+  }, []);
 
   // Helper to register a spine wrapper into spineRefs at (rowIndex, colIndex)
   const registerSpine = (rowIndex: number, colIndex: number) => (el: HTMLDivElement | null) => {
