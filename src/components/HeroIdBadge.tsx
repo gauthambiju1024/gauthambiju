@@ -580,6 +580,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           >
             {/* Page-block — visible "pages" along the cover's right edge (opposite the hinge) */}
             <div
+              ref={pageBlockRef}
               aria-hidden
               style={{
                 position: "absolute",
