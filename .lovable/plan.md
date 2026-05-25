@@ -1,32 +1,47 @@
-Corrected final plan:
+## Final plan — one real spine, no portal duplicate
 
-1. **Remove the fake replacement spine behavior**
-   - Stop showing a separate “flying spine” after the side spine disappears.
-   - The card-side About spine must not appear, vanish, then be replaced.
+### Answer to your question
+You're right. There is no good reason to keep two spines. The portal "flying spine" exists only because earlier code needed a free-flying element outside the card's 3D context. We can drop it entirely and use the **real `closedSpineRef` spine** as the one and only About spine through every phase.
 
-2. **Use one continuous visible spine from the card side onward**
-   - Create one overlay About spine that is visible as the actual side spine while the book/card closes.
-   - It starts exactly where the side spine is: same position, same size, same artwork.
-   - When filing begins, that same visible spine continues moving into the shelf.
+### What changes
 
-3. **Hide the old internal side-spine renderers**
-   - `spineSkinRef` / `closedSpineRef` should no longer visibly render as independent spines.
-   - They can remain only as geometry/reference if needed, but not as visible elements.
-   - This removes the “appears then disappears” phase.
+**File:** `src/components/HeroIdBadge.tsx`
 
-4. **Keep the same size throughout**
-   - The continuous About spine stays `28px × 200px` from the moment it becomes visible through final landing.
-   - No width reduction, no scale pop, no sudden new size.
+1. **Delete the portal flying spine** (`flyingSpineRef` div + its per-frame block). No second renderer anywhere.
 
-5. **Keep the filing motion, but start it from the real side-spine location**
-   - At the filing start, capture the current screen position of the visible side spine.
-   - Use that as the bezier start point.
-   - Continue the existing smooth filing arc to the shelf slot.
+2. **Restore the original home → about flip** exactly as it was before the recent edits:
+   - slide-to-center, scale, rotateY flip, lanyard fade, globe fade-in, book close — all reverted to the previous good timing
+   - `spineSkinRef` (perpendicular plane) re-enabled so the closing book reads as real 3D
+   - `closedSpineRef` re-enabled so the hinge-side spine face is visible during close
+   - no opacity:0 / visibility:hidden hacks on these refs
 
-6. **No crossfade, no second About spine**
-   - The shelf duplicate About spine stays hidden.
-   - The continuous spine remains visible and clickable after landing.
+3. **Promote `closedSpineRef` to the single continuous About spine.**
+   - It is the visible side spine while the book closes (real 3D, attached to the card).
+   - When filing begins, instead of spawning a new element, we **detach `closedSpineRef` visually** by switching its positioning from `absolute` inside the rotating book to `fixed` in viewport coordinates, seeded with its current `getBoundingClientRect()` at that exact frame. Same DOM node, same artwork, same size — just a coordinate-space swap with zero visual delta.
+   - The bezier filing arc + damped settle then drive that same node into the shelf slot.
+   - After landing, the same node stays put as the clickable About spine.
 
-Files to update:
-- `src/components/HeroIdBadge.tsx`
-- `src/components/AboutToProjectsBridge.tsx`
+4. **Card wrap hides cleanly** once the spine has detached, so the empty book frame doesn't linger behind the flying spine.
+
+5. **Shelf side (`AboutToProjectsBridge.tsx`)** — unchanged role:
+   - keeps publishing `__bridgeSlotRect` as the geometry target
+   - its own About spine stays hidden (no duplicate renderer)
+
+### Why this fixes both complaints
+- **Home → about transition** is restored because we revert to the previous flip behavior and stop hiding the real 3D spine refs.
+- **Spine looks 3D and consistent** because the visible spine during close is the actual perpendicular `spineSkinRef` + `closedSpineRef` geometry inside the book's preserve-3d context.
+- **No appear/disappear/reappear** because there is literally one DOM node playing the spine role from first reveal through final landing.
+- **No crossfade, no size jump, no position pop** because the handoff is a same-node coordinate-space swap seeded from the live rect.
+
+### Technical details
+- Replace the absolute→fixed swap with a single ref that toggles a `data-filing` flag at the frame where `fileRaw > 0`.
+- On that flag, set `position: fixed`, capture `rect = closedSpineRef.getBoundingClientRect()`, and from then on write `transform: translate3d(x, y, 0)` in viewport space along the existing bezier.
+- Keep size at 28×200 throughout. No scale, no rotate after detach.
+- On landing (`fileT >= 1`), pin to `__bridgeSlotRect`, enable pointer-events, wire click → `open-about-popup`.
+
+### Acceptance criteria
+- Home → about flip matches the earlier good version.
+- Side spine looks like a real 3D book edge during close.
+- Exactly one About spine exists on screen at all times.
+- No crossfade, no jump, no size change at any handoff.
+- Lands in shelf slot and remains clickable.

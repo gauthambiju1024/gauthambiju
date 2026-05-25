@@ -96,9 +96,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
-  const flyingSpineRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
-  const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
+  const filingRef = useRef<{
+    detached: boolean;
+    startCx: number; startCy: number;
+    targetCx: number; targetCy: number;
+  } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -271,9 +274,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
+      // closedSpineRef = hinge-side spine face; visible during the close so the closing book reads as 3D.
       if (closedSpineRef.current) {
-        closedSpineRef.current.style.opacity = "0";
-        closedSpineRef.current.style.visibility = "hidden";
+        const closedOp = thickenT;
+        closedSpineRef.current.style.opacity = String(closedOp);
+        closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
       }
       if (pageBlockRef.current) {
         pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.66, 0.80, p)));
@@ -288,72 +293,64 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
       cardWrap.style.opacity = String(1 - seg(0.72, 0.78, p));
 
-      // ============== CONTINUOUS ABOUT SPINE: card-side first, then filed ==============
-      if (flyingSpineRef.current) {
-        const sideReveal = seg(0.62, 0.70, p);
-        const visible = sideReveal > 0.001;
-        flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
+      // ============== SINGLE REAL SPINE: spineSkinRef is the only About spine ==============
+      const spineEl = spineSkinRef.current;
+      if (spineEl) {
+        if (!filingRef.current?.detached) {
+          // Pre-filing: the real 3D perpendicular spine, visible from reveal through the close
+          const skinOp = Math.max(thickenT, seg(0.62, 0.70, p));
+          spineEl.style.opacity = String(skinOp);
+          spineEl.style.visibility = skinOp > 0.01 ? "visible" : "hidden";
+        }
 
-        if (visible) {
-          const sideRect = closedSpineRef.current?.getBoundingClientRect();
-          const sideCx = sideRect ? sideRect.left - stageRect.left + sideRect.width / 2 : targetCenterX;
-          const sideCy = sideRect ? sideRect.top - stageRect.top + sideRect.height / 2 : targetCenterY;
+        if (fileRaw > 0 && !filingRef.current?.detached) {
+          // Detach: same DOM node moves into viewport-fixed coords seeded at its live screen rect.
+          const rect = spineEl.getBoundingClientRect();
+          const startCx = rect.left + rect.width / 2;
+          const startCy = rect.top + rect.height / 2;
+          const slotRect = (window as any).__bridgeSlotRect as
+            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+          const targetCx = slotRect ? slotRect.cx : startCx;
+          const targetCy = slotRect ? slotRect.cy : startCy;
+          filingRef.current = { detached: true, startCx, startCy, targetCx, targetCy };
 
-          // Until filing actually starts, keep re-locking to the live card-side spine position.
-          // This prevents the old "side spine disappears, new spine appears elsewhere" handoff.
-          if (fileRaw <= 0) fileTargetRef.current = null;
+          if (spineEl.parentElement !== document.body) document.body.appendChild(spineEl);
+          spineEl.style.position = "fixed";
+          spineEl.style.left = "0";
+          spineEl.style.top = "0";
+          spineEl.style.width = `${BOOK_SPINE_W}px`;
+          spineEl.style.height = `${SPINE_HEIGHT}px`;
+          spineEl.style.transformOrigin = "center center";
+          spineEl.style.opacity = "1";
+          spineEl.style.visibility = "visible";
+          spineEl.style.zIndex = "12";
+          spineEl.style.willChange = "transform";
+          spineEl.style.transform =
+            `translate3d(${(startCx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(startCy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+          spineEl.onclick = () => window.dispatchEvent(new CustomEvent("open-about-popup"));
+        }
 
-          if (!fileTargetRef.current && fileRaw > 0) {
-            const slotRect = (window as any).__bridgeSlotRect as
-              | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-            if (slotRect) {
-              fileTargetRef.current = {
-                startCx: sideCx,
-                startCy: sideCy,
-                targetCx: slotRect.cx - stageRect.left,
-                targetCy: slotRect.cy - stageRect.top,
-              };
-            }
+        if (filingRef.current?.detached) {
+          const f = filingRef.current;
+          const slotRect = (window as any).__bridgeSlotRect as
+            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+          if (slotRect) { f.targetCx = slotRect.cx; f.targetCy = slotRect.cy; }
+          const start: Pt = { x: f.startCx, y: f.startCy };
+          const end: Pt = { x: f.targetCx, y: f.targetCy };
+          const c1: Pt = { x: start.x + (end.x - start.x) * 0.15, y: start.y - 40 };
+          const c2: Pt = { x: start.x + (end.x - start.x) * 0.65, y: Math.min(start.y, end.y) - 70 };
+          const frozen = fileT >= 1;
+          const arcEased = eInOutCubic(fileT);
+          const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
+          let extraTy = 0;
+          if (!frozen && fileT > 0.88) {
+            const k = (fileT - 0.88) / 0.12;
+            extraTy = Math.exp(-5 * k) * Math.sin(k * Math.PI * 2) * 1.2;
           }
-          const tgt = fileTargetRef.current;
-          const frozen = Boolean(tgt && fileT >= 1);
-          let px = sideCx;
-          let py = sideCy;
-
-          if (tgt) {
-            const start: Pt = { x: tgt.startCx, y: tgt.startCy };
-            const end: Pt = { x: tgt.targetCx, y: tgt.targetCy };
-            // Low, tight arc — committed placement, minimal hangtime
-            const c1: Pt = { x: start.x + (end.x - start.x) * 0.15, y: start.y - 40 };
-            const c2: Pt = { x: start.x + (end.x - start.x) * 0.65, y: Math.min(start.y, end.y) - 70 };
-            const arcEased = eInOutCubic(fileT);
-            const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
-
-            // Damped-spring settle on impact: one quick oscillation, sharp decay
-            let extraTy = 0;
-            if (!frozen && fileT > 0.88) {
-              const k = (fileT - 0.88) / 0.12;
-              const decay = Math.exp(-5 * k);
-              const wave = Math.sin(k * Math.PI * 2);
-              const s = decay * wave;
-              extraTy = s * 1.2;
-            }
-
-            px = pt.x;
-            py = pt.y + extraTy;
-          }
-
-          // One spine, one size, no spin, no scale, no fade-out.
-          flyingSpineRef.current.style.opacity = String(sideReveal);
-          flyingSpineRef.current.style.transformOrigin = "center center";
-          flyingSpineRef.current.style.pointerEvents = frozen ? "auto" : "none";
-          flyingSpineRef.current.style.cursor = frozen ? "pointer" : "default";
-          flyingSpineRef.current.style.transform =
-            `translate3d(${(px - BOOK_SPINE_W / 2).toFixed(2)}px, ` +
-            `${(py - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
-        } else {
-          flyingSpineRef.current.style.opacity = "0";
-          fileTargetRef.current = null;
+          spineEl.style.pointerEvents = frozen ? "auto" : "none";
+          spineEl.style.cursor = frozen ? "pointer" : "default";
+          spineEl.style.transform =
+            `translate3d(${(pt.x - BOOK_SPINE_W / 2).toFixed(2)}px, ${(pt.y + extraTy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
         }
       }
 
@@ -476,25 +473,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
       </div>
 
-      {/* Flying spine — single continuous element from card to shelf, becomes the clickable About spine after landing. */}
-      <div
-        ref={flyingSpineRef}
-        onClick={() => window.dispatchEvent(new CustomEvent("open-about-popup"))}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: BOOK_SPINE_W,
-          height: SPINE_HEIGHT,
-          opacity: 0,
-          visibility: "hidden",
-          pointerEvents: "none",
-          zIndex: 12,
-          willChange: "transform, opacity",
-        }}
-      >
-        <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
-      </div>
+      {/* No portal spine — spineSkinRef (the real 3D book spine) is reparented into <body> at filing start. */}
 
 
       {/* Lanyard layer (fades out as card travels) */}
