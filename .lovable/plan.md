@@ -1,40 +1,34 @@
 ## Goal
+Make the visible green spine transition feel continuous and calm: no abrupt jump in position, no abrupt resize, and no white line moving left. Only the spine handoff is adjusted.
 
-From the moment the large green spine is fully visible (current end state in screenshot), animate ONLY that spine with a simple, elegant natural fall to its shelf slot while shrinking from its current "book" size down to the regular project-spine size. Nothing else changes.
+## What I will change
+1. Lock the flying spine to the exact on-screen position of the visible spine at the handoff frame.
+   - Capture the real rendered rectangle of the visible spine at the moment the handoff begins.
+   - Use that exact center/size as the flying spine start state so there is zero pop in step 2 or 3.
 
-## Scope (strict)
+2. Replace the current independent X/Y timing with one continuous, softer settle.
+   - Keep the same overall handoff window.
+   - Use a gentler path so the spine moves as one continuous drop toward the shelf instead of appearing to “teleport then fall”.
+   - Preserve the existing end target so it still lands in the same shelf slot.
 
-- No changes to Home, About, card flip, book-close, lanyard, globe, or anything before the spine becomes visible.
-- No changes to the shelf, About slot position, ledges, project spines, toolbox, or AboutToProjectsBridge.
-- Only the flying-spine segment inside `HeroIdBadge.tsx` is touched.
+3. Make the shrink start from the actual visible spine size, not an inferred scale.
+   - Read the real rendered start width/height from the handoff frame.
+   - Interpolate from that exact size down to the shelf spine size to remove the abrupt size snap.
 
-## What changes in `src/components/HeroIdBadge.tsx`
+4. Remove the white-line artifact at its source.
+   - Suppress any lingering lanyard/clip/page-edge visual during the bridge window.
+   - Ensure the flying spine wrapper itself contributes no border/outline/shadow artifact.
 
-Inside the `flyT` block where the flying spine moves to the slot:
-
-1. Replace the current linear `lerp(start → target)` + constant size with a natural-fall motion:
-   - X: ease-out horizontal drift from start X to slot X (gentle, no overshoot).
-   - Y: gravity-style fall — `y = start + (target - start) * t^2` (quadratic accel), so it falls slowly, then settles.
-   - End exactly at the existing slot center (`fileTargetRef.targetCx/Cy`) so the invisible handoff to the shelf's About spine still lines up frame-perfectly.
-
-2. Shrink the spine from current visible size to project-spine size during the fall:
-   - Start width = current visible spine width (the "book spine" size shown in the screenshot).
-   - End width = `ABOUT_SPINE_W` (28) — same as the shelf About slot, so the handoff has zero pop.
-   - Apply via CSS `transform: translate3d(x,y,0) scale(s)` with `transform-origin: top center` so the shrink reads as the spine settling into the slot, not jumping.
-   - Height scales with the same factor; the shelf About spine already matches `SPINE_HEIGHT`, so final scale = `ABOUT_SPINE_W / startWidth` (and same for height ratio if they differ — use a single uniform scale based on width to keep proportions clean).
-
-3. Keep the existing fade-in at handoff start and fade-out at `flyT` end (0.92→1.0) so the shelf About spine takes over invisibly. No other opacity changes.
-
-4. Remove only the white-line artifact source: ensure the flying spine wrapper has no border / box-shadow / outline and no residual lanyard clip is rendered during the fall (the lanyard layer is already faded by `bridge > 0`; just confirm no stray 1px element on the flying spine itself). No deletion of lanyard markup — just guarantee zero visible chrome on the falling spine.
-
-## Technical notes
-
-- File: `src/components/HeroIdBadge.tsx` only.
-- Easing: `xT = 1 - (1 - flyT)^2` (easeOutQuad) for X; `yT = flyT^2` (easeInQuad / gravity) for Y.
-- Compute `startWidth` once at handoff (when `fileTargetRef.current` is first set) by reading the rendered flying-spine box, then drive scale per frame.
-- No new refs, no new DOM, no changes to `ProjectSpine`, `AboutToProjectsBridge`, or any CSS file.
+## Files
+- `src/components/HeroIdBadge.tsx` only
 
 ## Out of scope
+- No changes to Home or About layouts
+- No changes to the earlier card flip/book close behavior beyond preventing the artifact during handoff
+- No changes to the shelf, project spines, or section timing structure
 
-- Bounce, rotation, tilt, squash-and-stretch, particles, sound, or any secondary motion.
-- Any timing-window changes to `bridge`, `closeT`, or `flyT` boundaries.
+## Technical details
+- Use the actual rendered handoff geometry instead of `targetCenterX/targetCenterY` plus derived start scales.
+- Base the start measurement on the visible spine/card transform already on screen.
+- Keep the same destination slot coordinates currently used for the shelf handoff.
+- Remove the stray line by fully hiding the artifact source during the handoff frame range, not by changing the page design.
