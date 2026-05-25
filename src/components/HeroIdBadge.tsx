@@ -290,9 +290,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
-          // Pin start point at the card's centered on-screen position (left-edge / hinge of book).
+          // Pin start at the visible closed-spine on-screen center, so the
+          // handoff has zero positional pop. Start size matches the visible
+          // (scaled) closed book spine; end size matches the shelf project spine.
           if (!fileTargetRef.current) {
-            const startCx = targetCenterX - (w * baseScale) / 2; // hinge x, in stage coords
+            const startCx = targetCenterX;
             const startCy = targetCenterY;
             const slotRect = (window as any).__bridgeSlotRect as
               | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
@@ -302,19 +304,29 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 startCy,
                 targetCx: slotRect.cx - stageRect.left,
                 targetCy: slotRect.cy - stageRect.top,
-              };
+                startScaleX: baseScale,
+                startScaleY: baseScale * (CARD_HEIGHT / SPINE_HEIGHT),
+              } as any;
             }
           }
-          const t = fileTargetRef.current;
+          const t = fileTargetRef.current as any;
           if (t) {
-            const cx = lerp(t.startCx, t.targetCx, fE);
-            const cy = lerp(t.startCy, t.targetCy, fE);
+            // Natural fall: ease-out X drift, gravity-style Y (quadratic accel).
+            const xT = 1 - Math.pow(1 - flyT, 2);
+            const yT = flyT * flyT;
+            const cx = lerp(t.startCx, t.targetCx, xT);
+            const cy = lerp(t.startCy, t.targetCy, yT);
+            // Shrink to project-spine size over the same window (ease-in-out).
+            const sE = eInOutCubic(flyT);
+            const sx = lerp(t.startScaleX, 1, sE);
+            const sy = lerp(t.startScaleY, 1, sE);
             // Fade in fast at handoff, fade out only at the very end as the shelf About spine takes over.
             const fadeIn = seg(0, 0.25, handoffT);
             const fadeOut = 1 - seg(0.92, 1.0, flyT);
             flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
-              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
           }
         } else {
           flyingSpineRef.current.style.opacity = "0";
