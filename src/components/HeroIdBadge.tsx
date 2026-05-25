@@ -198,7 +198,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: drag + slide/scale/flip + dense book-close + bezier file to shelf.
     const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     const eInOutQuart = (x: number) => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     type Pt = { x: number; y: number };
     const bezier = (p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt => {
       const u = 1 - t;
@@ -703,6 +702,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 height: CARD_HEIGHT,
                 transformOrigin: "100% 50%",
                 transform: "rotateY(-90deg)",
+                opacity: 0,
+                visibility: "hidden",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 pointerEvents: "none",
