@@ -324,19 +324,20 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             let cx = u*u*u*startP.x + 3*u*u*sE*c1.x + 3*u*sE*sE*c2.x + sE*sE*sE*endP.x;
             let cy = u*u*u*startP.y + 3*u*u*sE*c1.y + 3*u*sE*sE*c2.y + sE*sE*sE*endP.y;
 
-            // Width holds steady (no X scale). Height shrinks to shelf size.
+            // Width and height hold steady at shelf size — no scale change at any point.
             const scaleX = 1;
-            let scaleY = lerp(t.startScaleY, 1, sE);
+            let scaleY = 1;
 
-            // Damped-spring landing settle: one quick oscillation, sharp decay.
+            // Damped-spring landing settle: brief vertical sink only (no scaleY squash,
+            // so vertical-text letter width never drifts).
             if (flyT > 0.88) {
               const k = (flyT - 0.88) / 0.12;
               const decay = Math.exp(-5 * k);
               const wave = Math.sin(k * Math.PI * 2);
               const settle = decay * wave;
               cy += settle * 1.2;
-              scaleY *= 1 - settle * 0.02;
             }
+
 
             // Forward flight lean: peaks mid-arc, returns to 0 at landing.
             const flightTilt = 3 * Math.sin(flyT * Math.PI);
