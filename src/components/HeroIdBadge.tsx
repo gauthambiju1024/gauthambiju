@@ -264,10 +264,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
       }
-      // Hide the page-block edge during book close + handoff so no thin cream strip
-      // remains visible next to the spine.
+      // Hide the page-block edge fully once the bridge begins so the cream
+      // 3px strip can never read as a "white line" sliding across the screen.
       if (pageBlockRef.current) {
-        pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.5, 0.85, bridge)));
+        pageBlockRef.current.style.opacity = bridge > 0 ? "0" : "1";
       }
 
       // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
@@ -290,38 +290,35 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
-          // Pin start at the visible closed-spine on-screen center, so the
-          // handoff has zero positional pop. Start size matches the visible
-          // (scaled) closed book spine; end size matches the shelf project spine.
-          if (!fileTargetRef.current) {
-            const startCx = targetCenterX;
-            const startCy = targetCenterY;
+          // Measure the ACTUAL on-screen rect of the visible spine at the
+          // handoff frame, so the flying spine starts at the exact same place
+          // and size — zero positional/scale pop.
+          if (!fileTargetRef.current && spineSkinRef.current) {
+            const spineRect = spineSkinRef.current.getBoundingClientRect();
             const slotRect = (window as any).__bridgeSlotRect as
               | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-            if (slotRect) {
+            if (slotRect && spineRect.width > 0) {
+              const startCx = spineRect.left + spineRect.width / 2 - stageRect.left;
+              const startCy = spineRect.top + spineRect.height / 2 - stageRect.top;
               fileTargetRef.current = {
                 startCx,
                 startCy,
                 targetCx: slotRect.cx - stageRect.left,
                 targetCy: slotRect.cy - stageRect.top,
-                startScaleX: baseScale,
-                startScaleY: baseScale * (CARD_HEIGHT / SPINE_HEIGHT),
+                startScaleX: spineRect.width / BOOK_SPINE_W,
+                startScaleY: spineRect.height / SPINE_HEIGHT,
               } as any;
             }
           }
           const t = fileTargetRef.current as any;
           if (t) {
-            // Natural fall: ease-out X drift, gravity-style Y (quadratic accel).
-            const xT = 1 - Math.pow(1 - flyT, 2);
-            const yT = flyT * flyT;
-            const cx = lerp(t.startCx, t.targetCx, xT);
-            const cy = lerp(t.startCy, t.targetCy, yT);
-            // Shrink to project-spine size over the same window (ease-in-out).
+            // Single continuous settle: one ease for both position and size.
             const sE = eInOutCubic(flyT);
+            const cx = lerp(t.startCx, t.targetCx, sE);
+            const cy = lerp(t.startCy, t.targetCy, sE);
             const sx = lerp(t.startScaleX, 1, sE);
             const sy = lerp(t.startScaleY, 1, sE);
-            // Fade in fast at handoff, fade out only at the very end as the shelf About spine takes over.
-            const fadeIn = seg(0, 0.25, handoffT);
+            const fadeIn = seg(0, 0.2, handoffT);
             const fadeOut = 1 - seg(0.92, 1.0, flyT);
             flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
@@ -333,6 +330,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           fileTargetRef.current = null;
         }
       }
+
 
       // Lanyard + globe clear out before the cover swings.
       // Lanyard + globe clear out before the cover swings, and are fully gone
