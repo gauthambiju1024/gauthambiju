@@ -87,10 +87,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
-  const lanyardLayerRef = useRef<HTMLDivElement>(null);
   const globeLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
-  const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const backFaceRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
@@ -99,13 +97,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const flyingSpineRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
   const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
-  const visualLeftRef = useRef<SVGPathElement>(null);
-  const visualRightRef = useRef<SVGPathElement>(null);
-  const edgesLeftRef = useRef<SVGPathElement>(null);
-  const edgesRightRef = useRef<SVGPathElement>(null);
-  const textPathLeftRef = useRef<SVGPathElement>(null);
-  const textPathRightRef = useRef<SVGPathElement>(null);
-  const updateLanyardRef = useRef<(() => void) | null>(null);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
