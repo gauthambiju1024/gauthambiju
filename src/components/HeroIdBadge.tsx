@@ -209,7 +209,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const bridge = smoothstep(0.72, 1.0, p);
       const revealT = seg(0.00, 0.55, bridge);
       // Split file into two sub-beats: book close, then spine handoff + fly to slot.
-      const closeT = seg(0.50, 0.80, bridge);
+      const closeT = seg(0.30, 0.90, bridge);
       const flyT = seg(0.70, 1.0, bridge);
 
       const stageRect = stage.getBoundingClientRect();
@@ -281,7 +281,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Once the book has visually closed (closeT > 0.6), fade out the card wrap
       // and reveal a clean narrow spine at the same on-screen position. That spine
       // then flies to the shelf About slot during flyT.
-      const handoffStart = 0.55;
+      const handoffStart = 0.70;
       const handoffT = clamp((closeT - handoffStart) / (1 - handoffStart));
       cardWrap.style.opacity = String(1 - handoffT);
 
