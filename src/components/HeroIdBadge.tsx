@@ -317,9 +317,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       // Lanyard + globe clear out before the cover swings.
+      // Lanyard + globe clear out before the cover swings, and are fully gone
+      // once the bridge starts so no white clip/strap line trails behind.
       const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * chromeFade);
+        const op = bridge > 0 ? 0 : (1 - p2) * chromeFade;
+        lanyardLayerRef.current.style.opacity = String(op);
+        lanyardLayerRef.current.style.visibility = op < 0.01 ? "hidden" : "visible";
       }
       if (globeLayerRef.current) {
         const globeOp = p2 * chromeFade;
