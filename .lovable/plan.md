@@ -1,13 +1,10 @@
-## Root cause
-The flying spine's text is rendered vertically (`writing-mode: vertical-lr`). Because the spine's `scaleY` is animated from ~1.9 down to 1.0 during flight, the letters get squished horizontally as they move. The landing settle also multiplies `scaleY` by a brief oscillation (`1 - settle * 0.02`), which makes the font visibly reduce then increase right at landing.
+## Fix
+Slow down the spine's flight to the shelf so the transition feels gentler. Widen the `flyT` segment window so the motion spans more scroll progress at the same easing curve.
 
-## Fix (HeroIdBadge.tsx only)
-- Remove the `scaleY` lerp; keep scaleY = 1 throughout the flight.
-- Remove the `scaleY *= 1 - settle * 0.02` line from the landing settle (keep the small vertical `cy` sink so the impact still reads).
-- scaleX stays at 1.
-- Bezier arc, forward lean, and fade-in/out unchanged.
-
-Result: the spine renders at the exact shelf size and font from the first handoff frame to landing — no width/font drift.
+## Change
+`src/components/HeroIdBadge.tsx` only:
+- Widen the `flyT` window from `seg(0.74, 0.96, bridge)` to roughly `seg(0.62, 1.0, bridge)` so the spine takes noticeably longer to travel and land.
+- No change to bezier path, lean, settle, fade-in/out, scaleX, or scaleY.
 
 ## Out of scope
-Shelf, About slot, ProjectSpine, timing windows.
+Shelf, About slot, ProjectSpine, card flip, book close.
