@@ -487,10 +487,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
       </div>
 
-      {/* Flying spine — clean narrow element that handles the visible card→shelf handoff */}
+      {/* Flying spine — single continuous element from card to shelf, becomes the clickable About spine after landing. */}
       <div
         ref={flyingSpineRef}
-        aria-hidden
+        onClick={() => window.dispatchEvent(new CustomEvent("open-about-popup"))}
         style={{
           position: "absolute",
           left: 0,
