@@ -129,9 +129,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
         lastW = r.width;
         lastH = r.height;
-        updateLanyardRef.current?.();
       }
     };
+
     update();
     let mo: number | null = null;
     const tick = () => { update(); mo = requestAnimationFrame(tick); };
