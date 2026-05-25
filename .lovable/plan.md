@@ -1,20 +1,24 @@
-I’ll fix the filing sequence as one continuous hand-off, not a card-to-book pop.
+I found two likely causes:
+
+1. The visible spine is still inheriting the old card wrapper rotation/3D flip while the handoff begins, so it keeps tilting even after it should read as a straight book spine.
+2. The “white line” is the old lanyard/metal clip layer and/or the 3px page-block edge still being visible during the spine handoff, leaving a stray vertical strip as the card disappears.
 
 Plan:
-1. Keep the hero item narrow from the close beat through landing
-   - Remove the remaining full-card geometry from the visible filing phase.
-   - Make the visible object during filing a 28px-wide spine only, matching the shelf slot.
-   - Keep the About/front/back card faces hidden once the book starts closing so no large face or mirrored card can bleed through.
 
-2. Align the flying spine exactly to the shelf slot
-   - Calculate the flying transform from the spine’s actual center, not the old card center.
-   - Use the same width/height target as the shelf About slot so it does not resize abruptly after landing.
-   - Fade the flying spine into the shelf spine only at the final overlap, making the transfer invisible.
+1. Freeze tilt before the spine becomes visible
+   - Stop adding the card’s 2D tilt once the book-close phase starts.
+   - Keep the flying spine upright from its first visible frame through shelf landing.
+   - Remove `rotateY` influence from anything visible after the handoff so the spine does not continue twisting.
 
-3. Make project spines appear only after About has visually settled
-   - Delay and soften the other project spine rise-in so they start after the About spine is already placed.
-   - Replace the current compressed end-window timing with a slightly longer, smoother stagger so it feels gradual rather than sudden.
+2. Remove the white trailing line
+   - Fade the entire lanyard/clip layer earlier and force it hidden once the bridge/file sequence starts.
+   - Hide the book page-block edge during the close-to-spine handoff so no thin cream/white strip remains beside the spine.
 
-4. Keep scope tight
-   - Only touch the hero badge filing animation and projects bridge shelf timing.
-   - No changes to content, routes, mobile behavior, popups, or other sections.
+3. Make the handoff visually consistent
+   - Begin the flying spine only after the card wrapper has faded enough to avoid double exposure.
+   - Use a fixed 28px spine width and 200px shelf height for the flying object, matching the destination slot.
+   - Keep the shelf About spine fade synchronized with the flying spine’s final fade-out.
+
+Files to change:
+- `src/components/HeroIdBadge.tsx`
+- Only touch `src/components/AboutToProjectsBridge.tsx` if the final fade timing needs a tiny alignment adjustment.

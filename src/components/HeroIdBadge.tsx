@@ -223,7 +223,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const dxToCenter = (targetCenterX - restingCenterX) * p1;
       const dyToCenter = (targetCenterY - restingCenterY) * p1;
 
-      const tilt = 8 * (1 - p1);
+      // Freeze tilt/scale/flip once the bridge (book close + fly) starts, so the
+      // visible spine never tilts or twists further after it appears.
+      const freeze = bridge > 0 ? 1 : 0;
+      const tilt = 8 * (1 - p1) * (1 - freeze);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
