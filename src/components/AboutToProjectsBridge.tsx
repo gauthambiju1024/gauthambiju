@@ -203,6 +203,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
     };
   }, [projects, progressMV, rows.length]);
 
+  useEffect(() => {
+    const onOpen = () => setPopupOpen(true);
+    window.addEventListener("open-about-popup", onOpen);
+    return () => window.removeEventListener("open-about-popup", onOpen);
+  }, []);
+
   // Helper to register a spine wrapper into spineRefs at (rowIndex, colIndex)
   const registerSpine = (rowIndex: number, colIndex: number) => (el: HTMLDivElement | null) => {
     if (!spineRefs.current[rowIndex]) spineRefs.current[rowIndex] = [];
