@@ -473,25 +473,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
       </div>
 
-      {/* Flying spine — single continuous element from card to shelf, becomes the clickable About spine after landing. */}
-      <div
-        ref={flyingSpineRef}
-        onClick={() => window.dispatchEvent(new CustomEvent("open-about-popup"))}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: BOOK_SPINE_W,
-          height: SPINE_HEIGHT,
-          opacity: 0,
-          visibility: "hidden",
-          pointerEvents: "none",
-          zIndex: 12,
-          willChange: "transform, opacity",
-        }}
-      >
-        <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
-      </div>
+      {/* No portal spine — spineSkinRef (the real 3D book spine) is reparented into <body> at filing start. */}
 
 
       {/* Lanyard layer (fades out as card travels) */}
