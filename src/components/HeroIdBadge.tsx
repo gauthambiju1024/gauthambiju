@@ -96,12 +96,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
+  const flyingSpineRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
-  const filingRef = useRef<{
-    detached: boolean;
-    startCx: number; startCy: number;
-    targetCx: number; targetCy: number;
-  } | null>(null);
+  const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -201,6 +198,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     // Per-frame: drag + slide/scale/flip + dense book-close + bezier file to shelf.
     const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     const eInOutQuart = (x: number) => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     type Pt = { x: number; y: number };
     const bezier = (p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt => {
       const u = 1 - t;
@@ -251,6 +249,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         : 0;
       const wobbleTilt = 1 * wobble;
 
+      // Flight forward-lean
+      const flightTilt = fileRaw > 0 && fileRaw < 1 ? 3 * Math.sin(Math.PI * fileRaw) : 0;
+
       // Combined card-wrap tilt (slide tilt + wobble; no post-freeze drift)
       const slideTilt = 8 * (1 - slideT);
       const tilt = slideTilt + wobbleTilt;
@@ -274,11 +275,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
-      // closedSpineRef = hinge-side spine face; visible during the close so the closing book reads as 3D.
       if (closedSpineRef.current) {
-        const closedOp = thickenT;
-        closedSpineRef.current.style.opacity = String(closedOp);
-        closedSpineRef.current.style.visibility = closedOp > 0.01 ? "visible" : "hidden";
+        closedSpineRef.current.style.opacity = "0";
+        closedSpineRef.current.style.visibility = "hidden";
       }
       if (pageBlockRef.current) {
         pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.66, 0.80, p)));
@@ -293,64 +292,79 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
       cardWrap.style.opacity = String(1 - seg(0.72, 0.78, p));
 
-      // ============== SINGLE REAL SPINE: spineSkinRef is the only About spine ==============
-      const spineEl = spineSkinRef.current;
-      if (spineEl) {
-        if (!filingRef.current?.detached) {
-          // Pre-filing: the real 3D perpendicular spine, visible from reveal through the close
-          const skinOp = Math.max(thickenT, seg(0.62, 0.70, p));
-          spineEl.style.opacity = String(skinOp);
-          spineEl.style.visibility = skinOp > 0.01 ? "visible" : "hidden";
-        }
+      // ============== FLYING SPINE: bezier file with damped settle ==============
+      if (flyingSpineRef.current) {
+        const visible = unveilT > 0.001;
+        flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
-        if (fileRaw > 0 && !filingRef.current?.detached) {
-          // Detach: same DOM node moves into viewport-fixed coords seeded at its live screen rect.
-          const rect = spineEl.getBoundingClientRect();
-          const startCx = rect.left + rect.width / 2;
-          const startCy = rect.top + rect.height / 2;
-          const slotRect = (window as any).__bridgeSlotRect as
-            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-          const targetCx = slotRect ? slotRect.cx : startCx;
-          const targetCy = slotRect ? slotRect.cy : startCy;
-          filingRef.current = { detached: true, startCx, startCy, targetCx, targetCy };
-
-          if (spineEl.parentElement !== document.body) document.body.appendChild(spineEl);
-          spineEl.style.position = "fixed";
-          spineEl.style.left = "0";
-          spineEl.style.top = "0";
-          spineEl.style.width = `${BOOK_SPINE_W}px`;
-          spineEl.style.height = `${SPINE_HEIGHT}px`;
-          spineEl.style.transformOrigin = "center center";
-          spineEl.style.opacity = "1";
-          spineEl.style.visibility = "visible";
-          spineEl.style.zIndex = "12";
-          spineEl.style.willChange = "transform";
-          spineEl.style.transform =
-            `translate3d(${(startCx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(startCy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
-          spineEl.onclick = () => window.dispatchEvent(new CustomEvent("open-about-popup"));
-        }
-
-        if (filingRef.current?.detached) {
-          const f = filingRef.current;
-          const slotRect = (window as any).__bridgeSlotRect as
-            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-          if (slotRect) { f.targetCx = slotRect.cx; f.targetCy = slotRect.cy; }
-          const start: Pt = { x: f.startCx, y: f.startCy };
-          const end: Pt = { x: f.targetCx, y: f.targetCy };
-          const c1: Pt = { x: start.x + (end.x - start.x) * 0.15, y: start.y - 40 };
-          const c2: Pt = { x: start.x + (end.x - start.x) * 0.65, y: Math.min(start.y, end.y) - 70 };
-          const frozen = fileT >= 1;
-          const arcEased = eInOutCubic(fileT);
-          const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
-          let extraTy = 0;
-          if (!frozen && fileT > 0.88) {
-            const k = (fileT - 0.88) / 0.12;
-            extraTy = Math.exp(-5 * k) * Math.sin(k * Math.PI * 2) * 1.2;
+        if (visible) {
+          if (!fileTargetRef.current) {
+            const slotRect = (window as any).__bridgeSlotRect as
+              | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+            if (slotRect) {
+              fileTargetRef.current = {
+                startCx: targetCenterX,
+                startCy: targetCenterY,
+                targetCx: slotRect.cx - stageRect.left,
+                targetCy: slotRect.cy - stageRect.top,
+              };
+            }
           }
-          spineEl.style.pointerEvents = frozen ? "auto" : "none";
-          spineEl.style.cursor = frozen ? "pointer" : "default";
-          spineEl.style.transform =
-            `translate3d(${(pt.x - BOOK_SPINE_W / 2).toFixed(2)}px, ${(pt.y + extraTy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+          const tgt = fileTargetRef.current;
+          if (tgt) {
+            const frozen = fileT >= 1;
+            const start: Pt = { x: tgt.startCx, y: tgt.startCy };
+            const end: Pt = { x: tgt.targetCx, y: tgt.targetCy };
+            // Low, tight arc — committed placement, minimal hangtime
+            const c1: Pt = { x: start.x + (end.x - start.x) * 0.15, y: start.y - 40 };
+            const c2: Pt = { x: start.x + (end.x - start.x) * 0.65, y: Math.min(start.y, end.y) - 70 };
+            const arcEased = eInOutCubic(fileT);
+            const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
+
+            // Scale: baseScale (carried) -> 1 (shelf), easeInOutCubic
+            const scaleEase = eInOutCubic(fileT);
+            const sScale = frozen ? 1 : lerp(baseScale, 1, scaleEase);
+
+            // Damped-spring settle on impact: one quick oscillation, sharp decay
+            let extraTy = 0;
+            let settleScaleY = 1;
+            if (!frozen && fileT > 0.88) {
+              const k = (fileT - 0.88) / 0.12;
+              const decay = Math.exp(-5 * k);
+              const wave = Math.sin(k * Math.PI * 2);
+              const s = decay * wave;
+              extraTy = s * 1.2;
+              settleScaleY = 1 - s * 0.02;
+            }
+
+            const finalScaleX = sScale;
+            const finalScaleY = frozen ? 1 : sScale * settleScaleY;
+            const px = pt.x;
+            const py = pt.y + extraTy;
+            const spinTilt = frozen ? 0 : flightTilt;
+
+            const fadeIn = seg(0.72, 0.78, p);
+            // No fade-out: the flying spine IS the shelf spine after landing.
+            flyingSpineRef.current.style.opacity = String(fadeIn);
+            flyingSpineRef.current.style.transformOrigin = "center center";
+            flyingSpineRef.current.style.pointerEvents = frozen ? "auto" : "none";
+            flyingSpineRef.current.style.cursor = frozen ? "pointer" : "default";
+            if (frozen) {
+              // Hard-lock: fixed translate to slot center, scale 1, zero rotation.
+              flyingSpineRef.current.style.transform =
+                `translate3d(${(end.x - BOOK_SPINE_W / 2).toFixed(2)}px, ` +
+                `${(end.y - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+            } else {
+              flyingSpineRef.current.style.transform =
+                `translate3d(${(px - (BOOK_SPINE_W * finalScaleX) / 2).toFixed(2)}px, ` +
+                `${(py - (SPINE_HEIGHT * finalScaleY) / 2).toFixed(2)}px, 0) ` +
+                `rotate(${spinTilt.toFixed(2)}deg) ` +
+                `scale(${finalScaleX.toFixed(3)}, ${finalScaleY.toFixed(3)})`;
+            }
+          }
+        } else {
+          flyingSpineRef.current.style.opacity = "0";
+          fileTargetRef.current = null;
         }
       }
 
@@ -473,7 +487,25 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         <AboutGlobe markers={markers} selectedId={selectedMarkerId} onMarkerClick={onMarkerClick} />
       </div>
 
-      {/* No portal spine — spineSkinRef (the real 3D book spine) is reparented into <body> at filing start. */}
+      {/* Flying spine — single continuous element from card to shelf, becomes the clickable About spine after landing. */}
+      <div
+        ref={flyingSpineRef}
+        onClick={() => window.dispatchEvent(new CustomEvent("open-about-popup"))}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: BOOK_SPINE_W,
+          height: SPINE_HEIGHT,
+          opacity: 0,
+          visibility: "hidden",
+          pointerEvents: "none",
+          zIndex: 12,
+          willChange: "transform, opacity",
+        }}
+      >
+        <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+      </div>
 
 
       {/* Lanyard layer (fades out as card travels) */}
@@ -681,8 +713,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
                 height: CARD_HEIGHT,
                 transformOrigin: "100% 50%",
                 transform: "rotateY(-90deg)",
-                opacity: 0,
-                visibility: "hidden",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 pointerEvents: "none",
