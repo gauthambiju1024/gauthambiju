@@ -1,34 +1,24 @@
 ## Goal
-Make the visible green spine transition feel continuous and calm: no abrupt jump in position, no abrupt resize, and no white line moving left. Only the spine handoff is adjusted.
+Two tweaks to the existing flying-spine handoff in `src/components/HeroIdBadge.tsx`. Nothing else changes.
 
-## What I will change
-1. Lock the flying spine to the exact on-screen position of the visible spine at the handoff frame.
-   - Capture the real rendered rectangle of the visible spine at the moment the handoff begins.
-   - Use that exact center/size as the flying spine start state so there is zero pop in step 2 or 3.
+## 1. Width stays constant during the fly
+- The spine renders at the final shelf width from the very first handoff frame and never scales in X.
+- Only height shrinks toward the shelf project-spine height.
+- The visible width on screen at handoff start matches the destination slot width, so there is no width pop and no width animation.
 
-2. Replace the current independent X/Y timing with one continuous, softer settle.
-   - Keep the same overall handoff window.
-   - Use a gentler path so the spine moves as one continuous drop toward the shelf instead of appearing to “teleport then fall”.
-   - Preserve the existing end target so it still lands in the same shelf slot.
+## 2. Bezier arc + impact settle + flight lean
+Replace the current straight ease-in-out translate with a low, committed arc and a small landing recoil:
 
-3. Make the shrink start from the actual visible spine size, not an inferred scale.
-   - Read the real rendered start width/height from the handoff frame.
-   - Interpolate from that exact size down to the shelf spine size to remove the abrupt size snap.
+- Cubic bezier path from the measured start point to the slot target, with two control points biased to a low tight arc (gentle lift early, hover-decelerate late).
+- Single damped-spring settle in the last ~12% of the motion: brief vertical sink and slight vertical compression that decays sharply.
+- Subtle forward lean during flight that peaks mid-arc and returns to 0 at landing (small rotation on the flying spine wrapper).
 
-4. Remove the white-line artifact at its source.
-   - Suppress any lingering lanyard/clip/page-edge visual during the bridge window.
-   - Ensure the flying spine wrapper itself contributes no border/outline/shadow artifact.
-
-## Files
-- `src/components/HeroIdBadge.tsx` only
+All easing uses cubic ease-in-out matching the snippet the user provided. The damped settle uses the same exponential decay + single sine wave formula.
 
 ## Out of scope
-- No changes to Home or About layouts
-- No changes to the earlier card flip/book close behavior beyond preventing the artifact during handoff
-- No changes to the shelf, project spines, or section timing structure
+- No changes to Home, About, card flip, book-close, lanyard, shelf, project spines, or any timing windows.
+- No new DOM, no new refs, no CSS file changes.
+- No change to where the spine starts or where it lands — only how it travels and that the width holds steady.
 
-## Technical details
-- Use the actual rendered handoff geometry instead of `targetCenterX/targetCenterY` plus derived start scales.
-- Base the start measurement on the visible spine/card transform already on screen.
-- Keep the same destination slot coordinates currently used for the shelf handoff.
-- Remove the stray line by fully hiding the artifact source during the handoff frame range, not by changing the page design.
+## File
+- `src/components/HeroIdBadge.tsx` only.

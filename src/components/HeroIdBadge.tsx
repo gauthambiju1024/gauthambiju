@@ -312,19 +312,43 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           }
           const t = fileTargetRef.current as any;
           if (t) {
-            // Single continuous settle: one ease for both position and size.
+            // Bezier arc: low committed flight path with gentle anticipation
+            // lift and decelerating hover-approach to the slot.
             const sE = eInOutCubic(flyT);
-            const cx = lerp(t.startCx, t.targetCx, sE);
-            const cy = lerp(t.startCy, t.targetCy, sE);
-            const sx = lerp(t.startScaleX, 1, sE);
-            const sy = lerp(t.startScaleY, 1, sE);
+            const sx = start => start; // noop placeholder for clarity
+            const startP = { x: t.startCx, y: t.startCy };
+            const endP = { x: t.targetCx, y: t.targetCy };
+            const c1 = { x: startP.x + (endP.x - startP.x) * 0.15, y: startP.y - 40 };
+            const c2 = { x: startP.x + (endP.x - startP.x) * 0.65, y: Math.min(startP.y, endP.y) - 70 };
+            const u = 1 - sE;
+            let cx = u*u*u*startP.x + 3*u*u*sE*c1.x + 3*u*sE*sE*c2.x + sE*sE*sE*endP.x;
+            let cy = u*u*u*startP.y + 3*u*u*sE*c1.y + 3*u*sE*sE*c2.y + sE*sE*sE*endP.y;
+
+            // Width holds steady (no X scale). Height shrinks to shelf size.
+            const scaleX = 1;
+            let scaleY = lerp(t.startScaleY, 1, sE);
+
+            // Damped-spring landing settle: one quick oscillation, sharp decay.
+            if (flyT > 0.88) {
+              const k = (flyT - 0.88) / 0.12;
+              const decay = Math.exp(-5 * k);
+              const wave = Math.sin(k * Math.PI * 2);
+              const settle = decay * wave;
+              cy += settle * 1.2;
+              scaleY *= 1 - settle * 0.02;
+            }
+
+            // Forward flight lean: peaks mid-arc, returns to 0 at landing.
+            const flightTilt = 3 * Math.sin(flyT * Math.PI);
+
             const fadeIn = seg(0, 0.2, handoffT);
             const fadeOut = 1 - seg(0.92, 1.0, flyT);
             flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
-              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY.toFixed(3)})`;
           }
+
         } else {
           flyingSpineRef.current.style.opacity = "0";
           fileTargetRef.current = null;
