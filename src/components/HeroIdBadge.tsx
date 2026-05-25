@@ -195,22 +195,31 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
     updateLanyardRef.current = updateLanyard;
 
-    // Per-frame: drag + tilt + slide/scale/flip + 3D book hinge reveal + file to shelf.
+    // Per-frame: drag + slide/scale/flip + dense book-close + bezier file to shelf.
     const eInOutCubic = (x: number) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-    const eOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
+    const eInOutQuart = (x: number) => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    type Pt = { x: number; y: number };
+    const bezier = (p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt => {
+      const u = 1 - t;
+      return {
+        x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+        y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y,
+      };
+    };
     const applyTransform = () => {
       const p = progressMV?.get() ?? 0;
       const seg = (a: number, b: number, x: number) => smoothstep(a, b, x);
 
-      const p1 = seg(0.35, 0.55, p);
-      const p2 = seg(0.55, 0.72, p);
-
+      // Compressed, overlapping beats on the full scroll timeline
+      const slideT = seg(0.30, 0.55, p);          // card to center + grow
+      const flipT = seg(0.44, 0.60, p);           // Y-flip 0..180
+      const flipRaw = clamp((p - 0.44) / 0.16);   // raw for swing/pulse
+      const thickenT = seg(0.62, 0.76, p);        // book rotates 0..90 (closes)
+      const unveilT = seg(0.72, 0.84, p);         // flying spine appears at hinge
+      const fileT = seg(0.82, 0.96, p);           // bezier flight to shelf slot
+      const fileRaw = clamp((p - 0.82) / 0.14);
       const bridge = smoothstep(0.72, 1.0, p);
-      const revealT = seg(0.00, 0.55, bridge);
-      // Split file into two sub-beats: book close, then spine handoff + fly to slot.
-      const closeT = seg(0.62, 0.78, bridge);
-      const flyT = seg(0.74, 0.96, bridge);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -221,34 +230,41 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const targetCenterY = stageRect.height / 2;
       const restingCenterX = restingLeft + w / 2;
       const restingCenterY = restingTop + h / 2;
-      const dxToCenter = (targetCenterX - restingCenterX) * p1;
-      const dyToCenter = (targetCenterY - restingCenterY) * p1;
+      const dxToCenter = (targetCenterX - restingCenterX) * slideT;
+      const dyToCenter = (targetCenterY - restingCenterY) * slideT;
 
-      // Freeze tilt/scale/flip once the bridge (book close + fly) starts, so the
-      // visible spine never tilts or twists further after it appears.
-      const freeze = bridge > 0 ? 1 : 0;
-      const tilt = 8 * (1 - p1) * (1 - freeze);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
-      const baseScale = 1 + (maxScale - 1) * p1;
+      const baseScale = 1 + (maxScale - 1) * slideT;
 
-      const rotYFlip = p2 * 180;
+      // Density layer: swing + pulse peak at flip 0.5
+      const flipPeak = flipRaw > 0 && flipRaw < 1 ? Math.sin(flipRaw * Math.PI) : 0;
+      const flipSwingX = -3 * flipPeak;
+      const flipPulseY = 1 - 0.03 * flipPeak;
+      const rotYFlip = flipT * 180;
 
-      const cE = eInOutCubic(closeT);
-      const fE = eInOutCubic(flyT);
+      // Book close with quart easing + 1° wobble (fades at both ends)
+      const bookRotate = 90 * eInOutQuart(thickenT);
+      const wobble = thickenT > 0 && thickenT < 1
+        ? Math.sin(3 * Math.PI * thickenT) * Math.sin(Math.PI * thickenT)
+        : 0;
+      const wobbleTilt = 1 * wobble;
 
-      // Book closes during closeT; stays closed after.
-      const bookRotate = 90 * eInOutCubic(revealT) + 90 * cE;
+      // Flight forward-lean
+      const flightTilt = fileRaw > 0 && fileRaw < 1 ? 3 * Math.sin(Math.PI * fileRaw) : 0;
+
+      // Combined card-wrap tilt (slide tilt + wobble; no post-freeze drift)
+      const slideTilt = 8 * (1 - slideT);
+      const tilt = slideTilt + wobbleTilt;
+
+      // Face visibility
       const coverFacing = Math.cos(bookRotate * Math.PI / 180);
-      const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
-
+      const aboutOpacity = flipT > 0.5 ? Math.max(0, coverFacing) * (1 - thickenT) : 0;
       if (backFaceRef.current) {
-        backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
-        backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
+        backFaceRef.current.style.pointerEvents = thickenT > 0.02 ? "none" : "auto";
+        backFaceRef.current.style.visibility = flipT > 0.01 ? "visible" : "hidden";
       }
       if (cardRef.current) {
-        // Hide the front face (portrait/name) as soon as the cover begins swinging.
-        const frontHidden = revealT > 0;
+        const frontHidden = flipT > 0;
         cardRef.current.style.opacity = frontHidden ? "0" : "1";
         cardRef.current.style.visibility = frontHidden ? "hidden" : "visible";
       }
@@ -259,62 +275,83 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
-      // Closed-cover face stays hidden — we hand off to a clean external flying spine.
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
       }
-      // Hide the page-block edge during book close + handoff so no thin cream strip
-      // remains visible next to the spine.
       if (pageBlockRef.current) {
-        pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.5, 0.85, bridge)));
+        pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.66, 0.80, p)));
       }
 
-      // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
-      const tx = snap(offsetX + dxToCenter);
+      // Card wrap transform (hidden once handoff starts)
+      const tx = snap(offsetX + dxToCenter + flipSwingX);
       const ty = snap(offsetY + dyToCenter);
       cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${baseScale.toFixed(3)}, ${baseScale.toFixed(3)}) ` +
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) ` +
+        `scale(${baseScale.toFixed(3)}, ${(baseScale * flipPulseY).toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
+      cardWrap.style.opacity = String(1 - seg(0.72, 0.78, p));
 
-      // ============== FLYING SPINE HANDOFF ==============
-      // Once the book has visually closed (closeT > 0.6), fade out the card wrap
-      // and reveal a clean narrow spine at the same on-screen position. That spine
-      // then flies to the shelf About slot during flyT.
-      const handoffStart = 0.55;
-      const handoffT = clamp((closeT - handoffStart) / (1 - handoffStart));
-      cardWrap.style.opacity = String(1 - handoffT);
-
+      // ============== FLYING SPINE: bezier file with damped settle ==============
       if (flyingSpineRef.current) {
-        const visible = handoffT > 0.001;
+        const visible = unveilT > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
-          // Pin start point at the card's centered on-screen position (left-edge / hinge of book).
           if (!fileTargetRef.current) {
-            const startCx = targetCenterX - (w * baseScale) / 2; // hinge x, in stage coords
-            const startCy = targetCenterY;
             const slotRect = (window as any).__bridgeSlotRect as
               | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
             if (slotRect) {
               fileTargetRef.current = {
-                startCx,
-                startCy,
+                startCx: targetCenterX,
+                startCy: targetCenterY,
                 targetCx: slotRect.cx - stageRect.left,
                 targetCy: slotRect.cy - stageRect.top,
               };
             }
           }
-          const t = fileTargetRef.current;
-          if (t) {
-            const cx = lerp(t.startCx, t.targetCx, fE);
-            const cy = lerp(t.startCy, t.targetCy, fE);
-            // Fade in fast at handoff, fade out only at the very end as the shelf About spine takes over.
-            const fadeIn = seg(0, 0.25, handoffT);
-            const fadeOut = 1 - seg(0.92, 1.0, flyT);
+          const tgt = fileTargetRef.current;
+          if (tgt) {
+            const frozen = fileT >= 1;
+            const start: Pt = { x: tgt.startCx, y: tgt.startCy };
+            const end: Pt = { x: tgt.targetCx, y: tgt.targetCy };
+            // Low, tight arc — committed placement, minimal hangtime
+            const c1: Pt = { x: start.x + (end.x - start.x) * 0.15, y: start.y - 40 };
+            const c2: Pt = { x: start.x + (end.x - start.x) * 0.65, y: Math.min(start.y, end.y) - 70 };
+            const arcEased = eInOutCubic(fileT);
+            const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
+
+            // Scale: baseScale (carried) -> 1 (shelf), easeInOutCubic
+            const scaleEase = eInOutCubic(fileT);
+            const sScale = frozen ? 1 : lerp(baseScale, 1, scaleEase);
+
+            // Damped-spring settle on impact: one quick oscillation, sharp decay
+            let extraTy = 0;
+            let settleScaleY = 1;
+            if (!frozen && fileT > 0.88) {
+              const k = (fileT - 0.88) / 0.12;
+              const decay = Math.exp(-5 * k);
+              const wave = Math.sin(k * Math.PI * 2);
+              const s = decay * wave;
+              extraTy = s * 1.2;
+              settleScaleY = 1 - s * 0.02;
+            }
+
+            const finalScaleX = sScale;
+            const finalScaleY = frozen ? 1 : sScale * settleScaleY;
+            const px = pt.x;
+            const py = pt.y + extraTy;
+            const spinTilt = frozen ? 0 : flightTilt;
+
+            const fadeIn = seg(0.72, 0.78, p);
+            const fadeOut = 1 - seg(0.95, 0.97, p);
             flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
-              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+              `translate3d(${(px - (BOOK_SPINE_W * finalScaleX) / 2).toFixed(2)}px, ` +
+              `${(py - (SPINE_HEIGHT * finalScaleY) / 2).toFixed(2)}px, 0) ` +
+              `rotate(${spinTilt.toFixed(2)}deg) ` +
+              `scale(${finalScaleX.toFixed(3)}, ${finalScaleY.toFixed(3)})`;
           }
         } else {
           flyingSpineRef.current.style.opacity = "0";
@@ -322,24 +359,22 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         }
       }
 
-      // Lanyard + globe clear out before the cover swings.
-      // Lanyard + globe clear out before the cover swings, and are fully gone
-      // once the bridge starts so no white clip/strap line trails behind.
-      const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
+      // Lanyard + globe — unchanged behavior; lanyard fully removed during bridge
+      const chromeFade = 1 - smoothstep(0.0, 0.35, flipT);
       if (lanyardLayerRef.current) {
-        const op = bridge > 0 ? 0 : (1 - p2) * chromeFade;
+        const op = bridge > 0 ? 0 : (1 - flipT) * chromeFade;
         lanyardLayerRef.current.style.opacity = String(op);
         lanyardLayerRef.current.style.visibility = op < 0.01 ? "hidden" : "visible";
         lanyardLayerRef.current.style.display = bridge > 0 ? "none" : "block";
       }
       if (globeLayerRef.current) {
-        const globeOp = p2 * chromeFade;
+        const globeOp = flipT * chromeFade;
         globeLayerRef.current.style.opacity = String(globeOp);
         globeLayerRef.current.style.pointerEvents =
-          p2 > 0.5 && revealT < 0.02 ? "auto" : "none";
+          flipT > 0.5 && thickenT < 0.02 ? "auto" : "none";
       }
-      cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
-      cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
+      cardWrap.style.pointerEvents = slideT > 0.05 || thickenT > 0.02 ? "none" : "auto";
+      cardWrap.style.cursor = slideT > 0.05 ? "default" : "grab";
 
       if (bridge === 0) updateLanyard();
     };
