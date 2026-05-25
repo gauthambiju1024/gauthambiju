@@ -344,14 +344,23 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             const spinTilt = frozen ? 0 : flightTilt;
 
             const fadeIn = seg(0.72, 0.78, p);
-            const fadeOut = 1 - seg(0.95, 0.97, p);
-            flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            // No fade-out: the flying spine IS the shelf spine after landing.
+            flyingSpineRef.current.style.opacity = String(fadeIn);
             flyingSpineRef.current.style.transformOrigin = "center center";
-            flyingSpineRef.current.style.transform =
-              `translate3d(${(px - (BOOK_SPINE_W * finalScaleX) / 2).toFixed(2)}px, ` +
-              `${(py - (SPINE_HEIGHT * finalScaleY) / 2).toFixed(2)}px, 0) ` +
-              `rotate(${spinTilt.toFixed(2)}deg) ` +
-              `scale(${finalScaleX.toFixed(3)}, ${finalScaleY.toFixed(3)})`;
+            flyingSpineRef.current.style.pointerEvents = frozen ? "auto" : "none";
+            flyingSpineRef.current.style.cursor = frozen ? "pointer" : "default";
+            if (frozen) {
+              // Hard-lock: fixed translate to slot center, scale 1, zero rotation.
+              flyingSpineRef.current.style.transform =
+                `translate3d(${(end.x - BOOK_SPINE_W / 2).toFixed(2)}px, ` +
+                `${(end.y - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
+            } else {
+              flyingSpineRef.current.style.transform =
+                `translate3d(${(px - (BOOK_SPINE_W * finalScaleX) / 2).toFixed(2)}px, ` +
+                `${(py - (SPINE_HEIGHT * finalScaleY) / 2).toFixed(2)}px, 0) ` +
+                `rotate(${spinTilt.toFixed(2)}deg) ` +
+                `scale(${finalScaleX.toFixed(3)}, ${finalScaleY.toFixed(3)})`;
+            }
           }
         } else {
           flyingSpineRef.current.style.opacity = "0";
