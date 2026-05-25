@@ -1,25 +1,32 @@
-Final plan:
+Corrected final plan:
 
-1. **Use one continuous About spine element for the whole handoff**
-   - Keep the existing `ProjectSpine` visual, but make the hero “flying spine” become the only visible About spine during the card-to-shelf transition.
-   - The shelf About spine will stay hidden during arrival, so there is no crossfade, double image, or width pop.
+1. **Remove the fake replacement spine behavior**
+   - Stop showing a separate “flying spine” after the side spine disappears.
+   - The card-side About spine must not appear, vanish, then be replaced.
 
-2. **Preserve the new perfect motion**
-   - Keep the compressed flip, thicken, unveil, bezier filing arc, and crisp settle timing already added.
-   - Only adjust identity/visibility at the landing stage, not the motion choreography.
+2. **Use one continuous visible spine from the card side onward**
+   - Create one overlay About spine that is visible as the actual side spine while the book/card closes.
+   - It starts exactly where the side spine is: same position, same size, same artwork.
+   - When filing begins, that same visible spine continues moving into the shelf.
 
-3. **No spin or geometry changes once the spine is fully visible/landed**
-   - At the end of the file motion, lock the spine to the shelf slot with fixed translate, fixed width/height, fixed scale, and `rotate(0deg)`.
-   - Remove any fade-out/shrink/scale interpolation after landing.
+3. **Hide the old internal side-spine renderers**
+   - `spineSkinRef` / `closedSpineRef` should no longer visibly render as independent spines.
+   - They can remain only as geometry/reference if needed, but not as visible elements.
+   - This removes the “appears then disappears” phase.
 
-4. **No crossfade**
-   - The hero flying spine will remain visible after it lands and become the clickable “MORE ABOUT ME” shelf spine.
-   - The shelf’s duplicate About spine renderer will be hidden/non-interactive to avoid crossfade and duplication.
+4. **Keep the same size throughout**
+   - The continuous About spine stays `28px × 200px` from the moment it becomes visible through final landing.
+   - No width reduction, no scale pop, no sudden new size.
 
-5. **Make the landed spine usable**
-   - After the bridge settles, enable pointer events on the same landed spine and open the existing About popup when clicked.
-   - This keeps behavior unchanged for users, but visually it is one spine from card to shelf.
+5. **Keep the filing motion, but start it from the real side-spine location**
+   - At the filing start, capture the current screen position of the visible side spine.
+   - Use that as the bezier start point.
+   - Continue the existing smooth filing arc to the shelf slot.
 
-Files to change:
-- `src/components/HeroIdBadge.tsx`: keep the flying spine alive, freeze it after landing, and make it clickable after settle.
-- `src/components/AboutToProjectsBridge.tsx`: keep the invisible slot target, but hide the duplicate About spine permanently so it never crossfades in.
+6. **No crossfade, no second About spine**
+   - The shelf duplicate About spine stays hidden.
+   - The continuous spine remains visible and clickable after landing.
+
+Files to update:
+- `src/components/HeroIdBadge.tsx`
+- `src/components/AboutToProjectsBridge.tsx`

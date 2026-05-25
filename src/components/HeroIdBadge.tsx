@@ -249,9 +249,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         : 0;
       const wobbleTilt = 1 * wobble;
 
-      // Flight forward-lean
-      const flightTilt = fileRaw > 0 && fileRaw < 1 ? 3 * Math.sin(Math.PI * fileRaw) : 0;
-
       // Combined card-wrap tilt (slide tilt + wobble; no post-freeze drift)
       const slideTilt = 8 * (1 - slideT);
       const tilt = slideTilt + wobbleTilt;
@@ -292,27 +289,39 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
       cardWrap.style.opacity = String(1 - seg(0.72, 0.78, p));
 
-      // ============== FLYING SPINE: bezier file with damped settle ==============
+      // ============== CONTINUOUS ABOUT SPINE: card-side first, then filed ==============
       if (flyingSpineRef.current) {
-        const visible = unveilT > 0.001;
+        const sideReveal = seg(0.62, 0.70, p);
+        const visible = sideReveal > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
-          if (!fileTargetRef.current) {
+          const sideRect = closedSpineRef.current?.getBoundingClientRect();
+          const sideCx = sideRect ? sideRect.left - stageRect.left + sideRect.width / 2 : targetCenterX;
+          const sideCy = sideRect ? sideRect.top - stageRect.top + sideRect.height / 2 : targetCenterY;
+
+          // Until filing actually starts, keep re-locking to the live card-side spine position.
+          // This prevents the old "side spine disappears, new spine appears elsewhere" handoff.
+          if (fileRaw <= 0) fileTargetRef.current = null;
+
+          if (!fileTargetRef.current && fileRaw > 0) {
             const slotRect = (window as any).__bridgeSlotRect as
               | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
             if (slotRect) {
               fileTargetRef.current = {
-                startCx: targetCenterX,
-                startCy: targetCenterY,
+                startCx: sideCx,
+                startCy: sideCy,
                 targetCx: slotRect.cx - stageRect.left,
                 targetCy: slotRect.cy - stageRect.top,
               };
             }
           }
           const tgt = fileTargetRef.current;
+          const frozen = Boolean(tgt && fileT >= 1);
+          let px = sideCx;
+          let py = sideCy;
+
           if (tgt) {
-            const frozen = fileT >= 1;
             const start: Pt = { x: tgt.startCx, y: tgt.startCy };
             const end: Pt = { x: tgt.targetCx, y: tgt.targetCy };
             // Low, tight arc — committed placement, minimal hangtime
@@ -321,47 +330,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             const arcEased = eInOutCubic(fileT);
             const pt = frozen ? end : bezier(start, c1, c2, end, arcEased);
 
-            // Scale: baseScale (carried) -> 1 (shelf), easeInOutCubic
-            const scaleEase = eInOutCubic(fileT);
-            const sScale = frozen ? 1 : lerp(baseScale, 1, scaleEase);
-
             // Damped-spring settle on impact: one quick oscillation, sharp decay
             let extraTy = 0;
-            let settleScaleY = 1;
             if (!frozen && fileT > 0.88) {
               const k = (fileT - 0.88) / 0.12;
               const decay = Math.exp(-5 * k);
               const wave = Math.sin(k * Math.PI * 2);
               const s = decay * wave;
               extraTy = s * 1.2;
-              settleScaleY = 1 - s * 0.02;
             }
 
-            const finalScaleX = sScale;
-            const finalScaleY = frozen ? 1 : sScale * settleScaleY;
-            const px = pt.x;
-            const py = pt.y + extraTy;
-            const spinTilt = frozen ? 0 : flightTilt;
-
-            const fadeIn = seg(0.72, 0.78, p);
-            // No fade-out: the flying spine IS the shelf spine after landing.
-            flyingSpineRef.current.style.opacity = String(fadeIn);
-            flyingSpineRef.current.style.transformOrigin = "center center";
-            flyingSpineRef.current.style.pointerEvents = frozen ? "auto" : "none";
-            flyingSpineRef.current.style.cursor = frozen ? "pointer" : "default";
-            if (frozen) {
-              // Hard-lock: fixed translate to slot center, scale 1, zero rotation.
-              flyingSpineRef.current.style.transform =
-                `translate3d(${(end.x - BOOK_SPINE_W / 2).toFixed(2)}px, ` +
-                `${(end.y - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
-            } else {
-              flyingSpineRef.current.style.transform =
-                `translate3d(${(px - (BOOK_SPINE_W * finalScaleX) / 2).toFixed(2)}px, ` +
-                `${(py - (SPINE_HEIGHT * finalScaleY) / 2).toFixed(2)}px, 0) ` +
-                `rotate(${spinTilt.toFixed(2)}deg) ` +
-                `scale(${finalScaleX.toFixed(3)}, ${finalScaleY.toFixed(3)})`;
-            }
+            px = pt.x;
+            py = pt.y + extraTy;
           }
+
+          // One spine, one size, no spin, no scale, no fade-out.
+          flyingSpineRef.current.style.opacity = String(sideReveal);
+          flyingSpineRef.current.style.transformOrigin = "center center";
+          flyingSpineRef.current.style.pointerEvents = frozen ? "auto" : "none";
+          flyingSpineRef.current.style.cursor = frozen ? "pointer" : "default";
+          flyingSpineRef.current.style.transform =
+            `translate3d(${(px - BOOK_SPINE_W / 2).toFixed(2)}px, ` +
+            `${(py - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
         } else {
           flyingSpineRef.current.style.opacity = "0";
           fileTargetRef.current = null;
