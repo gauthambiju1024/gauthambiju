@@ -1,24 +1,40 @@
-I found two likely causes:
+## Goal
 
-1. The visible spine is still inheriting the old card wrapper rotation/3D flip while the handoff begins, so it keeps tilting even after it should read as a straight book spine.
-2. The “white line” is the old lanyard/metal clip layer and/or the 3px page-block edge still being visible during the spine handoff, leaving a stray vertical strip as the card disappears.
+From the moment the large green spine is fully visible (current end state in screenshot), animate ONLY that spine with a simple, elegant natural fall to its shelf slot while shrinking from its current "book" size down to the regular project-spine size. Nothing else changes.
 
-Plan:
+## Scope (strict)
 
-1. Freeze tilt before the spine becomes visible
-   - Stop adding the card’s 2D tilt once the book-close phase starts.
-   - Keep the flying spine upright from its first visible frame through shelf landing.
-   - Remove `rotateY` influence from anything visible after the handoff so the spine does not continue twisting.
+- No changes to Home, About, card flip, book-close, lanyard, globe, or anything before the spine becomes visible.
+- No changes to the shelf, About slot position, ledges, project spines, toolbox, or AboutToProjectsBridge.
+- Only the flying-spine segment inside `HeroIdBadge.tsx` is touched.
 
-2. Remove the white trailing line
-   - Fade the entire lanyard/clip layer earlier and force it hidden once the bridge/file sequence starts.
-   - Hide the book page-block edge during the close-to-spine handoff so no thin cream/white strip remains beside the spine.
+## What changes in `src/components/HeroIdBadge.tsx`
 
-3. Make the handoff visually consistent
-   - Begin the flying spine only after the card wrapper has faded enough to avoid double exposure.
-   - Use a fixed 28px spine width and 200px shelf height for the flying object, matching the destination slot.
-   - Keep the shelf About spine fade synchronized with the flying spine’s final fade-out.
+Inside the `flyT` block where the flying spine moves to the slot:
 
-Files to change:
-- `src/components/HeroIdBadge.tsx`
-- Only touch `src/components/AboutToProjectsBridge.tsx` if the final fade timing needs a tiny alignment adjustment.
+1. Replace the current linear `lerp(start → target)` + constant size with a natural-fall motion:
+   - X: ease-out horizontal drift from start X to slot X (gentle, no overshoot).
+   - Y: gravity-style fall — `y = start + (target - start) * t^2` (quadratic accel), so it falls slowly, then settles.
+   - End exactly at the existing slot center (`fileTargetRef.targetCx/Cy`) so the invisible handoff to the shelf's About spine still lines up frame-perfectly.
+
+2. Shrink the spine from current visible size to project-spine size during the fall:
+   - Start width = current visible spine width (the "book spine" size shown in the screenshot).
+   - End width = `ABOUT_SPINE_W` (28) — same as the shelf About slot, so the handoff has zero pop.
+   - Apply via CSS `transform: translate3d(x,y,0) scale(s)` with `transform-origin: top center` so the shrink reads as the spine settling into the slot, not jumping.
+   - Height scales with the same factor; the shelf About spine already matches `SPINE_HEIGHT`, so final scale = `ABOUT_SPINE_W / startWidth` (and same for height ratio if they differ — use a single uniform scale based on width to keep proportions clean).
+
+3. Keep the existing fade-in at handoff start and fade-out at `flyT` end (0.92→1.0) so the shelf About spine takes over invisibly. No other opacity changes.
+
+4. Remove only the white-line artifact source: ensure the flying spine wrapper has no border / box-shadow / outline and no residual lanyard clip is rendered during the fall (the lanyard layer is already faded by `bridge > 0`; just confirm no stray 1px element on the flying spine itself). No deletion of lanyard markup — just guarantee zero visible chrome on the falling spine.
+
+## Technical notes
+
+- File: `src/components/HeroIdBadge.tsx` only.
+- Easing: `xT = 1 - (1 - flyT)^2` (easeOutQuad) for X; `yT = flyT^2` (easeInQuad / gravity) for Y.
+- Compute `startWidth` once at handoff (when `fileTargetRef.current` is first set) by reading the rendered flying-spine box, then drive scale per frame.
+- No new refs, no new DOM, no changes to `ProjectSpine`, `AboutToProjectsBridge`, or any CSS file.
+
+## Out of scope
+
+- Bounce, rotation, tilt, squash-and-stretch, particles, sound, or any secondary motion.
+- Any timing-window changes to `bridge`, `closeT`, or `flyT` boundaries.
