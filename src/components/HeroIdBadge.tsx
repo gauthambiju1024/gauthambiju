@@ -353,7 +353,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             `translate3d(${(pt.x - BOOK_SPINE_W / 2).toFixed(2)}px, ${(pt.y + extraTy - SPINE_HEIGHT / 2).toFixed(2)}px, 0)`;
         }
       }
-      }
 
       // Lanyard + globe — unchanged behavior; lanyard fully removed during bridge
       const chromeFade = 1 - smoothstep(0.0, 0.35, flipT);
