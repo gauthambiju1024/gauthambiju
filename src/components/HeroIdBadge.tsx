@@ -97,6 +97,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
   const flyingSpineRef = useRef<HTMLDivElement>(null);
+  const pageBlockRef = useRef<HTMLDivElement>(null);
   const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
@@ -223,7 +224,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const dxToCenter = (targetCenterX - restingCenterX) * p1;
       const dyToCenter = (targetCenterY - restingCenterY) * p1;
 
-      const tilt = 8 * (1 - p1);
+      // Freeze tilt/scale/flip once the bridge (book close + fly) starts, so the
+      // visible spine never tilts or twists further after it appears.
+      const freeze = bridge > 0 ? 1 : 0;
+      const tilt = 8 * (1 - p1) * (1 - freeze);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
       const baseScale = 1 + (maxScale - 1) * p1;
 
@@ -259,6 +263,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
+      }
+      // Hide the page-block edge during book close + handoff so no thin cream strip
+      // remains visible next to the spine.
+      if (pageBlockRef.current) {
+        pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.5, 0.85, bridge)));
       }
 
       // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
@@ -314,9 +323,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       // Lanyard + globe clear out before the cover swings.
+      // Lanyard + globe clear out before the cover swings, and are fully gone
+      // once the bridge starts so no white clip/strap line trails behind.
       const chromeFade = 1 - smoothstep(0.0, 0.35, revealT);
       if (lanyardLayerRef.current) {
-        lanyardLayerRef.current.style.opacity = String((1 - p2) * chromeFade);
+        const op = bridge > 0 ? 0 : (1 - p2) * chromeFade;
+        lanyardLayerRef.current.style.opacity = String(op);
+        lanyardLayerRef.current.style.visibility = op < 0.01 ? "hidden" : "visible";
       }
       if (globeLayerRef.current) {
         const globeOp = p2 * chromeFade;
@@ -572,6 +585,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           >
             {/* Page-block — visible "pages" along the cover's right edge (opposite the hinge) */}
             <div
+              ref={pageBlockRef}
               aria-hidden
               style={{
                 position: "absolute",
