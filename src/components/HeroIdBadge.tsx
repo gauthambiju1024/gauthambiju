@@ -87,8 +87,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const cardWrapRef = useRef<HTMLDivElement>(null);
+  const lanyardLayerRef = useRef<HTMLDivElement>(null);
   const globeLayerRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
+  const clipRef = useRef<HTMLDivElement>(null);
   const cardBackInnerRef = useRef<HTMLDivElement>(null);
   const backFaceRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,13 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const flyingSpineRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
   const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
-
+  const visualLeftRef = useRef<SVGPathElement>(null);
+  const visualRightRef = useRef<SVGPathElement>(null);
+  const edgesLeftRef = useRef<SVGPathElement>(null);
+  const edgesRightRef = useRef<SVGPathElement>(null);
+  const textPathLeftRef = useRef<SVGPathElement>(null);
+  const textPathRightRef = useRef<SVGPathElement>(null);
+  const updateLanyardRef = useRef<(() => void) | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -129,9 +137,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (r.width > 0 && r.height > 0 && (r.width !== lastW || r.height !== lastH)) {
         lastW = r.width;
         lastH = r.height;
+        updateLanyardRef.current?.();
       }
     };
-
     update();
     let mo: number | null = null;
     const tick = () => { update(); mo = requestAnimationFrame(tick); };
@@ -322,6 +330,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         const op = bridge > 0 ? 0 : (1 - p2) * chromeFade;
         lanyardLayerRef.current.style.opacity = String(op);
         lanyardLayerRef.current.style.visibility = op < 0.01 ? "hidden" : "visible";
+        lanyardLayerRef.current.style.display = bridge > 0 ? "none" : "block";
       }
       if (globeLayerRef.current) {
         const globeOp = p2 * chromeFade;
@@ -332,8 +341,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
-      updateLanyard();
+      if (bridge === 0) updateLanyard();
     };
+
 
 
     let raf = 0;
@@ -454,8 +464,51 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       </div>
 
 
-      {/* Lanyard overlay removed — card floats without a neck-strap */}
+      {/* Lanyard layer (fades out as card travels) */}
+      <div ref={lanyardLayerRef} className="absolute inset-0" style={{ pointerEvents: "none" }}>
+        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 5, overflow: "visible" }} xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="hero-lanyard-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="2" dy="8" stdDeviation="5" floodColor="hsl(160 30% 4%)" floodOpacity="0.55" />
+            </filter>
+            <pattern id="hero-fabric-front" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+              <rect width="8" height="8" fill="hsl(140 30% 28%)" />
+              <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 25% 18%)" strokeWidth="3" />
+              <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 35% 38%)" strokeWidth="3" />
+              <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.18)" strokeWidth="1" />
+              <line x1="0" y1="6" x2="8" y2="6" stroke="hsl(0 0% 100% / 0.12)" strokeWidth="1" />
+            </pattern>
+            <pattern id="hero-fabric-back" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+              <rect width="8" height="8" fill="hsl(140 28% 18%)" />
+              <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(140 20% 12%)" strokeWidth="3" />
+              <line x1="4" y1="0" x2="4" y2="8" stroke="hsl(140 30% 22%)" strokeWidth="3" />
+              <line x1="0" y1="2" x2="8" y2="2" stroke="hsl(0 0% 0% / 0.22)" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <path ref={visualRightRef} d="" fill="none" stroke="url(#hero-fabric-back)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+          <path ref={edgesRightRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.35)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+          <path ref={visualLeftRef} d="" fill="none" stroke="url(#hero-fabric-front)" strokeWidth="22" filter="url(#hero-lanyard-shadow)" strokeLinecap="round" />
+          <path ref={edgesLeftRef} d="" fill="none" stroke="hsl(0 0% 0% / 0.28)" strokeWidth="22" strokeDasharray="2 4" opacity="0.5" strokeLinecap="round" />
+          <path ref={textPathLeftRef} id="hero-lanyard-text-left" d="" fill="none" stroke="transparent" />
+          <path ref={textPathRightRef} id="hero-lanyard-text-right" d="" fill="none" stroke="transparent" />
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.95)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-left" startOffset="50%">{badge.ribbonLeft}</textPath>
+          </text>
+          <text fontFamily="JetBrains Mono, monospace" fontSize="8" fontWeight="700" fill="hsl(40 30% 96% / 0.7)" letterSpacing="2" textAnchor="middle">
+            <textPath href="#hero-lanyard-text-right" startOffset="50%">{badge.ribbonRight}</textPath>
+          </text>
+        </svg>
 
+        {/* Metal clip + plastic strap */}
+        <div ref={clipRef} className="absolute flex flex-col items-center" style={{ zIndex: 8, filter: "drop-shadow(3px 8px 6px hsl(160 30% 4% / 0.5))", transformOrigin: "top center", pointerEvents: "none" }}>
+          <div style={{ width: 24, height: 30, background: "linear-gradient(135deg, hsl(0 0% 96%) 0%, hsl(0 0% 70%) 50%, hsl(0 0% 44%) 100%)", borderRadius: "6px 6px 12px 12px", boxShadow: "inset 1px 1px 3px hsl(0 0% 100% / 0.9), inset -2px -2px 4px hsl(0 0% 0% / 0.5)", position: "relative", zIndex: 2 }}>
+            <div style={{ position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", width: 14, height: 8, background: "hsl(0 0% 30%)", borderRadius: 4, boxShadow: "inset 0 2px 4px hsl(0 0% 0% / 0.7)" }} />
+          </div>
+          <div style={{ width: 16, height: 35, background: "linear-gradient(to right, hsl(0 0% 78% / 0.6), hsl(0 0% 100% / 0.8), hsl(0 0% 78% / 0.6))", border: "1px solid hsl(0 0% 100% / 0.5)", borderRadius: 2, marginTop: -6, position: "relative", display: "flex", justifyContent: "center", boxShadow: "0 2px 4px hsl(0 0% 0% / 0.3)" }}>
+            <div style={{ width: 8, height: 8, background: "radial-gradient(circle at 30% 30%, hsl(0 0% 100%), hsl(0 0% 60%))", borderRadius: "50%", marginTop: 18, boxShadow: "0 2px 3px hsl(0 0% 0% / 0.6), inset 0 -1px 2px hsl(0 0% 0% / 0.4)" }} />
+          </div>
+        </div>
+      </div>
 
       {/* ID Card wrapper — gets all transforms (drag + scroll-driven) */}
       <div
