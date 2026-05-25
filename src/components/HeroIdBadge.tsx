@@ -330,6 +330,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         const op = bridge > 0 ? 0 : (1 - p2) * chromeFade;
         lanyardLayerRef.current.style.opacity = String(op);
         lanyardLayerRef.current.style.visibility = op < 0.01 ? "hidden" : "visible";
+        lanyardLayerRef.current.style.display = bridge > 0 ? "none" : "block";
       }
       if (globeLayerRef.current) {
         const globeOp = p2 * chromeFade;
@@ -340,8 +341,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.pointerEvents = p1 > 0.05 || revealT > 0.02 ? "none" : "auto";
       cardWrap.style.cursor = p1 > 0.05 ? "default" : "grab";
 
-      updateLanyard();
+      if (bridge === 0) updateLanyard();
     };
+
 
 
     let raf = 0;
