@@ -264,6 +264,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
       }
+      // Hide the page-block edge during book close + handoff so no thin cream strip
+      // remains visible next to the spine.
+      if (pageBlockRef.current) {
+        pageBlockRef.current.style.opacity = String(1 - eInOutCubic(seg(0.5, 0.85, bridge)));
+      }
 
       // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
       const tx = snap(offsetX + dxToCenter);
