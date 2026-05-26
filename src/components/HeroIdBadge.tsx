@@ -281,9 +281,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Once the book has visually closed (closeT > 0.6), fade out the card wrap
       // and reveal a clean narrow spine at the same on-screen position. That spine
       // then flies to the shelf About slot during flyT.
-      const handoffStart = 0.70;
-      const handoffT = clamp((closeT - handoffStart) / (1 - handoffStart));
-      cardWrap.style.opacity = String(1 - handoffT);
+      const handoffT = closeT >= 1 ? 1 : 0;
+      cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
 
       if (flyingSpineRef.current) {
         const visible = handoffT > 0.001;
