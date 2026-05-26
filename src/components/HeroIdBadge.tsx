@@ -98,7 +98,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const closedSpineRef = useRef<HTMLDivElement>(null);
   const flyingSpineRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
-  const fileTargetRef = useRef<{ startCx: number; startCy: number; targetCx: number; targetCy: number } | null>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
   const edgesLeftRef = useRef<SVGPathElement>(null);
@@ -259,10 +258,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 ? "visible" : "hidden";
       }
-      // Closed-cover face stays hidden — we hand off to a clean external flying spine.
+      // Closed-cover face stays hidden — the persistent external spine owns the visible bridge.
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
+      }
+      if (spineSkinRef.current) {
+        spineSkinRef.current.style.opacity = bridge > 0 ? "0" : "1";
+        spineSkinRef.current.style.visibility = bridge > 0 ? "hidden" : "visible";
       }
       // Hide the page-block edge fully once the bridge begins so the cream
       // 3px strip can never read as a "white line" sliding across the screen.
@@ -277,55 +280,42 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${baseScale.toFixed(3)}, ${baseScale.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
-      // ============== FLYING SPINE HANDOFF ==============
-      // Once the book has visually closed (closeT > 0.6), fade out the card wrap
-      // and reveal a clean narrow spine at the same on-screen position. That spine
-      // then flies to the shelf About slot during flyT.
+      // ============== PERSISTENT SPINE BRIDGE ==============
+      // A single external spine stays visible through the whole bridge. It first
+      // sits on top of the book spine while shrinking, then flies to the shelf.
       const handoffT = closeT >= 1 ? 1 : 0;
       cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
 
       if (flyingSpineRef.current) {
-        const visible = handoffT > 0.001;
+        const visible = bridge > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
-          // Measure the ACTUAL on-screen rect of the visible spine at the
-          // handoff frame, so the flying spine starts at the exact same place
-          // and size — zero positional/scale pop.
-          if (!fileTargetRef.current && spineSkinRef.current) {
-            const spineRect = spineSkinRef.current.getBoundingClientRect();
-            const slotRect = (window as any).__bridgeSlotRect as
-              | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-            if (slotRect && spineRect.width > 0) {
-              const startCx = spineRect.left + spineRect.width / 2 - stageRect.left;
-              const startCy = spineRect.top + spineRect.height / 2 - stageRect.top;
-              fileTargetRef.current = {
-                startCx,
-                startCy,
-                targetCx: slotRect.cx - stageRect.left,
-                targetCy: slotRect.cy - stageRect.top,
-                startScaleX: spineRect.width / BOOK_SPINE_W,
-                startScaleY: spineRect.height / SPINE_HEIGHT,
-              } as any;
-            }
-          }
-          const t = fileTargetRef.current as any;
-          if (t) {
-            // Bezier arc: low committed flight path with gentle anticipation
-            // lift and decelerating hover-approach to the slot.
-            const sE = eInOutCubic(flyT);
-            const sx = start => start; // noop placeholder for clarity
-            const startP = { x: t.startCx, y: t.startCy };
-            const endP = { x: t.targetCx, y: t.targetCy };
+          const slotRect = (window as any).__bridgeSlotRect as
+            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+          const actualCardCenterX = restingCenterX + tx;
+          const actualCardCenterY = restingCenterY + ty;
+          const startP = {
+            x: actualCardCenterX - (CARD_WIDTH / 2 + BOOK_SPINE_W / 2) * baseScale,
+            y: actualCardCenterY,
+          };
+          const endP = {
+            x: slotRect ? slotRect.cx - stageRect.left : startP.x,
+            y: slotRect ? slotRect.cy - stageRect.top : startP.y,
+          };
+          const sE = fE;
+          const shrinkScaleX = lerp(baseScale, 1, cE);
+          const shrinkScaleY = lerp((CARD_HEIGHT * baseScale) / SPINE_HEIGHT, 1, cE);
+
+          {
             const c1 = { x: startP.x + (endP.x - startP.x) * 0.15, y: startP.y - 40 };
             const c2 = { x: startP.x + (endP.x - startP.x) * 0.65, y: Math.min(startP.y, endP.y) - 70 };
             const u = 1 - sE;
             let cx = u*u*u*startP.x + 3*u*u*sE*c1.x + 3*u*sE*sE*c2.x + sE*sE*sE*endP.x;
             let cy = u*u*u*startP.y + 3*u*u*sE*c1.y + 3*u*sE*sE*c2.y + sE*sE*sE*endP.y;
 
-            // Width and height hold steady at shelf size — no scale change at any point.
-            const scaleX = 1;
-            let scaleY = 1;
+            const scaleX = flyT <= 0 ? shrinkScaleX : 1;
+            let scaleY = flyT <= 0 ? shrinkScaleY : 1;
 
             // Damped-spring landing settle: brief vertical sink only (no scaleY squash,
             // so vertical-text letter width never drifts).
@@ -350,7 +340,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
         } else {
           flyingSpineRef.current.style.opacity = "0";
-          fileTargetRef.current = null;
         }
       }
 
