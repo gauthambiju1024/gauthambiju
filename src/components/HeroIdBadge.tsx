@@ -210,7 +210,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const revealT = seg(0.00, 0.55, bridge);
       // Split file into two sub-beats: book close, then spine handoff + fly to slot.
       const closeT = seg(0.30, 0.90, bridge);
-      const flyT = seg(0.70, 1.0, bridge);
+      const flyT = seg(0.75, 1.0, bridge);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
