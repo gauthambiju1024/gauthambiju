@@ -1,37 +1,36 @@
-## Why there's currently a crossfade
+## Why the spine teleports to the shelf right now
 
-The "book-spine" you see inside the closing book and the "flying spine" that lands on the shelf are two separate DOM elements in `HeroIdBadge.tsx`:
+In `src/components/HeroIdBadge.tsx`:
 
-- **In-book spine** (`spineSkinRef`, line 695) — lives inside `cardWrap`, rendered as `<ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />`.
-- **Flying spine** (`flyingSpineRef`, line 481) — a separate portal-mounted element, also rendered as `<ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />`.
+- `closeT = seg(0.30, 0.90, bridge)` — book finishes closing at bridge **0.90**.
+- `flyT  = seg(0.75, 1.00, bridge)` — flight begins at bridge **0.75**.
+- Handoff fires only when `closeT >= 1` — i.e. bridge **0.90**.
 
-Both render the **exact same component with the exact same data**, so they are pixel-identical. The "crossfade" you see is purely an opacity blend during the handoff window:
+So between bridge 0.75 and 0.90:
+- In-book spine (`cardWrap`) is still visible (handoffT=0).
+- Flying spine is hidden, but `flyT` is silently advancing — by bridge 0.90 it's already `eInOutCubic(0.60) ≈ 0.65` along the bezier arc.
 
-- `cardWrap.style.opacity = 1 - handoffT` (in-book spine fades out)
-- `flyingSpine.style.opacity = fadeIn * fadeOut` where `fadeIn = seg(0, 0.2, handoffT)` (flying spine fades in)
+At bridge 0.90 the swap fires and the flying spine appears **already two-thirds of the way to the shelf**. That's the teleport.
 
-Both elements are visible together for ~20% of the handoff, which reads as a ghost/double-spine moment.
+## The fix: lock close-end and fly-start to the SAME frame
 
-## Can they be the SAME spine? Yes — visually.
+Both timelines must meet exactly. Change in `src/components/HeroIdBadge.tsx`:
 
-They already render identical markup, and the flying spine is positioned by measuring `spineSkinRef.getBoundingClientRect()` at the handoff frame — so it starts at the exact same on-screen position and size. No DOM unification is needed; we just need to remove the opacity blend so the swap is invisible.
+1. **Line 212** — `closeT = seg(0.25, 0.75, bridge)` (was `seg(0.30, 0.90, bridge)`).
+   - Window stays 0.50 wide → shrink is still slow and elegant.
+   - Ends at bridge **0.75**.
 
-## Changes in `src/components/HeroIdBadge.tsx`
+2. **Line 213** — `flyT = seg(0.75, 1.0, bridge)` (already set in last edit, keep as-is).
+   - Starts at bridge **0.75**, exactly when `closeT` hits 1.
 
-1. **Instant swap, no fade.** Replace the crossfade with a hard handoff at a single frame:
-   - Line 286: `cardWrap.style.opacity = handoffT > 0 ? 0 : 1;` (binary, not gradient).
-   - Line 345–347: remove `fadeIn`; set `flyingSpineRef.current.style.opacity = String(fadeOut);` so the flying spine appears at full opacity the instant it takes over.
-   - Since both elements are pixel-identical and sit at the same rect, the swap is invisible — it looks like one continuous spine.
-
-2. **Tighten handoff to the exact close-end frame.** Move `handoffStart` from `0.70` to `1.0` so the flying spine takes over the instant the book finishes shrinking, not partway through. Pair this with widening `flyT` from `seg(0.70, 1.0, bridge)` to `seg(0.75, 1.0, bridge)` so the flight still has room to play out after the swap.
-   - Net effect: book shrinks fully → at the very last frame of `closeT`, the in-book spine vanishes and the flying spine appears at the identical rect → flight begins. One spine, no ghost.
+3. **Handoff block (lines 284–286)** — unchanged: `handoffT = closeT >= 1 ? 1 : 0` now fires at the exact frame `flyT` begins at 0. Same DOM rect, same `ProjectSpine` markup, flight starts from zero progress → no teleport, no ghost.
 
 ## Preserved
 
-- `closeT = seg(0.30, 0.90, bridge)` — slow elegant shrink, unchanged.
-- Bezier flight path, lean, settle, landing — unchanged.
-- `ProjectSpine` markup, colors, and `ABOUT_SPINE_DATA` — unchanged on both sides.
+- Slow elegant shrink (0.50-wide window of bridge).
+- Identical `<ProjectSpine data={ABOUT_SPINE_DATA} />` on both sides.
+- Bezier path, lean, settle, landing — unchanged.
 
 ## Result
 
-The book closes, shrinks to the spine, and that spine flies to the shelf as a single continuous object. No crossfade, no double-spine ghost frame.
+Book closes and shrinks slowly. At the exact frame the shrink completes, the visible spine begins its flight from that same position — one continuous spine, no disappear, no jump.
