@@ -341,9 +341,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             // Forward flight lean: peaks mid-arc, returns to 0 at landing.
             const flightTilt = 3 * Math.sin(flyT * Math.PI);
 
-            const fadeIn = seg(0, 0.2, handoffT);
             const fadeOut = 1 - seg(0.92, 1.0, flyT);
-            flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            flyingSpineRef.current.style.opacity = String(fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
               `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY.toFixed(3)})`;
