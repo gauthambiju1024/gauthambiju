@@ -125,11 +125,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const settled = bridge > 0.98;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        // Fade shelf About spine in across the final arrival window of the
-        // flying hero spine (flyT in HeroIdBadge: bridge 0.74→0.96, arrival 0.92→0.96).
-        // We fade in 0.92→0.96 so the shelf spine is fully opaque exactly as the
-        // flying spine reaches the slot — invisible hand-off, no width/position pop.
-        const k = clamp01((bridge - 0.92) / 0.04);
+        // Bring the shelf spine in slightly before the flying spine fades out,
+        // guaranteeing there is never a blank frame at landing.
+        const k = clamp01((bridge - 0.90) / 0.055);
         aboutSpineRef.current.style.opacity = String(k);
         aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
       }
