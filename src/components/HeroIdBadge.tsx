@@ -210,7 +210,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const revealT = seg(0.00, 0.55, bridge);
       // Split file into two sub-beats: book close, then spine handoff + fly to slot.
       const closeT = seg(0.30, 0.90, bridge);
-      const flyT = seg(0.70, 1.0, bridge);
+      const flyT = seg(0.75, 1.0, bridge);
 
       const stageRect = stage.getBoundingClientRect();
       const w = card.offsetWidth;
@@ -281,9 +281,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Once the book has visually closed (closeT > 0.6), fade out the card wrap
       // and reveal a clean narrow spine at the same on-screen position. That spine
       // then flies to the shelf About slot during flyT.
-      const handoffStart = 0.70;
-      const handoffT = clamp((closeT - handoffStart) / (1 - handoffStart));
-      cardWrap.style.opacity = String(1 - handoffT);
+      const handoffT = closeT >= 1 ? 1 : 0;
+      cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
 
       if (flyingSpineRef.current) {
         const visible = handoffT > 0.001;
@@ -342,9 +341,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             // Forward flight lean: peaks mid-arc, returns to 0 at landing.
             const flightTilt = 3 * Math.sin(flyT * Math.PI);
 
-            const fadeIn = seg(0, 0.2, handoffT);
             const fadeOut = 1 - seg(0.92, 1.0, flyT);
-            flyingSpineRef.current.style.opacity = String(fadeIn * fadeOut);
+            flyingSpineRef.current.style.opacity = String(fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
               `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY.toFixed(3)})`;
