@@ -327,13 +327,27 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const shelfHandoff = clamp((bridge - 0.985) / 0.015);
           const spineOpacity = 1 - shelfHandoff;
 
+          // Text sizes must match the original (scaled) spine at handoff and
+          // smoothly converge to the native shelf size. Original spine lives
+          // inside cardWrap scaled by baseScale, so its visual text is
+          // 10*baseScale / 8*baseScale at the moment of capture. Then the
+          // flying spine shrinks toward the shelf slot, so text follows the
+          // same shrink ratio.
+          const ABOUT_SHELF_W = 28;
+          const sizeRatio = width / Math.max(1, ABOUT_SHELF_W); // 1 at shelf, ~baseScale at start
+          const titleFs = 10 * sizeRatio;
+          const yearFs = 8 * sizeRatio;
+
           flyingSpineRef.current.style.visibility = spineOpacity > 0.001 ? "visible" : "hidden";
           flyingSpineRef.current.style.opacity = String(spineOpacity);
           flyingSpineRef.current.style.width = `${width.toFixed(2)}px`;
           flyingSpineRef.current.style.height = `${height.toFixed(2)}px`;
+          flyingSpineRef.current.style.setProperty("--spine-title-fs", `${titleFs.toFixed(2)}px`);
+          flyingSpineRef.current.style.setProperty("--spine-year-fs", `${yearFs.toFixed(2)}px`);
           flyingSpineRef.current.style.transform = `translate3d(${snap(left, 0.25)}px, ${snap(top, 0.25)}px, 0) rotate(${flightTilt.toFixed(2)}deg)`;
         }
       }
+
 
 
 
