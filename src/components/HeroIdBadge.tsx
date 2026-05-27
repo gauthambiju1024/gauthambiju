@@ -264,9 +264,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         closedSpineRef.current.style.visibility = "hidden";
       }
       if (spineSkinRef.current) {
-        // Keep the real 3D book spine visible until the persistent spine has
-        // already taken over, preventing a blank single-frame handoff.
-        const hide3D = flyT > 0.03;
+        // Real 3D book spine stays fully visible for the entire close phase.
+        // It is only hidden AFTER the flying spine has already appeared opaquely
+        // at the same position — eliminating both ghost overlap and blank frame.
+        const hide3D = flyT > 0.02;
         spineSkinRef.current.style.opacity = hide3D ? "0" : "1";
         spineSkinRef.current.style.visibility = hide3D ? "hidden" : "visible";
       }
@@ -284,15 +285,16 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       // ============== PERSISTENT SPINE BRIDGE ==============
-      // Keep the closing book visible for the first moments of flight so the
-      // single persistent spine has an overlap window instead of a hard swap.
-      cardWrap.style.opacity = flyT > 0.03 ? "0" : "1";
+      // Keep the closed book visible until the flying spine is already drawn
+      // at the exact same position/scale on the same frame (overlap = no gap).
+      cardWrap.style.opacity = flyT > 0.02 ? "0" : "1";
 
       if (flyingSpineRef.current) {
-        const prepT = seg(0.72, 1.0, closeT);
-        const visible = prepT > 0.001 || flyT > 0.001;
+        // Flying spine appears only at launch (no pre-fade during close),
+        // and appears at full opacity immediately for a clean handoff.
+        const visible = flyT > 0.0005;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
-        flyingSpineRef.current.style.zIndex = flyT > 0.001 ? "12" : "9";
+        flyingSpineRef.current.style.zIndex = "12";
 
         if (visible) {
           const slotRect = (window as any).__bridgeSlotRect as
@@ -337,7 +339,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
             const fadeOut = 1 - seg(0.995, 1.0, flyT);
             const spineYaw = lerp(-9, 0, fE);
-            flyingSpineRef.current.style.opacity = String((flyT > 0.001 ? 1 : prepT) * fadeOut);
+            // Always fully opaque during flight — clean handoff, never partial.
+            flyingSpineRef.current.style.opacity = String(fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
               `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) rotateY(${spineYaw.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
