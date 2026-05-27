@@ -487,10 +487,72 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           visibility: "hidden",
           pointerEvents: "none",
           zIndex: 12,
+          perspective: 700,
+          transformStyle: "preserve-3d",
+          WebkitTransformStyle: "preserve-3d",
           willChange: "transform, opacity",
         }}
       >
-        <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+        <div
+          ref={flyingSpineCoreRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            transformStyle: "preserve-3d",
+            WebkitTransformStyle: "preserve-3d",
+            transformOrigin: "center center",
+            willChange: "transform",
+          }}
+        >
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: -5,
+              top: 5,
+              width: 7,
+              height: "calc(100% - 10px)",
+              borderRadius: "4px 0 0 4px",
+              background: "linear-gradient(to right, hsl(160 32% 10%), hsl(160 30% 18%))",
+              boxShadow: "inset 1px 0 0 hsl(0 0% 100% / 0.08), -5px 6px 12px hsl(160 30% 4% / 0.42)",
+              transform: "translateZ(-5px) rotateY(-18deg)",
+            }}
+          />
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              right: -4,
+              top: 6,
+              width: 6,
+              height: "calc(100% - 12px)",
+              borderRadius: "0 4px 4px 0",
+              background: "linear-gradient(to right, hsl(160 30% 18%), hsl(160 28% 9%))",
+              transform: "translateZ(-4px) rotateY(16deg)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              transform: "translateZ(4px)",
+              filter: "drop-shadow(8px 12px 14px hsl(160 30% 4% / 0.42))",
+            }}
+          >
+            <ProjectSpine data={ABOUT_SPINE_DATA} fullHeight />
+          </div>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 3,
+              background: "linear-gradient(to right, hsl(0 0% 100% / 0.18), transparent 28%, transparent 68%, hsl(0 0% 0% / 0.18))",
+              transform: "translateZ(5px)",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
       </div>
 
 
