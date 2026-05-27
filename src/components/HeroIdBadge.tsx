@@ -208,9 +208,12 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const bridge = smoothstep(0.72, 1.0, p);
       const revealT = seg(0.00, 0.55, bridge);
-      // Split file into two sub-beats: book close, then spine handoff + fly to slot.
-      const closeT = seg(0.25, 0.75, bridge);
-      const flyT = seg(0.75, 1.0, bridge);
+      // Handoff happens the instant the 3D cover reaches 90° (spine pose is
+      // perfectly readable). After that, NO more 3D rotation — a flat detached
+      // spine owns the rest of the transition.
+      const flatSpineActive = revealT >= 0.995;
+      // flyT drives the flight from the captured rect to the shelf slot.
+      const flyT = flatSpineActive ? seg(0.55, 1.0, bridge) : 0;
       const flightActive = flyT > 0.001;
 
       const stageRect = stage.getBoundingClientRect();
@@ -225,8 +228,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const dxToCenter = (targetCenterX - restingCenterX) * p1;
       const dyToCenter = (targetCenterY - restingCenterY) * p1;
 
-      // Freeze tilt/scale/flip once the bridge (book close + fly) starts, so the
-      // visible spine never tilts or twists further after it appears.
+      // Freeze tilt/scale/flip once the bridge starts.
       const freeze = bridge > 0 ? 1 : 0;
       const tilt = 8 * (1 - p1) * (1 - freeze);
       const maxScale = Math.min(stageRect.width * 0.45 / w, stageRect.height * 0.78 / h);
@@ -234,21 +236,18 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
 
       const rotYFlip = p2 * 180;
 
-      const cE = eInOutCubic(closeT);
-      const fE = eInOutCubic(flyT);
-
-      // Book closes during closeT; stays closed after.
-      const bookRotate = 90 * eInOutCubic(revealT) + 90 * cE;
+      // Book ONLY does the first 90° (open cover → perpendicular spine pose).
+      // It never continues past 90°. The flat detached spine takes over there.
+      const bookRotate = 90 * eInOutCubic(revealT);
       const coverFacing = Math.cos(bookRotate * Math.PI / 180);
       const backVisible = p2 > 0.5;
-      const aboutOpacity = backVisible ? Math.max(0, coverFacing) * (1 - closeT) : 0;
+      const aboutOpacity = backVisible ? Math.max(0, coverFacing) : 0;
 
       if (backFaceRef.current) {
         backFaceRef.current.style.pointerEvents = revealT > 0.02 ? "none" : "auto";
-        backFaceRef.current.style.visibility = p2 > 0.01 ? "visible" : "hidden";
+        backFaceRef.current.style.visibility = p2 > 0.01 && !flatSpineActive ? "visible" : "hidden";
       }
       if (cardRef.current) {
-        // Hide the front face (portrait/name) as soon as the cover begins swinging.
         const frontHidden = revealT > 0;
         cardRef.current.style.opacity = frontHidden ? "0" : "1";
         cardRef.current.style.visibility = frontHidden ? "hidden" : "visible";
@@ -257,15 +256,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         bookRef.current.style.transform = `rotateY(${bookRotate.toFixed(2)}deg)`;
       }
       if (cardBackInnerRef.current) {
-        cardBackInnerRef.current.style.opacity = String(aboutOpacity);
-        cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 && !flightActive ? "visible" : "hidden";
+        const op = flatSpineActive ? 0 : aboutOpacity;
+        cardBackInnerRef.current.style.opacity = String(op);
+        cardBackInnerRef.current.style.visibility = op > 0.01 ? "visible" : "hidden";
       }
-      // Phase B/C: once the book has closed far enough, a single flat spine owns
-      // the rest of the transition. It starts at the card's rendered spine slot,
-      // then flies by rect interpolation to the shelf slot.
-      // Phase B/C: as soon as the closing spine reaches its clean vertical pose,
-      // hand off to a single detached flat spine for the rest of the transition.
-      const flatSpineActive = bridge > 0 && closeT >= 0.72;
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
@@ -275,7 +269,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       const slotRect = (window as any).__bridgeSlotRect as
         | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
 
-      // Capture the original spine's actual rendered rect BEFORE hiding it.
+      // Capture the rendered spine rect at the EXACT moment of handoff — while
+      // it is still the clean readable spine pose (bookRotate = 90°).
       if (flatSpineActive && !flightRectRef.current && spineSkinRef.current) {
         const r = spineSkinRef.current.getBoundingClientRect();
         if (r.width > 1 && r.height > 1) {
@@ -292,8 +287,9 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       if (spineSkinRef.current) {
-        // Original 3D spine stays visible until the detached spine is placed.
-        const originalVisible = !flatSpineActive || !flightRectRef.current;
+        // Original 3D spine is only visible BEFORE handoff. After handoff the
+        // flat detached spine owns the entire visual.
+        const originalVisible = !flatSpineActive;
         spineSkinRef.current.style.opacity = originalVisible ? "1" : "0";
         spineSkinRef.current.style.visibility = originalVisible ? "visible" : "hidden";
       }
@@ -301,17 +297,18 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         pageBlockRef.current.style.opacity = bridge > 0 ? "0" : "1";
       }
 
-      // Card wrap: resting drag + p1 center slide + scroll flip only.
+      // Card wrap transforms.
       const tx = snap(offsetX + dxToCenter);
       const ty = snap(offsetY + dyToCenter);
       const finalScale = baseScale;
-      const cardHidden = flatSpineActive && !!flightRectRef.current;
+      const cardHidden = flatSpineActive;
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${finalScale.toFixed(3)}, ${finalScale.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
       cardWrap.style.opacity = cardHidden ? "0" : "1";
       cardWrap.style.visibility = cardHidden ? "hidden" : "visible";
 
+      const fE = eInOutCubic(flyT);
       if (flyingSpineRef.current) {
         if (!flatSpineActive || !flightRectRef.current) {
           flyingSpineRef.current.style.visibility = "hidden";
@@ -321,7 +318,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const end = slotRect
             ? { left: slotRect.left - stageRect.left, top: slotRect.top - stageRect.top, width: slotRect.width, height: slotRect.height }
             : start;
-          // Stationary until flyT starts, then arc to the shelf slot.
           const arc = -64 * Math.sin(fE * Math.PI);
           const left = lerp(start.left, end.left, fE);
           const top = lerp(start.top, end.top, fE) + arc;
@@ -338,6 +334,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           flyingSpineRef.current.style.transform = `translate3d(${snap(left, 0.25)}px, ${snap(top, 0.25)}px, 0) rotate(${flightTilt.toFixed(2)}deg)`;
         }
       }
+
 
 
 

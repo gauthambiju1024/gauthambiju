@@ -1,56 +1,49 @@
-You’re right: the handoff is currently happening too late.
+What is happening:
 
-## What the actual issue is
+The spine is still being driven by the old 3D book-close math for too long.
 
-The spine already looks correct at the stage shown in your screenshot. But the current code waits until `closeT > 0.995`, meaning it forces the book to keep closing past the point where the visual spine is already usable. That extra closing segment is where the bad frame/visual jump is being introduced.
+In `HeroIdBadge.tsx`, the current handoff waits for:
 
-## Files involved
+```ts
+const closeT = seg(0.25, 0.75, bridge);
+const flatSpineActive = bridge > 0 && closeT >= 0.72;
+```
 
-- `src/components/HeroIdBadge.tsx` — owns the card/book/spine handoff and flight.
-- `src/components/AboutToProjectsBridge.tsx` — owns the shelf slot and final shelf spine reveal.
+But `closeT >= 0.72` is not an early visual handoff. Because the actual book rotation is eased again here:
 
-## Do I know what the issue is?
+```ts
+const bookRotate = 90 * reveal + 90 * eInOutCubic(closeT);
+```
 
-Yes. The handoff threshold is wrong, and the source rect should be captured from the visible spine at the screenshot stage before hiding the original.
+At the handoff threshold, the book is already around 170+ degrees rotated. That means the 3D spine has become almost edge-on in perspective, so the browser compresses it into a thin vertical strip. That is exactly what your screenshots show: the spine starts acceptable, then keeps closing, then collapses into a skinny line.
 
-## Plan
+The dark ghost/blank-looking slab is caused by the same issue: the original 3D book/back-face is still present while the spine is being perspective-compressed. The detached flight spine is only created after that bad state, so it captures the wrong skinny/warped rectangle and continues from there.
 
-1. **Move the handoff earlier**
-   - Replace the current near-complete-close handoff:
-     ```ts
-     closeT > 0.995
-     ```
-   - with an earlier threshold matching your screenshot stage, around:
-     ```ts
-     closeT >= 0.72
-     ```
-   - This means no further close animation after the spine visually reaches that clean vertical state.
+The fix should not be another tiny threshold tweak. The transition needs to stop using the 3D closing animation at the stage shown in your first screenshot.
 
-2. **Capture the visible spine before hiding anything**
-   - While the original 3D spine is still visible, read `spineSkinRef.getBoundingClientRect()`.
-   - Use that rect as the detached flight spine’s exact starting box.
-   - Only after the flight spine is positioned and fully opaque, hide the original card/book wrapper.
+Implementation plan:
 
-3. **Keep the detached spine stationary until flight starts**
-   - From handoff threshold to `flyT`, the detached spine remains exactly where the screenshot shows it.
-   - When `flyT` begins, it moves from that captured rect to the shelf slot.
+1. Freeze the book at the first clean spine frame
+   - End the 3D book-close much earlier, around the visual state shown in screenshot 1.
+   - Do not let `bookRotate` continue toward 170–180 degrees.
 
-4. **Remove the formula-based source position for the handoff**
-   - The current fallback math guesses the spine position from card width/scale.
-   - I’ll use the actual rendered rect first, and only keep fallback math as emergency backup.
+2. Hand off immediately at that visual state
+   - Capture the rendered spine rect while it is still wide and readable.
+   - Hide the 3D book/back-face immediately after the detached spine is placed.
 
-5. **Keep shelf reveal at the end only**
-   - The shelf About spine stays hidden until the flight spine is nearly landed.
-   - This prevents the double-spine ghost while the flight is happening.
+3. Replace the rest of the close with a flat spine flight
+   - From that point onward, only one element should be visible: `flyingSpineRef`.
+   - It should keep the same width/height as the clean captured spine until the travel begins.
+   - Then it should interpolate to the shelf slot.
 
-6. **Verify visually**
-   - Scroll through the exact transition area in the browser.
-   - Check that there is one spine at the screenshot stage, no further close movement, then clean flight to shelf.
+4. Remove the perspective-collapse path
+   - Stop using late `closeT` values to drive the visible spine.
+   - Do not capture `getBoundingClientRect()` after the spine has become edge-on.
 
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
+5. Keep shelf reveal only at the final landing
+   - The shelf About spine should stay hidden until the flying spine lands.
+   - This avoids double-spine ghosting.
 
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+Expected result:
+
+The transition will hand off at the first screenshot stage, not after further closing. The spine will not shrink into a line, the dark ghost slab will disappear, and the flight to the shelf will start from the readable full spine.
