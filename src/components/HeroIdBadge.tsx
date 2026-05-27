@@ -290,7 +290,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
 
       if (flyingSpineRef.current) {
-        const visible = bridge > 0.001;
+        const visible = flyT > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {
