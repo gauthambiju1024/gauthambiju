@@ -125,9 +125,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const settled = bridge > 0.98;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        // Bring the shelf spine in slightly before the flying spine fades out,
-        // guaranteeing there is never a blank frame at landing.
-        const k = clamp01((bridge - 0.90) / 0.055);
+        // Only reveal the shelf spine at the final landing position. The flight
+        // spine owns the full travel, preventing midair double-spine ghosts.
+        const k = clamp01((bridge - 0.985) / 0.015);
         aboutSpineRef.current.style.opacity = String(k);
         aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
       }
