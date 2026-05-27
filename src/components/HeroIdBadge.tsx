@@ -264,8 +264,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         closedSpineRef.current.style.visibility = "hidden";
       }
       if (spineSkinRef.current) {
-        spineSkinRef.current.style.opacity = bridge > 0 ? "0" : "1";
-        spineSkinRef.current.style.visibility = bridge > 0 ? "hidden" : "visible";
+        // Keep the 3D perpendicular spine visible through the reveal+close phase.
+        // Only hide once the spine launches into flight.
+        const hide3D = flyT > 0;
+        spineSkinRef.current.style.opacity = hide3D ? "0" : "1";
+        spineSkinRef.current.style.visibility = hide3D ? "hidden" : "visible";
       }
       // Hide the page-block edge fully once the bridge begins so the cream
       // 3px strip can never read as a "white line" sliding across the screen.
@@ -287,7 +290,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
 
       if (flyingSpineRef.current) {
-        const visible = bridge > 0.001;
+        const visible = flyT > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
 
         if (visible) {

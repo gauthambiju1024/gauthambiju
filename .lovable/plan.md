@@ -1,78 +1,30 @@
-## I understand the issue
+## Problem
 
-The current frames show this failure:
+The book spine currently looks 2D throughout the entire bridge because `spineSkinRef` (the perpendicular `rotateY(-90deg)` panel attached to the rotating `#book` wrapper — the only thing that gives the spine real 3D thickness as the cover swings) is hidden as soon as `bridge > 0`. From that moment, the only visible spine is `flyingSpineRef`, a flat element with no perspective rotation, so the whole closing animation reads as flat.
 
-1. Spine is visible.
-2. Spine starts moving.
-3. Spine disappears completely, leaving only a thin center line / empty background.
-4. Shelf appears later.
+The fly-to-shelf transition is correct and must not change.
 
-That is not the transition you want. You want the **same visible spine** to stay continuously present: shrink from the about/book spine, then fly, then land into the shelf slot without disappearing, popping, crossfading, or reappearing.
+## Fix
 
-## Actual cause
+Split ownership cleanly by phase:
 
-The current code still relies on multiple visual owners:
+- **Reveal + close phase** (`bridge` 0 → ~0.75, i.e. `flyT === 0`): the 3D `spineSkinRef` inside the rotating book stays visible. This restores the perpendicular spine look from before.
+- **Flight phase** (`flyT > 0`): hand off to `flyingSpineRef` for the trip to the shelf slot, exactly as it works now. Hide `spineSkinRef` at that moment.
 
-- `spineSkinRef` inside the 3D book
-- `flyingSpineRef` as a separate absolute element
-- `aboutSpineRef` on the shelf
-- shelf rules and shelf opacity appearing on their own timing
+### Edit in `src/components/HeroIdBadge.tsx` (inside `applyTransform`)
 
-Even after syncing `closeT` and `flyT`, the flying spine can still fail because its start target is only captured **after** the book wrapper is hidden. If the measured 3D `spineSkinRef` rect is edge-on / zero-ish / unstable at that exact frame, the flying spine never gets a valid full visual state. That creates the blank frame you attached.
+1. Change the `spineSkinRef` visibility rule so it stays visible while the book is rotating/closing, and only hides once flight begins:
+   - Show when `bridge === 0` OR `flyT === 0` (i.e. before the spine launches).
+   - Hide once `flyT > 0`.
 
-## Fix to implement
+2. Change the `flyingSpineRef` visibility rule so it only appears at the start of flight, not from `bridge > 0`:
+   - `visible = flyT > 0.001` (instead of `bridge > 0.001`).
+   - This element is already a flat rendering — fine for the airborne trip, where perspective isn't readable anyway.
 
-### 1. Make the flying spine the single persistent visual owner during the whole bridge
+3. Keep all positioning math, easings, shelf-spine fade-in timing in `AboutToProjectsBridge.tsx`, and `closeT`/`flyT` windows unchanged. No other file changes.
 
-In `src/components/HeroIdBadge.tsx`, change the handoff logic so:
+### Why this works
 
-- `flyingSpineRef` becomes visible as soon as the bridge begins, not only after `closeT >= 1`.
-- While `closeT` is running, it is positioned directly on top of the in-book spine and follows the shrink.
-- Once `closeT` reaches 1, the same `flyingSpineRef` starts the shelf flight from that exact position.
-- `spineSkinRef` can be hidden once the persistent spine takes over, so there is no double-image or crossfade.
+The "2D" look is entirely caused by killing the perpendicular 3D panel too early. By letting it live through the rotation, the user sees the true hinged spine emerge in 3D exactly as before. The handoff to the flat flying element happens only when the cover has already finished closing and the spine is about to launch — at that point the eye is tracking motion, not perspective, so the switch is invisible.
 
-This removes the fragile “hide book, then reveal another element” moment entirely.
-
-### 2. Use stable geometry instead of measuring an edge-on 3D element at the worst frame
-
-Do not depend on `spineSkinRef.getBoundingClientRect()` at the handoff frame.
-
-Instead compute a deterministic start rect from known values already in the animation:
-
-- card wrapper center position
-- card scale
-- `BOOK_SPINE_W`
-- `SPINE_HEIGHT`
-- current bridge/shrink progress
-
-This guarantees the flying spine always has a valid visible position and size.
-
-### 3. Keep the spine visible until the shelf slot is already visible
-
-In `src/components/AboutToProjectsBridge.tsx`, adjust shelf/About-spine timing so:
-
-- the shelf About spine appears **before or exactly as** the flying spine fades out
-- the flying spine does not fade out until the shelf About spine is present
-- no frame has both opacity paths at 0
-
-### 4. Remove the “thin line only” failure mode
-
-The vertical line in the third attached frame means the project shelf rule/slot line is showing while the spine is gone. The fix will ensure:
-
-- the spine opacity remains `1` through the mid-flight
-- shelf rules may draw, but never replace the spine visually
-- only after landing does the flying spine yield to the shelf spine
-
-## Expected result
-
-The sequence becomes:
-
-```text
-book/about spine visible
-→ same spine narrows/shrinks elegantly
-→ same spine flies toward shelf
-→ same spine lands in first shelf slot
-→ shelf version takes over only after it is already underneath
-```
-
-No disappearance. No blank center-line frame. No shelf-only reappearance. No crossfade between visibly different states.
+No risk to the transition: the flying spine's start position (`startP`) is already computed to sit exactly where the in-book spine ends up after close, so the visual handover frame stays aligned.
