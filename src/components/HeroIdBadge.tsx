@@ -263,7 +263,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Phase B/C: once the book has closed far enough, a single flat spine owns
       // the rest of the transition. It starts at the card's rendered spine slot,
       // then flies by rect interpolation to the shelf slot.
-      const flatSpineActive = bridge > 0 && closeT > 0.72;
+      const flatSpineActive = bridge > 0 && closeT > 0.995;
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
