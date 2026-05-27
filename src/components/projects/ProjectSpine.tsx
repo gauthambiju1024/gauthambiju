@@ -96,7 +96,10 @@ const ProjectSpine = forwardRef<HTMLDivElement, Props>(({
       {/* Year top */}
       {data.year && (
         <div className="absolute top-3 left-0 right-0 flex justify-center">
-          <span className="text-white/30 text-[8px] font-mono tracking-wider" style={{ writingMode: "vertical-lr" }}>
+          <span
+            className="text-white/30 font-mono tracking-wider"
+            style={{ writingMode: "vertical-lr", fontSize: "var(--spine-year-fs, 8px)" }}
+          >
             {data.year}
           </span>
         </div>
@@ -106,11 +109,16 @@ const ProjectSpine = forwardRef<HTMLDivElement, Props>(({
       <div className="absolute inset-0 flex items-center justify-center">
         <span
           className="text-white/90 font-serif-display font-semibold tracking-[0.2em] uppercase"
-          style={{ writingMode: "vertical-lr", textOrientation: "mixed", fontSize: data.title.length > 12 ? 10 : 13 }}
+          style={{
+            writingMode: "vertical-lr",
+            textOrientation: "mixed",
+            fontSize: `var(--spine-title-fs, ${data.title.length > 12 ? 10 : 13}px)`,
+          }}
         >
           {data.title}
         </span>
       </div>
+
 
       {/* Bottom subtitle */}
       <div
