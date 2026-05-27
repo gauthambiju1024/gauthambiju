@@ -97,6 +97,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const spineSkinRef = useRef<HTMLDivElement>(null);
   const closedSpineRef = useRef<HTMLDivElement>(null);
   const flyingSpineRef = useRef<HTMLDivElement>(null);
+  const flyingSpineCoreRef = useRef<HTMLDivElement>(null);
   const pageBlockRef = useRef<HTMLDivElement>(null);
   const visualLeftRef = useRef<SVGPathElement>(null);
   const visualRightRef = useRef<SVGPathElement>(null);
@@ -266,7 +267,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       if (spineSkinRef.current) {
         // Keep the 3D perpendicular spine visible through the reveal+close phase.
         // Only hide once the spine launches into flight.
-        const hide3D = flyT > 0;
+        const hide3D = flyT > 0.001;
         spineSkinRef.current.style.opacity = hide3D ? "0" : "1";
         spineSkinRef.current.style.visibility = hide3D ? "hidden" : "visible";
       }
@@ -290,8 +291,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.opacity = flyT > 0.001 ? "0" : "1";
 
       if (flyingSpineRef.current) {
-        const visible = flyT > 0.001;
+        const prepT = seg(0.92, 1.0, closeT);
+        const visible = prepT > 0.001 || flyT > 0.001;
         flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
+        flyingSpineRef.current.style.zIndex = flyT > 0.001 ? "12" : "9";
 
         if (visible) {
           const slotRect = (window as any).__bridgeSlotRect as
@@ -319,7 +322,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             // so the flying spine seamlessly continues the book's shrink.
             const startScaleX = baseScale;
             const startScaleY = (CARD_HEIGHT * baseScale) / SPINE_HEIGHT;
-            const scaleX = lerp(startScaleX, 1, fE);
+            const scaleX = Math.max(0.92, lerp(startScaleX, 1, fE));
             let scaleY = lerp(startScaleY, 1, fE);
 
             // Damped-spring landing settle: brief vertical sink only.
@@ -334,11 +337,15 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             // Forward flight lean: peaks mid-arc, returns to 0 at landing.
             const flightTilt = 3 * Math.sin(flyT * Math.PI);
 
-            const fadeOut = 1 - seg(0.92, 1.0, flyT);
-            flyingSpineRef.current.style.opacity = String(fadeOut);
+            const fadeOut = 1 - seg(0.97, 1.0, flyT);
+            flyingSpineRef.current.style.opacity = String((flyT > 0.001 ? 1 : prepT) * fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
               `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
+            if (flyingSpineCoreRef.current) {
+              const coreY = lerp(-9, 0, fE);
+              flyingSpineCoreRef.current.style.transform = `rotateY(${coreY.toFixed(2)}deg)`;
+            }
           }
 
         } else {
