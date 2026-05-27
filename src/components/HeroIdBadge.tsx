@@ -5,7 +5,7 @@ import heroPortrait from "@/assets/hero-portrait.png";
 import { useSiteContent } from "@/hooks/useSiteData";
 import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
 import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
-import ProjectSpine, { SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "./projects/ProjectSpine";
+import ProjectSpine, { SPINE_HEIGHT, ABOUT_SPINE_DATA } from "./projects/ProjectSpine";
 
 type HeroBadge = {
   name?: string;
@@ -105,6 +105,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
   const textPathLeftRef = useRef<SVGPathElement>(null);
   const textPathRightRef = useRef<SVGPathElement>(null);
   const updateLanyardRef = useRef<(() => void) | null>(null);
+  const flightRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
