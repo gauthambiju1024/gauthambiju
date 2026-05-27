@@ -264,12 +264,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         closedSpineRef.current.style.visibility = "hidden";
       }
       if (spineSkinRef.current) {
-        // Real 3D book spine stays fully visible for the entire close phase.
-        // It is only hidden AFTER the flying spine has already appeared opaquely
-        // at the same position — eliminating both ghost overlap and blank frame.
-        const hide3D = flyT > 0.02;
-        spineSkinRef.current.style.opacity = hide3D ? "0" : "1";
-        spineSkinRef.current.style.visibility = hide3D ? "hidden" : "visible";
+        // Real 3D book spine is the SOLE visible spine — through close, launch,
+        // flight, and landing. No handoff, no swap, no second spine.
+        spineSkinRef.current.style.opacity = "1";
+        spineSkinRef.current.style.visibility = "visible";
       }
       // Hide the page-block edge fully once the bridge begins so the cream
       // 3px strip can never read as a "white line" sliding across the screen.
@@ -277,79 +275,59 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         pageBlockRef.current.style.opacity = bridge > 0 ? "0" : "1";
       }
 
-      // Card wrap: only handles the center/scale/flip; no fly, no shrink-to-spine.
-      const tx = snap(offsetX + dxToCenter);
-      const ty = snap(offsetY + dyToCenter);
-      cardWrap.style.transform =
-        `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${baseScale.toFixed(3)}, ${baseScale.toFixed(3)}) ` +
-        `rotateY(${rotYFlip.toFixed(2)}deg)`;
+      // ============== SINGLE-SPINE FLIGHT ==============
+      // During flyT, translate the ENTIRE cardWrap (which still owns the real
+      // 3D book + its perpendicular spineSkin) to the shelf slot. The spine
+      // never changes DOM owner, so there is no blank frame and no ghost.
+      const slotRect = (window as any).__bridgeSlotRect as
+        | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
 
-      // ============== PERSISTENT SPINE BRIDGE ==============
-      // Keep the closed book visible until the flying spine is already drawn
-      // at the exact same position/scale on the same frame (overlap = no gap).
-      cardWrap.style.opacity = flyT > 0.02 ? "0" : "1";
+      let flightTx = 0, flightTy = 0, flightScale = 1, flightTilt = 0;
+      if (flyT > 0) {
+        const actualCardCenterX = restingCenterX + offsetX + dxToCenter;
+        const actualCardCenterY = restingCenterY + offsetY + dyToCenter;
+        const spineCenterX = actualCardCenterX - (CARD_WIDTH / 2 + BOOK_SPINE_W / 2) * baseScale;
+        const spineCenterY = actualCardCenterY;
 
-      if (flyingSpineRef.current) {
-        // Flying spine appears only at launch (no pre-fade during close),
-        // and appears at full opacity immediately for a clean handoff.
-        const visible = flyT > 0.0005;
-        flyingSpineRef.current.style.visibility = visible ? "visible" : "hidden";
-        flyingSpineRef.current.style.zIndex = "12";
+        const endX = slotRect ? slotRect.cx - stageRect.left : spineCenterX;
+        const endY = slotRect ? slotRect.cy - stageRect.top : spineCenterY;
 
-        if (visible) {
-          const slotRect = (window as any).__bridgeSlotRect as
-            | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-          const actualCardCenterX = restingCenterX + tx;
-          const actualCardCenterY = restingCenterY + ty;
-          const startP = {
-            x: actualCardCenterX - (CARD_WIDTH / 2 + BOOK_SPINE_W / 2) * baseScale,
-            y: actualCardCenterY,
-          };
-          const endP = {
-            x: slotRect ? slotRect.cx - stageRect.left : startP.x,
-            y: slotRect ? slotRect.cy - stageRect.top : startP.y,
-          };
-          const sE = fE;
+        const c1x = spineCenterX + (endX - spineCenterX) * 0.15;
+        const c1y = spineCenterY - 40;
+        const c2x = spineCenterX + (endX - spineCenterX) * 0.65;
+        const c2y = Math.min(spineCenterY, endY) - 70;
+        const u = 1 - fE;
+        const cx = u*u*u*spineCenterX + 3*u*u*fE*c1x + 3*u*fE*fE*c2x + fE*fE*fE*endX;
+        const cy = u*u*u*spineCenterY + 3*u*u*fE*c1y + 3*u*fE*fE*c2y + fE*fE*fE*endY;
 
-          {
-            const c1 = { x: startP.x + (endP.x - startP.x) * 0.15, y: startP.y - 40 };
-            const c2 = { x: startP.x + (endP.x - startP.x) * 0.65, y: Math.min(startP.y, endP.y) - 70 };
-            const u = 1 - sE;
-            let cx = u*u*u*startP.x + 3*u*u*sE*c1.x + 3*u*sE*sE*c2.x + sE*sE*sE*endP.x;
-            let cy = u*u*u*startP.y + 3*u*u*sE*c1.y + 3*u*sE*sE*c2.y + sE*sE*sE*endP.y;
+        flightTx = cx - spineCenterX;
+        flightTy = cy - spineCenterY;
 
-            // Start flight at the book's current scale and ease to 1 over flyT,
-            // so the flying spine seamlessly continues the book's shrink.
-            const startScaleX = baseScale;
-            const startScaleY = (CARD_HEIGHT * baseScale) / SPINE_HEIGHT;
-            const scaleX = Math.max(0.92, lerp(startScaleX, 1, fE));
-            let scaleY = lerp(startScaleY, 1, fE);
+        const endScale = SPINE_HEIGHT / CARD_HEIGHT;
+        flightScale = lerp(1, endScale / baseScale, fE);
+        flightTilt = 3 * Math.sin(flyT * Math.PI);
 
-            // Damped-spring landing settle: brief vertical sink only.
-            if (flyT > 0.88) {
-              const k = (flyT - 0.88) / 0.12;
-              const decay = Math.exp(-5 * k);
-              const wave = Math.sin(k * Math.PI * 2);
-              const settle = decay * wave;
-              cy += settle * 1.2;
-            }
-
-            // Forward flight lean: peaks mid-arc, returns to 0 at landing.
-            const flightTilt = 3 * Math.sin(flyT * Math.PI);
-
-            const fadeOut = 1 - seg(0.995, 1.0, flyT);
-            const spineYaw = lerp(-9, 0, fE);
-            // Always fully opaque during flight — clean handoff, never partial.
-            flyingSpineRef.current.style.opacity = String(fadeOut);
-            flyingSpineRef.current.style.transformOrigin = "center center";
-            flyingSpineRef.current.style.transform =
-              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) rotateY(${spineYaw.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
-          }
-
-        } else {
-          flyingSpineRef.current.style.opacity = "0";
+        if (flyT > 0.88) {
+          const k = (flyT - 0.88) / 0.12;
+          flightTy += Math.exp(-5 * k) * Math.sin(k * Math.PI * 2) * 1.2;
         }
       }
+
+      // Card wrap: combines resting drag, p1 center slide, scroll flip, and flight.
+      const tx = snap(offsetX + dxToCenter + flightTx);
+      const ty = snap(offsetY + dyToCenter + flightTy);
+      const finalScale = baseScale * flightScale;
+      cardWrap.style.transform =
+        `translate3d(${tx}px, ${ty}px, 0) rotate(${(tilt + flightTilt).toFixed(2)}deg) scale(${finalScale.toFixed(3)}, ${finalScale.toFixed(3)}) ` +
+        `rotateY(${rotYFlip.toFixed(2)}deg)`;
+      cardWrap.style.opacity = "1";
+
+      // Flying spine DOM is no longer used — single-spine choreography.
+      if (flyingSpineRef.current) {
+        flyingSpineRef.current.style.visibility = "hidden";
+        flyingSpineRef.current.style.opacity = "0";
+      }
+
 
 
       // Lanyard + globe clear out before the cover swings.
