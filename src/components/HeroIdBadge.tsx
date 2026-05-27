@@ -263,69 +263,71 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       // Phase B/C: once the book has closed far enough, a single flat spine owns
       // the rest of the transition. It starts at the card's rendered spine slot,
       // then flies by rect interpolation to the shelf slot.
-      const flatSpineActive = bridge > 0 && closeT > 0.995;
+      // Phase B/C: as soon as the closing spine reaches its clean vertical pose,
+      // hand off to a single detached flat spine for the rest of the transition.
+      const flatSpineActive = bridge > 0 && closeT >= 0.72;
       if (closedSpineRef.current) {
         closedSpineRef.current.style.opacity = "0";
         closedSpineRef.current.style.visibility = "hidden";
       }
-      if (spineSkinRef.current) {
-        const spineSkinVisible = !flatSpineActive;
-        spineSkinRef.current.style.opacity = spineSkinVisible ? "1" : "0";
-        spineSkinRef.current.style.visibility = spineSkinVisible ? "visible" : "hidden";
+
+      // ============== RECT-BASED SPINE FLIGHT ==============
+      const slotRect = (window as any).__bridgeSlotRect as
+        | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+
+      // Capture the original spine's actual rendered rect BEFORE hiding it.
+      if (flatSpineActive && !flightRectRef.current && spineSkinRef.current) {
+        const r = spineSkinRef.current.getBoundingClientRect();
+        if (r.width > 1 && r.height > 1) {
+          flightRectRef.current = {
+            left: r.left - stageRect.left,
+            top: r.top - stageRect.top,
+            width: r.width,
+            height: r.height,
+          };
+        }
       }
-      // Hide the page-block edge fully once the bridge begins so the cream
-      // 3px strip can never read as a "white line" sliding across the screen.
+      if (!flatSpineActive) {
+        flightRectRef.current = null;
+      }
+
+      if (spineSkinRef.current) {
+        // Original 3D spine stays visible until the detached spine is placed.
+        const originalVisible = !flatSpineActive || !flightRectRef.current;
+        spineSkinRef.current.style.opacity = originalVisible ? "1" : "0";
+        spineSkinRef.current.style.visibility = originalVisible ? "visible" : "hidden";
+      }
       if (pageBlockRef.current) {
         pageBlockRef.current.style.opacity = bridge > 0 ? "0" : "1";
       }
 
-      // ============== RECT-BASED SPINE FLIGHT ==============
-      // Phase C uses one detached, flat spine measured from the closed spine's
-      // actual screen rect. The ID/book wrapper no longer flies.
-      const slotRect = (window as any).__bridgeSlotRect as
-        | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
-
-      // Card wrap: combines resting drag, p1 center slide, and scroll flip only.
+      // Card wrap: resting drag + p1 center slide + scroll flip only.
       const tx = snap(offsetX + dxToCenter);
       const ty = snap(offsetY + dyToCenter);
       const finalScale = baseScale;
+      const cardHidden = flatSpineActive && !!flightRectRef.current;
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${finalScale.toFixed(3)}, ${finalScale.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
-      cardWrap.style.opacity = flatSpineActive ? "0" : "1";
-      cardWrap.style.visibility = flatSpineActive ? "hidden" : "visible";
+      cardWrap.style.opacity = cardHidden ? "0" : "1";
+      cardWrap.style.visibility = cardHidden ? "hidden" : "visible";
 
       if (flyingSpineRef.current) {
-        if (!flatSpineActive) {
-          flightRectRef.current = null;
+        if (!flatSpineActive || !flightRectRef.current) {
           flyingSpineRef.current.style.visibility = "hidden";
           flyingSpineRef.current.style.opacity = "0";
         } else {
-          const sourceWidth = BOOK_SPINE_W * baseScale;
-          const sourceHeight = CARD_HEIGHT * baseScale;
-          const source = {
-            left: restingCenterX + offsetX + dxToCenter - (CARD_WIDTH / 2 + BOOK_SPINE_W) * baseScale,
-            top: restingCenterY + offsetY + dyToCenter - sourceHeight / 2,
-            width: sourceWidth,
-            height: sourceHeight,
-          };
-
-          if (!flightActive) {
-            flightRectRef.current = source;
-          } else if (!flightRectRef.current) {
-            flightRectRef.current = source;
-          }
-
           const start = flightRectRef.current;
           const end = slotRect
             ? { left: slotRect.left - stageRect.left, top: slotRect.top - stageRect.top, width: slotRect.width, height: slotRect.height }
             : start;
+          // Stationary until flyT starts, then arc to the shelf slot.
           const arc = -64 * Math.sin(fE * Math.PI);
           const left = lerp(start.left, end.left, fE);
           const top = lerp(start.top, end.top, fE) + arc;
           const width = lerp(start.width, end.width, fE);
           const height = lerp(start.height, end.height, fE);
-          const tilt = 3 * Math.sin(fE * Math.PI);
+          const flightTilt = 3 * Math.sin(fE * Math.PI);
           const shelfHandoff = clamp((bridge - 0.985) / 0.015);
           const spineOpacity = 1 - shelfHandoff;
 
@@ -333,9 +335,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           flyingSpineRef.current.style.opacity = String(spineOpacity);
           flyingSpineRef.current.style.width = `${width.toFixed(2)}px`;
           flyingSpineRef.current.style.height = `${height.toFixed(2)}px`;
-          flyingSpineRef.current.style.transform = `translate3d(${snap(left, 0.25)}px, ${snap(top, 0.25)}px, 0) rotate(${tilt.toFixed(2)}deg)`;
+          flyingSpineRef.current.style.transform = `translate3d(${snap(left, 0.25)}px, ${snap(top, 0.25)}px, 0) rotate(${flightTilt.toFixed(2)}deg)`;
         }
       }
+
 
 
 
