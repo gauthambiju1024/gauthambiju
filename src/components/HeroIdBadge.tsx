@@ -284,10 +284,10 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
 
       // ============== PERSISTENT SPINE BRIDGE ==============
-      // A single external spine stays visible through the whole bridge. It first
-      // sits on top of the book spine while shrinking, then flies to the shelf.
-      const handoffT = closeT >= 1 ? 1 : 0;
-      cardWrap.style.opacity = handoffT > 0 ? "0" : "1";
+      // Keep the closing book (with real 3D spine) visible through the whole
+      // close phase. Only hide the cardWrap once flight begins — exactly when
+      // the flying spine takes over — so there is never a blank/disappear frame.
+      cardWrap.style.opacity = flyT > 0.001 ? "0" : "1";
 
       if (flyingSpineRef.current) {
         const visible = flyT > 0.001;
@@ -307,8 +307,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             y: slotRect ? slotRect.cy - stageRect.top : startP.y,
           };
           const sE = fE;
-          const shrinkScaleX = lerp(baseScale, 1, cE);
-          const shrinkScaleY = lerp((CARD_HEIGHT * baseScale) / SPINE_HEIGHT, 1, cE);
 
           {
             const c1 = { x: startP.x + (endP.x - startP.x) * 0.15, y: startP.y - 40 };
@@ -317,11 +315,14 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             let cx = u*u*u*startP.x + 3*u*u*sE*c1.x + 3*u*sE*sE*c2.x + sE*sE*sE*endP.x;
             let cy = u*u*u*startP.y + 3*u*u*sE*c1.y + 3*u*sE*sE*c2.y + sE*sE*sE*endP.y;
 
-            const scaleX = flyT <= 0 ? shrinkScaleX : 1;
-            let scaleY = flyT <= 0 ? shrinkScaleY : 1;
+            // Start flight at the book's current scale and ease to 1 over flyT,
+            // so the flying spine seamlessly continues the book's shrink.
+            const startScaleX = baseScale;
+            const startScaleY = (CARD_HEIGHT * baseScale) / SPINE_HEIGHT;
+            const scaleX = lerp(startScaleX, 1, fE);
+            let scaleY = lerp(startScaleY, 1, fE);
 
-            // Damped-spring landing settle: brief vertical sink only (no scaleY squash,
-            // so vertical-text letter width never drifts).
+            // Damped-spring landing settle: brief vertical sink only.
             if (flyT > 0.88) {
               const k = (flyT - 0.88) / 0.12;
               const decay = Math.exp(-5 * k);
@@ -330,7 +331,6 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
               cy += settle * 1.2;
             }
 
-
             // Forward flight lean: peaks mid-arc, returns to 0 at landing.
             const flightTilt = 3 * Math.sin(flyT * Math.PI);
 
@@ -338,7 +338,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
             flyingSpineRef.current.style.opacity = String(fadeOut);
             flyingSpineRef.current.style.transformOrigin = "center center";
             flyingSpineRef.current.style.transform =
-              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX}, ${scaleY.toFixed(3)})`;
+              `translate3d(${(cx - BOOK_SPINE_W / 2).toFixed(2)}px, ${(cy - SPINE_HEIGHT / 2).toFixed(2)}px, 0) rotate(${flightTilt.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
           }
 
         } else {
