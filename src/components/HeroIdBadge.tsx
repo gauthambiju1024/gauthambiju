@@ -260,14 +260,16 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
         cardBackInnerRef.current.style.opacity = String(aboutOpacity);
         cardBackInnerRef.current.style.visibility = aboutOpacity > 0.01 && !flightActive ? "visible" : "hidden";
       }
-      // Phase B: close into one flat visible spine before the detached flight starts.
-      const closedSpineVisible = bridge > 0 && closeT > 0.72 && !flightActive;
+      // Phase B/C: once the book has closed far enough, a single flat spine owns
+      // the rest of the transition. It starts at the card's rendered spine slot,
+      // then flies by rect interpolation to the shelf slot.
+      const flatSpineActive = bridge > 0 && closeT > 0.72;
       if (closedSpineRef.current) {
-        closedSpineRef.current.style.opacity = closedSpineVisible ? "1" : "0";
-        closedSpineRef.current.style.visibility = closedSpineVisible ? "visible" : "hidden";
+        closedSpineRef.current.style.opacity = "0";
+        closedSpineRef.current.style.visibility = "hidden";
       }
       if (spineSkinRef.current) {
-        const spineSkinVisible = !closedSpineVisible && !flightActive;
+        const spineSkinVisible = !flatSpineActive;
         spineSkinRef.current.style.opacity = spineSkinVisible ? "1" : "0";
         spineSkinRef.current.style.visibility = spineSkinVisible ? "visible" : "hidden";
       }
@@ -290,32 +292,28 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       cardWrap.style.transform =
         `translate3d(${tx}px, ${ty}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${finalScale.toFixed(3)}, ${finalScale.toFixed(3)}) ` +
         `rotateY(${rotYFlip.toFixed(2)}deg)`;
-      cardWrap.style.opacity = flightActive ? "0" : "1";
-      cardWrap.style.visibility = flightActive ? "hidden" : "visible";
+      cardWrap.style.opacity = flatSpineActive ? "0" : "1";
+      cardWrap.style.visibility = flatSpineActive ? "hidden" : "visible";
 
       if (flyingSpineRef.current) {
-        if (!flightActive) {
+        if (!flatSpineActive) {
           flightRectRef.current = null;
           flyingSpineRef.current.style.visibility = "hidden";
           flyingSpineRef.current.style.opacity = "0";
         } else {
-          if (!flightRectRef.current) {
-            const sourceRect = closedSpineRef.current?.getBoundingClientRect() || spineSkinRef.current?.getBoundingClientRect();
-            const fallbackW = BOOK_SPINE_W * baseScale;
-            const fallbackH = CARD_HEIGHT * baseScale;
-            flightRectRef.current = sourceRect && sourceRect.width > 1 && sourceRect.height > 1
-              ? {
-                  left: sourceRect.left - stageRect.left,
-                  top: sourceRect.top - stageRect.top,
-                  width: sourceRect.width,
-                  height: sourceRect.height,
-                }
-              : {
-                  left: restingCenterX + offsetX + dxToCenter - fallbackW / 2,
-                  top: restingCenterY + offsetY + dyToCenter - fallbackH / 2,
-                  width: fallbackW,
-                  height: fallbackH,
-                };
+          const sourceWidth = BOOK_SPINE_W * baseScale;
+          const sourceHeight = CARD_HEIGHT * baseScale;
+          const source = {
+            left: restingCenterX + offsetX + dxToCenter - (CARD_WIDTH / 2 + BOOK_SPINE_W) * baseScale,
+            top: restingCenterY + offsetY + dyToCenter - sourceHeight / 2,
+            width: sourceWidth,
+            height: sourceHeight,
+          };
+
+          if (!flightActive) {
+            flightRectRef.current = source;
+          } else if (!flightRectRef.current) {
+            flightRectRef.current = source;
           }
 
           const start = flightRectRef.current;
@@ -328,9 +326,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const width = lerp(start.width, end.width, fE);
           const height = lerp(start.height, end.height, fE);
           const tilt = 3 * Math.sin(fE * Math.PI);
+          const shelfHandoff = clamp((bridge - 0.985) / 0.015);
+          const spineOpacity = 1 - shelfHandoff;
 
-          flyingSpineRef.current.style.visibility = "visible";
-          flyingSpineRef.current.style.opacity = "1";
+          flyingSpineRef.current.style.visibility = spineOpacity > 0.001 ? "visible" : "hidden";
+          flyingSpineRef.current.style.opacity = String(spineOpacity);
           flyingSpineRef.current.style.width = `${width.toFixed(2)}px`;
           flyingSpineRef.current.style.height = `${height.toFixed(2)}px`;
           flyingSpineRef.current.style.transform = `translate3d(${snap(left, 0.25)}px, ${snap(top, 0.25)}px, 0) rotate(${tilt.toFixed(2)}deg)`;
