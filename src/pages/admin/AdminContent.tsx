@@ -22,6 +22,7 @@ export default function AdminContent() {
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
   const [journey, setJourney] = useState<JourneyData>({});
+  const [skillGroups, setSkillGroups] = useState<{ title: string; icon: 'wrench' | 'gear' | 'caliper'; skills: { name: string; context: string; project?: string }[] }[]>([]);
 
   useEffect(() => { fetchAll(); }, []);
 
