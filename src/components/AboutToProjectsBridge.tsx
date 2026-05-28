@@ -196,10 +196,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
       // the viewer at start, settling into the shelf plane). Order: left→right.
-      const archWinStart = 0.995;
+      const archWinStart = 0.92;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.35;
+      const archSpan = archWinLen * 0.22;
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
