@@ -68,6 +68,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   // The About-spine slot (top row) is appended as the last entry of row 0.
   // The toolbox is appended as the last entry of the bottom row.
   const spineRefs = useRef<HTMLDivElement[][]>([]);
+  // One-shot guards to prevent re-writing styles every RAF once landed
+  // (eliminates 1-frame races with the flight-spine's final opacity writes).
+  const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
 
   // Size the length array only; do NOT wipe ref arrays — React's ref
   // callbacks have already populated them by the time this effect runs.
