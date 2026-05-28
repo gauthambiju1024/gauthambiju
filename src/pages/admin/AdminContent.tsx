@@ -38,6 +38,7 @@ export default function AdminContent() {
       if (row.section === 'story' && row.key === 'stats') setStats(val);
       if (row.section === 'marquee' && row.key === 'items') setMarqueeItems(val as string[]);
       if (row.section === 'about' && row.key === 'journey') setJourney((val as JourneyData) || {});
+      if (row.section === 'skills' && row.key === 'groups') setSkillGroups((val?.groups as any) || []);
     }
   };
 
