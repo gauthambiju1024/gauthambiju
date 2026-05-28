@@ -116,9 +116,21 @@ const ProjectsShelf = () => {
                     onClick={() => setSelectedId(isSelected ? null : project.id)}
                     className="relative flex-shrink-0 cursor-pointer group"
                     style={{ perspective: "800px" }}
-                    animate={{ y: isSelected ? -14 : 0 }}
+                    initial={{ opacity: 0, y: -80, rotate: -8, scale: 1.15 }}
+                    whileInView={{
+                      opacity: [0, 1, 1],
+                      y: [-80, -20, 0],
+                      rotate: [-8, 3, 0],
+                      scale: [1.15, 1.05, 1],
+                    }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{
+                      duration: 0.75,
+                      delay: i * 0.09,
+                      ease: [0.65, 0, 0.35, 1],
+                      times: [0, 0.6, 1],
+                    }}
                     whileHover={{ y: isSelected ? -14 : -8 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
                   >
                     <motion.div
                       className="relative rounded-sm overflow-hidden"
@@ -172,8 +184,19 @@ const ProjectsShelf = () => {
                       </div>
                     </motion.div>
 
-                    {/* Book shadow on shelf */}
-                    <div className="h-1 mx-1 bg-black/25 rounded-b-sm blur-[2px]" />
+                    {/* Book shadow on shelf — pulses on landing */}
+                    <motion.div
+                      className="h-1 mx-1 bg-black/25 rounded-b-sm blur-[2px] origin-center"
+                      initial={{ scaleX: 0.6, opacity: 0 }}
+                      whileInView={{ scaleX: [0.6, 1.15, 1], opacity: [0, 0.9, 1] }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{
+                        duration: 0.35,
+                        delay: i * 0.09 + 0.55,
+                        ease: "easeOut",
+                        times: [0, 0.55, 1],
+                      }}
+                    />
                   </motion.button>
                 );
               })}
