@@ -1,7 +1,7 @@
 import HeroAboutFlip from "@/components/HeroAboutFlip";
 
 import ThinkingWall from "@/components/ThinkingWall";
-import SkillsToolbox from "@/components/SkillsToolbox";
+import ToolboxToSkillsBridge from "@/components/ToolboxToSkillsBridge";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
@@ -10,14 +10,12 @@ import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
 import { Entropy } from "@/components/ui/entropy";
 
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
-import ToolboxFrame from "@/components/desk/frames/ToolboxFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
 import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
 
 const trailingStations = [
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
-  { id: "skills", Frame: ToolboxFrame, Section: SkillsToolbox },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
   { id: "contact", Frame: LetterFrame, Section: ContactClosing },
 ] as const;
@@ -36,6 +34,8 @@ const Index = () => {
 
       <div className="margin-content-wrapper relative z-[2]">
         <HeroAboutFlip />
+
+        <ToolboxToSkillsBridge />
 
         {trailingStations.map(({ id, Frame, Section }) => (
           <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">

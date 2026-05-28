@@ -74,9 +74,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const headerPlankRef = useRef<HTMLDivElement | null>(null);
   const headerPathRef = useRef<SVGPathElement | null>(null);
   const headerPathLen = useRef<number>(0);
-  // One-shot guards to prevent re-writing styles every RAF once landed
-  // (eliminates 1-frame races with the flight-spine's final opacity writes).
-  const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
 
   // Size the length array only; do NOT wipe ref arrays — React's ref
   // callbacks have already populated them by the time this effect runs.
@@ -132,31 +129,24 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       // Shelf fades in just as the packet starts shrinking
       shelfWrap.style.opacity = String(seg(0.70, 0.80, bridge));
-      shelfWrap.style.pointerEvents = bridge > 0.99 ? "auto" : "none";
+      shelfWrap.style.pointerEvents = bridge >= 1.0 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
-      const settled = bridge > 0.98;
+      const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
+      // Pure scroll-reactive: shelf About spine only shows when bridge fully
+      // settled. Reverses cleanly on scroll-up — no one-shot lock that would
+      // leave the spine visible while the flight spine re-renders.
       if (aboutSpineRef.current) {
-        if (!landedRef.current.about) {
-          // SNAP-IN at settle: stay hidden through the entire flight, flip to
-          // visible the instant the flight spine reaches opacity 0 (bridge=1.0).
-          // No crossfade → no overlapping double spine.
-          if (bridge >= 1.0) {
-            aboutSpineRef.current.style.opacity = "1";
-            aboutSpineRef.current.style.pointerEvents = "auto";
-            landedRef.current.about = true;
-          } else {
-            aboutSpineRef.current.style.opacity = "0";
-            aboutSpineRef.current.style.pointerEvents = "none";
-          }
+        if (settled) {
+          aboutSpineRef.current.style.opacity = "1";
+          aboutSpineRef.current.style.pointerEvents = "auto";
+        } else {
+          aboutSpineRef.current.style.opacity = "0";
+          aboutSpineRef.current.style.pointerEvents = "none";
         }
-      }
-      if (!landedRef.current.slot) {
-        slot.style.opacity = "0";
-        landedRef.current.slot = true;
       }
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
@@ -194,48 +184,60 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         if (plank) plank.style.transform = `scaleX(${e.toFixed(4)})`;
       });
 
-      // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
-      // the viewer at start, settling into the shelf plane). Order: left→right.
-      const archWinStart = 0.92;
+      // === ARCHIVE: project spines fly TOWARD the shelf, top→bottom by row,
+      // left→right within each row. Window starts while About is still being
+      // shelved, so first spines emerge gracefully behind the flight.
+      const archWinStart = 0.86;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.22;
+      const archSpan = archWinLen * 0.55; // longer, softer arrival per spine
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
         row.forEach((_, c) => {
-          const raw = c * 1.0 + r * 0.25;
+          // row-dominant ordering (top fills first), col secondary
+          const raw = r * 1.0 + c * 0.18;
           if (raw > maxOrderRaw) maxOrderRaw = raw;
         });
       });
+      // easeOutQuint: gentler, more elegant settle than cubic.
+      const easeOutQuint = (x: number) => 1 - Math.pow(1 - x, 5);
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
           if (!el) return;
-          const raw = c * 1.0 + r * 0.25;
+          const raw = r * 1.0 + c * 0.18;
           const norm = maxOrderRaw > 0 ? raw / maxOrderRaw : 0;
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          // Arrive from the viewer: start LARGE in front of plane, settle to flat.
-          const eOut = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
-          const z = lerp(260, 0, eOut);
-          const s = lerp(1.35, 1, eOut);
-          // rotateY: 14 → -3 around u=0.7 → 0 settle
+          const eOut = u <= 0 ? 0 : u >= 1 ? 1 : easeOutQuint(u);
+          // Softer arrival: lower Z, smaller scale, less rotateY overshoot.
+          const z = lerp(180, 0, eOut);
+          const s = lerp(1.18, 1, eOut);
           let ry: number;
-          if (u <= 0) ry = 14;
+          if (u <= 0) ry = 8;
           else if (u >= 1) ry = 0;
-          else if (u < 0.7) {
-            const k = u / 0.7;
-            ry = lerp(14, -3, 1 - Math.pow(1 - k, 2));
+          else if (u < 0.75) {
+            const k = u / 0.75;
+            ry = lerp(8, -1.5, 1 - Math.pow(1 - k, 2));
           } else {
-            const k = (u - 0.7) / 0.3;
-            ry = lerp(-3, 0, k);
+            const k = (u - 0.75) / 0.25;
+            ry = lerp(-1.5, 0, k);
           }
           el.style.opacity = String(u <= 0 ? 0 : u >= 1 ? 1 : eOut);
           el.style.transform = `translateZ(${z.toFixed(1)}px) scale(${s.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
         });
       });
 
+      // Publish toolbox rect for the next-stage bridge (Toolbox→Skills flip).
+      if (toolboxRef.current) {
+        const tr = toolboxRef.current.getBoundingClientRect();
+        (window as any).__toolboxRect = {
+          left: tr.left, top: tr.top, width: tr.width, height: tr.height,
+          cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
+          visible: bridge >= 1.0,
+        };
+      }
 
       publishSlotRect();
     };
@@ -256,7 +258,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeProgress = 0;
       (window as any).__bridgeActive = false;
       (window as any).__bridgeSlotRect = null;
-      landedRef.current = { about: false, slot: false };
     };
   }, [projects, progressMV, rows.length]);
 
@@ -339,7 +340,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
               className="font-mono uppercase"
               style={{
                 position: "absolute",
-                right: 0,
+                left: 0,
                 top: -1,
                 padding: "0 10px",
                 background: "hsl(35 24% 8%)",
@@ -446,7 +447,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
-                          filter: "drop-shadow(0 5px 3px rgba(0,0,0,0.55)) drop-shadow(0 10px 14px rgba(0,0,0,0.35))",
+                          filter: "drop-shadow(0 7px 4px rgba(0,0,0,0.6)) drop-shadow(0 14px 20px rgba(0,0,0,0.4))",
                           marginBottom: -2,
                         }}
                       >
@@ -456,13 +457,13 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           aria-label="Open toolbox"
                           style={{
                             display: "block",
-                            width: 150,
-                            height: 118,
+                            width: 220,
+                            height: 174,
                             transformOrigin: "bottom right",
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="150" height="118" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg width="220" height="174" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
                               <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0" stopColor="hsl(220 6% 32%)" />

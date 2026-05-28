@@ -22,6 +22,7 @@ export default function AdminContent() {
   const [rotatingWords, setRotatingWords] = useState<string[]>([]);
   const [marqueeItems, setMarqueeItems] = useState<string[]>([]);
   const [journey, setJourney] = useState<JourneyData>({});
+  const [skillGroups, setSkillGroups] = useState<{ title: string; icon: 'wrench' | 'gear' | 'caliper'; skills: { name: string; context: string; project?: string }[] }[]>([]);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -37,6 +38,7 @@ export default function AdminContent() {
       if (row.section === 'story' && row.key === 'stats') setStats(val);
       if (row.section === 'marquee' && row.key === 'items') setMarqueeItems(val as string[]);
       if (row.section === 'about' && row.key === 'journey') setJourney((val as JourneyData) || {});
+      if (row.section === 'skills' && row.key === 'groups') setSkillGroups((val?.groups as any) || []);
     }
   };
 
@@ -60,6 +62,7 @@ export default function AdminContent() {
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="marquee">Marquee</TabsTrigger>
           <TabsTrigger value="journey">About / Journey</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero">
@@ -199,6 +202,49 @@ export default function AdminContent() {
               <Button onClick={() => saveContent('about', 'journey', journey as unknown as Json)}>
                 <Save className="h-4 w-4 mr-2" />Save Journey
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="skills">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Skills (Toolbox interior)</CardTitle>
+              <Button size="sm" onClick={() => setSkillGroups([...skillGroups, { title: 'New Group', icon: 'wrench', skills: [] }])}><Plus className="h-4 w-4 mr-1" />Add Group</Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">Groups become compartments inside the open toolbox. Each skill is a chip with hover context.</p>
+              {skillGroups.map((g, gi) => (
+                <div key={gi} className="border rounded-md p-4 space-y-3 relative">
+                  <Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => setSkillGroups(skillGroups.filter((_, j) => j !== gi))}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2"><Label>Group Title</Label><Input value={g.title} onChange={e => { const c = [...skillGroups]; c[gi].title = e.target.value; setSkillGroups(c); }} /></div>
+                    <div>
+                      <Label>Icon</Label>
+                      <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={g.icon} onChange={e => { const c = [...skillGroups]; c[gi].icon = e.target.value as any; setSkillGroups(c); }}>
+                        <option value="wrench">Wrench</option>
+                        <option value="gear">Gear</option>
+                        <option value="caliper">Caliper</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Skills</Label>
+                      <Button size="sm" variant="outline" onClick={() => { const c = [...skillGroups]; c[gi].skills = [...c[gi].skills, { name: '', context: '', project: '' }]; setSkillGroups(c); }}><Plus className="h-3 w-3 mr-1" />Add</Button>
+                    </div>
+                    {g.skills.map((s, si) => (
+                      <div key={si} className="grid grid-cols-12 gap-2 items-end border-l-2 border-muted pl-3">
+                        <div className="col-span-3"><Label className="text-xs">Name</Label><Input value={s.name} onChange={e => { const c = [...skillGroups]; c[gi].skills[si].name = e.target.value; setSkillGroups(c); }} /></div>
+                        <div className="col-span-6"><Label className="text-xs">Context</Label><Input value={s.context} onChange={e => { const c = [...skillGroups]; c[gi].skills[si].context = e.target.value; setSkillGroups(c); }} /></div>
+                        <div className="col-span-2"><Label className="text-xs">Project</Label><Input value={s.project ?? ''} onChange={e => { const c = [...skillGroups]; c[gi].skills[si].project = e.target.value; setSkillGroups(c); }} /></div>
+                        <Button variant="ghost" size="icon" onClick={() => { const c = [...skillGroups]; c[gi].skills = c[gi].skills.filter((_, j) => j !== si); setSkillGroups(c); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <Button onClick={() => saveContent('skills', 'groups', { groups: skillGroups } as unknown as Json)}><Save className="h-4 w-4 mr-2" />Save Skills</Button>
             </CardContent>
           </Card>
         </TabsContent>
