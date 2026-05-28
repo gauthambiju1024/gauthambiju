@@ -68,6 +68,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   // The About-spine slot (top row) is appended as the last entry of row 0.
   // The toolbox is appended as the last entry of the bottom row.
   const spineRefs = useRef<HTMLDivElement[][]>([]);
+  // Planks (per-row wooden board behind the rule), synced with rule draw.
+  const plankRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Top "PROJECTS" shelf plank + its rule path.
+  const headerPlankRef = useRef<HTMLDivElement | null>(null);
+  const headerPathRef = useRef<SVGPathElement | null>(null);
+  const headerPathLen = useRef<number>(0);
   // One-shot guards to prevent re-writing styles every RAF once landed
   // (eliminates 1-frame races with the flight-spine's final opacity writes).
   const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
