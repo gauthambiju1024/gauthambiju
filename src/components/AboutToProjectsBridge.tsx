@@ -291,8 +291,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     paddingLeft: 24,
                     paddingRight: 24,
                     minHeight: SPINE_HEIGHT + 12,
-                    overflowY: "hidden",
+                    overflowY: "visible",
                     overflowX: "visible",
+                    perspective: "800px",
+                    perspectiveOrigin: "50% 100%",
                   }}
                 >
                   {/* About spine — narrow first slot on the top shelf, used as the filing target.
