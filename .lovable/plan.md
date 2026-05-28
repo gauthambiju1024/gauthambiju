@@ -1,44 +1,55 @@
-Two surgical visual changes to `src/components/AboutToProjectsBridge.tsx`. No behaviour/layout changes elsewhere.
+# Project Spine Landing — Polish Pass
 
-## 1. Project spines drop from above (not rise from below)
+Four targeted fixes in `src/components/AboutToProjectsBridge.tsx` (plus a small CSS tweak for shelf thickness). No business logic changes.
 
-Currently each spine wrapper starts at `translateY(135%)` (below the shelf rule) and rises into place via `lerp(135 → 0, easeBack)`. That is the "appears from bottom" behaviour you're seeing.
+## 1. Remove About-spine flicker
 
-Change so spines fall in from above, mirroring the About-spine flight:
+**Root cause:** The archive (project-spine drop) window currently starts at `bridge = 0.965`, but the About spine only fades in at `bridge = 0.985`. During that 0.965 → 0.985 gap the flight spine (owned by the hero handoff) is finishing its travel while the shelf About slot is still invisible — and on every RAF frame we re-write `aboutSpineRef.style.opacity` from the same formula, so any 1-frame race with the flight spine's own opacity write produces a visible flicker. Project spines also begin dropping *before* About is locked in, which visually competes with the landing.
 
-- Initial inline style on each spine wrapper: `transform: translateY(-160%) rotate(-6deg)`
-- Animation lerp in the `ARCHIVE` block:
-  - `y` goes from `-160 → 0` (above → resting)
-  - `rotate` goes from `-6deg → 2deg → 0deg` via a two-segment lerp (first 70% drop, last 30% settle)
-  - Keep the existing per-row + per-col stagger (`r * 1.0 + c * 0.18`) and `archWinStart 0.965 → archWinEnd 1.0` window
-  - Easing: replace `easeBack` with a smooth cubic-out for the drop, then a small overshoot on rotation only (avoids visual "jump up" from easeBack on Y)
-- Apply identical change to the toolbox wrapper's initial transform (it shares the same ref system, so it will auto-pick up the new lerp).
+**Fix:**
+- Hold the project-archive window until *after* About is fully landed: `archWinStart = 0.99` (was `0.965`), with About reveal moved slightly earlier to `0.975 → 0.99` so it is fully opaque before any sibling moves.
+- Stop re-writing `aboutSpineRef.style.opacity` once it has reached 1. Track a `landed` flag in a ref; once `k >= 1` we set opacity to `1` one time and skip further writes (prevents fighting the flight-spine's final frames).
+- Same one-shot guard for `slot.style.opacity` and `pointerEvents`.
 
-Net effect: every spine + the toolbox glide down from above the shelf ledge with a slight tilt that straightens on landing — same family as the About-spine fly-in.
+## 2. Spines appear left → right after About lands
 
-## 2. Realistic greyscale toolbox on the shelf
+Current ordering uses `raw = r * 1.0 + c * 0.18` — every row starts at the same time as About lands, so the eye sees a near-simultaneous pop.
 
-Replace the orange/wood `<svg>` (lines ~349–403) with a machined steel toolbox in the same warm-grey palette as the redesigned SkillsToolbox panel. Same dimensions (96×76), same anchor/href, same ref — purely visual swap.
+**Fix:** Order purely by global column index (left → right), with rows offset by a small constant so upper rows still lead slightly:
+```
+raw = c * 1.0 + r * 0.25   // left→right dominant, rows trail by 0.25 step
+```
+Stagger span (`archSpan`) shortened per-spine to ~0.35 of window so the wave is crisp, and total stagger spreads across the remaining 0.65.
 
-New SVG composition:
+## 3. Front-to-back 3D landing (replace top-down drop)
 
-- Gradients (added to `<defs>`):
-  - `tbBody`: `hsl(220 6% 32%) → hsl(220 6% 18%)` (brushed steel body)
-  - `tbLid`: `hsl(220 6% 40%) → hsl(220 6% 24%)` (lid catches light)
-  - `tbHandle`: existing chrome stays (`#cfcfcf → #5a5a5a`)
-- Body & lid: 1px stroke `hsl(220 8% 10%)`, 2px corner radius (sharper than current)
-- Hinge line: `hsl(220 8% 8%)` 1px, plus a 0.5px highlight underneath
-- Latches: small chrome rectangles (10×8) using `tbHandle` gradient, dark pivot dot — no yellow
-- Label plaque: dark slate rect `hsl(220 8% 14%)` with engraved "TOOLS" text in `hsl(40 8% 70%)` mono
-- Feet: dark slate `hsl(220 8% 12%)`
-- Top edge highlight: 0.6px `rgba(255,255,255,0.12)` (subtle, not glossy)
-- Faint horizontal brushed-metal striations on the body (0.4px lines at 6–8px intervals, `rgba(255,255,255,0.04)`)
-- Ground shadow ellipse stays
+Match the About-spine handoff feel: spines arrive *from depth*, not from above.
 
-Result: a grounded, industrial steel toolbox that visually belongs next to the dark book spines and matches the new SkillsToolbox aesthetic — no playful orange/wood.
+**Fix (transform only — no DOM changes):**
+- Add `perspective: 800px` on each row's spine container so child transforms get real depth.
+- Per-spine initial state: `translateZ(-220px) scale(0.55) rotateY(-22deg)` with `opacity: 0`.
+- Animate to `translateZ(0) scale(1) rotateY(0)` with `opacity: 1`, using a cubic-out ease on Z/scale and a tiny overshoot on `rotateY` (`-22 → +4 → 0`).
+- Remove the `translateY(-160%)` drop and the `rotate(-6deg)` tilt entirely. Same treatment for the toolbox so it lands consistently.
 
-## Out of scope
+Result: each spine "pushes forward" out of the shelf plane, mirroring the About-spine arrival vector.
 
-- `ProjectsShelf.tsx` (the separate shelf component) — already updated previously, unchanged here.
-- `SkillsToolbox.tsx` — unchanged.
-- All other animations, spine markup, ledge stroke, About-spine flight, scroll bindings — unchanged.
+## 4. Shelf thickness so spines/toolbox don't float
+
+Current ledge is a 1px SVG stroke — spines visually sit on a line.
+
+**Fix:** Wrap each ledge with a thin wooden-plank look:
+- Increase ledge wrapper height from `14` → `18`.
+- Behind the existing SVG rule, render a 6px-tall bar using the same ink color at low opacity, with:
+  - top edge highlight: `inset 0 1px 0 rgba(255,255,255,0.06)`
+  - drop shadow under the plank: `0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)`
+  - subtle vertical front-face gradient (`hsl(38 40% 18%) → hsl(38 35% 10%)`) to read as a board edge.
+- The SVG rule keeps its draw-on animation as the *top edge* of the plank.
+- Spines/toolbox `align-items: end` is unchanged, so they now visibly rest on the plank's top surface; the shadow grounds them.
+
+## Technical notes
+
+- All changes are visual/animation. No data, routing, or component-API changes.
+- The "landed" guard uses a `useRef<{about:boolean; slot:boolean}>` initialized to `false`; reset on unmount via the existing cleanup.
+- Perspective lives on the row's spine-row flex container (one per row) so toolbox shares it.
+- Keep `willChange: "transform, opacity"` on each spine wrapper.
+- Existing draw-in animation for the ledge path is untouched.

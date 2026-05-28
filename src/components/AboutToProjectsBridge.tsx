@@ -68,6 +68,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   // The About-spine slot (top row) is appended as the last entry of row 0.
   // The toolbox is appended as the last entry of the bottom row.
   const spineRefs = useRef<HTMLDivElement[][]>([]);
+  // One-shot guards to prevent re-writing styles every RAF once landed
+  // (eliminates 1-frame races with the flight-spine's final opacity writes).
+  const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
 
   // Size the length array only; do NOT wipe ref arrays — React's ref
   // callbacks have already populated them by the time this effect runs.
@@ -125,13 +128,24 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const settled = bridge > 0.98;
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
-        // Only reveal the shelf spine at the final landing position. The flight
-        // spine owns the full travel, preventing midair double-spine ghosts.
-        const k = clamp01((bridge - 0.985) / 0.015);
-        aboutSpineRef.current.style.opacity = String(k);
-        aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
+        if (!landedRef.current.about) {
+          // Reveal shelf About spine slightly earlier so it is fully opaque
+          // BEFORE any project spine starts moving. Once at 1, freeze writes
+          // to avoid 1-frame races with the flight-spine's final opacity writes.
+          const k = clamp01((bridge - 0.975) / 0.015);
+          aboutSpineRef.current.style.opacity = String(k);
+          aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
+          if (k >= 1) {
+            aboutSpineRef.current.style.opacity = "1";
+            aboutSpineRef.current.style.pointerEvents = "auto";
+            landedRef.current.about = true;
+          }
+        }
       }
-      slot.style.opacity = "0";
+      if (!landedRef.current.slot) {
+        slot.style.opacity = "0";
+        landedRef.current.slot = true;
+      }
 
       // === DRAW: per-row rule stroke, staggered, completing well before About lands ===
       const drawWinStart = 0.74;
@@ -152,45 +166,46 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         path.style.strokeDashoffset = String(L * (1 - e));
       });
 
-      // === ARCHIVE: project spines rise gradually AFTER About has fully landed.
-      // Bridge only reaches 1.0 at the very end, so we cannot extend beyond it.
-      // We rely on a longer per-spine span (0.55 of the window) with stagger to
-      // give a soft, sequential rise rather than a synchronized pop.
-      const archWinStart = 0.965;
+      // === ARCHIVE: project spines emerge front-to-back (from depth) AFTER About lands.
+      // Order is left→right dominant, with rows trailing slightly so the eye reads
+      // a crisp wave across the shelf.
+      const archWinStart = 0.99;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.55;
+      const archSpan = archWinLen * 0.35;
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
         row.forEach((_, c) => {
-          const raw = r * 1.0 + c * 0.18;
+          const raw = c * 1.0 + r * 0.25;
           if (raw > maxOrderRaw) maxOrderRaw = raw;
         });
       });
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
           if (!el) return;
-          const raw = r * 1.0 + c * 0.18;
+          const raw = c * 1.0 + r * 0.25;
           const norm = maxOrderRaw > 0 ? raw / maxOrderRaw : 0;
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          // Drop from above with smooth cubic-out for Y, separate overshoot on rotation.
-          const eY = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
-          const y = lerp(-160, 0, eY);
-          // Rotation: tilts from -6deg, overshoots to +2deg around u=0.7, settles to 0
-          let rot: number;
-          if (u <= 0) rot = -6;
-          else if (u >= 1) rot = 0;
+          // Emerge from depth: translateZ + scale + rotateY (front-to-back feel).
+          const eOut = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
+          const z = lerp(-220, 0, eOut);
+          const s = lerp(0.55, 1, eOut);
+          // rotateY: -22 → +4 around u=0.7 → 0 settle
+          let ry: number;
+          if (u <= 0) ry = -22;
+          else if (u >= 1) ry = 0;
           else if (u < 0.7) {
             const k = u / 0.7;
-            rot = lerp(-6, 2, 1 - Math.pow(1 - k, 2));
+            ry = lerp(-22, 4, 1 - Math.pow(1 - k, 2));
           } else {
             const k = (u - 0.7) / 0.3;
-            rot = lerp(2, 0, k);
+            ry = lerp(4, 0, k);
           }
-          el.style.transform = `translateY(${y.toFixed(2)}%) rotate(${rot.toFixed(2)}deg)`;
+          el.style.opacity = String(u <= 0 ? 0 : u >= 1 ? 1 : eOut);
+          el.style.transform = `translateZ(${z.toFixed(1)}px) scale(${s.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
         });
       });
 
@@ -214,6 +229,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeProgress = 0;
       (window as any).__bridgeActive = false;
       (window as any).__bridgeSlotRect = null;
+      landedRef.current = { about: false, slot: false };
     };
   }, [projects, progressMV, rows.length]);
 
@@ -275,8 +291,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     paddingLeft: 24,
                     paddingRight: 24,
                     minHeight: SPINE_HEIGHT + 12,
-                    overflowY: "hidden",
+                    overflowY: "visible",
                     overflowX: "visible",
+                    perspective: "800px",
+                    perspectiveOrigin: "50% 100%",
                   }}
                 >
                   {/* About spine — narrow first slot on the top shelf, used as the filing target.
@@ -312,8 +330,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         ref={registerSpine(rowIndex, myCol)}
                         style={{
                           flex: "0 0 auto",
-                          transform: "translateY(-160%) rotate(-6deg)",
-                          willChange: "transform",
+                          opacity: 0,
+                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transformStyle: "preserve-3d",
+                          willChange: "transform, opacity",
                         }}
                       >
                         <ProjectSpine
@@ -342,8 +362,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         ref={registerSpine(rowIndex, myCol)}
                         style={{
                           flex: "0 0 auto",
-                          transform: "translateY(-160%) rotate(-6deg)",
-                          willChange: "transform",
+                          opacity: 0,
+                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transformStyle: "preserve-3d",
+                          willChange: "transform, opacity",
                         }}
                       >
                         <a
@@ -422,12 +444,36 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                   })()}
                 </div>
 
-                {/* ledge — SVG path drawn from center outward */}
-                <div className="relative" style={{ height: 14 }}>
-                  <svg width="100%" height="14" viewBox="0 0 1180 14" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
+                {/* ledge — wooden plank with thickness + drop shadow so spines visibly rest on it */}
+                <div className="relative" style={{ height: 18 }}>
+                  {/* plank front-face (board edge) */}
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: 1,
+                      height: 7,
+                      background:
+                        "linear-gradient(to bottom, hsl(38 40% 18%) 0%, hsl(38 38% 13%) 55%, hsl(38 35% 9%) 100%)",
+                      borderTop: "1px solid hsl(38 45% 28% / 0.55)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
+                      borderRadius: "1px",
+                    }}
+                  />
+                  {/* drawn top-edge rule (animated) */}
+                  <svg
+                    width="100%"
+                    height="14"
+                    viewBox="0 0 1180 14"
+                    preserveAspectRatio="none"
+                    style={{ display: "block", overflow: "visible", position: "relative" }}
+                  >
                     <path
                       ref={(el) => { rulePathRefs.current[rowIndex] = el; }}
-                      d="M 590 7 L 1180 7 M 590 7 L 0 7"
+                      d="M 590 1 L 1180 1 M 590 1 L 0 1"
                       stroke={INK}
                       strokeWidth="1"
                       strokeLinecap="round"
@@ -446,7 +492,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     style={{
                       position: "absolute",
                       left: "50%",
-                      top: 0,
+                      top: -1,
                       transform: "translateX(-50%)",
                       padding: "0 10px",
                       background: "hsl(35 24% 8%)",
