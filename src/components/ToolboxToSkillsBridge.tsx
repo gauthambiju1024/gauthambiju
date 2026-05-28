@@ -47,9 +47,10 @@ const ToolboxToSkillsBridge = () => {
 
   // Lid — hinge open (rotateX). Lid sits above the tray, hinge at its bottom.
   const lidRotate = useTransform(scrollYProgress, [0.3, 0.65], [0, -135]);
-  const lidFilter = useTransform(scrollYProgress, [0.3, 0.65], [0.5, 0.15]).get
-    ? useTransform(scrollYProgress, [0.3, 0.65], (v: number) => `drop-shadow(0 ${(v * 20).toFixed(1)}px ${(v * 30).toFixed(1)}px rgba(0,0,0,${v.toFixed(2)}))`)
-    : undefined;
+  const lidFilter = useTransform(scrollYProgress, [0.3, 0.65], [
+    "drop-shadow(0 10px 15px rgba(0,0,0,0.5))",
+    "drop-shadow(0 3px 6px rgba(0,0,0,0.15))",
+  ]);
 
   // Interior reveal
   const interiorOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
