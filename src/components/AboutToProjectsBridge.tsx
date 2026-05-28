@@ -129,10 +129,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
         if (!landedRef.current.about) {
-          // Reveal shelf About spine slightly earlier so it is fully opaque
-          // BEFORE any project spine starts moving. Once at 1, freeze writes
-          // to avoid 1-frame races with the flight-spine's final opacity writes.
-          const k = clamp01((bridge - 0.975) / 0.015);
+          // CROSSFADE with flight spine: HeroIdBadge fades the flight spine out
+          // across bridge 0.985 → 1.0. Use the EXACT same window so both spines
+          // sum to opacity 1 at all times and never appear as a duplicate.
+          const k = clamp01((bridge - 0.985) / 0.015);
           aboutSpineRef.current.style.opacity = String(k);
           aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
           if (k >= 1) {
@@ -147,29 +147,44 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         landedRef.current.slot = true;
       }
 
-      // === DRAW: per-row rule stroke, staggered, completing well before About lands ===
+      // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
       const drawWinStart = 0.74;
       const drawWinEnd = 0.92;
       const drawWinLen = drawWinEnd - drawWinStart;
       const rowCount = Math.max(1, rulePathRefs.current.length);
       const drawStagger = drawWinLen * 0.3;
       const drawPerRow = drawWinLen - drawStagger;
+
+      // Header plank (top shelf for the PROJECTS title) — draws first.
+      {
+        const start = 0.70;
+        const end = 0.78;
+        const d = clamp01((bridge - start) / (end - start));
+        const e = easeInOut(d);
+        if (headerPathRef.current) {
+          const L = headerPathLen.current || 0;
+          if (L > 0) headerPathRef.current.style.strokeDashoffset = String(L * (1 - e));
+        }
+        if (headerPlankRef.current) {
+          headerPlankRef.current.style.transform = `scaleX(${e.toFixed(4)})`;
+        }
+      }
+
       rulePathRefs.current.forEach((path, i) => {
-        if (!path) return;
         const L = rulePathLens.current[i] || 0;
-        if (L <= 0) return;
         const rowOff = rowCount > 1 ? (i / (rowCount - 1)) * drawStagger : 0;
         const start = drawWinStart + rowOff;
         const end = start + drawPerRow;
         const d = clamp01((bridge - start) / (end - start));
         const e = easeInOut(d);
-        path.style.strokeDashoffset = String(L * (1 - e));
+        if (path && L > 0) path.style.strokeDashoffset = String(L * (1 - e));
+        const plank = plankRefs.current[i];
+        if (plank) plank.style.transform = `scaleX(${e.toFixed(4)})`;
       });
 
-      // === ARCHIVE: project spines emerge front-to-back (from depth) AFTER About lands.
-      // Order is left→right dominant, with rows trailing slightly so the eye reads
-      // a crisp wave across the shelf.
-      const archWinStart = 0.99;
+      // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
+      // the viewer at start, settling into the shelf plane). Order: left→right.
+      const archWinStart = 0.995;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
       const archSpan = archWinLen * 0.35;
@@ -189,20 +204,20 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          // Emerge from depth: translateZ + scale + rotateY (front-to-back feel).
+          // Arrive from the viewer: start LARGE in front of plane, settle to flat.
           const eOut = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
-          const z = lerp(-220, 0, eOut);
-          const s = lerp(0.55, 1, eOut);
-          // rotateY: -22 → +4 around u=0.7 → 0 settle
+          const z = lerp(260, 0, eOut);
+          const s = lerp(1.35, 1, eOut);
+          // rotateY: 14 → -3 around u=0.7 → 0 settle
           let ry: number;
-          if (u <= 0) ry = -22;
+          if (u <= 0) ry = 14;
           else if (u >= 1) ry = 0;
           else if (u < 0.7) {
             const k = u / 0.7;
-            ry = lerp(-22, 4, 1 - Math.pow(1 - k, 2));
+            ry = lerp(14, -3, 1 - Math.pow(1 - k, 2));
           } else {
             const k = (u - 0.7) / 0.3;
-            ry = lerp(4, 0, k);
+            ry = lerp(-3, 0, k);
           }
           el.style.opacity = String(u <= 0 ? 0 : u >= 1 ? 1 : eOut);
           el.style.transform = `translateZ(${z.toFixed(1)}px) scale(${s.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
