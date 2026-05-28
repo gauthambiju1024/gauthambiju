@@ -529,6 +529,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                 <div className="relative" style={{ height: 18 }}>
                   {/* plank front-face (board edge) */}
                   <div
+                    ref={(el) => { plankRefs.current[rowIndex] = el; }}
                     aria-hidden
                     style={{
                       position: "absolute",
@@ -542,6 +543,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                       boxShadow:
                         "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
                       borderRadius: "1px",
+                      transform: "scaleX(0)",
+                      transformOrigin: "left center",
+                      willChange: "transform",
                     }}
                   />
                   {/* drawn top-edge rule (animated) */}
