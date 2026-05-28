@@ -141,16 +141,16 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
         if (!landedRef.current.about) {
-          // CROSSFADE with flight spine: HeroIdBadge fades the flight spine out
-          // across bridge 0.985 → 1.0. Use the EXACT same window so both spines
-          // sum to opacity 1 at all times and never appear as a duplicate.
-          const k = clamp01((bridge - 0.985) / 0.015);
-          aboutSpineRef.current.style.opacity = String(k);
-          aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
-          if (k >= 1) {
+          // SNAP-IN at settle: stay hidden through the entire flight, flip to
+          // visible the instant the flight spine reaches opacity 0 (bridge=1.0).
+          // No crossfade → no overlapping double spine.
+          if (bridge >= 1.0) {
             aboutSpineRef.current.style.opacity = "1";
             aboutSpineRef.current.style.pointerEvents = "auto";
             landedRef.current.about = true;
+          } else {
+            aboutSpineRef.current.style.opacity = "0";
+            aboutSpineRef.current.style.pointerEvents = "none";
           }
         }
       }
