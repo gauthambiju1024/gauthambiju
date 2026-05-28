@@ -1,66 +1,27 @@
-Do I know what the issue is? Yes.
 
-What the transition is doing now:
+## 1. Project spines — appearance animation matching the "MORE ABOUT ME" landing
 
-1. `DeskStage.tsx` creates the scroll progress for the whole page.
-2. `HeroIdBadge.tsx` reads that progress as `p`.
-3. The badge animation has three major phases:
-   - `p1`: card moves toward the center and scales up.
-   - `p2`: card flips to the About/book side.
-   - `bridge`: the book/spine transition begins.
-4. During `bridge`, the visible spine starts as `spineSkinRef` inside `cardWrap`.
-5. `cardWrap` is already scaled by `baseScale`, so the spine text is also visually scaled up.
-6. At handoff, the code captures only the spine rectangle using `getBoundingClientRect()`:
+**Reference:** the About spine flies in with: arc (sin curve up then down), slight rotation tilt, scale-down from large to native shelf size, opacity fade-in at the end of the arc — driven by `eInOutCubic` easing.
 
-```ts
-const r = spineSkinRef.current.getBoundingClientRect();
-flightRectRef.current = { width: r.width, height: r.height, ... };
-```
+**Goal:** when the Projects shelf scrolls into view, each project spine should "drop into its slot" with the same physical, weighted feeling — not just fade up. Staggered left-to-right so it reads as books being placed on the shelf one after another.
 
-7. Then `cardWrap` is hidden and `flyingSpineRef` appears.
-8. `flyingSpineRef` uses a fresh `ProjectSpine` instance. That new spine is not inside the scaled card wrapper.
-9. During flight, the current code changes the detached spine's actual CSS `width` and `height`:
+**File: `src/components/ProjectsShelf.tsx`**
 
-```ts
-const width = lerp(start.width, end.width, fE);
-const height = lerp(start.height, end.height, fE);
-flyingSpineRef.current.style.width = `${width}px`;
-flyingSpineRef.current.style.height = `${height}px`;
-```
+Per-spine entry animation (using framer-motion, already imported):
+- **From state:** `opacity: 0`, `y: -80` (above the shelf), `rotate: -8°`, `scale: 1.15`.
+- **To state:** `opacity: 1`, `y: 0`, `rotate: 0°`, `scale: 1`.
+- **Trigger:** `whileInView` with `viewport={{ once: true, amount: 0.3 }}` on each spine so it fires when the shelf enters.
+- **Easing:** custom cubic-bezier `[0.65, 0, 0.35, 1]` (matches `eInOutCubic` used in the About flight) over `0.75s`.
+- **Arc feel:** use `keyframes` for `y` — `[-80, -20, 0]` and `rotate` — `[-8, 3, 0]` so the spine arcs down and settles with a small overshoot tilt, mimicking the About spine's `sin`-curve arc and `flightTilt`.
+- **Stagger:** `delay: i * 0.09` where `i` is the spine index within the shelf row. Reads as books being placed left-to-right.
+- **Landing micro-bounce:** after settle, a tiny `y: [0, -2, 0]` shadow pulse on the existing book-shadow strip (0.2s, delayed to start of land) so the shelf feels the impact.
 
-Why the text changes abruptly:
+Keep all existing hover, select, and lift interactions exactly as they are — entry animation runs once, then normal behaviour resumes.
 
-There are three separate spine renderings:
+No changes to spine visuals, layout, sizes, or any other component.
 
-```text
-original 3D spine inside scaled cardWrap
-        ↓ handoff
-flying detached spine in portal
-        ↓ final fade
-shelf About spine
-```
+---
 
-The rectangle is being copied, but the text scale is not.
+## 2. Toolbox redesign — approved, proceeding as previously planned
 
-`ProjectSpine.tsx` hardcodes the title text size:
-
-```ts
-fontSize: data.title.length > 12 ? 10 : 13
-```
-
-So the original spine text is effectively `10px × cardWrap scale`, but the detached flying spine text goes back to plain `10px`. That is the abrupt size drop you are seeing.
-
-Then, because the flying spine's box is resized during travel, the spine body changes size while the text remains a hardcoded pixel size, which makes the ratio look unstable across the rest of the motion.
-
-Targeted debug fix — no other transition changes:
-
-1. Keep all existing timing, movement, handoff, shelf reveal, and layout.
-2. Add optional CSS-variable support inside `ProjectSpine.tsx` for title/year font sizes, with the current values as defaults. This changes nothing unless a caller provides the variables.
-3. In `HeroIdBadge.tsx`, set those CSS variables on only the hero/flying About spine instances:
-   - For the original 3D spine inside the scaled `cardWrap`, use inverse scaling so its visual text size equals the native shelf text size.
-   - For the flying spine, keep the same native text size throughout the flight.
-4. Leave shelf spines unchanged, because they already use the native text size.
-
-Result:
-
-The text will not shrink at handoff anymore because the original, flying, and shelf About spine will all render the title/year at the same visual size. The spine can still move and resize exactly as it currently does; only the text-size mismatch is removed.
+(Same as prior plan: brushed-metal greyscale tray, recessed compartments, engraved labels, SVG line-icons replacing emoji glyphs, metal-tag skill chips, slate tooltip with gold hairline. No behavioural or content changes.)
