@@ -68,6 +68,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   // The About-spine slot (top row) is appended as the last entry of row 0.
   // The toolbox is appended as the last entry of the bottom row.
   const spineRefs = useRef<HTMLDivElement[][]>([]);
+  // Planks (per-row wooden board behind the rule), synced with rule draw.
+  const plankRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Top "PROJECTS" shelf plank + its rule path.
+  const headerPlankRef = useRef<HTMLDivElement | null>(null);
+  const headerPathRef = useRef<SVGPathElement | null>(null);
+  const headerPathLen = useRef<number>(0);
   // One-shot guards to prevent re-writing styles every RAF once landed
   // (eliminates 1-frame races with the flight-spine's final opacity writes).
   const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
@@ -93,11 +99,17 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             rulePathLens.current[i] = L;
             p.style.strokeDasharray = `${L}`;
             p.style.strokeDashoffset = `${L}`;
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
         }
       });
+      if (headerPathRef.current) {
+        try {
+          const L = headerPathRef.current.getTotalLength();
+          headerPathLen.current = L;
+          headerPathRef.current.style.strokeDasharray = `${L}`;
+          headerPathRef.current.style.strokeDashoffset = `${L}`;
+        } catch { /* ignore */ }
+      }
     };
     measureRules();
 
@@ -129,10 +141,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
         if (!landedRef.current.about) {
-          // Reveal shelf About spine slightly earlier so it is fully opaque
-          // BEFORE any project spine starts moving. Once at 1, freeze writes
-          // to avoid 1-frame races with the flight-spine's final opacity writes.
-          const k = clamp01((bridge - 0.975) / 0.015);
+          // CROSSFADE with flight spine: HeroIdBadge fades the flight spine out
+          // across bridge 0.985 → 1.0. Use the EXACT same window so both spines
+          // sum to opacity 1 at all times and never appear as a duplicate.
+          const k = clamp01((bridge - 0.985) / 0.015);
           aboutSpineRef.current.style.opacity = String(k);
           aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
           if (k >= 1) {
@@ -147,29 +159,44 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         landedRef.current.slot = true;
       }
 
-      // === DRAW: per-row rule stroke, staggered, completing well before About lands ===
+      // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
       const drawWinStart = 0.74;
       const drawWinEnd = 0.92;
       const drawWinLen = drawWinEnd - drawWinStart;
       const rowCount = Math.max(1, rulePathRefs.current.length);
       const drawStagger = drawWinLen * 0.3;
       const drawPerRow = drawWinLen - drawStagger;
+
+      // Header plank (top shelf for the PROJECTS title) — draws first.
+      {
+        const start = 0.70;
+        const end = 0.78;
+        const d = clamp01((bridge - start) / (end - start));
+        const e = easeInOut(d);
+        if (headerPathRef.current) {
+          const L = headerPathLen.current || 0;
+          if (L > 0) headerPathRef.current.style.strokeDashoffset = String(L * (1 - e));
+        }
+        if (headerPlankRef.current) {
+          headerPlankRef.current.style.transform = `scaleX(${e.toFixed(4)})`;
+        }
+      }
+
       rulePathRefs.current.forEach((path, i) => {
-        if (!path) return;
         const L = rulePathLens.current[i] || 0;
-        if (L <= 0) return;
         const rowOff = rowCount > 1 ? (i / (rowCount - 1)) * drawStagger : 0;
         const start = drawWinStart + rowOff;
         const end = start + drawPerRow;
         const d = clamp01((bridge - start) / (end - start));
         const e = easeInOut(d);
-        path.style.strokeDashoffset = String(L * (1 - e));
+        if (path && L > 0) path.style.strokeDashoffset = String(L * (1 - e));
+        const plank = plankRefs.current[i];
+        if (plank) plank.style.transform = `scaleX(${e.toFixed(4)})`;
       });
 
-      // === ARCHIVE: project spines emerge front-to-back (from depth) AFTER About lands.
-      // Order is left→right dominant, with rows trailing slightly so the eye reads
-      // a crisp wave across the shelf.
-      const archWinStart = 0.99;
+      // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
+      // the viewer at start, settling into the shelf plane). Order: left→right.
+      const archWinStart = 0.995;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
       const archSpan = archWinLen * 0.35;
@@ -189,20 +216,20 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          // Emerge from depth: translateZ + scale + rotateY (front-to-back feel).
+          // Arrive from the viewer: start LARGE in front of plane, settle to flat.
           const eOut = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
-          const z = lerp(-220, 0, eOut);
-          const s = lerp(0.55, 1, eOut);
-          // rotateY: -22 → +4 around u=0.7 → 0 settle
+          const z = lerp(260, 0, eOut);
+          const s = lerp(1.35, 1, eOut);
+          // rotateY: 14 → -3 around u=0.7 → 0 settle
           let ry: number;
-          if (u <= 0) ry = -22;
+          if (u <= 0) ry = 14;
           else if (u >= 1) ry = 0;
           else if (u < 0.7) {
             const k = u / 0.7;
-            ry = lerp(-22, 4, 1 - Math.pow(1 - k, 2));
+            ry = lerp(14, -3, 1 - Math.pow(1 - k, 2));
           } else {
             const k = (u - 0.7) / 0.3;
-            ry = lerp(4, 0, k);
+            ry = lerp(-3, 0, k);
           }
           el.style.opacity = String(u <= 0 ? 0 : u >= 1 ? 1 : eOut);
           el.style.transform = `translateZ(${z.toFixed(1)}px) scale(${s.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
@@ -263,16 +290,68 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             gap: 18,
           }}
         >
-          {/* PROJECTS heading */}
-          <div className="flex items-center justify-center" style={{ gap: 14 }}>
-            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
+          {/* PROJECTS top shelf — same plank treatment as category rows */}
+          <div className="relative" style={{ height: 18 }}>
+            <div
+              ref={headerPlankRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 1,
+                height: 7,
+                background:
+                  "linear-gradient(to bottom, hsl(38 40% 18%) 0%, hsl(38 38% 13%) 55%, hsl(38 35% 9%) 100%)",
+                borderTop: "1px solid hsl(38 45% 28% / 0.55)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
+                borderRadius: "1px",
+                transform: "scaleX(0)",
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+            />
+            <svg
+              width="100%"
+              height="14"
+              viewBox="0 0 1180 14"
+              preserveAspectRatio="none"
+              style={{ display: "block", overflow: "visible", position: "relative" }}
+            >
+              <path
+                ref={headerPathRef}
+                d="M 0 1 L 1180 1"
+                stroke={INK}
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.7"
+                fill="none"
+                pathLength={1180}
+                style={{
+                  strokeDasharray: 1180,
+                  strokeDashoffset: 1180,
+                  willChange: "stroke-dashoffset",
+                }}
+              />
+            </svg>
             <span
               className="font-mono uppercase"
-              style={{ color: INK, fontSize: 11, letterSpacing: "0.4em" }}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: -1,
+                padding: "0 10px",
+                background: "hsl(35 24% 8%)",
+                color: INK,
+                fontSize: 10,
+                letterSpacing: "2.4px",
+                lineHeight: "14px",
+                whiteSpace: "nowrap",
+              }}
             >
-              Projects
+              PROJECTS
             </span>
-            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
           </div>
 
           {rows.map((row, rowIndex) => {
@@ -331,9 +410,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         style={{
                           flex: "0 0 auto",
                           opacity: 0,
-                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
+                          filter: "drop-shadow(0 3px 2px rgba(0,0,0,0.5)) drop-shadow(0 6px 8px rgba(0,0,0,0.32))",
                         }}
                       >
                         <ProjectSpine
@@ -363,9 +443,11 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         style={{
                           flex: "0 0 auto",
                           opacity: 0,
-                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
+                          filter: "drop-shadow(0 4px 2px rgba(0,0,0,0.55)) drop-shadow(0 8px 10px rgba(0,0,0,0.35))",
+                          marginBottom: -2,
                         }}
                       >
                         <a
@@ -398,8 +480,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                               </linearGradient>
                             </defs>
 
-                            {/* ground shadow */}
-                            <ellipse cx="48" cy="72" rx="38" ry="2.5" fill="rgba(0,0,0,0.4)" />
+                            {/* ground shadow now handled by wrapper drop-shadow filter */}
 
                             {/* handle */}
                             <path d="M 30 22 Q 48 6 66 22" stroke="url(#tbHandle)" strokeWidth="3" fill="none" strokeLinecap="round" />
@@ -448,6 +529,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                 <div className="relative" style={{ height: 18 }}>
                   {/* plank front-face (board edge) */}
                   <div
+                    ref={(el) => { plankRefs.current[rowIndex] = el; }}
                     aria-hidden
                     style={{
                       position: "absolute",
@@ -461,6 +543,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                       boxShadow:
                         "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
                       borderRadius: "1px",
+                      transform: "scaleX(0)",
+                      transformOrigin: "left center",
+                      willChange: "transform",
                     }}
                   />
                   {/* drawn top-edge rule (animated) */}
@@ -473,7 +558,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                   >
                     <path
                       ref={(el) => { rulePathRefs.current[rowIndex] = el; }}
-                      d="M 590 1 L 1180 1 M 590 1 L 0 1"
+                      d="M 0 1 L 1180 1"
                       stroke={INK}
                       strokeWidth="1"
                       strokeLinecap="round"

@@ -1,55 +1,47 @@
-# Project Spine Landing — Polish Pass
+# Shelf Polish — Round 2
 
-Four targeted fixes in `src/components/AboutToProjectsBridge.tsx` (plus a small CSS tweak for shelf thickness). No business logic changes.
+All edits in `src/components/AboutToProjectsBridge.tsx`. No data/logic changes.
 
-## 1. Remove About-spine flicker
+## 1. Kill the duplicate About spine
 
-**Root cause:** The archive (project-spine drop) window currently starts at `bridge = 0.965`, but the About spine only fades in at `bridge = 0.985`. During that 0.965 → 0.985 gap the flight spine (owned by the hero handoff) is finishing its travel while the shelf About slot is still invisible — and on every RAF frame we re-write `aboutSpineRef.style.opacity` from the same formula, so any 1-frame race with the flight spine's own opacity write produces a visible flicker. Project spines also begin dropping *before* About is locked in, which visually competes with the landing.
+**Root cause:** the hero flight spine (`HeroIdBadge.tsx` line 327) fades out across `bridge 0.985 → 1.0`. My previous patch moved the shelf About reveal earlier to `0.975 → 0.99`, so for ~10% of the window both are fully opaque side-by-side. That's the second spine you see.
 
-**Fix:**
-- Hold the project-archive window until *after* About is fully landed: `archWinStart = 0.99` (was `0.965`), with About reveal moved slightly earlier to `0.975 → 0.99` so it is fully opaque before any sibling moves.
-- Stop re-writing `aboutSpineRef.style.opacity` once it has reached 1. Track a `landed` flag in a ref; once `k >= 1` we set opacity to `1` one time and skip further writes (prevents fighting the flight-spine's final frames).
-- Same one-shot guard for `slot.style.opacity` and `pointerEvents`.
+**Fix:** Re-align the shelf About reveal *exactly* to the flight handoff window — `0.985 → 1.0` — so the two crossfade rather than overlap. Keep the one-shot `landedRef.about` guard so we still avoid the original 1-frame flicker after settle. Move the project archive window after that: `0.995 → 1.0` (very crisp, since project spines kick in only once About is fully owned by the shelf).
 
-## 2. Spines appear left → right after About lands
+## 2. Spines arrive FROM the viewer (not from depth)
 
-Current ordering uses `raw = r * 1.0 + c * 0.18` — every row starts at the same time as About lands, so the eye sees a near-simultaneous pop.
+Reverse the Z direction so spines fly *out of the screen toward the shelf*, settling into the plane.
 
-**Fix:** Order purely by global column index (left → right), with rows offset by a small constant so upper rows still lead slightly:
-```
-raw = c * 1.0 + r * 0.25   // left→right dominant, rows trail by 0.25 step
-```
-Stagger span (`archSpan`) shortened per-spine to ~0.35 of window so the wave is crisp, and total stagger spreads across the remaining 0.65.
+- Initial: `translateZ(260px) scale(1.35) rotateY(14deg)` opacity `0`.
+- End: `translateZ(0) scale(1) rotateY(0)` opacity `1`.
+- Keep cubic-out easing on Z/scale and the small overshoot on rotateY (`14 → -3 → 0`).
+- Keep `perspective: 800px` on the row container so the depth reads.
 
-## 3. Front-to-back 3D landing (replace top-down drop)
+## 3. Toolbox actually rests on the plank
 
-Match the About-spine handoff feel: spines arrive *from depth*, not from above.
+Two issues — its built-in SVG ground shadow sits *inside* the SVG viewbox above its feet, and there is no contact shadow on the plank surface.
 
-**Fix (transform only — no DOM changes):**
-- Add `perspective: 800px` on each row's spine container so child transforms get real depth.
-- Per-spine initial state: `translateZ(-220px) scale(0.55) rotateY(-22deg)` with `opacity: 0`.
-- Animate to `translateZ(0) scale(1) rotateY(0)` with `opacity: 1`, using a cubic-out ease on Z/scale and a tiny overshoot on `rotateY` (`-22 → +4 → 0`).
-- Remove the `translateY(-160%)` drop and the `rotate(-6deg)` tilt entirely. Same treatment for the toolbox so it lands consistently.
+- Drop the toolbox's internal `<ellipse>` shadow.
+- Add a CSS contact shadow on the toolbox wrapper: `filter: drop-shadow(0 3px 2px rgba(0,0,0,0.55)) drop-shadow(0 6px 8px rgba(0,0,0,0.35))`.
+- Shift the toolbox SVG down by 2px (`marginBottom: -2px`) so its feet visually press into the plank's top edge.
+- Apply the same drop-shadow filter to each project spine wrapper for consistent grounding.
 
-Result: each spine "pushes forward" out of the shelf plane, mirroring the About-spine arrival vector.
+## 4. Shelf line + plank both animate left → right (in sync)
 
-## 4. Shelf thickness so spines/toolbox don't float
+Today the SVG line draws from center outward and the plank just appears statically.
 
-Current ledge is a 1px SVG stroke — spines visually sit on a line.
+- Change the SVG path to a single left→right stroke (`M 0 1 L 1180 1`) drawn by dashoffset.
+- Animate the plank's `width` from `0%` → `100%` (left origin) over the *same* per-row window using `transform: scaleX(...)` with `transform-origin: left center` — GPU-cheap, no layout thrash.
+- A new `plankRefs` array tracks each plank `<div>`; inside the existing draw loop we set `el.style.transform = scaleX(e)` using the same eased value already computed for the line.
 
-**Fix:** Wrap each ledge with a thin wooden-plank look:
-- Increase ledge wrapper height from `14` → `18`.
-- Behind the existing SVG rule, render a 6px-tall bar using the same ink color at low opacity, with:
-  - top edge highlight: `inset 0 1px 0 rgba(255,255,255,0.06)`
-  - drop shadow under the plank: `0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)`
-  - subtle vertical front-face gradient (`hsl(38 40% 18%) → hsl(38 35% 10%)`) to read as a board edge.
-- The SVG rule keeps its draw-on animation as the *top edge* of the plank.
-- Spines/toolbox `align-items: end` is unchanged, so they now visibly rest on the plank's top surface; the shadow grounds them.
+## 5. PROJECTS header becomes a top shelf
+
+Replace the current centered "— PROJECTS —" rule with the same plank component used for category shelves (left→right draw, same thickness/shadow), labeled `PROJECTS`. Treat it as `rowIndex = -1` (or a separate `headerPlankRef`) so it draws first, slightly ahead of the category planks (`drawWinStart - 0.04`).
 
 ## Technical notes
 
-- All changes are visual/animation. No data, routing, or component-API changes.
-- The "landed" guard uses a `useRef<{about:boolean; slot:boolean}>` initialized to `false`; reset on unmount via the existing cleanup.
-- Perspective lives on the row's spine-row flex container (one per row) so toolbox shares it.
-- Keep `willChange: "transform, opacity"` on each spine wrapper.
-- Existing draw-in animation for the ledge path is untouched.
+- New refs: `plankRefs: useRef<HTMLDivElement[]>` (one per category row) and `headerPlankRef`.
+- Draw loop already iterates `rulePathRefs`; extend each iteration to also write `plankRefs.current[i].style.transform = scaleX(e)`.
+- Header plank uses its own `start/end` window (`0.70 → 0.78`) so the top shelf appears just before the category shelves cascade.
+- Spine + toolbox initial inline styles updated to the new positive-Z transform; archive loop updated to lerp `Z: 260→0`, `scale: 1.35→1`, `rotateY: 14→-3→0`.
+- No changes to `HeroIdBadge.tsx`, `ProjectSpine.tsx`, routing, or data hooks.
