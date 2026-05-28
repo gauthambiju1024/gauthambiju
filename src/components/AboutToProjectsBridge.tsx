@@ -184,48 +184,60 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         if (plank) plank.style.transform = `scaleX(${e.toFixed(4)})`;
       });
 
-      // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
-      // the viewer at start, settling into the shelf plane). Order: left→right.
-      const archWinStart = 0.92;
+      // === ARCHIVE: project spines fly TOWARD the shelf, top→bottom by row,
+      // left→right within each row. Window starts while About is still being
+      // shelved, so first spines emerge gracefully behind the flight.
+      const archWinStart = 0.86;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.22;
+      const archSpan = archWinLen * 0.55; // longer, softer arrival per spine
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
         row.forEach((_, c) => {
-          const raw = c * 1.0 + r * 0.25;
+          // row-dominant ordering (top fills first), col secondary
+          const raw = r * 1.0 + c * 0.18;
           if (raw > maxOrderRaw) maxOrderRaw = raw;
         });
       });
+      // easeOutQuint: gentler, more elegant settle than cubic.
+      const easeOutQuint = (x: number) => 1 - Math.pow(1 - x, 5);
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
           if (!el) return;
-          const raw = c * 1.0 + r * 0.25;
+          const raw = r * 1.0 + c * 0.18;
           const norm = maxOrderRaw > 0 ? raw / maxOrderRaw : 0;
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          // Arrive from the viewer: start LARGE in front of plane, settle to flat.
-          const eOut = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
-          const z = lerp(260, 0, eOut);
-          const s = lerp(1.35, 1, eOut);
-          // rotateY: 14 → -3 around u=0.7 → 0 settle
+          const eOut = u <= 0 ? 0 : u >= 1 ? 1 : easeOutQuint(u);
+          // Softer arrival: lower Z, smaller scale, less rotateY overshoot.
+          const z = lerp(180, 0, eOut);
+          const s = lerp(1.18, 1, eOut);
           let ry: number;
-          if (u <= 0) ry = 14;
+          if (u <= 0) ry = 8;
           else if (u >= 1) ry = 0;
-          else if (u < 0.7) {
-            const k = u / 0.7;
-            ry = lerp(14, -3, 1 - Math.pow(1 - k, 2));
+          else if (u < 0.75) {
+            const k = u / 0.75;
+            ry = lerp(8, -1.5, 1 - Math.pow(1 - k, 2));
           } else {
-            const k = (u - 0.7) / 0.3;
-            ry = lerp(-3, 0, k);
+            const k = (u - 0.75) / 0.25;
+            ry = lerp(-1.5, 0, k);
           }
           el.style.opacity = String(u <= 0 ? 0 : u >= 1 ? 1 : eOut);
           el.style.transform = `translateZ(${z.toFixed(1)}px) scale(${s.toFixed(3)}) rotateY(${ry.toFixed(2)}deg)`;
         });
       });
 
+      // Publish toolbox rect for the next-stage bridge (Toolbox→Skills flip).
+      if (toolboxRef.current) {
+        const tr = toolboxRef.current.getBoundingClientRect();
+        (window as any).__toolboxRect = {
+          left: tr.left, top: tr.top, width: tr.width, height: tr.height,
+          cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
+          visible: bridge >= 1.0,
+        };
+      }
 
       publishSlotRect();
     };
