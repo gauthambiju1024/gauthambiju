@@ -99,11 +99,17 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             rulePathLens.current[i] = L;
             p.style.strokeDasharray = `${L}`;
             p.style.strokeDashoffset = `${L}`;
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
         }
       });
+      if (headerPathRef.current) {
+        try {
+          const L = headerPathRef.current.getTotalLength();
+          headerPathLen.current = L;
+          headerPathRef.current.style.strokeDasharray = `${L}`;
+          headerPathRef.current.style.strokeDashoffset = `${L}`;
+        } catch { /* ignore */ }
+      }
     };
     measureRules();
 
