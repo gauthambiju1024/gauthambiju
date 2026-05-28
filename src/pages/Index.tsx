@@ -35,6 +35,8 @@ const Index = () => {
       <div className="margin-content-wrapper relative z-[2]">
         <HeroAboutFlip />
 
+        <ToolboxToSkillsBridge />
+
         {trailingStations.map(({ id, Frame, Section }) => (
           <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
             <section id={id} className="relative w-full">
