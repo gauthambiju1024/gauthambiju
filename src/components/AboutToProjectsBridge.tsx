@@ -558,7 +558,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                   >
                     <path
                       ref={(el) => { rulePathRefs.current[rowIndex] = el; }}
-                      d="M 590 1 L 1180 1 M 590 1 L 0 1"
+                      d="M 0 1 L 1180 1"
                       stroke={INK}
                       strokeWidth="1"
                       strokeLinecap="round"
