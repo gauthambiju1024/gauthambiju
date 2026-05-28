@@ -92,7 +92,7 @@ const ToolboxToSkillsBridge = () => {
                 transformOrigin: "bottom center",
                 transformStyle: "preserve-3d",
                 rotateX: lidRotate,
-                filter: useTransform(lidShadow, (v) => `drop-shadow(0 ${(v * 20).toFixed(1)}px ${(v * 30).toFixed(1)}px rgba(0,0,0,${v.toFixed(2)}))`),
+                filter: lidFilter,
               }}
             >
               <ToolboxLid />
