@@ -246,7 +246,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeProgress = 0;
       (window as any).__bridgeActive = false;
       (window as any).__bridgeSlotRect = null;
-      landedRef.current = { about: false, slot: false };
     };
   }, [projects, progressMV, rows.length]);
 
