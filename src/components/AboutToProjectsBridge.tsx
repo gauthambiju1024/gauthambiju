@@ -480,8 +480,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                               </linearGradient>
                             </defs>
 
-                            {/* ground shadow */}
-                            <ellipse cx="48" cy="72" rx="38" ry="2.5" fill="rgba(0,0,0,0.4)" />
+                            {/* ground shadow now handled by wrapper drop-shadow filter */}
 
                             {/* handle */}
                             <path d="M 30 22 Q 48 6 66 22" stroke="url(#tbHandle)" strokeWidth="3" fill="none" strokeLinecap="round" />
