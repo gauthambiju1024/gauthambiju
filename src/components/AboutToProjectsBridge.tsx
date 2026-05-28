@@ -361,13 +361,13 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           <svg width="96" height="76" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
                               <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stopColor="hsl(38 65% 58%)" />
-                                <stop offset="0.5" stopColor="hsl(34 60% 48%)" />
-                                <stop offset="1" stopColor="hsl(28 55% 32%)" />
+                                <stop offset="0" stopColor="hsl(220 6% 32%)" />
+                                <stop offset="0.5" stopColor="hsl(220 6% 24%)" />
+                                <stop offset="1" stopColor="hsl(220 6% 18%)" />
                               </linearGradient>
                               <linearGradient id="tbLid" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stopColor="hsl(40 70% 62%)" />
-                                <stop offset="1" stopColor="hsl(32 60% 42%)" />
+                                <stop offset="0" stopColor="hsl(220 6% 40%)" />
+                                <stop offset="1" stopColor="hsl(220 6% 24%)" />
                               </linearGradient>
                               <linearGradient id="tbHandle" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0" stopColor="hsl(0 0% 78%)" />
@@ -377,41 +377,44 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                             </defs>
 
                             {/* ground shadow */}
-                            <ellipse cx="48" cy="72" rx="38" ry="2.5" fill="rgba(0,0,0,0.35)" />
+                            <ellipse cx="48" cy="72" rx="38" ry="2.5" fill="rgba(0,0,0,0.4)" />
 
                             {/* handle */}
                             <path d="M 30 22 Q 48 6 66 22" stroke="url(#tbHandle)" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <circle cx="30" cy="22" r="2.2" fill="hsl(0 0% 28%)" />
-                            <circle cx="66" cy="22" r="2.2" fill="hsl(0 0% 28%)" />
+                            <circle cx="30" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
+                            <circle cx="66" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
 
                             {/* lid */}
-                            <rect x="8" y="22" width="80" height="14" rx="2" fill="url(#tbLid)" stroke="hsl(28 50% 22%)" strokeWidth="1" />
-                            <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" />
-                            {/* hinge gap */}
-                            <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(28 55% 18%)" strokeWidth="1" />
+                            <rect x="8" y="22" width="80" height="14" rx="2" fill="url(#tbLid)" stroke="hsl(220 8% 10%)" strokeWidth="1" />
+                            <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
+                            {/* hinge */}
+                            <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(220 8% 8%)" strokeWidth="1" />
+                            <line x1="8" y1="36.7" x2="88" y2="36.7" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
 
                             {/* body */}
-                            <rect x="8" y="36" width="80" height="32" rx="2" fill="url(#tbBody)" stroke="hsl(28 50% 20%)" strokeWidth="1" />
-                            {/* faint wood/metal stripes */}
-                            <line x1="10" y1="44" x2="86" y2="44" stroke="rgba(0,0,0,0.15)" strokeWidth="0.6" />
-                            <line x1="10" y1="56" x2="86" y2="56" stroke="rgba(0,0,0,0.18)" strokeWidth="0.6" />
+                            <rect x="8" y="36" width="80" height="32" rx="2" fill="url(#tbBody)" stroke="hsl(220 8% 10%)" strokeWidth="1" />
+                            {/* brushed-metal striations */}
+                            <line x1="10" y1="42" x2="86" y2="42" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
+                            <line x1="10" y1="48" x2="86" y2="48" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
+                            <line x1="10" y1="54" x2="86" y2="54" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
+                            <line x1="10" y1="60" x2="86" y2="60" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
 
-                            {/* latches */}
-                            <rect x="22" y="32" width="10" height="10" rx="1" fill="hsl(45 70% 55%)" stroke="hsl(28 50% 22%)" strokeWidth="0.8" />
-                            <rect x="64" y="32" width="10" height="10" rx="1" fill="hsl(45 70% 55%)" stroke="hsl(28 50% 22%)" strokeWidth="0.8" />
-                            <line x1="27" y1="34" x2="27" y2="40" stroke="hsl(28 55% 18%)" strokeWidth="0.8" />
-                            <line x1="69" y1="34" x2="69" y2="40" stroke="hsl(28 55% 18%)" strokeWidth="0.8" />
+                            {/* chrome latches */}
+                            <rect x="22" y="32" width="10" height="8" rx="1" fill="url(#tbHandle)" stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
+                            <rect x="64" y="32" width="10" height="8" rx="1" fill="url(#tbHandle)" stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
+                            <circle cx="27" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
+                            <circle cx="69" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
 
-                            {/* center label plaque */}
-                            <rect x="40" y="48" width="16" height="8" rx="1" fill="hsl(28 50% 22%)" />
-                            <text x="48" y="54" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 60% 70%)" letterSpacing="0.5">TOOLS</text>
+                            {/* center label plaque — engraved slate */}
+                            <rect x="38" y="48" width="20" height="9" rx="1" fill="hsl(220 8% 14%)" stroke="hsl(220 8% 8%)" strokeWidth="0.5" />
+                            <text x="48" y="54.4" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 8% 70%)" letterSpacing="0.6">TOOLS</text>
 
                             {/* feet */}
-                            <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(28 50% 18%)" />
-                            <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(28 50% 18%)" />
+                            <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
+                            <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
 
                             {/* top edge highlight */}
-                            <line x1="10" y1="37" x2="86" y2="37" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
+                            <line x1="10" y1="37" x2="86" y2="37" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
                           </svg>
                         </a>
                       </div>
