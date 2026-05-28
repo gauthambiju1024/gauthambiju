@@ -74,9 +74,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
   const headerPlankRef = useRef<HTMLDivElement | null>(null);
   const headerPathRef = useRef<SVGPathElement | null>(null);
   const headerPathLen = useRef<number>(0);
-  // One-shot guards to prevent re-writing styles every RAF once landed
-  // (eliminates 1-frame races with the flight-spine's final opacity writes).
-  const landedRef = useRef<{ about: boolean; slot: boolean }>({ about: false, slot: false });
 
   // Size the length array only; do NOT wipe ref arrays — React's ref
   // callbacks have already populated them by the time this effect runs.
