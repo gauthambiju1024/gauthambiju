@@ -362,8 +362,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         ref={registerSpine(rowIndex, myCol)}
                         style={{
                           flex: "0 0 auto",
-                          transform: "translateY(-160%) rotate(-6deg)",
-                          willChange: "transform",
+                          opacity: 0,
+                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transformStyle: "preserve-3d",
+                          willChange: "transform, opacity",
                         }}
                       >
                         <a
