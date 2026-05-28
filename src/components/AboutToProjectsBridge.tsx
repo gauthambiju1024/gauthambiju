@@ -176,9 +176,21 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           const start = archWinStart + norm * archStaggerTotal;
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
-          const e = u <= 0 ? 0 : u >= 1 ? 1 : easeBack(u);
-          const y = lerp(135, 0, e);
-          el.style.transform = `translateY(${y.toFixed(2)}%)`;
+          // Drop from above with smooth cubic-out for Y, separate overshoot on rotation.
+          const eY = u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(1 - u, 3);
+          const y = lerp(-160, 0, eY);
+          // Rotation: tilts from -6deg, overshoots to +2deg around u=0.7, settles to 0
+          let rot: number;
+          if (u <= 0) rot = -6;
+          else if (u >= 1) rot = 0;
+          else if (u < 0.7) {
+            const k = u / 0.7;
+            rot = lerp(-6, 2, 1 - Math.pow(1 - k, 2));
+          } else {
+            const k = (u - 0.7) / 0.3;
+            rot = lerp(2, 0, k);
+          }
+          el.style.transform = `translateY(${y.toFixed(2)}%) rotate(${rot.toFixed(2)}deg)`;
         });
       });
 
