@@ -129,31 +129,24 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       // Shelf fades in just as the packet starts shrinking
       shelfWrap.style.opacity = String(seg(0.70, 0.80, bridge));
-      shelfWrap.style.pointerEvents = bridge > 0.99 ? "auto" : "none";
+      shelfWrap.style.pointerEvents = bridge >= 1.0 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
-      const settled = bridge > 0.98;
+      const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
+      // Pure scroll-reactive: shelf About spine only shows when bridge fully
+      // settled. Reverses cleanly on scroll-up — no one-shot lock that would
+      // leave the spine visible while the flight spine re-renders.
       if (aboutSpineRef.current) {
-        if (!landedRef.current.about) {
-          // SNAP-IN at settle: stay hidden through the entire flight, flip to
-          // visible the instant the flight spine reaches opacity 0 (bridge=1.0).
-          // No crossfade → no overlapping double spine.
-          if (bridge >= 1.0) {
-            aboutSpineRef.current.style.opacity = "1";
-            aboutSpineRef.current.style.pointerEvents = "auto";
-            landedRef.current.about = true;
-          } else {
-            aboutSpineRef.current.style.opacity = "0";
-            aboutSpineRef.current.style.pointerEvents = "none";
-          }
+        if (settled) {
+          aboutSpineRef.current.style.opacity = "1";
+          aboutSpineRef.current.style.pointerEvents = "auto";
+        } else {
+          aboutSpineRef.current.style.opacity = "0";
+          aboutSpineRef.current.style.pointerEvents = "none";
         }
-      }
-      if (!landedRef.current.slot) {
-        slot.style.opacity = "0";
-        landedRef.current.slot = true;
       }
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
