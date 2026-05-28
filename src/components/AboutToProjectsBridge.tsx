@@ -447,7 +447,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
-                          filter: "drop-shadow(0 5px 3px rgba(0,0,0,0.55)) drop-shadow(0 10px 14px rgba(0,0,0,0.35))",
+                          filter: "drop-shadow(0 7px 4px rgba(0,0,0,0.6)) drop-shadow(0 14px 20px rgba(0,0,0,0.4))",
                           marginBottom: -2,
                         }}
                       >
@@ -457,13 +457,13 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           aria-label="Open toolbox"
                           style={{
                             display: "block",
-                            width: 150,
-                            height: 118,
+                            width: 220,
+                            height: 174,
                             transformOrigin: "bottom right",
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="150" height="118" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg width="220" height="174" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
                               <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0" stopColor="hsl(220 6% 32%)" />
