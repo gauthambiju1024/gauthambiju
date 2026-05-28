@@ -444,12 +444,36 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                   })()}
                 </div>
 
-                {/* ledge — SVG path drawn from center outward */}
-                <div className="relative" style={{ height: 14 }}>
-                  <svg width="100%" height="14" viewBox="0 0 1180 14" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
+                {/* ledge — wooden plank with thickness + drop shadow so spines visibly rest on it */}
+                <div className="relative" style={{ height: 18 }}>
+                  {/* plank front-face (board edge) */}
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: 1,
+                      height: 7,
+                      background:
+                        "linear-gradient(to bottom, hsl(38 40% 18%) 0%, hsl(38 38% 13%) 55%, hsl(38 35% 9%) 100%)",
+                      borderTop: "1px solid hsl(38 45% 28% / 0.55)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
+                      borderRadius: "1px",
+                    }}
+                  />
+                  {/* drawn top-edge rule (animated) */}
+                  <svg
+                    width="100%"
+                    height="14"
+                    viewBox="0 0 1180 14"
+                    preserveAspectRatio="none"
+                    style={{ display: "block", overflow: "visible", position: "relative" }}
+                  >
                     <path
                       ref={(el) => { rulePathRefs.current[rowIndex] = el; }}
-                      d="M 590 7 L 1180 7 M 590 7 L 0 7"
+                      d="M 590 1 L 1180 1 M 590 1 L 0 1"
                       stroke={INK}
                       strokeWidth="1"
                       strokeLinecap="round"
@@ -468,7 +492,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                     style={{
                       position: "absolute",
                       left: "50%",
-                      top: 0,
+                      top: -1,
                       transform: "translateX(-50%)",
                       padding: "0 10px",
                       background: "hsl(35 24% 8%)",
