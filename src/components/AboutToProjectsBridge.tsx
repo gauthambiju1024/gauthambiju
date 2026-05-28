@@ -141,16 +141,16 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       (window as any).__bridgeSettled = settled;
       if (aboutSpineRef.current) {
         if (!landedRef.current.about) {
-          // CROSSFADE with flight spine: HeroIdBadge fades the flight spine out
-          // across bridge 0.985 → 1.0. Use the EXACT same window so both spines
-          // sum to opacity 1 at all times and never appear as a duplicate.
-          const k = clamp01((bridge - 0.985) / 0.015);
-          aboutSpineRef.current.style.opacity = String(k);
-          aboutSpineRef.current.style.pointerEvents = settled ? "auto" : "none";
-          if (k >= 1) {
+          // SNAP-IN at settle: stay hidden through the entire flight, flip to
+          // visible the instant the flight spine reaches opacity 0 (bridge=1.0).
+          // No crossfade → no overlapping double spine.
+          if (bridge >= 1.0) {
             aboutSpineRef.current.style.opacity = "1";
             aboutSpineRef.current.style.pointerEvents = "auto";
             landedRef.current.about = true;
+          } else {
+            aboutSpineRef.current.style.opacity = "0";
+            aboutSpineRef.current.style.pointerEvents = "none";
           }
         }
       }
@@ -196,10 +196,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       // === ARCHIVE: project spines fly TOWARD the shelf (out of the screen toward
       // the viewer at start, settling into the shelf plane). Order: left→right.
-      const archWinStart = 0.995;
+      const archWinStart = 0.92;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.35;
+      const archSpan = archWinLen * 0.22;
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
@@ -446,7 +446,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
-                          filter: "drop-shadow(0 4px 2px rgba(0,0,0,0.55)) drop-shadow(0 8px 10px rgba(0,0,0,0.35))",
+                          filter: "drop-shadow(0 5px 3px rgba(0,0,0,0.55)) drop-shadow(0 10px 14px rgba(0,0,0,0.35))",
                           marginBottom: -2,
                         }}
                       >
@@ -456,13 +456,13 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           aria-label="Open toolbox"
                           style={{
                             display: "block",
-                            width: 96,
-                            height: 76,
+                            width: 150,
+                            height: 118,
                             transformOrigin: "bottom right",
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="96" height="76" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg width="150" height="118" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
                               <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0" stopColor="hsl(220 6% 32%)" />
