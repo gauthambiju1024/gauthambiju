@@ -290,16 +290,68 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             gap: 18,
           }}
         >
-          {/* PROJECTS heading */}
-          <div className="flex items-center justify-center" style={{ gap: 14 }}>
-            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
+          {/* PROJECTS top shelf — same plank treatment as category rows */}
+          <div className="relative" style={{ height: 18 }}>
+            <div
+              ref={headerPlankRef}
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 1,
+                height: 7,
+                background:
+                  "linear-gradient(to bottom, hsl(38 40% 18%) 0%, hsl(38 38% 13%) 55%, hsl(38 35% 9%) 100%)",
+                borderTop: "1px solid hsl(38 45% 28% / 0.55)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.45), 0 6px 10px -4px rgba(0,0,0,0.35)",
+                borderRadius: "1px",
+                transform: "scaleX(0)",
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+            />
+            <svg
+              width="100%"
+              height="14"
+              viewBox="0 0 1180 14"
+              preserveAspectRatio="none"
+              style={{ display: "block", overflow: "visible", position: "relative" }}
+            >
+              <path
+                ref={headerPathRef}
+                d="M 0 1 L 1180 1"
+                stroke={INK}
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.7"
+                fill="none"
+                pathLength={1180}
+                style={{
+                  strokeDasharray: 1180,
+                  strokeDashoffset: 1180,
+                  willChange: "stroke-dashoffset",
+                }}
+              />
+            </svg>
             <span
               className="font-mono uppercase"
-              style={{ color: INK, fontSize: 11, letterSpacing: "0.4em" }}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: -1,
+                padding: "0 10px",
+                background: "hsl(35 24% 8%)",
+                color: INK,
+                fontSize: 10,
+                letterSpacing: "2.4px",
+                lineHeight: "14px",
+                whiteSpace: "nowrap",
+              }}
             >
-              Projects
+              PROJECTS
             </span>
-            <span style={{ flex: 1, height: 1, background: INK, opacity: 0.4 }} />
           </div>
 
           {rows.map((row, rowIndex) => {
