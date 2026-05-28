@@ -410,9 +410,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         style={{
                           flex: "0 0 auto",
                           opacity: 0,
-                          transform: "translateZ(-220px) scale(0.55) rotateY(-22deg)",
+                          transform: "translateZ(260px) scale(1.35) rotateY(14deg)",
                           transformStyle: "preserve-3d",
                           willChange: "transform, opacity",
+                          filter: "drop-shadow(0 3px 2px rgba(0,0,0,0.5)) drop-shadow(0 6px 8px rgba(0,0,0,0.32))",
                         }}
                       >
                         <ProjectSpine
