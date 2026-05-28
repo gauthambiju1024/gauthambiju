@@ -340,7 +340,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
               className="font-mono uppercase"
               style={{
                 position: "absolute",
-                right: 0,
+                left: 0,
                 top: -1,
                 padding: "0 10px",
                 background: "hsl(35 24% 8%)",
