@@ -1,62 +1,36 @@
+## Problem
 
-# Integrate Library → Toolbox → Final Workbench choreography
+`ToolboxToSkillsBridge` currently renders its own miniature library (two shelves with "MORE ABOUT ME", "CLASSY", "VAIDYA" books + an empty slot used as the toolbox start position). This duplicates the real `ProjectsShelf` / `AboutToProjectsBridge` above it and shows a second toolbox during the recede phase.
 
-## What the uploaded code does
-A single pinned scroll section (~600vh) with three beats:
-1. **Library recedes** — two bookshelves with spines scroll up and fade.
-2. **3D toolbox flies & opens** — CSS-perspective 6-face box (W=800, H=240, D=500) lifts from a slot, scales to viewport, rotates −90° X to look down into it, lid hinges 125°, 3-column foam skill tray (InnerApp) appears on the floor.
-3. **Toolbox lands on desk** — rotates back, shrinks, slides to bottom-left of `FinalWorkbench` (field-notes board, contact laptop, plant, lamp, mug, notebook+pen).
+The user wants:
+- No duplicate shelf inside the pinned bridge.
+- The flying toolbox originates from the **real** toolbox already sitting on the bottom shelf of `AboutToProjectsBridge`.
+- Only one toolbox visible at any moment.
 
-Single `useScroll` + `useSpring` drives everything — no handoff seams.
+## Plan
 
-## Files
-**Replace**
-- `src/components/ToolboxToSkillsBridge.tsx` — rewritten to host the uploaded pinned-scroll choreography (same export name, no Index.tsx move needed).
+### 1. `src/components/ToolboxToSkillsBridge.tsx`
+- Delete the `ShelfLine`, `Book`, and the entire `motion.div` block that renders the duplicate shelves (lines ~287–325).
+- Remove `slotRef`, `shelvesY`, `shelvesOpacity`, and the inner `Book` helper.
+- Replace the slot-based starting position with the live `window.__toolboxRect` published by `AboutToProjectsBridge`:
+  - In `useLayoutEffect`, read `(window as any).__toolboxRect` (poll on `scroll` / `resize`, already wired) to compute `pos.x / pos.y / startScale` from that rect instead of `slotRef`.
+  - `startScale = rect.width / W`.
+- While in flight (smoothProgress > 0 and < ~0.97), set `(window as any).__toolboxInFlight = true` so `AboutToProjectsBridge` hides its own shelf toolbox; clear it otherwise. This already works — `AboutToProjectsBridge` reads the flag and sets opacity to 0.
+- Drop the early scroll hint that says "Scroll to explore" since the recede beat is gone (optional — keep if it still reads well at p≈0).
+- Adjust scroll keyframes so beat 1 (0 → 0.2) is purely the toolbox lifting + rotating from the shelf rect to center stage (no shelf fade needed). Beats 2/3 (open + land) unchanged.
+- Section height can drop from `600vh` to `~450vh` since one beat is removed.
 
-**New**
-- `src/components/skills/FinalWorkbench.tsx` — uploaded content, background layers stripped.
-- `src/components/skills/skillsData.ts` — fallback SKILLS/CERTIFICATES defaults.
+### 2. `src/components/AboutToProjectsBridge.tsx`
+No structural changes. It already:
+- Renders the realistic `<ToolboxClosed />` on the bottom shelf.
+- Publishes `__toolboxRect` every frame.
+- Hides itself when `__toolboxInFlight` is true.
 
-**Update**
-- `src/index.css` — append `.send-workbench-section`, `.field-notes-board`, `.contact-laptop`, `.final-toolbox`, `.workbench-plant`, `.desk-lamp`, `.workbench-mug`, `.notebook-pen`, `.hide-scrollbar`, `@keyframes shimmer`. **All CSS transforms kept verbatim.** No token edits.
-- `src/pages/Index.tsx` — drop trailing `contact` station (writing + thinking stay). FinalWorkbench is the new closing frame.
-- `src/components/AboutToProjectsBridge.tsx` — remove `__toolboxTakeoverProgress` publish + shelf fade tied to it (new section owns its own intro/library recap).
+Verify the rect is published even when the section is fully scrolled past (so the bridge below can still read a sane start rect). If not, cache the last rect in the bridge instead of reading per-frame.
 
-**Not changed**: Hero/About flip, AssemblyHeader, ProjectsShelf, ThinkingWall, WritingDesk, MarginDoodles, Entropy, ghost grid, `--bd-*` tokens, fonts, routing, Supabase.
+### 3. No other files touched
+`FinalWorkbench`, `ProjectsShelf`, `Index.tsx`, `index.css`, skill data, doodles, AssemblyHeader — unchanged.
 
-## "Remove the background" — concretely
-- `App.tsx` → `<ConstellationBg />` removed.
-- `FinalWorkbench.tsx` → top constellation SVG/radial-gradient wrapper + `<div className="desk-plane" />` removed. All desk props kept.
-- `index.css` → do NOT copy `body { background }` or `.desk-plane`. Everything else copied verbatim.
+## Result
 
-Result: toolbox + workbench props float on the existing walnut + ghost-grid background.
-
-## Margins stay visible (new requirement)
-The new pinned section mounts **inside** `.margin-content-wrapper` (same as today), so `MarginDoodles` continue to render in the left/right margins throughout the entire library→toolbox→workbench scroll. The pinned sticky stage uses `position: sticky` within that wrapper — it never goes `position: fixed` full-viewport — so the margin doodle SVGs on either side remain fully visible and the central panel respects the same gutter as the rest of the site.
-
-To ensure the toolbox 3D animation (which uses `position: absolute` over the sticky stage) doesn't visually bleed into the margins, the sticky stage gets `overflow: visible` for the 3D flight but the scenery layers (FinalWorkbench desk props) are clipped to the central panel via a wrapper with the existing panel max-width. Margin doodles render on top via their existing fixed positioning.
-
-## Wire-up (technical)
-- Rename uploaded `App.tsx` default export into `ToolboxToSkillsBridge.tsx`. Keep `useScroll({ target: containerRef })` + `useSpring`. Outer 600vh wrapper becomes the section root.
-- Skills data: read from `useSiteContent("skills", "groups")` (same source as current `ToolboxInterior`), map into the 3-column foam tray; fall back to `skillsData.ts`.
-- FinalWorkbench contact block: wire email/linkedin/resume to `useSiteContent("contact", ...)` if available; defaults already match `gauthambiju02@gmail.com`.
-- Rewrite imports `motion/react` → `framer-motion`. `lucide-react` + `framer-motion` already in deps — no installs.
-- Slot the toolbox lifts from sits inside the library recap panel of the same pinned section — seam stays in one viewport.
-- Remove orphaned `__toolboxTakeoverProgress`, `__toolboxRect`, `__toolboxInFlight` globals from `AboutToProjectsBridge.tsx`.
-- `#skills` anchor on the new section root; `#contact` anchor on the FinalWorkbench wrapper inside it — AssemblyHeader nav resolves correctly.
-
-## Section order after change
-```text
-Hero/About flip
-Projects shelf
-[NEW] Pinned: library recap → 3D toolbox opens → skills → FinalWorkbench (= contact)
-Thinking wall
-Writing desk
-```
-
-## Verification
-- Build passes.
-- One scroll: library recedes → toolbox lifts/opens centered → skills tray readable → lands on desk with laptop/board. No empty frames.
-- MarginDoodles visible in left/right margins through the entire pinned scroll.
-- AssemblyHeader #skills and #contact land correctly.
-- No doubled dark backgrounds.
+Scrolling past projects: the actual shelf toolbox lifts off the bottom shelf, flies to center, rotates open to reveal skills, then lands on the desk. No second shelf, no second toolbox, no empty frame.
