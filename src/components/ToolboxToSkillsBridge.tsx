@@ -104,14 +104,14 @@ const ToolboxToSkillsBridge = () => {
   const bgOpacity = useTransform(t, [0, 0.25, 0.40, 0.90, 1], [0, 0, 1, 1, 0.3]);
 
 
-  // Publish 'flip active' so the shelf prop hides whenever the bridge owns
-  // the toolbox — flag flips ON as soon as the start rect is known.
+  // Publish 'flip active' so the shelf prop hides whenever the bridge actually
+  // owns the toolbox (pin engaged AND we have a valid start rect).
   useEffect(() => {
-    if (!start) return;
-    (window as any).__skillsFlipActive = true;
-    const unsub = t.on("change", () => {
-      (window as any).__skillsFlipActive = true;
-    });
+    const apply = (v: number) => {
+      (window as any).__skillsFlipActive = !!start && v > 0.001 && v < 0.999;
+    };
+    apply(t.get());
+    const unsub = t.on("change", apply);
     return () => {
       unsub();
       (window as any).__skillsFlipActive = false;
