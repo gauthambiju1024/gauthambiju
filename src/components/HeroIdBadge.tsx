@@ -324,8 +324,11 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
           const width = lerp(start.width, end.width, fE);
           const height = lerp(start.height, end.height, fE);
           const flightTilt = 3 * Math.sin(fE * Math.PI);
-          const shelfHandoff = clamp((bridge - 0.985) / 0.015);
-          const spineOpacity = 1 - shelfHandoff;
+          // Flying spine stays fully opaque until the bridge fully completes,
+          // then hides in one frame. The shelf spine has already appeared at
+          // bridge>=0.97 (overlap window) so there is no gap → no flicker.
+          const spineOpacity = bridge >= 1 ? 0 : 1;
+
 
           // Text sizes must match the original (scaled) spine at handoff and
           // smoothly converge to the native shelf size. Original spine lives
