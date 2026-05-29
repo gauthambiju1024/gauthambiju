@@ -73,12 +73,12 @@ const ToolboxToSkillsBridge = () => {
   // Position: park on shelf rect (re-read live below) → centre → settle
   // We hold the actor exactly over the shelf prop until ~0.30 so the handoff
   // happens IN the same viewport as the shelf.
-  const x = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.x, start.x, 0, 0, 0]);
-  const y = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.y, start.y, 0, 0, 40]);
+  const x = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [s.x, s.x, 0, 0, 0]);
+  const y = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [s.y, s.y, 0, 0, 40]);
   const scale = useTransform(
     t,
     [0, 0.3, 0.45, 0.85, 1],
-    [start.scale, start.scale, endScale, endScale, endScale * 0.85]
+    [s.scale, s.scale, endScale, endScale, endScale * 0.85]
   );
 
   // Rotations — start front-on (matches shelf prop), then flip to top-down, then settle.
