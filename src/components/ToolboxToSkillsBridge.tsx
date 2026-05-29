@@ -10,14 +10,13 @@
  * the site's walnut + ghost-grid background and MarginDoodles stay visible
  * on either side.
  */
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import {
   motion,
   useScroll,
   useTransform,
   useSpring,
 } from "framer-motion";
-import { ArrowDown } from "lucide-react";
 import { SKILLS } from "./skills/skillsData";
 import { FinalWorkbench } from "./skills/FinalWorkbench";
 
@@ -27,56 +26,9 @@ const H_BASE = 160;
 const H_LID = 80;
 const D = 500;
 
-const ShelfLine = ({ label }: { label?: string }) => (
-  <div className="relative w-full h-[6px] bg-gradient-to-b from-[#8a6a43] via-[#4a341e] to-[#2a1d11] shadow-[0_6px_20px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-sm flex items-center mt-2 z-10 shrink-0">
-    {label && (
-      <div className="absolute top-1/2 -translate-y-1/2 left-8 md:left-24 bg-[#0d0f12] px-4 text-[#bf935a] font-mono text-[10px] tracking-[0.3em] font-medium shadow-[0_0_10px_rgba(13,15,18,0.9)] border border-[#8a6a43]/20 uppercase">
-        {label}
-      </div>
-    )}
-  </div>
-);
-
-const Book = ({
-  title,
-  subtitle,
-  year,
-  colorClass,
-  borderClass,
-  pattern = true,
-}: {
-  title: string;
-  subtitle?: string;
-  year?: string;
-  colorClass: string;
-  borderClass: string;
-  pattern?: boolean;
-}) => (
-  <div
-    className={`w-14 sm:w-16 h-[200px] sm:h-[220px] ${colorClass} rounded-t flex flex-col justify-end items-center pb-6 shadow-[10px_10px_20px_rgba(0,0,0,0.8)] relative ${borderClass} z-20 shrink-0 transform-gpu`}
-  >
-    {pattern && (
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDQiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay pointer-events-none" />
-    )}
-    <div className="w-full flex-1 flex items-center justify-center relative z-10 p-2">
-      <span className="[writing-mode:vertical-rl] tracking-[0.2em] font-medium uppercase text-white/90 whitespace-nowrap py-8 max-h-full drop-shadow-md text-[13px] sm:text-[14px]">
-        {title}
-      </span>
-      {year && (
-        <span className="absolute top-4 [writing-mode:vertical-rl] text-white/40 font-mono text-[9px] tracking-widest">
-          {year}
-        </span>
-      )}
-    </div>
-    {subtitle && (
-      <span className="text-[8px] sm:text-[9px] text-white/50 w-full text-center px-1 leading-tight mb-auto mt-4 tracking-wide z-10 uppercase">
-        {subtitle}
-      </span>
-    )}
-    <div className="w-full h-[3px] bg-white/20 mt-2 mb-1 shadow-inner z-10" />
-    <div className="w-full h-1 bg-white/10 z-10" />
-  </div>
-);
+// Library shelf UI removed — the toolbox now lifts off the real ProjectsShelf
+// toolbox rendered by AboutToProjectsBridge above. We track its rect via
+// window.__toolboxRect for a pixel-perfect handoff.
 
 const Face = ({
   w,
@@ -161,7 +113,6 @@ const InnerApp = ({ contentOpacity, contentY }: { contentOpacity: any; contentY:
 
 const ToolboxToSkillsBridge = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const slotRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: 0, y: 0, startScale: 0.4, endScale: 1 });
   const [finalPos, setFinalPos] = useState({ x: -320, y: 180, scale: 0.8 });
 
@@ -176,26 +127,33 @@ const ToolboxToSkillsBridge = () => {
   });
 
   useLayoutEffect(() => {
+    let lastRect: { cx: number; cy: number; width: number } | null = null;
     const update = () => {
-      if (!slotRef.current) return;
-      const rect = slotRef.current.getBoundingClientRect();
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
 
-      const maxScale = Math.min(
-        (window.innerWidth * 0.9) / W,
-        (window.innerHeight * 0.85) / D,
-        1.1,
-      );
-
-      setPos({
-        x: cx - centerX,
-        y: cy - centerY,
-        startScale: rect.width / W,
-        endScale: maxScale,
-      });
+      // Pull live position of the realistic shelf toolbox from
+      // AboutToProjectsBridge. Cache the last seen rect so we still have a
+      // sane origin once the user has scrolled past the projects section.
+      const tr = (window as any).__toolboxRect as
+        | { cx: number; cy: number; width: number; height: number }
+        | undefined;
+      if (tr && tr.width > 0) {
+        lastRect = { cx: tr.cx, cy: tr.cy, width: tr.width };
+      }
+      if (lastRect) {
+        const maxScale = Math.min(
+          (window.innerWidth * 0.9) / W,
+          (window.innerHeight * 0.85) / D,
+          1.1,
+        );
+        setPos({
+          x: lastRect.cx - centerX,
+          y: lastRect.cy - centerY,
+          startScale: lastRect.width / W,
+          endScale: maxScale,
+        });
+      }
 
       const finalEl = document.querySelector(".final-toolbox");
       if (finalEl) {
@@ -208,73 +166,69 @@ const ToolboxToSkillsBridge = () => {
       }
     };
     update();
-    const t = setTimeout(update, 100);
+    let raf = 0;
+    const loop = () => {
+      update();
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
     window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, { passive: true });
     return () => {
-      clearTimeout(t);
+      cancelAnimationFrame(raf);
       window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update);
+      (window as any).__toolboxInFlight = false;
     };
   }, []);
 
-  const shelvesY = useTransform(smoothProgress, [0, 0.15], ["0vh", "-60vh"]);
-  const shelvesOpacity = useTransform(smoothProgress, [0.05, 0.15], [1, 0]);
+  // Tell AboutToProjectsBridge to hide its shelf toolbox while ours is flying.
+  useEffect(() => {
+    const unsub = smoothProgress.on("change", (v) => {
+      (window as any).__toolboxInFlight = v > 0.001 && v < 0.995;
+    });
+    return () => unsub();
+  }, [smoothProgress]);
 
-  const cxAnim = useTransform(smoothProgress, [0.05, 0.2, 0.8, 0.95], [pos.x, 0, 0, finalPos.x]);
-  const cyAnim = useTransform(smoothProgress, [0.05, 0.2, 0.8, 0.95], [pos.y, 0, 0, finalPos.y]);
+  const cxAnim = useTransform(smoothProgress, [0, 0.25, 0.75, 0.95], [pos.x, 0, 0, finalPos.x]);
+  const cyAnim = useTransform(smoothProgress, [0, 0.25, 0.75, 0.95], [pos.y, 0, 0, finalPos.y]);
 
-  const zWrapper = useTransform(smoothProgress, [0, 0.2, 0.8, 0.95], [-D / 2, 0, 0, 40]);
+  const zWrapper = useTransform(smoothProgress, [0, 0.25, 0.75, 0.95], [-D / 2, 0, 0, 40]);
   const cScale = useTransform(
     smoothProgress,
-    [0, 0.05, 0.2, 0.8, 0.95],
-    [pos.startScale, pos.startScale, pos.endScale, pos.endScale, finalPos.scale],
+    [0, 0.25, 0.75, 0.95],
+    [pos.startScale, pos.endScale, pos.endScale, finalPos.scale],
   );
 
   const rotX = useTransform(
     smoothProgress,
-    [0, 0.1, 0.2, 0.8, 0.95],
+    [0, 0.15, 0.25, 0.75, 0.95],
     ["0deg", "-15deg", "-90deg", "-90deg", "-15deg"],
   );
   const rotY = useTransform(
     smoothProgress,
-    [0, 0.1, 0.2, 0.8, 0.95],
+    [0, 0.15, 0.25, 0.75, 0.95],
     ["0deg", "-5deg", "0deg", "0deg", "35deg"],
   );
 
   const lidRotX = useTransform(
     smoothProgress,
-    [0.25, 0.4, 0.65, 0.75],
+    [0.3, 0.42, 0.6, 0.72],
     ["0deg", "125deg", "125deg", "0deg"],
   );
 
-  const contentOpacity = useTransform(smoothProgress, [0.35, 0.45, 0.55, 0.65], [0, 1, 1, 0]);
-  const contentY = useTransform(smoothProgress, [0.35, 0.45, 0.55, 0.65], [40, 0, 0, -20]);
+  const contentOpacity = useTransform(smoothProgress, [0.38, 0.46, 0.58, 0.66], [0, 1, 1, 0]);
+  const contentY = useTransform(smoothProgress, [0.38, 0.46, 0.58, 0.66], [40, 0, 0, -20]);
 
   const tableOpacity = useTransform(smoothProgress, [0.85, 0.95], [0, 1]);
   const tableY = useTransform(smoothProgress, [0.85, 0.95], [100, 0]);
-
-  const hintOpacity = useTransform(smoothProgress, [0, 0.05], [1, 0]);
 
   return (
     <div
       ref={containerRef}
       id="skills"
       className="relative w-full"
-      style={{ height: "600vh" }}
+      style={{ height: "450vh" }}
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
-        {/* Scroll hint */}
-        <motion.div
-          style={{ opacity: hintOpacity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20 pointer-events-none"
-        >
-          <span className="text-[10px] font-medium tracking-[0.4em] uppercase text-zinc-500">
-            Scroll to explore
-          </span>
-          <ArrowDown className="w-5 h-5 animate-bounce text-zinc-400 drop-shadow-md" />
-        </motion.div>
-
         {/* Final workbench desk scene */}
         <motion.div
           className="absolute inset-0 z-[80]"
@@ -283,46 +237,6 @@ const ToolboxToSkillsBridge = () => {
           <FinalWorkbench />
         </motion.div>
 
-        {/* Library shelves that recede on scroll */}
-        <motion.div
-          style={{ y: shelvesY, opacity: shelvesOpacity }}
-          className="absolute inset-0 pt-16 flex flex-col w-full h-full max-w-7xl mx-auto px-6 sm:px-12 pointer-events-none"
-        >
-          <div className="w-full flex-1 flex flex-col justify-center gap-[8vh] pb-32">
-            <div className="w-full flex flex-col items-center">
-              <div className="flex gap-6 sm:gap-14 items-end h-[240px] w-full px-8 sm:px-24 mb-[-1px]">
-                <Book
-                  title="MORE ABOUT ME"
-                  year="2026"
-                  colorClass="bg-[#2d4d45]"
-                  borderClass="border-l-[3px] border-[#457065] border-r-[2px] border-[#1a2f2a]"
-                />
-                <Book
-                  title="CLASSY"
-                  subtitle="Your custom timetable"
-                  colorClass="bg-[#353840]"
-                  borderClass="border-l-[3px] border-[#545963] border-r-[2px] border-[#202226]"
-                />
-              </div>
-              <ShelfLine label="PROJECTS" />
-            </div>
-            <div className="w-full flex flex-col items-center relative">
-              <div className="flex justify-between items-end min-h-[240px] w-full px-8 sm:px-24 mb-[-1px]">
-                <Book
-                  title="VAIDYA"
-                  colorClass="bg-[#3b3e45]"
-                  borderClass="border-l-[3px] border-[#5c616b] border-r-[2px] border-[#24262a]"
-                />
-                {/* Empty slot used for toolbox start bounds */}
-                <div
-                  className="w-[300px] h-[90px] shrink-0 pointer-events-none relative"
-                  ref={slotRef}
-                />
-              </div>
-              <ShelfLine label="GENERAL · 01" />
-            </div>
-          </div>
-        </motion.div>
 
         {/* 3D Toolbox entity */}
         <motion.div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-center">
