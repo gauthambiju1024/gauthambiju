@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
+import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
+
 
 /** Narrow spine width used by the hero filing animation; About spine stays this wide forever. */
 const ABOUT_SPINE_W = 28;
