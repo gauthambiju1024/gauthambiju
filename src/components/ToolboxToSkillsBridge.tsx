@@ -1,18 +1,18 @@
 import { useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 import ToolboxInterior from "./skills/ToolboxInterior";
-import { ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
+import { ToolboxClosed, ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
 
 
 /**
  * ToolboxToSkillsBridge — pinned scroll-driven flip.
- * 0.00–0.30  Closed toolbox scales up and translates to centre.
- * 0.30–0.65  Lid swings open along its hinge; tray container reveals.
+ * 0.00–0.30  The SAME closed toolbox from the shelf scales up and centres.
+ * 0.30–0.42  Closed toolbox crossfades into the open lid+body assembly
+ *            (visually identical silhouette → no jump, no blank).
+ * 0.30–0.65  Lid swings open along its hinge; tray body reveals.
  * 0.65–1.00  Interior (skills) fades & scales in; section becomes interactive.
  */
-const ToolboxToSkillsBridge = () => {
-  const pinRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
+
 
   // Tray (body of toolbox) — scales/centres
   const trayScale = useTransform(scrollYProgress, [0, 0.3, 1], [0.55, 1, 1]);
