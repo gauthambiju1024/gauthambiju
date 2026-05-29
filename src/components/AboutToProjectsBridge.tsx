@@ -465,7 +465,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                             pointerEvents: "auto",
                           }}
                         >
-                          <ToolboxClosed width={220} height={174} />
+                          <ToolboxClosed width={220} />
                         </a>
                       </div>
                     );
