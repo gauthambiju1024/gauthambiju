@@ -10,14 +10,13 @@
  * the site's walnut + ghost-grid background and MarginDoodles stay visible
  * on either side.
  */
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import {
   motion,
   useScroll,
   useTransform,
   useSpring,
 } from "framer-motion";
-import { ArrowDown } from "lucide-react";
 import { SKILLS } from "./skills/skillsData";
 import { FinalWorkbench } from "./skills/FinalWorkbench";
 
