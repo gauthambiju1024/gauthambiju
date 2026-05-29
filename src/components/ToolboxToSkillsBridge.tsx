@@ -28,13 +28,12 @@ const ToolboxToSkillsBridge = () => {
 
   // Starting position read from the published shelf-toolbox rect so the centre
   // stage begins exactly where the shelf prop sat → seamless handoff.
-  const [start, setStart] = useState({ x: 0, y: 0, scale: 0.4 });
+  const [start, setStart] = useState<{ x: number; y: number; scale: number } | null>(null);
   const [endScale, setEndScale] = useState(1);
 
   useLayoutEffect(() => {
     const update = () => {
       if (!slotRef.current) return;
-      const slotRect = slotRef.current.getBoundingClientRect();
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
 
@@ -42,11 +41,12 @@ const ToolboxToSkillsBridge = () => {
         | { left: number; top: number; width: number; height: number; cx: number; cy: number }
         | null;
 
+      // 40% smaller than viewport-max
       const max = Math.min(
         (window.innerWidth * 0.92) / TBX_W,
         (window.innerHeight * 0.78) / TBX_D,
         1.1
-      );
+      ) * 0.6;
       setEndScale(max);
 
       if (shelf && shelf.width > 0) {
@@ -55,8 +55,6 @@ const ToolboxToSkillsBridge = () => {
           y: shelf.cy - screenCy,
           scale: shelf.width / TBX_W,
         });
-      } else {
-        setStart({ x: 0, y: window.innerHeight * 0.35, scale: 0.25 });
       }
     };
     update();
@@ -69,6 +67,8 @@ const ToolboxToSkillsBridge = () => {
       window.removeEventListener("scroll", update);
     };
   }, []);
+
+  const s = start ?? { x: 0, y: 0, scale: 0.25 };
 
   // Position: park on shelf rect (re-read live below) → centre → settle
   // We hold the actor exactly over the shelf prop until ~0.30 so the handoff
