@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
+import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
+
 
 /** Narrow spine width used by the hero filing animation; About spine stays this wide forever. */
 const ABOUT_SPINE_W = 28;
@@ -136,18 +138,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
-      // Pure scroll-reactive: shelf About spine only shows when bridge fully
-      // settled. Reverses cleanly on scroll-up — no one-shot lock that would
-      // leave the spine visible while the flight spine re-renders.
+      // Crossfade with the flying spine over the same 0.985 → 1.0 window so
+      // the two opacities sum to 1.0 — no gap frame, no overlap pop, and the
+      // animation reverses cleanly on scroll-up.
       if (aboutSpineRef.current) {
-        if (settled) {
-          aboutSpineRef.current.style.opacity = "1";
-          aboutSpineRef.current.style.pointerEvents = "auto";
-        } else {
-          aboutSpineRef.current.style.opacity = "0";
-          aboutSpineRef.current.style.pointerEvents = "none";
-        }
+        const shelfFade = clamp01((bridge - 0.985) / 0.015);
+        aboutSpineRef.current.style.opacity = String(shelfFade);
+        aboutSpineRef.current.style.pointerEvents = shelfFade >= 1 ? "auto" : "none";
       }
+
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
       const drawWinStart = 0.74;
@@ -463,63 +462,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="220" height="174" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                              <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stopColor="hsl(220 6% 32%)" />
-                                <stop offset="0.5" stopColor="hsl(220 6% 24%)" />
-                                <stop offset="1" stopColor="hsl(220 6% 18%)" />
-                              </linearGradient>
-                              <linearGradient id="tbLid" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stopColor="hsl(220 6% 40%)" />
-                                <stop offset="1" stopColor="hsl(220 6% 24%)" />
-                              </linearGradient>
-                              <linearGradient id="tbHandle" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0" stopColor="hsl(0 0% 78%)" />
-                                <stop offset="0.5" stopColor="hsl(0 0% 58%)" />
-                                <stop offset="1" stopColor="hsl(0 0% 38%)" />
-                              </linearGradient>
-                            </defs>
-
-                            {/* ground shadow now handled by wrapper drop-shadow filter */}
-
-                            {/* handle */}
-                            <path d="M 30 22 Q 48 6 66 22" stroke="url(#tbHandle)" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <circle cx="30" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
-                            <circle cx="66" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
-
-                            {/* lid */}
-                            <rect x="8" y="22" width="80" height="14" rx="2" fill="url(#tbLid)" stroke="hsl(220 8% 10%)" strokeWidth="1" />
-                            <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
-                            {/* hinge */}
-                            <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(220 8% 8%)" strokeWidth="1" />
-                            <line x1="8" y1="36.7" x2="88" y2="36.7" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-
-                            {/* body */}
-                            <rect x="8" y="36" width="80" height="32" rx="2" fill="url(#tbBody)" stroke="hsl(220 8% 10%)" strokeWidth="1" />
-                            {/* brushed-metal striations */}
-                            <line x1="10" y1="42" x2="86" y2="42" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-                            <line x1="10" y1="48" x2="86" y2="48" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
-                            <line x1="10" y1="54" x2="86" y2="54" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-                            <line x1="10" y1="60" x2="86" y2="60" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
-
-                            {/* chrome latches */}
-                            <rect x="22" y="32" width="10" height="8" rx="1" fill="url(#tbHandle)" stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-                            <rect x="64" y="32" width="10" height="8" rx="1" fill="url(#tbHandle)" stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-                            <circle cx="27" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
-                            <circle cx="69" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
-
-                            {/* center label plaque — engraved slate */}
-                            <rect x="38" y="48" width="20" height="9" rx="1" fill="hsl(220 8% 14%)" stroke="hsl(220 8% 8%)" strokeWidth="0.5" />
-                            <text x="48" y="54.4" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 8% 70%)" letterSpacing="0.6">TOOLS</text>
-
-                            {/* feet */}
-                            <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-                            <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-
-                            {/* top edge highlight */}
-                            <line x1="10" y1="37" x2="86" y2="37" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
-                          </svg>
+                          <ToolboxClosed width={220} height={174} />
                         </a>
                       </div>
                     );
