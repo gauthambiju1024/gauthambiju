@@ -380,12 +380,16 @@ export const Toolbox3D: React.FC<Toolbox3DProps> = ({
  */
 interface ClosedProps {
   width?: number;
-  /** Slight tilt to read as "sitting on shelf". */
+  /** Kept for backwards-compat; ignored. Shelf prop is now front-on. */
   tilt?: boolean;
 }
-export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220, tilt = true }) => {
+export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220 }) => {
   const ratio = (TBX_H_BASE + TBX_H_LID) / TBX_W;
-  const height = width * ratio;
+  const bodyHeight = width * ratio;
+  // Handle sticks ~50px above the lid in unit space — account for it so the
+  // toolbox sits flush on the shelf plank without being clipped.
+  const handleOverhang = 50 * (width / TBX_W);
+  const height = bodyHeight + handleOverhang;
   const scale = width / TBX_W;
   return (
     <div
@@ -393,7 +397,10 @@ export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220, tilt = true 
         width,
         height,
         perspective: 1400,
-        perspectiveOrigin: "50% 60%",
+        perspectiveOrigin: "50% 50%",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
       }}
     >
       <div
@@ -401,16 +408,17 @@ export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220, tilt = true 
           width: TBX_W,
           height: TBX_H_BASE + TBX_H_LID,
           transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          transformOrigin: "bottom center",
         }}
       >
         <Toolbox3D
           scale={1}
-          rotateX={tilt ? "-12deg" : "0deg"}
-          rotateY={tilt ? "-8deg" : "0deg"}
+          rotateX="0deg"
+          rotateY="0deg"
           lidRotateX="0deg"
         />
       </div>
     </div>
   );
 };
+

@@ -1,72 +1,60 @@
+## Goal
 
-## Scope
+1. Show the shelf toolbox **front-on, resting on the plank** (no top-down tilt).
+2. Make that *same* toolbox perform the scroll-driven flip into the Skills section using the timing from your scaffold.
 
-Stop after the toolbox + flip-open transition is in place. The interior skills grid will use the existing admin-backed skills source (`ToolboxInterior` already reads from `useSiteContent("skills", "groups")`), styled as the foam-cutout grid from the reference, but NOT re-wired or schema-changed.
+No new dependencies — `framer-motion` already exposes the same `useScroll` / `useTransform` / `useSpring` / `motion` APIs as `motion/react`, so `npm install motion` is not needed.
 
-## What changes
+---
 
-### 1. New shared toolbox artwork — `src/components/skills/ToolboxSvg.tsx` (rewrite)
+## Changes
 
-Replace the small flat SVG with three React components that render the **landscape 3D toolbox** from the reference (W=800, H_BASE=160, H_LID=80, D=500 base proportions, but expressed as a self-scaling 3D unit driven by a `scale` prop):
+### 1. `src/components/skills/ToolboxSvg.tsx` — front-view shelf prop
 
-- `ToolboxClosed3D({ scale })` — full 6-face base + 6-face lid assembly, lid closed (rotateX=0). Used as the static, scaled-down shelf prop AND as the starting frame of the flip. Contains: dark `#0a0e12` faces, gold-tinted borders, corner rivets, hazard stripes, twin latches with "L-01"/"R-02" plaques, central "CORE SYS_MDL" nameplate, carbon-fiber overlays, layered handle on the lid front, metal corner brackets. Uses `transform-style: preserve-3d` and the `<Face>` helper.
-- `ToolboxLid3D({ rotateX, scale })` — only the lid sub-assembly with its hinge transform-origin (`50% 100% -D/2`) and a `rotateX` motion-value prop for the scroll-driven hinge open.
-- `ToolboxBase3D({ scale, children })` — only the base sub-assembly, with a slot for the interior content on its top-face (the "floor" the lid opens to reveal).
+`ToolboxClosed` currently tilts the box (`rotateX: -12deg`, `rotateY: -8deg`), which is why on the shelf it reads as a top-down 3/4 view. Fix:
 
-The old flat `ToolboxClosed` / `ToolboxLidOnly` / `ToolboxBodyOnly` exports are removed.
+- Remove the `tilt` prop's default rotation. Render the toolbox with `rotateX: 0deg`, `rotateY: 0deg`, lid closed → pure front face (CORE nameplate, latches, handle visible).
+- Recompute the wrapper height from the natural front-view aspect: `height = width * (H_BASE + H_LID) / W` (220 × 0.30 = 66px for the body; +50px for the handle that sticks above).
+- Add a light perspective (`perspective: 1200px`) so the rivets/borders still read as dimensional but the face is square-on.
+- Keep the `Toolbox3D` internals untouched — only `ToolboxClosed` wrapper changes.
 
-### 2. Shelf prop — `src/components/AboutToProjectsBridge.tsx`
+### 2. `src/components/AboutToProjectsBridge.tsx` — shelf slot
 
-Replace the inline `<ToolboxClosed width={220} height={174} />` with `<ToolboxClosed3D scale={0.22} />` inside a 220×174 wrapper. The wrapper still:
-- registers as the last cell of the bottom shelf row
-- carries the existing rise-into-row archive animation
-- publishes `window.__toolboxRect` for the next bridge
-- handles the `#skills` link / `transformOrigin: "bottom right"` for the next handoff
+- Change the `<a>` wrapper around `<ToolboxClosed />` from the fixed `width:220, height:174` to a height that matches the new front-view aspect (≈ 116px including handle overhang), so the toolbox visually sits *on* the plank instead of floating in a tall blank box.
+- Anchor it to the plank bottom (`alignItems: flex-end`).
+- No animation logic changes; `__toolboxRect` keeps publishing the new (smaller, front-view) rect so the bridge handoff still lines up exactly.
 
-No animation logic changes here — only the artwork.
+### 3. `src/components/ToolboxToSkillsBridge.tsx` — match your scaffold timing
 
-### 3. Toolbox→Skills bridge — `src/components/ToolboxToSkillsBridge.tsx` (rewrite)
-
-Rebuild as a scroll-driven 3D flip mirroring the reference's behavior, scoped to the existing pinned 260vh section. Stage uses `[perspective:2500px]` and a `[transform-style:preserve-3d]` 3D container sized W×(H_BASE+H_LID).
-
-Scroll-progress timeline (`useScroll` + `useSpring` for elegant smoothing, consistent with project conventions):
+Rewrite the keyframes to exactly your scaffold (with continuity from the shelf rect):
 
 ```text
-progress   stage transform                         lid rotateX   interior
-0.00       at shelf rect (x,y,scale from           0             hidden
-           __toolboxRect), rotX 0, rotY 0
-0.05–0.20  fly to centre, rotX → -15°, scale up    0             hidden
-0.20–0.30  rotX → -90° (top-down orthographic)     0             hidden
-0.30–0.45  hold top-down                           0 → 125°      hidden → fade in
-0.45–0.65  hold top-down, lid fully open           125°          fully visible (interactive)
-0.65–0.95  rotX → -15°, rotY → 35° (settle on      125° → 0°     fade out → hidden
-           desk view)
+smoothProgress = useSpring(scrollYProgress, { stiffness: 70, damping: 20, restDelta: 0.001 })
+
+x      : [0, 0.1, 0.8, 1]            → [shelfDx, 0,      0,      0]
+y      : [0, 0.1, 0.8, 1]            → [shelfDy, 0,      0,     40]
+scale  : [0, 0.1, 0.2, 0.8, 0.95]    → [shelfS,  shelfS, fitS,   fitS,   fitS*0.85]
+
+rotateX: [0, 0.1, 0.2, 0.8, 0.95]    → ["0deg",  "-15deg","-90deg","-90deg","-15deg"]
+rotateY: [0, 0.1, 0.2, 0.8, 0.95]    → ["0deg",  "-5deg", "0deg",  "0deg",  "35deg"]
+lidRotX: [0.25, 0.4, 0.65, 0.75]     → ["0deg",  "125deg","125deg","0deg"]
+
+interiorOpacity: [0.40, 0.50, 0.65, 0.72] → [0, 1, 1, 0]
 ```
 
-The lid's foam-cutout skills grid (top-face of the base, the "floor") receives an `opacity` motion-value driven by 0.35–0.55 fade-in. This floor face is the only `pointerEvents:auto` face — matching the reference.
+- Stage perspective dropped from 2500px → **1200px** to match your scaffold (more pronounced 3D).
+- Starting `rotateX/rotateY = 0deg` now matches the shelf prop's front view → seamless visual handoff (no instant rotation snap when the bridge takes over).
+- `__skillsFlipActive` still gates so the shelf prop hides once `t > 0.02`.
+- Sticky `260vh` section, dark stage background, `ToolboxInterior` on the floor face — all unchanged.
 
-The floor face's content is `<ToolboxInterior />` (existing) wrapped in the same foam/grid container styling as the reference's `InnerApp` (foam-pattern background, 3-column grid, skill chips with foam-cutout shadow, screw rivet). `ToolboxInterior` already pulls from admin (`useSiteContent("skills","groups")`) and the existing `DEFAULT_GROUPS` fallback — no admin/schema change.
+### Out of scope
 
-Starting position uses `window.__toolboxRect` (already published by the shelf bridge) so the 3D toolbox begins exactly on the shelf prop — visual continuity, no blank handoff. As soon as scroll begins, the shelf prop is faded (existing `__bridgeSettled` logic already covers this since the shelf section unpins as we enter the Skills section).
+- About-me spine flicker, projects shelf layout, admin/DB, constellation background, ToolboxInterior content.
 
-A `useLayoutEffect` measures and re-publishes positions on resize, matching the reference's `update()` pattern.
+---
 
-### 4. Cleanup
+## Files touched
 
-- Remove the `closedOpacity/openOpacity/lidRotate/openAssembly` flat-SVG code path from the current `ToolboxToSkillsBridge`.
-- Keep `id="skills"`, scroll-margin, and pinned section height (`260vh`) unchanged so `AssemblyHeader` nav targeting is unaffected.
-- No changes to `Index.tsx`, admin pages, or DB.
-
-## Out of scope (per "do only till here first")
-
-- Constellation background, leaf decor, "ConstellationBg" from reference — not added.
-- Post-skills "settle on desk" workbench scene from reference — not added.
-- Certificates / scroll-marker dock / "Scroll to explore" arrow — not added.
-- Any admin schema or `useSiteData` changes.
-- Changing the existing About→Projects spine flicker / appearance code — already covered in prior turns.
-
-## Acceptance
-
-- Shelf shows the new landscape 3D toolbox (scaled down) in the bottom-right slot, hand-drawn-quality dark-gold aesthetic.
-- Scrolling into the Skills section flies the same toolbox to centre, rotates to a top-down view, hinges the lid open, and reveals the admin-backed skills grid styled as foam-cutout tools.
-- Scrolling back reverses smoothly with no flicker or blank frame.
+- `src/components/skills/ToolboxSvg.tsx` — front-view `ToolboxClosed` wrapper
+- `src/components/AboutToProjectsBridge.tsx` — shelf slot sizing/anchor
+- `src/components/ToolboxToSkillsBridge.tsx` — retimed scroll choreography matching your scaffold
