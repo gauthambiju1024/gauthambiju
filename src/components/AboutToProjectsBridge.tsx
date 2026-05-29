@@ -465,8 +465,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                       </div>
                     );
                   })()}
-
-                  })()}
                 </div>
 
                 {/* ledge — wooden plank with thickness + drop shadow so spines visibly rest on it */}
