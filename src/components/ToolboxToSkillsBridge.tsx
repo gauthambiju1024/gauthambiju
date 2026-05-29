@@ -1,44 +1,119 @@
-import { useRef } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { Toolbox3D, TBX_W, TBX_H_BASE, TBX_H_LID, TBX_D } from "./skills/ToolboxSvg";
 import ToolboxInterior from "./skills/ToolboxInterior";
-import { ToolboxClosed, ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
-
 
 /**
- * ToolboxToSkillsBridge — pinned scroll-driven flip.
- * 0.00–0.30  The SAME closed toolbox from the shelf scales up and centres.
- * 0.30–0.42  Closed toolbox crossfades into the open lid+body assembly
- *            (visually identical silhouette → no jump, no blank).
- * 0.30–0.65  Lid swings open along its hinge; tray body reveals.
- * 0.65–1.00  Interior (skills) fades & scales in; section becomes interactive.
+ * Toolbox → Skills bridge.
+ * Pinned 260vh section. The SAME 3D toolbox that sits on the projects shelf
+ * flies to centre, rotates to a top-down view, the lid hinges back, and the
+ * admin-backed skills grid is revealed on the floor of the open tray.
+ *
+ * Timeline (scroll progress):
+ *   0.00–0.05  pre-roll (toolbox is at the shelf's published rect)
+ *   0.05–0.20  fly to centre + scale up, slight tilt (-15°, -5°)
+ *   0.20–0.30  rotate to top-down (-90°, 0°)
+ *   0.30–0.65  lid hinges open (0 → 125°); interior fades in
+ *   0.65–0.95  settle on desk (rotate back to -15°, +35°); interior fades out
  */
 const ToolboxToSkillsBridge = () => {
   const pinRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
+  const slotRef = useRef<HTMLDivElement>(null);
 
-  // Stage container — scales/centres
-  const trayScale = useTransform(scrollYProgress, [0, 0.3, 1], [0.55, 1, 1]);
-  const trayY = useTransform(scrollYProgress, [0, 0.3], [60, 0]);
-  const trayOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+  const { scrollYProgress } = useScroll({
+    target: pinRef,
+    offset: ["start start", "end end"],
+  });
+  const t = useSpring(scrollYProgress, { stiffness: 80, damping: 22, restDelta: 0.001 });
 
-  // Closed shelf toolbox — visible at start, fades into the open assembly at ~0.32–0.42.
-  const closedOpacity = useTransform(scrollYProgress, [0.30, 0.42], [1, 0]);
-  // Open assembly (lid + body tray) fades in just as closed fades out — same silhouette → no blank.
-  const openOpacity = useTransform(scrollYProgress, [0.30, 0.42], [0, 1]);
+  // Starting position read from the published shelf-toolbox rect so the centre
+  // stage begins exactly where the shelf prop sat → seamless handoff.
+  const [start, setStart] = useState({ x: 0, y: 0, scale: 0.4 });
+  const [endScale, setEndScale] = useState(1);
 
-  // Lid — hinge open (rotateX). Lid sits above the tray, hinge at its bottom.
-  const lidRotate = useTransform(scrollYProgress, [0.42, 0.72], [0, -135]);
-  const lidFilter = useTransform(scrollYProgress, [0.42, 0.72], [
-    "drop-shadow(0 10px 15px rgba(0,0,0,0.5))",
-    "drop-shadow(0 3px 6px rgba(0,0,0,0.15))",
-  ]);
+  useLayoutEffect(() => {
+    const update = () => {
+      if (!slotRef.current) return;
+      const slotRect = slotRef.current.getBoundingClientRect();
+      const cx = slotRect.left + slotRect.width / 2;
+      const cy = slotRect.top + slotRect.height / 2;
+      const screenCx = window.innerWidth / 2;
+      const screenCy = window.innerHeight / 2;
 
-  // Interior reveal
-  const interiorOpacity = useTransform(scrollYProgress, [0.55, 0.78], [0, 1]);
-  const interiorScale = useTransform(scrollYProgress, [0.55, 0.78], [0.92, 1]);
+      const shelf = (window as any).__toolboxRect as
+        | { left: number; top: number; width: number; height: number; cx: number; cy: number }
+        | null;
 
-  // Settle indicator
-  const settledOpacity = useTransform(scrollYProgress, [0.7, 0.85], [0, 1]);
+      const max = Math.min(
+        (window.innerWidth * 0.92) / TBX_W,
+        (window.innerHeight * 0.78) / TBX_D,
+        1.1
+      );
+      setEndScale(max);
+
+      if (shelf && shelf.width > 0) {
+        setStart({
+          x: shelf.cx - screenCx,
+          y: shelf.cy - screenCy,
+          scale: shelf.width / TBX_W,
+        });
+      } else {
+        // Fallback: come up from below if shelf rect not published yet
+        setStart({ x: 0, y: window.innerHeight * 0.35, scale: 0.25 });
+      }
+    };
+    update();
+    const id = setTimeout(update, 120);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  // Stage X/Y: shelf-rect → centre → centre → desk-settle (slight offset).
+  const x = useTransform(t, [0, 0.2, 0.8, 1], [start.x, 0, 0, 0]);
+  const y = useTransform(t, [0, 0.2, 0.8, 1], [start.y, 0, 0, 40]);
+  const scale = useTransform(
+    t,
+    [0, 0.05, 0.2, 0.8, 0.95],
+    [start.scale, start.scale, endScale, endScale, endScale * 0.85]
+  );
+
+  // Rotations: rest → tilt → top-down → hold → desk view
+  const rotX = useTransform(
+    t,
+    [0, 0.05, 0.2, 0.65, 0.95],
+    ["0deg", "-12deg", "-90deg", "-90deg", "-15deg"]
+  );
+  const rotY = useTransform(
+    t,
+    [0, 0.05, 0.2, 0.65, 0.95],
+    ["0deg", "-6deg", "0deg", "0deg", "30deg"]
+  );
+
+  // Lid hinge — closed → open → closed-on-settle
+  const lidRot = useTransform(t, [0.30, 0.42, 0.65, 0.78], ["0deg", "125deg", "125deg", "0deg"]);
+
+  // Interior reveal — fades in once the lid is mostly open, fades out before settle
+  const interiorOpacity = useTransform(t, [0.40, 0.50, 0.65, 0.75], [0, 1, 1, 0]);
+  const interiorY = useTransform(t, [0.40, 0.50, 0.65, 0.75], [30, 0, 0, -10]);
+
+  // Section background fade (so the shelf below shows through at start)
+  const bgOpacity = useTransform(t, [0, 0.18, 0.82, 1], [0, 1, 1, 0.3]);
+
+  // Publish 'flip active' so the shelf prop can hide while we render the 3D one
+  useEffect(() => {
+    const unsub = t.on("change", (v) => {
+      (window as any).__skillsFlipActive = v > 0.02;
+    });
+    return () => {
+      unsub();
+      (window as any).__skillsFlipActive = false;
+    };
+  }, [t]);
 
   return (
     <section
@@ -49,111 +124,46 @@ const ToolboxToSkillsBridge = () => {
       className="relative"
     >
       <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        <div className="w-full h-full pt-[100px] pb-6 flex items-center justify-center">
-          {/* Stage */}
+        {/* Dark stage background */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            opacity: bgOpacity,
+            background:
+              "radial-gradient(ellipse at 50% 40%, hsl(220 18% 8%) 0%, hsl(220 22% 5%) 60%, hsl(220 24% 3%) 100%)",
+          }}
+        />
+
+        {/* slot used purely as a screen-centre anchor for the layout-effect math */}
+        <div ref={slotRef} className="absolute left-1/2 top-1/2 w-1 h-1" aria-hidden />
+
+        {/* Stage with shared perspective */}
+        <div
+          className="absolute inset-0 flex items-center justify-center [perspective:2500px]"
+          style={{ pointerEvents: "none" }}
+        >
           <motion.div
-            style={{
-              y: trayY,
-              scale: trayScale,
-              opacity: trayOpacity,
-              width: "min(92vw, 1100px)",
-              height: "min(72vh, 620px)",
-              position: "relative",
-              perspective: "1200px",
-            }}
+            className="relative"
+            style={{ x, y, pointerEvents: "auto" }}
           >
-            {/* Closed shelf toolbox — same artwork that sat on the projects shelf.
-                Visible until ~scroll 0.42, then crossfades into the open assembly. */}
-            <motion.div
-              aria-hidden
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: closedOpacity,
-                pointerEvents: "none",
-                filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.45)) drop-shadow(0 6px 10px rgba(0,0,0,0.35))",
-              }}
-            >
-              <div style={{ width: "min(60%, 420px)", aspectRatio: "96 / 76" }}>
-                <ToolboxClosed width="100%" height="100%" />
-              </div>
-            </motion.div>
-
-            {/* Open assembly (lid + body tray) — fades in as the closed toolbox fades out. */}
-            <motion.div style={{ position: "absolute", inset: 0, opacity: openOpacity }}>
-              {/* Lid (hinged at bottom edge) */}
-              <motion.div
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  left: 0, right: 0,
-                  bottom: "100%",
-                  height: "min(14vh, 92px)",
-                  transformOrigin: "bottom center",
-                  transformStyle: "preserve-3d",
-                  rotateX: lidRotate,
-                  filter: lidFilter,
-                }}
-              >
-                <ToolboxLidOnly />
-              </motion.div>
-
-
-            {/* Tray body */}
-            <div
-              className="rounded-md w-full h-full p-4 md:p-6 relative"
-              style={{
-                background: "linear-gradient(180deg, hsl(220 6% 22%) 0%, hsl(220 6% 16%) 100%)",
-                border: "1px solid hsl(220 6% 10%)",
-                boxShadow:
-                  "inset 0 1px 0 hsl(220 6% 32%), inset 0 -1px 0 hsl(220 8% 8%), 0 18px 40px -10px rgba(0,0,0,0.6)",
-                backgroundImage:
-                  "linear-gradient(180deg, hsl(220 6% 22%) 0%, hsl(220 6% 16%) 100%), repeating-linear-gradient(180deg, transparent 0 2px, rgba(255,255,255,0.015) 2px 3px)",
-              }}
-            >
-              {/* Same body silhouette as shelf toolbox — back wall of the open tray */}
-              <div aria-hidden className="absolute inset-0 pointer-events-none opacity-40">
-                <ToolboxBodyOnly />
-              </div>
-
-
-              {/* Header strip */}
-              <motion.div
-                className="flex items-center gap-3 mb-4"
-                style={{ opacity: settledOpacity }}
-              >
-                <div className="h-px flex-1" style={{ background: "hsl(220 5% 28%)" }} />
-                <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: "hsl(40 6% 52%)" }}>
-                  Skills · The Toolbox
-                </span>
-                <div className="h-px flex-1" style={{ background: "hsl(220 5% 28%)" }} />
-              </motion.div>
-
-              {/* Interior */}
-              <motion.div
-                style={{ opacity: interiorOpacity, scale: interiorScale }}
-                className="h-[calc(100%-2rem)]"
-              >
-                <ToolboxInterior />
-              </motion.div>
-            </div>
-            </motion.div>
-
-
-            {/* Subtle drop-shadow under closed/opening toolbox */}
-            <div
-              aria-hidden
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: -24,
-                width: "70%",
-                height: 24,
-                background: "radial-gradient(50% 100% at 50% 0%, rgba(0,0,0,0.45), rgba(0,0,0,0))",
-                filter: "blur(6px)",
-              }}
+            <Toolbox3D
+              scale={scale}
+              rotateX={rotX}
+              rotateY={rotY}
+              lidRotateX={lidRot}
+              floorContent={
+                <motion.div
+                  style={{ opacity: interiorOpacity, y: interiorY }}
+                  className="w-full h-full bg-[#0a0a0c] p-6 flex flex-col gap-4 relative rounded-md shadow-[inset_0_20px_50px_rgba(0,0,0,1)] overflow-hidden border-[6px] border-[#05080a]"
+                >
+                  {/* Foam base texture */}
+                  <div className="absolute inset-0 opacity-70 bg-[repeating-linear-gradient(45deg,#0c0c0e_0,#0c0c0e_4px,transparent_4px,transparent_8px),repeating-linear-gradient(-45deg,#111_0,#111_2px,transparent_2px,transparent_6px)] mix-blend-overlay pointer-events-none" />
+                  <div className="relative z-10 flex-1 overflow-y-auto hide-scrollbar">
+                    <ToolboxInterior />
+                  </div>
+                </motion.div>
+              }
             />
           </motion.div>
         </div>

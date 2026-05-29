@@ -1,117 +1,416 @@
+import { MotionValue, motion, MotionStyle } from "framer-motion";
+import React, { CSSProperties } from "react";
+
 /**
- * Shared toolbox artwork — single source of truth for the closed shelf toolbox
- * AND the Toolbox→Skills flip. Keeps lid/body visuals identical across both
- * usages. Gradient ids are scoped per-component to avoid SVG id collisions.
+ * Landscape 3D toolbox — single source of truth.
+ * - Used statically (scaled-down) as the shelf prop in AboutToProjectsBridge.
+ * - Used dynamically (motion-value driven) as the centrepiece of the
+ *   Toolbox→Skills flip in ToolboxToSkillsBridge.
+ *
+ * Base unit dimensions (in CSS px before scale): W × (H_BASE + H_LID).
+ * Wrap in a sized container; pass `scale` to fit. Internally renders 3D with
+ * `transform-style: preserve-3d` and the <Face> helper.
  */
 
-const Defs = ({ prefix }: { prefix: string }) => (
-  <defs>
-    <linearGradient id={`${prefix}-body`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stopColor="hsl(220 6% 32%)" />
-      <stop offset="0.5" stopColor="hsl(220 6% 24%)" />
-      <stop offset="1" stopColor="hsl(220 6% 18%)" />
-    </linearGradient>
-    <linearGradient id={`${prefix}-lid`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stopColor="hsl(220 6% 40%)" />
-      <stop offset="1" stopColor="hsl(220 6% 24%)" />
-    </linearGradient>
-    <linearGradient id={`${prefix}-handle`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stopColor="hsl(0 0% 78%)" />
-      <stop offset="0.5" stopColor="hsl(0 0% 58%)" />
-      <stop offset="1" stopColor="hsl(0 0% 38%)" />
-    </linearGradient>
-  </defs>
+export const TBX_W = 800;
+export const TBX_H_BASE = 160;
+export const TBX_H_LID = 80;
+export const TBX_D = 500;
+
+type FaceProps = {
+  w: number;
+  h: number;
+  transform: string;
+  className?: string;
+  children?: React.ReactNode;
+  bg?: string;
+  innerBlur?: boolean;
+  pointerEvents?: CSSProperties["pointerEvents"];
+};
+
+const Face = ({
+  w,
+  h,
+  transform,
+  className = "",
+  children,
+  bg = "bg-[#1f2125]",
+  innerBlur = false,
+  pointerEvents = "none",
+}: FaceProps) => (
+  <div
+    className={`absolute left-1/2 top-1/2 [backface-visibility:hidden] ${className} ${bg}`}
+    style={{
+      width: w,
+      height: h,
+      marginLeft: -w / 2,
+      marginTop: -h / 2,
+      transform,
+      pointerEvents,
+    }}
+  >
+    {innerBlur && (
+      <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.95)] pointer-events-none" />
+    )}
+    {children}
+  </div>
 );
 
-interface ClosedProps {
-  width?: number | string;
-  height?: number | string;
+const Latch = ({ label }: { label: string }) => (
+  <div className="w-20 h-16 bg-[rgba(10,14,18,0.96)] rounded-b shadow-[0_6px_15px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(184,146,74,0.2)] flex flex-col items-center justify-end pb-2 border border-[rgba(184,146,74,0.40)] relative overflow-hidden">
+    <div className="absolute flex justify-between w-full px-2 top-3">
+      <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+      <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+    </div>
+    <span className="absolute top-1 font-mono text-[8px] font-bold text-[#e5c47a] opacity-40 tracking-widest pl-0.5 mix-blend-overlay">
+      {label}
+    </span>
+    <div className="absolute top-2 w-[80%] h-1 bg-[rgba(184,146,74,0.2)] rounded-full" />
+    <div className="w-6 h-4 bg-[#0a0e12] rounded border border-[rgba(184,146,74,0.40)] shadow-[inset_0_2px_4px_rgba(184,146,74,0.1),inset_0_-2px_4px_rgba(0,0,0,0.9)]" />
+  </div>
+);
+
+const LidLatchStub = () => (
+  <div className="w-20 h-10 bg-[rgba(10,14,18,0.96)] rounded-t-lg shadow-[inset_0_2px_10px_rgba(184,146,74,0.1)] border border-[rgba(184,146,74,0.40)] border-b-0 relative overflow-hidden">
+    <div className="absolute bottom-2 w-[80%] left-[10%] h-1 bg-[rgba(184,146,74,0.3)] rounded-full shadow-inner" />
+    <div className="absolute flex justify-between w-full px-[6px] bottom-5">
+      <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+      <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+    </div>
+  </div>
+);
+
+const Handle = () => (
+  <div className="absolute -top-[50px] left-1/2 -translate-x-1/2 w-64 h-[50px] [transform-style:preserve-3d]">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div
+        key={i}
+        className={`absolute inset-0 border-[14px] ${
+          i === 0 ? "border-[#0a0e12]" : "border-[#05080a]"
+        } border-b-0 rounded-t-2xl z-0 shadow-sm`}
+        style={{ transform: `translateZ(-${i * 4}px)` }}
+      />
+    ))}
+    <div
+      className="absolute inset-0 border-[16px] border-[#020304] border-b-0 rounded-t-2xl shadow-[inset_0_0_10px_rgba(0,0,0,1)]"
+      style={{ transform: "translateZ(-10px) scale(1.02)" }}
+    />
+  </div>
+);
+
+interface Toolbox3DProps {
+  /** Wrapper transforms — supply numbers OR framer motion values. */
+  scale?: number | MotionValue<number>;
+  rotateX?: string | MotionValue<string>;
+  rotateY?: string | MotionValue<string>;
+  /** Lid hinge angle (rotateX around its hinge). 0 = closed. */
+  lidRotateX?: string | MotionValue<string>;
+  /** Content rendered on the floor (top face of base, visible when lid opens). */
+  floorContent?: React.ReactNode;
+  /** Style overrides for the wrapper. */
+  wrapperStyle?: MotionStyle;
 }
 
-/** Full closed-toolbox artwork — what sits on the projects shelf. */
-export const ToolboxClosed = ({ width = 220, height = 174 }: ClosedProps) => {
-  const p = "tb-closed";
+/**
+ * The 3D toolbox. Always renders the full assembly (base + lid). Drive the
+ * motion-value props to animate (or pass static values for the shelf prop).
+ */
+export const Toolbox3D: React.FC<Toolbox3DProps> = ({
+  scale = 1,
+  rotateX = "0deg",
+  rotateY = "0deg",
+  lidRotateX = "0deg",
+  floorContent,
+  wrapperStyle,
+}) => {
+  const W = TBX_W;
+  const H_BASE = TBX_H_BASE;
+  const H_LID = TBX_H_LID;
+  const D = TBX_D;
+
   return (
-    <svg width={width} height={height} viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <Defs prefix={p} />
-      {/* handle */}
-      <path d="M 30 22 Q 48 6 66 22" stroke={`url(#${p}-handle)`} strokeWidth="3" fill="none" strokeLinecap="round" />
-      <circle cx="30" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
-      <circle cx="66" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
-      {/* lid */}
-      <rect x="8" y="22" width="80" height="14" rx="2" fill={`url(#${p}-lid)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
-      <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
-      {/* hinge */}
-      <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(220 8% 8%)" strokeWidth="1" />
-      <line x1="8" y1="36.7" x2="88" y2="36.7" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      {/* body */}
-      <rect x="8" y="36" width="80" height="32" rx="2" fill={`url(#${p}-body)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
-      <line x1="10" y1="42" x2="86" y2="42" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-      <line x1="10" y1="48" x2="86" y2="48" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
-      <line x1="10" y1="54" x2="86" y2="54" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-      <line x1="10" y1="60" x2="86" y2="60" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
-      {/* latches */}
-      <rect x="22" y="32" width="10" height="8" rx="1" fill={`url(#${p}-handle)`} stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-      <rect x="64" y="32" width="10" height="8" rx="1" fill={`url(#${p}-handle)`} stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-      <circle cx="27" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
-      <circle cx="69" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
-      {/* plaque */}
-      <rect x="38" y="48" width="20" height="9" rx="1" fill="hsl(220 8% 14%)" stroke="hsl(220 8% 8%)" strokeWidth="0.5" />
-      <text x="48" y="54.4" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 8% 70%)" letterSpacing="0.6">TOOLS</text>
-      {/* feet */}
-      <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-      <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-      <line x1="10" y1="37" x2="86" y2="37" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
-    </svg>
+    <motion.div
+      className="relative [transform-style:preserve-3d]"
+      style={
+        {
+          width: W,
+          height: H_BASE + H_LID,
+          rotateX: rotateX as any,
+          rotateY: rotateY as any,
+          scale: scale as any,
+          ...wrapperStyle,
+        } as MotionStyle
+      }
+    >
+      {/* ===== BASE ===== */}
+      <div
+        className="absolute inset-x-0 bottom-0 [transform-style:preserve-3d]"
+        style={{ height: H_BASE }}
+      >
+        {/* Front */}
+        <Face
+          w={W}
+          h={H_BASE}
+          transform={`translateZ(${D / 2}px)`}
+          className="bg-[#0a0e12] border-x border-b border-t border-[rgba(184,146,74,0.30)] rounded-b-lg shadow-inner overflow-hidden"
+        >
+          {/* Tech texture */}
+          <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(45deg,#000_0,#000_2px,transparent_2px,transparent_4px),repeating-linear-gradient(-45deg,#111_0,#111_2px,transparent_2px,transparent_4px)] mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-20 pointer-events-none" />
+          {/* Corner rivets */}
+          <div className="absolute top-2 left-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+          <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+          <div className="absolute bottom-2 left-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+          <div className="absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+          {/* Hazard bars */}
+          <div className="absolute top-1/2 -translate-y-1/2 right-[8%] w-[40px] h-[80px] flex gap-[5px] opacity-20 transform -skew-x-12 mix-blend-overlay">
+            <div className="w-1.5 h-full bg-yellow-400" />
+            <div className="w-1.5 h-full bg-yellow-400" />
+            <div className="w-1.5 h-full bg-yellow-400" />
+            <div className="w-1.5 h-full bg-yellow-400" />
+          </div>
+          {/* Latches */}
+          <div className="absolute top-0 w-full px-32 flex justify-between z-10">
+            <Latch label="L-01" />
+            <Latch label="R-02" />
+          </div>
+          {/* CORE nameplate */}
+          <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+            <div className="px-8 py-3 bg-[rgba(10,14,18,0.95)] rounded font-mono text-[18px] tracking-[0.4em] text-[#e5c47a] border border-[rgba(184,146,74,0.3)] shadow-[inset_0_2px_1px_rgba(255,255,255,0.05),0_5px_15px_rgba(0,0,0,0.8)] z-10 font-bold uppercase flex flex-col items-center gap-1">
+              <span className="text-[#b8924a] font-mono text-[9px] tracking-[0.3em] relative top-1 bg-[rgba(5,8,10,0.92)] px-2 rounded-sm border border-[rgba(184,146,74,0.2)] shadow-inner pb-0.5">
+                SYS_MDL
+              </span>
+              <div className="flex items-center gap-4 mt-1">
+                <div className="w-2 h-2 rounded-full bg-[rgba(184,146,74,0.3)] shadow-[inset_0_1px_3px_rgba(0,0,0,1),0_1px_1px_rgba(255,255,255,0.1)]" />
+                <span className="drop-shadow-[0_0_10px_rgba(184,146,74,0.4)] text-[22px] font-medium tracking-[0.3em] leading-none">
+                  CORE
+                </span>
+                <div className="w-2 h-2 rounded-full bg-[rgba(184,146,74,0.3)] shadow-[inset_0_1px_3px_rgba(0,0,0,1),0_1px_1px_rgba(255,255,255,0.1)]" />
+              </div>
+            </div>
+          </div>
+          {/* Metal corners */}
+          <div className="absolute bottom-[-1px] left-[-1px] w-12 h-12 border-l-[3px] border-b-[3px] border-[rgba(184,146,74,0.40)] rounded-bl-lg mix-blend-screen opacity-50" />
+          <div className="absolute bottom-[-1px] right-[-1px] w-12 h-12 border-r-[3px] border-b-[3px] border-[rgba(184,146,74,0.40)] rounded-br-lg mix-blend-screen opacity-50" />
+        </Face>
+
+        {/* Back */}
+        <Face
+          w={W}
+          h={H_BASE}
+          transform={`translateZ(-${D / 2}px) rotateY(180deg)`}
+          className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.30)] rounded-b-lg"
+        >
+          <div className="absolute inset-0 opacity-5 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(184,146,74,0.5)_3px,rgba(184,146,74,0.5)_4px)]" />
+        </Face>
+
+        {/* Sides */}
+        <Face
+          w={D}
+          h={H_BASE}
+          transform={`translateX(-${W / 2}px) rotateY(-90deg)`}
+          className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.3)] rounded-b-lg"
+        />
+        <Face
+          w={D}
+          h={H_BASE}
+          transform={`translateX(${W / 2}px) rotateY(90deg)`}
+          className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.3)] rounded-b-lg"
+        />
+
+        {/* Bottom */}
+        <Face
+          w={W}
+          h={D}
+          transform={`translateY(${H_BASE / 2}px) rotateX(-90deg)`}
+          bg="bg-[#08090a] rounded-lg"
+        />
+
+        {/* Inner foam walls */}
+        <Face
+          w={W}
+          h={H_BASE}
+          transform={`translateZ(${D / 2 - 4}px) rotateY(180deg)`}
+          bg="bg-[#0b0c0e]"
+          innerBlur
+        />
+        <Face
+          w={W}
+          h={H_BASE}
+          transform={`translateZ(-${D / 2 - 4}px)`}
+          bg="bg-[#0b0c0e]"
+          innerBlur
+        />
+        <Face
+          w={D}
+          h={H_BASE}
+          transform={`translateX(-${W / 2 - 4}px) rotateY(90deg)`}
+          bg="bg-[#0b0c0e]"
+          innerBlur
+        />
+        <Face
+          w={D}
+          h={H_BASE}
+          transform={`translateX(${W / 2 - 4}px) rotateY(-90deg)`}
+          bg="bg-[#0b0c0e]"
+          innerBlur
+        />
+
+        {/* Floor — interior content lives here */}
+        <Face
+          w={W}
+          h={D}
+          transform={`translateY(${H_BASE / 2 - 4}px) rotateX(90deg)`}
+          bg="bg-[#050505] rounded-md"
+          pointerEvents={floorContent ? "auto" : "none"}
+        >
+          {floorContent}
+        </Face>
+      </div>
+
+      {/* ===== LID ===== */}
+      <motion.div
+        className="absolute inset-x-0 top-0 [transform-style:preserve-3d]"
+        style={
+          {
+            height: H_LID,
+            transformOrigin: `50% 100% -${D / 2}px`,
+            rotateX: lidRotateX as any,
+          } as MotionStyle
+        }
+      >
+        {/* Lid front */}
+        <Face
+          w={W}
+          h={H_LID}
+          transform={`translateZ(${D / 2}px)`}
+          className="bg-[#0a0e12] border-x border-t border-[rgba(184,146,74,0.30)] rounded-t-lg shadow-[inset_0_2px_10px_rgba(184,146,74,0.05)] overflow-hidden"
+        >
+          <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(45deg,#000_0,#000_2px,transparent_2px,transparent_4px),repeating-linear-gradient(-45deg,#111_0,#111_2px,transparent_2px,transparent_4px)] mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/40" />
+          <div className="absolute bottom-0 w-full px-32 flex justify-between z-10">
+            <LidLatchStub />
+            <LidLatchStub />
+          </div>
+          <Handle />
+          <div className="absolute top-[-1px] left-[-1px] w-12 h-12 border-l-4 border-t-4 border-[rgba(184,146,74,0.40)] rounded-tl-lg mix-blend-screen opacity-50 z-20" />
+          <div className="absolute top-[-1px] right-[-1px] w-12 h-12 border-r-4 border-t-4 border-[rgba(184,146,74,0.40)] rounded-tr-lg mix-blend-screen opacity-50 z-20" />
+        </Face>
+
+        <Face
+          w={W}
+          h={H_LID}
+          transform={`translateZ(-${D / 2}px) rotateY(180deg)`}
+          className="bg-[#0a0e12] border-x border-t border-[rgba(184,146,74,0.3)] rounded-t-lg"
+        >
+          <div className="absolute inset-0 opacity-5 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(184,146,74,0.5)_3px,rgba(184,146,74,0.5)_4px)]" />
+        </Face>
+
+        <Face
+          w={D}
+          h={H_LID}
+          transform={`translateX(-${W / 2}px) rotateY(-90deg)`}
+          className="bg-[#0a0e12] border-[rgba(184,146,74,0.3)] rounded-t-lg"
+        />
+        <Face
+          w={D}
+          h={H_LID}
+          transform={`translateX(${W / 2}px) rotateY(90deg)`}
+          className="bg-[#0a0e12] border-[rgba(184,146,74,0.3)] rounded-t-lg"
+        />
+
+        {/* Lid top */}
+        <Face
+          w={W}
+          h={D}
+          transform={`translateY(-${H_LID / 2}px) rotateX(90deg)`}
+          className="bg-[#0a0e12] border border-[rgba(184,146,74,0.4)] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] rounded-lg"
+        >
+          <div className="absolute inset-10 border border-[rgba(184,146,74,0.1)] shadow-[0_0_10px_rgba(0,0,0,0.5)] rounded pointer-events-none" />
+          <div className="absolute inset-20 border border-[rgba(184,146,74,0.1)] shadow-[0_0_10px_rgba(0,0,0,0.5)] rounded pointer-events-none" />
+        </Face>
+
+        {/* Lid inner foam */}
+        <Face
+          w={W}
+          h={H_LID}
+          transform={`translateZ(${D / 2 - 4}px) rotateY(180deg)`}
+          bg="bg-[#040608]"
+          innerBlur
+        />
+        <Face
+          w={W}
+          h={H_LID}
+          transform={`translateZ(-${D / 2 - 4}px)`}
+          bg="bg-[#040608]"
+          innerBlur
+        />
+        <Face
+          w={D}
+          h={H_LID}
+          transform={`translateX(-${W / 2 - 4}px) rotateY(90deg)`}
+          bg="bg-[#040608]"
+          innerBlur
+        />
+        <Face
+          w={D}
+          h={H_LID}
+          transform={`translateX(${W / 2 - 4}px) rotateY(-90deg)`}
+          bg="bg-[#040608]"
+          innerBlur
+        />
+
+        {/* Lid inner roof */}
+        <Face
+          w={W}
+          h={D}
+          transform={`translateY(-${H_LID / 2 - 4}px) rotateX(-90deg)`}
+          className="bg-[#020304] rounded-lg"
+        >
+          <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(45deg,#070a0d_0,#070a0d_10px,transparent_10px,transparent_20px)] shadow-[inset_0_0_120px_rgba(0,0,0,1)]" />
+        </Face>
+      </motion.div>
+    </motion.div>
   );
 };
 
 /**
- * Lid + handle + latches only — drawn so the hinge sits at the bottom of the
- * viewBox (y=18). Use `transformOrigin: "bottom center"` and rotateX to swing
- * open. ViewBox 0 0 96 18 covers y=0 (handle apex) → y=18 (hinge line).
+ * Convenience wrapper: closed toolbox sized to fit a given pixel width (height
+ * computed from the natural aspect ratio). Used as the static shelf prop.
  */
-export const ToolboxLidOnly = () => {
-  const p = "tb-lid";
+interface ClosedProps {
+  width?: number;
+  /** Slight tilt to read as "sitting on shelf". */
+  tilt?: boolean;
+}
+export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220, tilt = true }) => {
+  const ratio = (TBX_H_BASE + TBX_H_LID) / TBX_W;
+  const height = width * ratio;
+  const scale = width / TBX_W;
   return (
-    <svg width="100%" height="100%" viewBox="0 0 96 18" preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}>
-      <Defs prefix={p} />
-      {/* handle (apex near top of viewBox) */}
-      <path d="M 30 6 Q 48 -10 66 6" stroke={`url(#${p}-handle)`} strokeWidth="3" fill="none" strokeLinecap="round" />
-      <circle cx="30" cy="6" r="2.2" fill="hsl(220 8% 14%)" />
-      <circle cx="66" cy="6" r="2.2" fill="hsl(220 8% 14%)" />
-      {/* lid body */}
-      <rect x="8" y="6" width="80" height="14" rx="2" fill={`url(#${p}-lid)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
-      <line x1="10" y1="8.5" x2="86" y2="8.5" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
-      {/* latches sit at the bottom of the lid, just above hinge */}
-      <rect x="22" y="16" width="10" height="8" rx="1" fill={`url(#${p}-handle)`} stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-      <rect x="64" y="16" width="10" height="8" rx="1" fill={`url(#${p}-handle)`} stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
-    </svg>
-  );
-};
-
-/**
- * Body (open tray seen from front) — same body silhouette as the closed
- * toolbox so the visual identity is preserved during the flip. ViewBox covers
- * y=0 (hinge/top edge) → y=35 (feet).
- */
-export const ToolboxBodyOnly = () => {
-  const p = "tb-body";
-  return (
-    <svg width="100%" height="100%" viewBox="0 0 96 35" preserveAspectRatio="none" style={{ display: "block" }}>
-      <Defs prefix={p} />
-      {/* hinge */}
-      <line x1="8" y1="0.5" x2="88" y2="0.5" stroke="hsl(220 8% 8%)" strokeWidth="1" />
-      <line x1="8" y1="1.2" x2="88" y2="1.2" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-      {/* body */}
-      <rect x="8" y="0.5" width="80" height="32" rx="2" fill={`url(#${p}-body)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
-      <line x1="10" y1="6" x2="86" y2="6" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-      <line x1="10" y1="14" x2="86" y2="14" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
-      <line x1="10" y1="22" x2="86" y2="22" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-      {/* feet */}
-      <rect x="12" y="32.5" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-      <rect x="78" y="32.5" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-      <line x1="10" y1="1.5" x2="86" y2="1.5" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
-    </svg>
+    <div
+      style={{
+        width,
+        height,
+        perspective: 1400,
+        perspectiveOrigin: "50% 60%",
+      }}
+    >
+      <div
+        style={{
+          width: TBX_W,
+          height: TBX_H_BASE + TBX_H_LID,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        <Toolbox3D
+          scale={1}
+          rotateX={tilt ? "-12deg" : "0deg"}
+          rotateY={tilt ? "-8deg" : "0deg"}
+          lidRotateX="0deg"
+        />
+      </div>
+    </div>
   );
 };
