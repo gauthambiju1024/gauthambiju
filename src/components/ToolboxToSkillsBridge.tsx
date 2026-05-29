@@ -69,7 +69,8 @@ const ToolboxToSkillsBridge = () => {
                 filter: lidFilter,
               }}
             >
-              <ToolboxLid />
+              <ToolboxLidOnly />
+
             </motion.div>
 
             {/* Tray body */}
