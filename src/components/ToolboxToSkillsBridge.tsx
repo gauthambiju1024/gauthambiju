@@ -1,245 +1,528 @@
-import { useEffect, useRef, useState } from "react";
-import { useScroll } from "framer-motion";
-import ToolboxInterior from "./skills/ToolboxInterior";
-import { Toolbox, ToolboxHandle } from "./skills/ToolboxSvg";
-
 /**
- * ToolboxToSkillsBridge — continuous choreography spanning the END of the
- * projects shelf section and this entire section.
+ * ToolboxToSkillsBridge — pinned scroll choreography:
+ *   1. Library shelves recede upward and fade.
+ *   2. 3D landscape toolbox lifts from a slot, rotates open at center, foam
+ *      skill tray reveals on the interior floor.
+ *   3. Toolbox rotates back to 3/4 view and lands on the FinalWorkbench desk
+ *      scene (laptop, field notes, plant, lamp, mug, notebook).
  *
- * Driven by TWO progresses:
- *   - window.__toolboxTakeoverProgress (0→1) — published by AboutToProjectsBridge
- *     during its tail (0.88→1.0). Drives LIFT + CARRY from shelf rect → center.
- *   - this section's scrollYProgress (0→1) — drives TILT, LATCHES, LID, INTERIOR.
- *
- * One toolbox node only. No fades on the toolbox itself.
+ * Background scenery from the source has been removed so the scene inherits
+ * the site's walnut + ghost-grid background and MarginDoodles stay visible
+ * on either side.
  */
+import { useState, useRef, useLayoutEffect } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+} from "framer-motion";
+import { ArrowDown } from "lucide-react";
+import { SKILLS } from "./skills/skillsData";
+import { FinalWorkbench } from "./skills/FinalWorkbench";
 
-const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-const smooth = (x: number) => x * x * (3 - 2 * x);
-const easeOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
-const easeInOutQuart = (x: number) =>
-  x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+// Landscape toolbox proportions
+const W = 800;
+const H_BASE = 160;
+const H_LID = 80;
+const D = 500;
 
-const phase = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+const ShelfLine = ({ label }: { label?: string }) => (
+  <div className="relative w-full h-[6px] bg-gradient-to-b from-[#8a6a43] via-[#4a341e] to-[#2a1d11] shadow-[0_6px_20px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-sm flex items-center mt-2 z-10 shrink-0">
+    {label && (
+      <div className="absolute top-1/2 -translate-y-1/2 left-8 md:left-24 bg-[#0d0f12] px-4 text-[#bf935a] font-mono text-[10px] tracking-[0.3em] font-medium shadow-[0_0_10px_rgba(13,15,18,0.9)] border border-[#8a6a43]/20 uppercase">
+        {label}
+      </div>
+    )}
+  </div>
+);
+
+const Book = ({
+  title,
+  subtitle,
+  year,
+  colorClass,
+  borderClass,
+  pattern = true,
+}: {
+  title: string;
+  subtitle?: string;
+  year?: string;
+  colorClass: string;
+  borderClass: string;
+  pattern?: boolean;
+}) => (
+  <div
+    className={`w-14 sm:w-16 h-[200px] sm:h-[220px] ${colorClass} rounded-t flex flex-col justify-end items-center pb-6 shadow-[10px_10px_20px_rgba(0,0,0,0.8)] relative ${borderClass} z-20 shrink-0 transform-gpu`}
+  >
+    {pattern && (
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDQiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay pointer-events-none" />
+    )}
+    <div className="w-full flex-1 flex items-center justify-center relative z-10 p-2">
+      <span className="[writing-mode:vertical-rl] tracking-[0.2em] font-medium uppercase text-white/90 whitespace-nowrap py-8 max-h-full drop-shadow-md text-[13px] sm:text-[14px]">
+        {title}
+      </span>
+      {year && (
+        <span className="absolute top-4 [writing-mode:vertical-rl] text-white/40 font-mono text-[9px] tracking-widest">
+          {year}
+        </span>
+      )}
+    </div>
+    {subtitle && (
+      <span className="text-[8px] sm:text-[9px] text-white/50 w-full text-center px-1 leading-tight mb-auto mt-4 tracking-wide z-10 uppercase">
+        {subtitle}
+      </span>
+    )}
+    <div className="w-full h-[3px] bg-white/20 mt-2 mb-1 shadow-inner z-10" />
+    <div className="w-full h-1 bg-white/10 z-10" />
+  </div>
+);
+
+const Face = ({
+  w,
+  h,
+  transform,
+  className,
+  children,
+  bg = "bg-[#1f2125]",
+  innerBlur = false,
+  pointerEvents = "none",
+}: {
+  w: number;
+  h: number;
+  transform: string;
+  className?: string;
+  children?: React.ReactNode;
+  bg?: string;
+  innerBlur?: boolean;
+  pointerEvents?: "auto" | "none";
+}) => (
+  <div
+    className={`absolute left-1/2 top-1/2 [backface-visibility:hidden] ${className ?? ""} ${bg}`}
+    style={{
+      width: w,
+      height: h,
+      marginLeft: -w / 2,
+      marginTop: -h / 2,
+      transform,
+      pointerEvents,
+    }}
+  >
+    {innerBlur && (
+      <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.95)] pointer-events-none" />
+    )}
+    {children}
+  </div>
+);
+
+const InnerApp = ({ contentOpacity, contentY }: { contentOpacity: any; contentY: any }) => (
+  <motion.div
+    style={{ opacity: contentOpacity, y: contentY }}
+    className="w-full h-full bg-[#121316] p-6 flex flex-col gap-6 relative rounded-md shadow-[inset_0_20px_50px_rgba(0,0,0,1)] overflow-hidden border-[8px] border-[#0b0c0e]"
+  >
+    <div className="absolute inset-0 opacity-80 bg-[repeating-linear-gradient(45deg,#0c0c0e_0,#0c0c0e_4px,transparent_4px,transparent_8px),repeating-linear-gradient(-45deg,#111_0,#111_4px,transparent_4px,transparent_8px)] mix-blend-overlay pointer-events-none" />
+
+    <div className="relative z-10 flex-1 grid grid-cols-3 gap-6 h-full">
+      {(Object.keys(SKILLS) as Array<keyof typeof SKILLS>).map((category, idx) => (
+        <div key={category} className="flex flex-col h-full">
+          <div className="flex items-center gap-3 px-2 mb-3 mt-1">
+            <div
+              className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${
+                idx === 0
+                  ? "text-blue-500 bg-blue-500/80"
+                  : idx === 1
+                  ? "text-orange-500 bg-orange-500/80"
+                  : "text-emerald-500 bg-emerald-500/80"
+              }`}
+            />
+            <h2 className="text-zinc-500 font-mono text-[10px] tracking-[0.2em] uppercase">
+              {category}
+            </h2>
+          </div>
+
+          <div className="flex-1 bg-[#0a0a0c]/80 p-3 rounded-xl shadow-[inset_0_10px_20px_rgba(0,0,0,1)] border border-white/[0.02] grid grid-rows-[repeat(auto-fill,minmax(40px,1fr))] gap-2 relative overflow-y-auto hide-scrollbar">
+            {SKILLS[category].map((skill) => (
+              <div key={skill} className="relative group perspective-1000 h-[45px]">
+                <div className="absolute inset-0 bg-[#050505] rounded-[4px] shadow-[inset_0_4px_8px_rgba(0,0,0,1)]" />
+                <div className="absolute inset-0.5 bg-gradient-to-b from-[#2a2c30] to-[#1a1b1e] rounded-[3px] shadow-[0_4px_10px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] border border-[#333] flex items-center justify-center p-2 group-hover:-translate-y-1 group-hover:scale-[1.02] transition-transform duration-200 cursor-default">
+                  <span className="text-[10px] sm:text-[11px] font-medium text-slate-300 text-center leading-tight">
+                    {skill}
+                  </span>
+                  <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-[#111] shadow-[0_1px_0_rgba(255,255,255,0.2)]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
 
 const ToolboxToSkillsBridge = () => {
-  const pinRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const slotRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0, startScale: 0.4, endScale: 1 });
+  const [finalPos, setFinalPos] = useState({ x: -320, y: 180, scale: 0.8 });
 
-  const flyRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const toolboxHandle = useRef<ToolboxHandle>(null);
-  const interiorSideRef = useRef<HTMLDivElement>(null);
-  const interiorTopRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 70,
+    damping: 20,
+    restDelta: 0.001,
+  });
 
-  // Toggle interior variant when we cross top-view threshold (avoids re-render on every frame)
-  const [topView, setTopView] = useState(false);
-  const topViewRef = useRef(false);
+  useLayoutEffect(() => {
+    const update = () => {
+      if (!slotRef.current) return;
+      const rect = slotRef.current.getBoundingClientRect();
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
 
-  useEffect(() => {
-    let raf = 0;
-    let mounted = true;
+      const maxScale = Math.min(
+        (window.innerWidth * 0.9) / W,
+        (window.innerHeight * 0.85) / D,
+        1.1,
+      );
 
-    const tick = () => {
-      if (!mounted) return;
-      const ownP = clamp01(scrollYProgress.get());
-      const takeover = clamp01((window as any).__toolboxTakeoverProgress ?? 0);
-      const rect = (window as any).__toolboxRect;
-      const fly = flyRef.current;
-      const inner = innerRef.current;
-      if (!fly || !inner) {
-        raf = requestAnimationFrame(tick);
-        return;
+      setPos({
+        x: cx - centerX,
+        y: cy - centerY,
+        startScale: rect.width / W,
+        endScale: maxScale,
+      });
+
+      const finalEl = document.querySelector(".final-toolbox");
+      if (finalEl) {
+        const fRect = finalEl.getBoundingClientRect();
+        setFinalPos({
+          x: fRect.left + fRect.width / 2 - centerX,
+          y: fRect.top + fRect.height / 2 - centerY,
+          scale: Math.max(fRect.width / W, 0.25),
+        });
       }
-
-      const active = takeover > 0.001 || (ownP > 0.0005 && ownP < 0.9995);
-      if (!active || !rect) {
-        fly.style.opacity = "0";
-        (window as any).__toolboxInFlight = false;
-        raf = requestAnimationFrame(tick);
-        return;
-      }
-      fly.style.opacity = "1";
-      (window as any).__toolboxInFlight = true;
-
-      // Center-stage rect
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const cw = Math.min(vw * 0.56, 480);
-      const ch = cw * (76 / 96);
-      const cL = vw / 2 - cw / 2;
-      const cT = vh / 2 - ch / 2;
-
-      // Drive: while in own section, freeze position at center; before that, use takeover.
-      const liftCarryT = ownP > 0.0005 ? 1 : takeover;
-      const liftT = easeOutQuart(phase(liftCarryT, 0.0, 0.30));
-      const carryT = smooth(phase(liftCarryT, 0.20, 1.0));
-
-      // Phase B/C/D — own scroll
-      const tiltT = easeInOutQuart(phase(ownP, 0.05, 0.40));   // rotateX 0→18deg
-      const latchT = smooth(phase(ownP, 0.25, 0.35));            // 0→1
-      const lidT = easeOutQuart(phase(ownP, 0.32, 0.58));        // 0→1
-      const interiorT = phase(ownP, 0.55, 0.92);                 // 0→1
-      const headerT = phase(ownP, 0.78, 0.96);
-
-      // ----- Position & size -----
-      const shelfL = rect.left, shelfT = rect.top;
-      const shelfW = rect.width, shelfH = rect.height;
-      const hoverL = shelfL;
-      const hoverT = shelfT - 80;
-
-      let curL: number, curT: number, curW: number, curH: number;
-      if (carryT <= 0) {
-        curL = shelfL + (hoverL - shelfL) * liftT;
-        curT = shelfT + (hoverT - shelfT) * liftT;
-        curW = shelfW;
-        curH = shelfH;
-      } else {
-        const sL = hoverL, sT = hoverT;
-        const eL = cL, eT = cT;
-        const midX = (sL + eL) / 2;
-        const midY = Math.min(sT, eT) - 60;
-        const t = carryT;
-        const omt = 1 - t;
-        curL = omt * omt * sL + 2 * omt * t * midX + t * t * eL;
-        curT = omt * omt * sT + 2 * omt * t * midY + t * t * eT;
-        curW = shelfW + (cw - shelfW) * carryT;
-        curH = shelfH + (ch - shelfH) * carryT;
-      }
-
-      fly.style.left = `${curL.toFixed(2)}px`;
-      fly.style.top = `${curT.toFixed(2)}px`;
-      fly.style.width = `${curW.toFixed(2)}px`;
-      fly.style.height = `${curH.toFixed(2)}px`;
-
-      // Shadow grows with size/altitude
-      const shadowBlur = 10 + carryT * 28;
-      const shadowY = 8 + carryT * 22;
-      const shadowAlpha = 0.4 + carryT * 0.25;
-      fly.style.filter = `drop-shadow(0 ${shadowY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0,0,0,${shadowAlpha.toFixed(2)}))`;
-
-      // Inner: 3D tilt (perspective rotateX). Subtle forward tilt to suggest peering into the box.
-      const tiltDeg = tiltT * 18;
-      inner.style.transform = `perspective(1400px) rotateX(${tiltDeg.toFixed(2)}deg)`;
-
-      // ----- Toolbox parts -----
-      toolboxHandle.current?.setLatches(latchT * 90);
-      toolboxHandle.current?.setLid(-lidT * 165);
-      // Dim front face once lid is opening so the interior reads (geometry, not fade)
-      toolboxHandle.current?.setBodyOpacity(1 - lidT * 0.65);
-
-      // Top-view toggle: once tilt + lid both engaged, show top-down foam tray
-      const wantTop = ownP > 0.45;
-      if (wantTop !== topViewRef.current) {
-        topViewRef.current = wantTop;
-        setTopView(wantTop);
-      }
-
-      // Interior reveal (top-down tray) via clip-path from bottom
-      if (interiorTopRef.current) {
-        const insetTop = (1 - clamp01(interiorT)) * 100;
-        interiorTopRef.current.style.clipPath = `inset(${insetTop.toFixed(2)}% 0 0 0)`;
-        interiorTopRef.current.style.opacity = wantTop ? "1" : "0";
-      }
-      if (interiorSideRef.current) {
-        interiorSideRef.current.style.opacity = "0";
-      }
-
-      if (headerRef.current) {
-        const insetTop = (1 - clamp01(headerT)) * 100;
-        headerRef.current.style.clipPath = `inset(${insetTop.toFixed(2)}% 0 0 0)`;
-      }
-
-      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+    update();
+    const t = setTimeout(update, 100);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, { passive: true });
     return () => {
-      mounted = false;
-      cancelAnimationFrame(raf);
-      (window as any).__toolboxInFlight = false;
+      clearTimeout(t);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
     };
-  }, [scrollYProgress]);
+  }, []);
+
+  const shelvesY = useTransform(smoothProgress, [0, 0.15], ["0vh", "-60vh"]);
+  const shelvesOpacity = useTransform(smoothProgress, [0.05, 0.15], [1, 0]);
+
+  const cxAnim = useTransform(smoothProgress, [0.05, 0.2, 0.8, 0.95], [pos.x, 0, 0, finalPos.x]);
+  const cyAnim = useTransform(smoothProgress, [0.05, 0.2, 0.8, 0.95], [pos.y, 0, 0, finalPos.y]);
+
+  const zWrapper = useTransform(smoothProgress, [0, 0.2, 0.8, 0.95], [-D / 2, 0, 0, 40]);
+  const cScale = useTransform(
+    smoothProgress,
+    [0, 0.05, 0.2, 0.8, 0.95],
+    [pos.startScale, pos.startScale, pos.endScale, pos.endScale, finalPos.scale],
+  );
+
+  const rotX = useTransform(
+    smoothProgress,
+    [0, 0.1, 0.2, 0.8, 0.95],
+    ["0deg", "-15deg", "-90deg", "-90deg", "-15deg"],
+  );
+  const rotY = useTransform(
+    smoothProgress,
+    [0, 0.1, 0.2, 0.8, 0.95],
+    ["0deg", "-5deg", "0deg", "0deg", "35deg"],
+  );
+
+  const lidRotX = useTransform(
+    smoothProgress,
+    [0.25, 0.4, 0.65, 0.75],
+    ["0deg", "125deg", "125deg", "0deg"],
+  );
+
+  const contentOpacity = useTransform(smoothProgress, [0.35, 0.45, 0.55, 0.65], [0, 1, 1, 0]);
+  const contentY = useTransform(smoothProgress, [0.35, 0.45, 0.55, 0.65], [40, 0, 0, -20]);
+
+  const tableOpacity = useTransform(smoothProgress, [0.85, 0.95], [0, 1]);
+  const tableY = useTransform(smoothProgress, [0.85, 0.95], [100, 0]);
+
+  const hintOpacity = useTransform(smoothProgress, [0, 0.05], [1, 0]);
 
   return (
-    <section
-      ref={pinRef}
+    <div
+      ref={containerRef}
       id="skills"
-      aria-label="Skills toolbox"
-      style={{ height: "260vh" }}
-      className="relative"
+      className="relative w-full"
+      style={{ height: "600vh" }}
     >
-      <div className="sticky top-0 w-full" style={{ height: "100vh", pointerEvents: "none" }}>
-        <div
-          ref={headerRef}
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{
-            bottom: "8vh",
-            clipPath: "inset(100% 0 0 0)",
-            willChange: "clip-path",
-          }}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+        {/* Scroll hint */}
+        <motion.div
+          style={{ opacity: hintOpacity }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20 pointer-events-none"
         >
-          <div className="flex items-center gap-3">
-            <div className="h-px w-16" style={{ background: "hsl(220 5% 28%)" }} />
-            <span className="text-[11px] tracking-[0.35em] uppercase font-mono" style={{ color: "hsl(40 6% 60%)" }}>
-              Skills · The Toolbox
-            </span>
-            <div className="h-px w-16" style={{ background: "hsl(220 5% 28%)" }} />
+          <span className="text-[10px] font-medium tracking-[0.4em] uppercase text-zinc-500">
+            Scroll to explore
+          </span>
+          <ArrowDown className="w-5 h-5 animate-bounce text-zinc-400 drop-shadow-md" />
+        </motion.div>
+
+        {/* Final workbench desk scene */}
+        <motion.div
+          className="absolute inset-0 z-[80]"
+          style={{ opacity: tableOpacity, y: tableY, pointerEvents: "none" }}
+        >
+          <FinalWorkbench />
+        </motion.div>
+
+        {/* Library shelves that recede on scroll */}
+        <motion.div
+          style={{ y: shelvesY, opacity: shelvesOpacity }}
+          className="absolute inset-0 pt-16 flex flex-col w-full h-full max-w-7xl mx-auto px-6 sm:px-12 pointer-events-none"
+        >
+          <div className="w-full flex-1 flex flex-col justify-center gap-[8vh] pb-32">
+            <div className="w-full flex flex-col items-center">
+              <div className="flex gap-6 sm:gap-14 items-end h-[240px] w-full px-8 sm:px-24 mb-[-1px]">
+                <Book
+                  title="MORE ABOUT ME"
+                  year="2026"
+                  colorClass="bg-[#2d4d45]"
+                  borderClass="border-l-[3px] border-[#457065] border-r-[2px] border-[#1a2f2a]"
+                />
+                <Book
+                  title="CLASSY"
+                  subtitle="Your custom timetable"
+                  colorClass="bg-[#353840]"
+                  borderClass="border-l-[3px] border-[#545963] border-r-[2px] border-[#202226]"
+                />
+              </div>
+              <ShelfLine label="PROJECTS" />
+            </div>
+            <div className="w-full flex flex-col items-center relative">
+              <div className="flex justify-between items-end min-h-[240px] w-full px-8 sm:px-24 mb-[-1px]">
+                <Book
+                  title="VAIDYA"
+                  colorClass="bg-[#3b3e45]"
+                  borderClass="border-l-[3px] border-[#5c616b] border-r-[2px] border-[#24262a]"
+                />
+                {/* Empty slot used for toolbox start bounds */}
+                <div
+                  className="w-[300px] h-[90px] shrink-0 pointer-events-none relative"
+                  ref={slotRef}
+                />
+              </div>
+              <ShelfLine label="GENERAL · 01" />
+            </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* The ONE flying toolbox — fixed to viewport */}
-      <div
-        ref={flyRef}
-        aria-hidden
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          width: 220,
-          height: 174,
-          pointerEvents: "none",
-          zIndex: 30,
-          opacity: 0,
-          willChange: "transform, left, top, width, height, filter",
-        }}
-      >
-        <div
-          ref={innerRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            transformStyle: "preserve-3d",
-            transformOrigin: "50% 70%",
-            willChange: "transform",
-          }}
-        >
-          <Toolbox ref={toolboxHandle} />
-
-          {/* Top-down foam tray — covers the body region, revealed via clip-path */}
-          <div
-            ref={interiorTopRef}
-            style={{
-              position: "absolute",
-              left: "8.333%",
-              top: "47.368%",
-              width: "83.333%",
-              height: "42.105%",
-              clipPath: "inset(100% 0 0 0)",
-              willChange: "clip-path, opacity",
-              overflow: "visible",
-              pointerEvents: "auto",
-              opacity: 0,
-              transition: "opacity 220ms ease-out",
-            }}
+        {/* 3D Toolbox entity */}
+        <motion.div className="absolute inset-0 pointer-events-none z-[100] flex items-center justify-center">
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center [perspective:2500px]"
+            style={{ x: cxAnim, y: cyAnim }}
           >
-            {topView ? <ToolboxInterior variant="top" /> : null}
-          </div>
-        </div>
+            <motion.div
+              className="relative [transform-style:preserve-3d]"
+              style={{
+                width: W,
+                height: H_BASE + H_LID,
+                z: zWrapper,
+                rotateX: rotX,
+                rotateY: rotY,
+                scale: cScale,
+              }}
+            >
+              {/* BASE */}
+              <div
+                className="absolute inset-x-0 bottom-0 [transform-style:preserve-3d]"
+                style={{ height: H_BASE }}
+              >
+                <Face
+                  w={W}
+                  h={H_BASE}
+                  transform={`translateZ(${D / 2}px)`}
+                  className="bg-[#0a0e12] border-x border-b border-t border-[rgba(184,146,74,0.30)] rounded-b-lg shadow-inner overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-50 bg-[repeating-linear-gradient(45deg,#000_0,#000_2px,transparent_2px,transparent_4px),repeating-linear-gradient(-45deg,#111_0,#111_2px,transparent_2px,transparent_4px)] mix-blend-overlay" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-20 pointer-events-none" />
+                  <div className="absolute top-2 left-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+                  <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+                  <div className="absolute bottom-2 left-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+                  <div className="absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full bg-[#111] shadow-[0_1px_1px_rgba(255,255,255,0.2)]" />
+                  <div className="absolute top-1/2 -translate-y-1/2 right-[8%] w-[40px] h-[80px] flex gap-[5px] opacity-20 transform -skew-x-12 mix-blend-overlay">
+                    <div className="w-1.5 h-full bg-yellow-400" />
+                    <div className="w-1.5 h-full bg-yellow-400" />
+                    <div className="w-1.5 h-full bg-yellow-400" />
+                    <div className="w-1.5 h-full bg-yellow-400" />
+                  </div>
+                  <div className="absolute top-0 w-full px-32 flex justify-between z-10">
+                    <div className="w-20 h-16 bg-[rgba(10,14,18,0.96)] rounded-b shadow-[0_6px_15px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(184,146,74,0.2)] flex flex-col items-center justify-end pb-2 border border-[rgba(184,146,74,0.40)] relative overflow-hidden">
+                      <div className="absolute flex justify-between w-full px-2 top-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                      </div>
+                      <span className="absolute top-1 font-mono text-[8px] font-bold text-[var(--bd-gold-hi)] opacity-40 tracking-widest pl-0.5 mix-blend-overlay">
+                        L-01
+                      </span>
+                      <div className="absolute top-2 w-[80%] h-1 bg-[rgba(184,146,74,0.2)] rounded-full" />
+                      <div className="w-6 h-4 bg-[#0a0e12] rounded border border-[rgba(184,146,74,0.40)] shadow-[inset_0_2px_4px_rgba(184,146,74,0.1),inset_0_-2px_4px_rgba(0,0,0,0.9)]" />
+                    </div>
+                    <div className="w-20 h-16 bg-[rgba(10,14,18,0.96)] rounded-b shadow-[0_6px_15px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(184,146,74,0.2)] flex flex-col items-center justify-end pb-2 border border-[rgba(184,146,74,0.40)] relative overflow-hidden">
+                      <div className="absolute flex justify-between w-full px-2 top-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                      </div>
+                      <span className="absolute top-1 font-mono text-[8px] font-bold text-[var(--bd-gold-hi)] opacity-40 tracking-widest pl-0.5 mix-blend-overlay">
+                        R-02
+                      </span>
+                      <div className="absolute top-2 w-[80%] h-1 bg-[rgba(184,146,74,0.2)] rounded-full" />
+                      <div className="w-6 h-4 bg-[#0a0e12] rounded border border-[rgba(184,146,74,0.40)] shadow-[inset_0_2px_4px_rgba(184,146,74,0.1),inset_0_-2px_4px_rgba(0,0,0,0.9)]" />
+                    </div>
+                  </div>
+                  <div className="absolute top-[55%] left-24 -translate-y-1/2 flex flex-col items-center">
+                    <div className="w-[12px] h-20 bg-gradient-to-b from-yellow-500/10 to-transparent absolute -top-[45px] blur-sm pointer-events-none" />
+                    <div className="px-8 py-3 bg-[rgba(10,14,18,0.95)] rounded font-mono text-[18px] tracking-[0.4em] text-[var(--bd-gold-hi)] border border-[rgba(184,146,74,0.3)] shadow-[inset_0_2px_1px_rgba(255,255,255,0.05),0_5px_15px_rgba(0,0,0,0.8)] z-10 font-bold uppercase flex flex-col items-center gap-1">
+                      <span className="text-[var(--bd-gold)] font-mono text-[9px] tracking-[0.3em] relative top-1 bg-[rgba(5,8,10,0.92)] px-2 rounded-sm border border-[rgba(184,146,74,0.2)] shadow-inner pb-0.5">
+                        SYS_MDL
+                      </span>
+                      <div className="flex items-center gap-4 mt-1">
+                        <div className="w-2 h-2 rounded-full bg-[rgba(184,146,74,0.3)] shadow-[inset_0_1px_3px_rgba(0,0,0,1),0_1px_1px_rgba(255,255,255,0.1)]" />
+                        <span className="drop-shadow-[0_0_10px_rgba(184,146,74,0.4)] text-[22px] font-medium tracking-[0.3em] leading-none">
+                          CORE
+                        </span>
+                        <div className="w-2 h-2 rounded-full bg-[rgba(184,146,74,0.3)] shadow-[inset_0_1px_3px_rgba(0,0,0,1),0_1px_1px_rgba(255,255,255,0.1)]" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-[-1px] left-[-1px] w-12 h-12 border-l-[3px] border-b-[3px] border-[rgba(184,146,74,0.40)] rounded-bl-lg mix-blend-screen opacity-50" />
+                  <div className="absolute bottom-[-1px] right-[-1px] w-12 h-12 border-r-[3px] border-b-[3px] border-[rgba(184,146,74,0.40)] rounded-br-lg mix-blend-screen opacity-50" />
+                </Face>
+
+                <Face
+                  w={W}
+                  h={H_BASE}
+                  transform={`translateZ(-${D / 2}px) rotateY(180deg)`}
+                  className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.30)] rounded-b-lg"
+                >
+                  <div className="absolute inset-0 opacity-5 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(184,146,74,0.5)_3px,rgba(184,146,74,0.5)_4px)]" />
+                </Face>
+
+                <Face w={D} h={H_BASE} transform={`translateX(-${W / 2}px) rotateY(-90deg)`} className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.3)] rounded-b-lg" />
+                <Face w={D} h={H_BASE} transform={`translateX(${W / 2}px) rotateY(90deg)`} className="bg-[#0a0e12] border-x border-b border-[rgba(184,146,74,0.3)] rounded-b-lg" />
+                <Face w={W} h={D} transform={`translateY(${H_BASE / 2}px) rotateX(-90deg)`} bg="bg-[#08090a] rounded-lg" />
+
+                <Face w={W} h={H_BASE} transform={`translateZ(${D / 2 - 4}px) rotateY(180deg)`} bg="bg-[#0b0c0e]" innerBlur />
+                <Face w={W} h={H_BASE} transform={`translateZ(-${D / 2 - 4}px)`} bg="bg-[#0b0c0e]" innerBlur />
+                <Face w={D} h={H_BASE} transform={`translateX(-${W / 2 - 4}px) rotateY(90deg)`} bg="bg-[#0b0c0e]" innerBlur />
+                <Face w={D} h={H_BASE} transform={`translateX(${W / 2 - 4}px) rotateY(-90deg)`} bg="bg-[#0b0c0e]" innerBlur />
+
+                <Face
+                  w={W}
+                  h={D}
+                  transform={`translateY(${H_BASE / 2 - 4}px) rotateX(90deg)`}
+                  bg="bg-[#050505] rounded-md"
+                  pointerEvents="auto"
+                >
+                  <InnerApp contentOpacity={contentOpacity} contentY={contentY} />
+                </Face>
+              </div>
+
+              {/* LID */}
+              <motion.div
+                className="absolute inset-x-0 top-0 [transform-style:preserve-3d]"
+                style={{
+                  height: H_LID,
+                  transformOrigin: `50% 100% -${D / 2}px`,
+                  rotateX: lidRotX,
+                }}
+              >
+                <Face
+                  w={W}
+                  h={H_LID}
+                  transform={`translateZ(${D / 2}px)`}
+                  className="bg-[#0a0e12] border-x border-t border-[rgba(184,146,74,0.30)] rounded-t-lg shadow-[inset_0_2px_10px_rgba(184,146,74,0.05)] overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(45deg,#000_0,#000_2px,transparent_2px,transparent_4px),repeating-linear-gradient(-45deg,#111_0,#111_2px,transparent_2px,transparent_4px)] mix-blend-overlay" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/40" />
+                  <div className="absolute bottom-0 w-full px-32 flex justify-between z-10">
+                    <div className="w-20 h-10 bg-[rgba(10,14,18,0.96)] rounded-t-lg shadow-[inset_0_2px_10px_rgba(184,146,74,0.1)] border border-[rgba(184,146,74,0.40)] border-b-0 relative overflow-hidden">
+                      <div className="absolute bottom-2 w-[80%] left-[10%] h-1 bg-[rgba(184,146,74,0.3)] rounded-full shadow-inner" />
+                      <div className="absolute flex justify-between w-full px-[6px] bottom-5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                      </div>
+                    </div>
+                    <div className="w-20 h-10 bg-[rgba(10,14,18,0.96)] rounded-t-lg shadow-[inset_0_2px_10px_rgba(184,146,74,0.1)] border border-[rgba(184,146,74,0.40)] border-b-0 relative overflow-hidden">
+                      <div className="absolute bottom-2 w-[80%] left-[10%] h-1 bg-[rgba(184,146,74,0.3)] rounded-full shadow-inner" />
+                      <div className="absolute flex justify-between w-full px-[6px] bottom-5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[rgba(184,146,74,0.5)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute -top-[50px] left-1/2 -translate-x-1/2 w-64 h-[50px] [transform-style:preserve-3d]">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`absolute inset-0 border-[14px] ${i === 0 ? "border-[#0a0e12]" : "border-[#05080a]"} border-b-0 rounded-t-2xl z-0 shadow-sm`}
+                        style={{ transform: `translateZ(-${i * 4}px)` }}
+                      />
+                    ))}
+                    <div
+                      className="absolute inset-0 border-[16px] border-[#020304] border-b-0 rounded-t-2xl shadow-[inset_0_0_10px_rgba(0,0,0,1)]"
+                      style={{ transform: "translateZ(-10px) scale(1.02)" }}
+                    />
+                  </div>
+                  <div className="absolute top-[-1px] left-[-1px] w-12 h-12 border-l-4 border-t-4 border-[rgba(184,146,74,0.40)] rounded-tl-lg mix-blend-screen opacity-50 z-20" />
+                  <div className="absolute top-[-1px] right-[-1px] w-12 h-12 border-r-4 border-t-4 border-[rgba(184,146,74,0.40)] rounded-tr-lg mix-blend-screen opacity-50 z-20" />
+                </Face>
+
+                <Face
+                  w={W}
+                  h={H_LID}
+                  transform={`translateZ(-${D / 2}px) rotateY(180deg)`}
+                  className="bg-[#0a0e12] border-x border-t border-[rgba(184,146,74,0.3)] rounded-t-lg"
+                >
+                  <div className="absolute inset-0 opacity-5 bg-[repeating-linear-gradient(0deg,transparent,transparent_3px,rgba(184,146,74,0.5)_3px,rgba(184,146,74,0.5)_4px)]" />
+                </Face>
+                <Face w={D} h={H_LID} transform={`translateX(-${W / 2}px) rotateY(-90deg)`} className="bg-[#0a0e12] border-[rgba(184,146,74,0.3)] rounded-t-lg" />
+                <Face w={D} h={H_LID} transform={`translateX(${W / 2}px) rotateY(90deg)`} className="bg-[#0a0e12] border-[rgba(184,146,74,0.3)] rounded-t-lg" />
+                <Face
+                  w={W}
+                  h={D}
+                  transform={`translateY(-${H_LID / 2}px) rotateX(90deg)`}
+                  className="bg-[#0a0e12] border border-[rgba(184,146,74,0.4)] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] rounded-lg"
+                >
+                  <div className="absolute inset-10 border border-[rgba(184,146,74,0.1)] shadow-[0_0_10px_rgba(0,0,0,0.5)] rounded pointer-events-none" />
+                  <div className="absolute inset-20 border border-[rgba(184,146,74,0.1)] shadow-[0_0_10px_rgba(0,0,0,0.5)] rounded pointer-events-none" />
+                </Face>
+                <Face w={W} h={H_LID} transform={`translateZ(${D / 2 - 4}px) rotateY(180deg)`} bg="bg-[#040608]" innerBlur />
+                <Face w={W} h={H_LID} transform={`translateZ(-${D / 2 - 4}px)`} bg="bg-[#040608]" innerBlur />
+                <Face w={D} h={H_LID} transform={`translateX(-${W / 2 - 4}px) rotateY(90deg)`} bg="bg-[#040608]" innerBlur />
+                <Face w={D} h={H_LID} transform={`translateX(${W / 2 - 4}px) rotateY(-90deg)`} bg="bg-[#040608]" innerBlur />
+                <Face
+                  w={W}
+                  h={D}
+                  transform={`translateY(-${H_LID / 2 - 4}px) rotateX(-90deg)`}
+                  className="bg-[#020304] rounded-lg"
+                >
+                  <div className="absolute inset-0 opacity-40 bg-[repeating-linear-gradient(45deg,#070a0d_0,#070a0d_10px,transparent_10px,transparent_20px)] shadow-[inset_0_0_120px_rgba(0,0,0,1)]" />
+                </Face>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
-    </section>
+    </div>
   );
 };
 
