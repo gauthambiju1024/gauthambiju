@@ -10,6 +10,8 @@ export interface ToolboxHandle {
   setLid(deg: number): void;
   /** Both latches rotate around their own pivots (0 = closed, ~90 = unlatched). */
   setLatches(deg: number): void;
+  /** Body opacity (used to dim the front face when revealing top-down tray). */
+  setBodyOpacity(o: number): void;
 }
 
 interface ToolboxProps {
@@ -24,6 +26,7 @@ export const Toolbox = forwardRef<ToolboxHandle, ToolboxProps>(
     const lidRef = useRef<SVGGElement>(null);
     const latchLRef = useRef<SVGGElement>(null);
     const latchRRef = useRef<SVGGElement>(null);
+    const bodyRef = useRef<SVGGElement>(null);
     const id = useMemo(() => `tb-${++__tbCounter}`, []);
 
     useImperativeHandle(ref, () => ({
@@ -33,6 +36,9 @@ export const Toolbox = forwardRef<ToolboxHandle, ToolboxProps>(
       setLatches(deg) {
         latchLRef.current?.setAttribute("transform", `rotate(${deg.toFixed(2)} 27 36)`);
         latchRRef.current?.setAttribute("transform", `rotate(${(-deg).toFixed(2)} 69 36)`);
+      },
+      setBodyOpacity(o) {
+        if (bodyRef.current) bodyRef.current.style.opacity = String(o);
       },
     }));
 
@@ -62,8 +68,8 @@ export const Toolbox = forwardRef<ToolboxHandle, ToolboxProps>(
           </linearGradient>
         </defs>
 
-        {/* Body (static) */}
-        <g>
+        {/* Body — front face, dimmable to expose interior */}
+        <g ref={bodyRef}>
           <rect x="8" y="36" width="80" height="32" rx="2" fill={`url(#${id}-body)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
           <line x1="10" y1="42" x2="86" y2="42" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
           <line x1="10" y1="48" x2="86" y2="48" stroke="rgba(0,0,0,0.18)" strokeWidth="0.4" />
@@ -73,19 +79,17 @@ export const Toolbox = forwardRef<ToolboxHandle, ToolboxProps>(
           <text x="48" y="54.4" textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="5" fill="hsl(40 8% 70%)" letterSpacing="0.6">TOOLS</text>
           <rect x="12" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
           <rect x="78" y="68" width="6" height="3" rx="0.5" fill="hsl(220 8% 12%)" />
-          {/* hinge sits at y=36 */}
           <line x1="8" y1="36" x2="88" y2="36" stroke="hsl(220 8% 8%)" strokeWidth="1" />
           <line x1="8" y1="36.7" x2="88" y2="36.7" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
         </g>
 
         {/* Lid group — rotates around (48, 36) */}
-        <g ref={lidRef} transform="rotate(0 48 36)" style={{ transformBox: "fill-box" } as any}>
+        <g ref={lidRef} transform="rotate(0 48 36)">
           <path d="M 30 22 Q 48 6 66 22" stroke={`url(#${id}-handle)`} strokeWidth="3" fill="none" strokeLinecap="round" />
           <circle cx="30" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
           <circle cx="66" cy="22" r="2.2" fill="hsl(220 8% 14%)" />
           <rect x="8" y="22" width="80" height="14" rx="2" fill={`url(#${id}-lid)`} stroke="hsl(220 8% 10%)" strokeWidth="1" />
           <line x1="10" y1="24.5" x2="86" y2="24.5" stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" />
-          {/* Latches travel with lid; also rotate around own pivots */}
           <g ref={latchLRef} transform="rotate(0 27 36)">
             <rect x="22" y="32" width="10" height="8" rx="1" fill={`url(#${id}-handle)`} stroke="hsl(220 8% 10%)" strokeWidth="0.7" />
             <circle cx="27" cy="36" r="0.9" fill="hsl(220 8% 12%)" />
@@ -101,7 +105,6 @@ export const Toolbox = forwardRef<ToolboxHandle, ToolboxProps>(
 );
 Toolbox.displayName = "Toolbox";
 
-/** Backward-compatible alias — the closed toolbox is just Toolbox at rest. */
 export const ToolboxClosed = ({
   width = 220,
   height = 174,

@@ -77,15 +77,32 @@ const DEFAULT_GROUPS: SkillGroup[] = [
   },
 ];
 
-const WELL_BG = "hsl(220 5% 14%)";
-const WELL_SHADOW = "inset 0 2px 6px rgba(0,0,0,0.55), inset 0 -1px 0 hsl(220 6% 24%)";
 const LABEL_INK = "hsl(40 8% 70%)";
 const LABEL_INK_DIM = "hsl(40 6% 52%)";
-const CHIP_BG = "hsl(220 5% 20%)";
-const CHIP_BORDER = "hsl(220 5% 12%)";
-const CHIP_HIGHLIGHT = "inset 0 1px 0 hsl(220 5% 30%), 0 1px 2px rgba(0,0,0,0.35)";
 
-const ToolboxInterior = () => {
+// Foam-tray top-down look
+const FOAM_BG = "hsl(220 8% 9%)";
+const FOAM_RECESS = `
+  inset 0 4px 10px rgba(0,0,0,0.85),
+  inset 0 -1px 0 hsl(220 8% 18%),
+  inset 2px 0 6px rgba(0,0,0,0.6),
+  inset -2px 0 6px rgba(0,0,0,0.6)
+`;
+const TOOL_BG = "linear-gradient(135deg, hsl(0 0% 72%) 0%, hsl(0 0% 52%) 50%, hsl(0 0% 38%) 100%)";
+const TOOL_BG_DARK = "linear-gradient(135deg, hsl(220 6% 38%) 0%, hsl(220 6% 24%) 50%, hsl(220 6% 16%) 100%)";
+const TOOL_BG_BRASS = "linear-gradient(135deg, hsl(38 55% 62%) 0%, hsl(38 50% 44%) 50%, hsl(38 45% 30%) 100%)";
+
+const groupToolStyle = (gi: number) => {
+  if (gi === 0) return { background: TOOL_BG_BRASS, clipPath: "polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%)" };
+  if (gi === 1) return { background: TOOL_BG, clipPath: "polygon(0 30%, 18% 30%, 18% 0, 82% 0, 82% 30%, 100% 30%, 100% 70%, 82% 70%, 82% 100%, 18% 100%, 18% 70%, 0 70%)" };
+  return { background: TOOL_BG_DARK, clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" };
+};
+
+interface Props {
+  variant?: "side" | "top";
+}
+
+const ToolboxInterior = ({ variant = "side" }: Props) => {
   const { value } = useSiteContent("skills", "groups");
   const [activeSkill, setActiveSkill] = useState<{ group: number; skill: number } | null>(null);
 
@@ -94,88 +111,131 @@ const ToolboxInterior = () => {
       ? ((value as any).groups as SkillGroup[])
       : DEFAULT_GROUPS;
 
+  if (variant === "top") {
+    return (
+      <div
+        className="grid grid-cols-3 gap-2 h-full w-full p-2"
+        style={{
+          background: FOAM_BG,
+          boxShadow: FOAM_RECESS,
+          borderRadius: "3px",
+        }}
+      >
+        {groups.map((group, gi) => (
+          <div
+            key={group.title + gi}
+            className="relative flex flex-col"
+            style={{
+              background: "hsl(220 8% 11%)",
+              boxShadow: `inset 0 3px 8px rgba(0,0,0,0.75), inset 0 -1px 0 hsl(220 8% 16%)`,
+              borderRadius: "2px",
+              padding: "8px 6px 6px",
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span style={{ color: LABEL_INK_DIM }}>{renderIcon(group.icon)}</span>
+              <h3
+                className="font-mono text-[9px] font-semibold tracking-[0.2em] uppercase"
+                style={{ color: LABEL_INK }}
+              >
+                {group.title}
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1">
+              {group.skills.map((skill, si) => {
+                const isActive = activeSkill?.group === gi && activeSkill?.skill === si;
+                const ts = groupToolStyle(gi);
+                return (
+                  <div key={skill.name + si} className="relative">
+                    <motion.button
+                      className="w-full px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider relative"
+                      style={{
+                        background: ts.background,
+                        clipPath: ts.clipPath,
+                        color: gi === 0 ? "hsl(35 30% 12%)" : "hsl(220 6% 8%)",
+                        textShadow: gi === 0
+                          ? "0 1px 0 hsl(38 55% 70% / 0.6)"
+                          : "0 1px 0 hsl(0 0% 80% / 0.3)",
+                        filter: isActive
+                          ? "drop-shadow(0 4px 6px rgba(0,0,0,0.7)) brightness(1.1)"
+                          : "drop-shadow(0 2px 3px rgba(0,0,0,0.6))",
+                        cursor: "pointer",
+                      }}
+                      whileHover={{ y: -2 }}
+                      onHoverStart={() => setActiveSkill({ group: gi, skill: si })}
+                      onHoverEnd={() => setActiveSkill(null)}
+                      onClick={() => setActiveSkill(isActive ? null : { group: gi, skill: si })}
+                    >
+                      {skill.name}
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.div
+                          className="absolute z-20 left-full ml-2 top-0 w-52 p-3 rounded-sm"
+                          style={{
+                            background: "hsl(220 8% 12%)",
+                            color: "hsl(40 6% 82%)",
+                            borderLeft: "2px solid hsl(38 55% 55%)",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 hsl(220 8% 20%)",
+                          }}
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -4 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <p className="text-[11px] leading-relaxed font-body">{skill.context}</p>
+                          {skill.project && (
+                            <span
+                              className="block mt-1.5 text-[9px] tracking-wider uppercase font-mono"
+                              style={{ color: "hsl(38 45% 60%)" }}
+                            >
+                              Used in: {skill.project}
+                            </span>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Fallback (side variant — original)
   return (
     <div className="grid md:grid-cols-3 gap-3 h-full w-full">
       {groups.map((group, gi) => (
         <div
           key={group.title + gi}
           className="rounded-sm p-3 relative"
-          style={{ background: WELL_BG, boxShadow: WELL_SHADOW, border: "1px solid hsl(220 6% 9%)" }}
+          style={{
+            background: "hsl(220 5% 14%)",
+            boxShadow: "inset 0 2px 6px rgba(0,0,0,0.55), inset 0 -1px 0 hsl(220 6% 24%)",
+            border: "1px solid hsl(220 6% 9%)",
+          }}
         >
-          <div
-            className="flex items-center gap-2 mb-3 pb-2"
-            style={{ borderBottom: "1px solid hsl(220 6% 10%)", boxShadow: "0 1px 0 hsl(220 6% 22%)" }}
-          >
+          <div className="flex items-center gap-2 mb-3 pb-2" style={{ borderBottom: "1px solid hsl(220 6% 10%)" }}>
             <span style={{ color: LABEL_INK_DIM }}>{renderIcon(group.icon)}</span>
-            <h3
-              className="font-mono text-[11px] font-semibold tracking-[0.25em] uppercase"
-              style={{ color: LABEL_INK, textShadow: "0 1px 0 rgba(0,0,0,0.6), 0 -1px 0 hsl(220 6% 26%)" }}
-            >
+            <h3 className="font-mono text-[11px] font-semibold tracking-[0.25em] uppercase" style={{ color: LABEL_INK }}>
               {group.title}
             </h3>
-            <span
-              className="ml-auto text-[9px] font-mono w-5 h-5 rounded-full flex items-center justify-center"
-              style={{
-                color: LABEL_INK_DIM,
-                background: "hsl(220 5% 12%)",
-                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.6), inset 0 -1px 0 hsl(220 6% 22%)",
-              }}
-            >
-              {group.skills.length}
-            </span>
           </div>
-
           <div className="flex flex-wrap gap-1.5">
-            {group.skills.map((skill, si) => {
-              const isActive = activeSkill?.group === gi && activeSkill?.skill === si;
-              return (
-                <div key={skill.name + si} className="relative">
-                  <motion.button
-                    className="px-2.5 py-1 text-[11px] font-mono rounded-[3px] transition-all duration-150"
-                    style={{
-                      background: isActive ? "hsl(220 5% 16%)" : CHIP_BG,
-                      color: isActive ? "hsl(40 8% 88%)" : "hsl(40 6% 74%)",
-                      border: `1px solid ${CHIP_BORDER}`,
-                      boxShadow: isActive ? "inset 0 1px 3px rgba(0,0,0,0.6)" : CHIP_HIGHLIGHT,
-                    }}
-                    whileHover={{ y: -1 }}
-                    onHoverStart={() => setActiveSkill({ group: gi, skill: si })}
-                    onHoverEnd={() => setActiveSkill(null)}
-                    onClick={() => setActiveSkill(isActive ? null : { group: gi, skill: si })}
-                  >
-                    {skill.name}
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {isActive && (
-                      <motion.div
-                        className="absolute z-20 bottom-full left-0 mb-2 w-52 p-3 rounded-sm"
-                        style={{
-                          background: "hsl(220 8% 12%)",
-                          color: "hsl(40 6% 82%)",
-                          borderLeft: "2px solid hsl(38 55% 55%)",
-                          boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 hsl(220 8% 20%)",
-                        }}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <p className="text-[11px] leading-relaxed font-body">{skill.context}</p>
-                        {skill.project && (
-                          <span
-                            className="block mt-1.5 text-[9px] tracking-wider uppercase font-mono"
-                            style={{ color: "hsl(38 45% 60%)" }}
-                          >
-                            Used in: {skill.project}
-                          </span>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
+            {group.skills.map((skill, si) => (
+              <button
+                key={skill.name + si}
+                className="px-2.5 py-1 text-[11px] font-mono rounded-[3px]"
+                style={{ background: "hsl(220 5% 20%)", color: "hsl(40 6% 74%)", border: "1px solid hsl(220 5% 12%)" }}
+              >
+                {skill.name}
+              </button>
+            ))}
           </div>
         </div>
       ))}
