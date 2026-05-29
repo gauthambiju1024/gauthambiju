@@ -1,37 +1,44 @@
 import { useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 import ToolboxInterior from "./skills/ToolboxInterior";
-import { ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
+import { ToolboxClosed, ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
 
 
 /**
  * ToolboxToSkillsBridge — pinned scroll-driven flip.
- * 0.00–0.30  Closed toolbox scales up and translates to centre.
- * 0.30–0.65  Lid swings open along its hinge; tray container reveals.
+ * 0.00–0.30  The SAME closed toolbox from the shelf scales up and centres.
+ * 0.30–0.42  Closed toolbox crossfades into the open lid+body assembly
+ *            (visually identical silhouette → no jump, no blank).
+ * 0.30–0.65  Lid swings open along its hinge; tray body reveals.
  * 0.65–1.00  Interior (skills) fades & scales in; section becomes interactive.
  */
 const ToolboxToSkillsBridge = () => {
   const pinRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
 
-  // Tray (body of toolbox) — scales/centres
+  // Stage container — scales/centres
   const trayScale = useTransform(scrollYProgress, [0, 0.3, 1], [0.55, 1, 1]);
   const trayY = useTransform(scrollYProgress, [0, 0.3], [60, 0]);
   const trayOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
 
+  // Closed shelf toolbox — visible at start, fades into the open assembly at ~0.32–0.42.
+  const closedOpacity = useTransform(scrollYProgress, [0.30, 0.42], [1, 0]);
+  // Open assembly (lid + body tray) fades in just as closed fades out — same silhouette → no blank.
+  const openOpacity = useTransform(scrollYProgress, [0.30, 0.42], [0, 1]);
+
   // Lid — hinge open (rotateX). Lid sits above the tray, hinge at its bottom.
-  const lidRotate = useTransform(scrollYProgress, [0.3, 0.65], [0, -135]);
-  const lidFilter = useTransform(scrollYProgress, [0.3, 0.65], [
+  const lidRotate = useTransform(scrollYProgress, [0.42, 0.72], [0, -135]);
+  const lidFilter = useTransform(scrollYProgress, [0.42, 0.72], [
     "drop-shadow(0 10px 15px rgba(0,0,0,0.5))",
     "drop-shadow(0 3px 6px rgba(0,0,0,0.15))",
   ]);
 
   // Interior reveal
-  const interiorOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
-  const interiorScale = useTransform(scrollYProgress, [0.45, 0.7], [0.92, 1]);
+  const interiorOpacity = useTransform(scrollYProgress, [0.55, 0.78], [0, 1]);
+  const interiorScale = useTransform(scrollYProgress, [0.55, 0.78], [0.92, 1]);
 
   // Settle indicator
-  const settledOpacity = useTransform(scrollYProgress, [0.6, 0.75], [0, 1]);
+  const settledOpacity = useTransform(scrollYProgress, [0.7, 0.85], [0, 1]);
 
   return (
     <section
@@ -55,23 +62,45 @@ const ToolboxToSkillsBridge = () => {
               perspective: "1200px",
             }}
           >
-            {/* Lid (hinged at bottom edge) */}
+            {/* Closed shelf toolbox — same artwork that sat on the projects shelf.
+                Visible until ~scroll 0.42, then crossfades into the open assembly. */}
             <motion.div
               aria-hidden
               style={{
                 position: "absolute",
-                left: 0, right: 0,
-                bottom: "100%",
-                height: "min(14vh, 92px)",
-                transformOrigin: "bottom center",
-                transformStyle: "preserve-3d",
-                rotateX: lidRotate,
-                filter: lidFilter,
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: closedOpacity,
+                pointerEvents: "none",
+                filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.45)) drop-shadow(0 6px 10px rgba(0,0,0,0.35))",
               }}
             >
-              <ToolboxLidOnly />
-
+              <div style={{ width: "min(60%, 420px)", aspectRatio: "96 / 76" }}>
+                <ToolboxClosed width="100%" height="100%" />
+              </div>
             </motion.div>
+
+            {/* Open assembly (lid + body tray) — fades in as the closed toolbox fades out. */}
+            <motion.div style={{ position: "absolute", inset: 0, opacity: openOpacity }}>
+              {/* Lid (hinged at bottom edge) */}
+              <motion.div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: 0, right: 0,
+                  bottom: "100%",
+                  height: "min(14vh, 92px)",
+                  transformOrigin: "bottom center",
+                  transformStyle: "preserve-3d",
+                  rotateX: lidRotate,
+                  filter: lidFilter,
+                }}
+              >
+                <ToolboxLidOnly />
+              </motion.div>
+
 
             {/* Tray body */}
             <div
@@ -111,6 +140,8 @@ const ToolboxToSkillsBridge = () => {
                 <ToolboxInterior />
               </motion.div>
             </div>
+            </motion.div>
+
 
             {/* Subtle drop-shadow under closed/opening toolbox */}
             <div
