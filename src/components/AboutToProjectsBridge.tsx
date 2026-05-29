@@ -458,15 +458,18 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           href="#skills"
                           aria-label="Open toolbox"
                           style={{
-                            display: "block",
+                            display: "flex",
+                            alignItems: "flex-end",
+                            justifyContent: "center",
                             width: 220,
-                            height: 174,
-                            transformOrigin: "bottom right",
+                            height: 116,
+                            transformOrigin: "bottom center",
                             pointerEvents: "auto",
                           }}
                         >
                           <ToolboxClosed width={220} />
                         </a>
+
                       </div>
                     );
                   })()}
