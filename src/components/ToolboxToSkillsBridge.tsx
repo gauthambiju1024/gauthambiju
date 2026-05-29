@@ -100,8 +100,6 @@ const ToolboxToSkillsBridge = () => {
   const interiorOpacity = useTransform(t, [0.50, 0.60, 0.78, 0.84], [0, 1, 1, 0]);
   const interiorY = useTransform(t, [0.50, 0.60, 0.78, 0.84], [30, 0, 0, -10]);
 
-  // Section background fade — starts transparent so shelf shows through during park
-  const bgOpacity = useTransform(t, [0, 0.25, 0.40, 0.90, 1], [0, 0, 1, 1, 0.3]);
 
 
   // Publish 'flip active' so the shelf prop hides whenever the bridge actually
