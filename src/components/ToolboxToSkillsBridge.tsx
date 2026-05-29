@@ -83,13 +83,14 @@ const ToolboxToSkillsBridge = () => {
                   "inset 0 1px 0 hsl(220 6% 32%), inset 0 -1px 0 hsl(220 8% 8%), 0 18px 40px -10px rgba(0,0,0,0.6)",
                 backgroundImage:
                   "linear-gradient(180deg, hsl(220 6% 22%) 0%, hsl(220 6% 16%) 100%), repeating-linear-gradient(180deg, transparent 0 2px, rgba(255,255,255,0.015) 2px 3px)",
+              }}
             >
               {/* Same body silhouette as shelf toolbox — back wall of the open tray */}
               <div aria-hidden className="absolute inset-0 pointer-events-none opacity-40">
                 <ToolboxBodyOnly />
               </div>
 
-            >
+
               {/* Header strip */}
               <motion.div
                 className="flex items-center gap-3 mb-4"
