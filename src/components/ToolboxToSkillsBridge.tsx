@@ -49,12 +49,13 @@ const ToolboxToSkillsBridge = () => {
       const active = takeover > 0.001 || (ownP > 0.0005 && ownP < 0.9995);
       if (!active || !rect) {
         fly.style.opacity = "0";
+        fly.style.pointerEvents = "none";
         (window as any).__toolboxInFlight = false;
         raf = requestAnimationFrame(tick);
         return;
       }
       fly.style.opacity = "1";
-      (window as any).__toolboxInFlight = true;
+      fly.style.pointerEvents = ownP > 0.6 ? "auto" : "none";
 
       // Center-stage rect
       const vw = window.innerWidth;
