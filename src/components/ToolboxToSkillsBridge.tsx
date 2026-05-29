@@ -77,31 +77,30 @@ const ToolboxToSkillsBridge = () => {
                 filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.45)) drop-shadow(0 6px 10px rgba(0,0,0,0.35))",
               }}
             >
-              <div style={{ width: "70%", height: "70%" }}>
-                <svg viewBox="0 0 96 76" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
-                  <foreignObject width="0" height="0" />
-                </svg>
-                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ToolboxClosed width="100%" height="100%" />
-                </div>
+              <div style={{ width: "min(60%, 420px)", aspectRatio: "96 / 76" }}>
+                <ToolboxClosed width="100%" height="100%" />
               </div>
             </motion.div>
 
             {/* Open assembly (lid + body tray) — fades in as the closed toolbox fades out. */}
             <motion.div style={{ position: "absolute", inset: 0, opacity: openOpacity }}>
+              {/* Lid (hinged at bottom edge) */}
+              <motion.div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: 0, right: 0,
+                  bottom: "100%",
+                  height: "min(14vh, 92px)",
+                  transformOrigin: "bottom center",
+                  transformStyle: "preserve-3d",
+                  rotateX: lidRotate,
+                  filter: lidFilter,
+                }}
+              >
+                <ToolboxLidOnly />
+              </motion.div>
 
-                left: 0, right: 0,
-                bottom: "100%",
-                height: "min(14vh, 92px)",
-                transformOrigin: "bottom center",
-                transformStyle: "preserve-3d",
-                rotateX: lidRotate,
-                filter: lidFilter,
-              }}
-            >
-              <ToolboxLidOnly />
-
-            </motion.div>
 
             {/* Tray body */}
             <div
