@@ -10,7 +10,6 @@ import { Entropy } from "@/components/ui/entropy";
 
 import CorkboardFrame from "@/components/desk/frames/CorkboardFrame";
 import NotebookFrame from "@/components/desk/frames/NotebookFrame";
-import LetterFrame from "@/components/desk/frames/LetterFrame";
 import { useMotionValue } from "framer-motion";
 
 const trailingStations = [
