@@ -138,14 +138,17 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
-      // Crossfade with the flying spine over the same 0.985 → 1.0 window so
-      // the two opacities sum to 1.0 — no gap frame, no overlap pop, and the
-      // animation reverses cleanly on scroll-up.
+      // Shelf spine appears slightly BEFORE the flying spine starts fading,
+      // and both stay at opacity 1 for an overlap window. Because they render
+      // pixel-aligned (flying spine's end rect == slot rect), the overlap is
+      // invisible — but it guarantees no missing frame → no flicker. On scroll
+      // up the shelf spine hides again as soon as we drop below the threshold.
       if (aboutSpineRef.current) {
-        const shelfFade = clamp01((bridge - 0.985) / 0.015);
-        aboutSpineRef.current.style.opacity = String(shelfFade);
-        aboutSpineRef.current.style.pointerEvents = shelfFade >= 1 ? "auto" : "none";
+        const shelfOn = bridge >= 0.97 ? 1 : 0;
+        aboutSpineRef.current.style.opacity = String(shelfOn);
+        aboutSpineRef.current.style.pointerEvents = bridge >= 1 ? "auto" : "none";
       }
+
 
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
