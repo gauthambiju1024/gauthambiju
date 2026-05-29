@@ -239,6 +239,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
           visible: bridge >= 1.0,
         };
+        // Hide shelf prop while the flip bridge owns the toolbox → never two on screen.
+        const flipping = (window as any).__skillsFlipActive === true;
+        toolboxRef.current.style.opacity = flipping ? "0" : "1";
+        toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
       }
 
       publishSlotRect();

@@ -70,36 +70,38 @@ const ToolboxToSkillsBridge = () => {
     };
   }, []);
 
-  // Position: shelf → centre → centre → slight settle drop
-  const x = useTransform(t, [0, 0.1, 0.8, 1], [start.x, 0, 0, 0]);
-  const y = useTransform(t, [0, 0.1, 0.8, 1], [start.y, 0, 0, 40]);
+  // Position: park on shelf rect (re-read live below) → centre → settle
+  // We hold the actor exactly over the shelf prop until ~0.30 so the handoff
+  // happens IN the same viewport as the shelf.
+  const x = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.x, start.x, 0, 0, 0]);
+  const y = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.y, start.y, 0, 0, 40]);
   const scale = useTransform(
     t,
-    [0, 0.1, 0.2, 0.8, 0.95],
+    [0, 0.3, 0.45, 0.85, 1],
     [start.scale, start.scale, endScale, endScale, endScale * 0.85]
   );
 
-  // Rotations — exactly the user's scaffold
+  // Rotations — start front-on (matches shelf prop), then flip to top-down, then settle.
   const rotX = useTransform(
     t,
-    [0, 0.1, 0.2, 0.8, 0.95],
-    ["0deg", "-15deg", "-90deg", "-90deg", "-15deg"]
+    [0, 0.3, 0.45, 0.85, 0.97],
+    ["0deg", "0deg", "-90deg", "-90deg", "-15deg"]
   );
   const rotY = useTransform(
     t,
-    [0, 0.1, 0.2, 0.8, 0.95],
-    ["0deg", "-5deg", "0deg", "0deg", "35deg"]
+    [0, 0.3, 0.45, 0.85, 0.97],
+    ["0deg", "0deg", "0deg", "0deg", "35deg"]
   );
 
-  // Lid hinge
-  const lidRot = useTransform(t, [0.25, 0.4, 0.65, 0.75], ["0deg", "125deg", "125deg", "0deg"]);
+  // Lid hinge — opens after the flip is complete
+  const lidRot = useTransform(t, [0.45, 0.55, 0.78, 0.85], ["0deg", "125deg", "125deg", "0deg"]);
 
-  // Interior reveal — visible while lid is open
-  const interiorOpacity = useTransform(t, [0.40, 0.50, 0.65, 0.72], [0, 1, 1, 0]);
-  const interiorY = useTransform(t, [0.40, 0.50, 0.65, 0.72], [30, 0, 0, -10]);
+  // Interior reveal
+  const interiorOpacity = useTransform(t, [0.50, 0.60, 0.78, 0.84], [0, 1, 1, 0]);
+  const interiorY = useTransform(t, [0.50, 0.60, 0.78, 0.84], [30, 0, 0, -10]);
 
-  // Section background fade
-  const bgOpacity = useTransform(t, [0, 0.12, 0.85, 1], [0, 1, 1, 0.3]);
+  // Section background fade — starts transparent so shelf shows through during park
+  const bgOpacity = useTransform(t, [0, 0.25, 0.40, 0.90, 1], [0, 0, 1, 1, 0.3]);
 
 
   // Publish 'flip active' so the shelf prop can hide while we render the 3D one
