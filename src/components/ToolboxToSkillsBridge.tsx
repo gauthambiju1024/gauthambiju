@@ -26,56 +26,9 @@ const H_BASE = 160;
 const H_LID = 80;
 const D = 500;
 
-const ShelfLine = ({ label }: { label?: string }) => (
-  <div className="relative w-full h-[6px] bg-gradient-to-b from-[#8a6a43] via-[#4a341e] to-[#2a1d11] shadow-[0_6px_20px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-sm flex items-center mt-2 z-10 shrink-0">
-    {label && (
-      <div className="absolute top-1/2 -translate-y-1/2 left-8 md:left-24 bg-[#0d0f12] px-4 text-[#bf935a] font-mono text-[10px] tracking-[0.3em] font-medium shadow-[0_0_10px_rgba(13,15,18,0.9)] border border-[#8a6a43]/20 uppercase">
-        {label}
-      </div>
-    )}
-  </div>
-);
-
-const Book = ({
-  title,
-  subtitle,
-  year,
-  colorClass,
-  borderClass,
-  pattern = true,
-}: {
-  title: string;
-  subtitle?: string;
-  year?: string;
-  colorClass: string;
-  borderClass: string;
-  pattern?: boolean;
-}) => (
-  <div
-    className={`w-14 sm:w-16 h-[200px] sm:h-[220px] ${colorClass} rounded-t flex flex-col justify-end items-center pb-6 shadow-[10px_10px_20px_rgba(0,0,0,0.8)] relative ${borderClass} z-20 shrink-0 transform-gpu`}
-  >
-    {pattern && (
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDQiLz4KPC9zdmc+')] opacity-50 mix-blend-overlay pointer-events-none" />
-    )}
-    <div className="w-full flex-1 flex items-center justify-center relative z-10 p-2">
-      <span className="[writing-mode:vertical-rl] tracking-[0.2em] font-medium uppercase text-white/90 whitespace-nowrap py-8 max-h-full drop-shadow-md text-[13px] sm:text-[14px]">
-        {title}
-      </span>
-      {year && (
-        <span className="absolute top-4 [writing-mode:vertical-rl] text-white/40 font-mono text-[9px] tracking-widest">
-          {year}
-        </span>
-      )}
-    </div>
-    {subtitle && (
-      <span className="text-[8px] sm:text-[9px] text-white/50 w-full text-center px-1 leading-tight mb-auto mt-4 tracking-wide z-10 uppercase">
-        {subtitle}
-      </span>
-    )}
-    <div className="w-full h-[3px] bg-white/20 mt-2 mb-1 shadow-inner z-10" />
-    <div className="w-full h-1 bg-white/10 z-10" />
-  </div>
-);
+// Library shelf UI removed — the toolbox now lifts off the real ProjectsShelf
+// toolbox rendered by AboutToProjectsBridge above. We track its rect via
+// window.__toolboxRect for a pixel-perfect handoff.
 
 const Face = ({
   w,
