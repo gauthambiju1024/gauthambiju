@@ -136,18 +136,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
-      // Pure scroll-reactive: shelf About spine only shows when bridge fully
-      // settled. Reverses cleanly on scroll-up — no one-shot lock that would
-      // leave the spine visible while the flight spine re-renders.
+      // Crossfade with the flying spine over the same 0.985 → 1.0 window so
+      // the two opacities sum to 1.0 — no gap frame, no overlap pop, and the
+      // animation reverses cleanly on scroll-up.
       if (aboutSpineRef.current) {
-        if (settled) {
-          aboutSpineRef.current.style.opacity = "1";
-          aboutSpineRef.current.style.pointerEvents = "auto";
-        } else {
-          aboutSpineRef.current.style.opacity = "0";
-          aboutSpineRef.current.style.pointerEvents = "none";
-        }
+        const shelfFade = clamp01((bridge - 0.985) / 0.015);
+        aboutSpineRef.current.style.opacity = String(shelfFade);
+        aboutSpineRef.current.style.pointerEvents = shelfFade >= 1 ? "auto" : "none";
       }
+
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
       const drawWinStart = 0.74;
