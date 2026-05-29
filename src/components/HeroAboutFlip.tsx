@@ -44,7 +44,7 @@ const HeroAboutFlip = () => {
 
       {/* Anchor for the About nav link — placed past the flip midpoint so clicking it lands on the flipped state */}
       <div id="about" style={{ position: "absolute", top: "55%", left: 0, width: 1, height: 1 }} aria-hidden />
-      <div id="projects" style={{ position: "absolute", top: "82%", left: 0, width: 1, height: 1 }} aria-hidden />
+      <div id="projects" style={{ position: "absolute", top: "88%", left: 0, width: 1, height: 1 }} aria-hidden />
 
       {/* Lanyard + ID card overlay; back face is rendered inside HeroIdBadge */}
       <HeroIdBadge progressMV={scrollYProgress} anchorId="home" />
