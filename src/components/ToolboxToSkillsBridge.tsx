@@ -127,17 +127,6 @@ const ToolboxToSkillsBridge = () => {
       className="relative"
     >
       <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        {/* Dark stage background */}
-        <motion.div
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            opacity: bgOpacity,
-            background:
-              "radial-gradient(ellipse at 50% 40%, hsl(220 18% 8%) 0%, hsl(220 22% 5%) 60%, hsl(220 24% 3%) 100%)",
-          }}
-        />
-
         {/* slot used purely as a screen-centre anchor for the layout-effect math */}
         <div ref={slotRef} className="absolute left-1/2 top-1/2 w-1 h-1" aria-hidden />
 
@@ -148,7 +137,7 @@ const ToolboxToSkillsBridge = () => {
         >
           <motion.div
             className="relative"
-            style={{ x, y, pointerEvents: "auto" }}
+            style={{ x, y, pointerEvents: "auto", opacity: start ? 1 : 0 }}
           >
             <Toolbox3D
               scale={scale}
