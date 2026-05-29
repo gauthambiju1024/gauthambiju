@@ -140,6 +140,8 @@ const ToolboxToSkillsBridge = () => {
                 <ToolboxInterior />
               </motion.div>
             </div>
+            </motion.div>
+
 
             {/* Subtle drop-shadow under closed/opening toolbox */}
             <div
