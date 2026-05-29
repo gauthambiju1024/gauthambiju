@@ -56,6 +56,7 @@ const ToolboxToSkillsBridge = () => {
       }
       fly.style.opacity = "1";
       fly.style.pointerEvents = ownP > 0.6 ? "auto" : "none";
+      (window as any).__toolboxInFlight = true;
 
       // Center-stage rect
       const vw = window.innerWidth;
