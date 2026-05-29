@@ -1,34 +1,8 @@
 import { useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 import ToolboxInterior from "./skills/ToolboxInterior";
+import { ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
 
-const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-
-const ToolboxLid = () => (
-  <svg width="100%" height="100%" viewBox="0 0 96 18" preserveAspectRatio="none" style={{ display: "block" }}>
-    <defs>
-      <linearGradient id="tb2Lid" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="hsl(220 6% 40%)" />
-        <stop offset="1" stopColor="hsl(220 6% 24%)" />
-      </linearGradient>
-      <linearGradient id="tb2Handle" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="hsl(0 0% 78%)" />
-        <stop offset="0.5" stopColor="hsl(0 0% 58%)" />
-        <stop offset="1" stopColor="hsl(0 0% 38%)" />
-      </linearGradient>
-    </defs>
-    {/* handle */}
-    <path d="M 30 9 Q 48 -4 66 9" stroke="url(#tb2Handle)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-    <circle cx="30" cy="9" r="1.2" fill="hsl(220 8% 14%)" />
-    <circle cx="66" cy="9" r="1.2" fill="hsl(220 8% 14%)" />
-    {/* lid body */}
-    <rect x="2" y="6" width="92" height="11" rx="1.5" fill="url(#tb2Lid)" stroke="hsl(220 8% 10%)" strokeWidth="0.5" />
-    <line x1="4" y1="8" x2="92" y2="8" stroke="rgba(255,255,255,0.18)" strokeWidth="0.4" />
-    {/* latches */}
-    <rect x="22" y="13" width="10" height="4" rx="0.6" fill="url(#tb2Handle)" stroke="hsl(220 8% 10%)" strokeWidth="0.4" />
-    <rect x="64" y="13" width="10" height="4" rx="0.6" fill="url(#tb2Handle)" stroke="hsl(220 8% 10%)" strokeWidth="0.4" />
-  </svg>
-);
 
 /**
  * ToolboxToSkillsBridge — pinned scroll-driven flip.
