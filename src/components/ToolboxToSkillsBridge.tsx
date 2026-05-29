@@ -12,26 +12,33 @@ import { ToolboxClosed, ToolboxLidOnly, ToolboxBodyOnly } from "./skills/Toolbox
  * 0.30–0.65  Lid swings open along its hinge; tray body reveals.
  * 0.65–1.00  Interior (skills) fades & scales in; section becomes interactive.
  */
+const ToolboxToSkillsBridge = () => {
+  const pinRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
 
-
-  // Tray (body of toolbox) — scales/centres
+  // Stage container — scales/centres
   const trayScale = useTransform(scrollYProgress, [0, 0.3, 1], [0.55, 1, 1]);
   const trayY = useTransform(scrollYProgress, [0, 0.3], [60, 0]);
   const trayOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
 
+  // Closed shelf toolbox — visible at start, fades into the open assembly at ~0.32–0.42.
+  const closedOpacity = useTransform(scrollYProgress, [0.30, 0.42], [1, 0]);
+  // Open assembly (lid + body tray) fades in just as closed fades out — same silhouette → no blank.
+  const openOpacity = useTransform(scrollYProgress, [0.30, 0.42], [0, 1]);
+
   // Lid — hinge open (rotateX). Lid sits above the tray, hinge at its bottom.
-  const lidRotate = useTransform(scrollYProgress, [0.3, 0.65], [0, -135]);
-  const lidFilter = useTransform(scrollYProgress, [0.3, 0.65], [
+  const lidRotate = useTransform(scrollYProgress, [0.42, 0.72], [0, -135]);
+  const lidFilter = useTransform(scrollYProgress, [0.42, 0.72], [
     "drop-shadow(0 10px 15px rgba(0,0,0,0.5))",
     "drop-shadow(0 3px 6px rgba(0,0,0,0.15))",
   ]);
 
   // Interior reveal
-  const interiorOpacity = useTransform(scrollYProgress, [0.45, 0.7], [0, 1]);
-  const interiorScale = useTransform(scrollYProgress, [0.45, 0.7], [0.92, 1]);
+  const interiorOpacity = useTransform(scrollYProgress, [0.55, 0.78], [0, 1]);
+  const interiorScale = useTransform(scrollYProgress, [0.55, 0.78], [0.92, 1]);
 
   // Settle indicator
-  const settledOpacity = useTransform(scrollYProgress, [0.6, 0.75], [0, 1]);
+  const settledOpacity = useTransform(scrollYProgress, [0.7, 0.85], [0, 1]);
 
   return (
     <section
