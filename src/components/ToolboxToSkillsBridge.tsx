@@ -138,7 +138,7 @@ const ToolboxToSkillsBridge = () => {
 
         {/* Stage with shared perspective */}
         <div
-          className="absolute inset-0 flex items-center justify-center [perspective:2500px]"
+          className="absolute inset-0 flex items-center justify-center [perspective:1200px]"
           style={{ pointerEvents: "none" }}
         >
           <motion.div
