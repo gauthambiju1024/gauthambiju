@@ -129,30 +129,24 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // Phase A — toolbox takeover: as we scroll the last slice of the section
-      // (raw t 0.88 → 1.0), the shelf fades and the flying toolbox lifts to
-      // center stage. Published for ToolboxToSkillsBridge to consume.
-      const takeoverRaw = clamp01((t - 0.88) / (1.0 - 0.88));
-      const takeover = easeInOut(takeoverRaw);
-      (window as any).__toolboxTakeoverProgress = takeover;
-
-      // Shelf fades in just as the packet starts shrinking, then fades out
-      // during the takeover phase.
-      const shelfIn = seg(0.70, 0.80, bridge);
-      shelfWrap.style.opacity = String(shelfIn * (1 - takeover));
-      shelfWrap.style.transform = `translateX(-50%) scale(${(1 - takeover * 0.08).toFixed(3)})`;
-      shelfWrap.style.filter = takeover > 0 ? `blur(${(takeover * 3).toFixed(2)}px)` : "";
-      shelfWrap.style.pointerEvents = bridge >= 1.0 && takeover < 0.01 ? "auto" : "none";
+      // Shelf fades in just as the packet starts shrinking
+      shelfWrap.style.opacity = String(seg(0.70, 0.80, bridge));
+      shelfWrap.style.pointerEvents = bridge >= 1.0 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
       const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
+      // Shelf spine appears slightly BEFORE the flying spine starts fading,
+      // and both stay at opacity 1 for an overlap window. Because they render
+      // pixel-aligned (flying spine's end rect == slot rect), the overlap is
+      // invisible — but it guarantees no missing frame → no flicker. On scroll
+      // up the shelf spine hides again as soon as we drop below the threshold.
       if (aboutSpineRef.current) {
         const shelfOn = bridge >= 0.97 ? 1 : 0;
-        aboutSpineRef.current.style.opacity = String(shelfOn * (1 - takeover));
-        aboutSpineRef.current.style.pointerEvents = bridge >= 1 && takeover < 0.01 ? "auto" : "none";
+        aboutSpineRef.current.style.opacity = String(shelfOn);
+        aboutSpineRef.current.style.pointerEvents = bridge >= 1 ? "auto" : "none";
       }
 
 
@@ -237,20 +231,15 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         });
       });
 
-      // Publish toolbox rect for the Toolbox→Skills choreography. The flying
-      // toolbox in that bridge tracks this rect every frame, so at p=0 it sits
-      // pixel-perfect on the shelf — same SVG, same position, no handoff seam.
+      // Publish toolbox rect for the next-stage bridge (Toolbox→Skills flip).
       if (toolboxRef.current) {
         const tr = toolboxRef.current.getBoundingClientRect();
         (window as any).__toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
-          visible: bridge >= 0.92,
+          visible: bridge >= 1.0,
         };
-        const inFlight = !!(window as any).__toolboxInFlight;
-        toolboxRef.current.style.opacity = inFlight ? "0" : String(1 - takeover);
       }
-
 
       publishSlotRect();
     };

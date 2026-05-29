@@ -1,36 +1,50 @@
-## Problem
+## 1. Fix About-spine flicker
 
-`ToolboxToSkillsBridge` currently renders its own miniature library (two shelves with "MORE ABOUT ME", "CLASSY", "VAIDYA" books + an empty slot used as the toolbox start position). This duplicates the real `ProjectsShelf` / `AboutToProjectsBridge` above it and shows a second toolbox during the recede phase.
+**Root cause.** The flying spine (in `HeroIdBadge.tsx`) fades out between `bridge 0.985 → 1.0` via `shelfHandoff`. The shelf spine (in `AboutToProjectsBridge.tsx`) only snaps to `opacity: 1` at the exact instant `bridge >= 1.0`. That leaves a ~15ms window where the flying spine is already mostly transparent but the shelf spine is still hidden — a one‑frame "nothing" gap that reads as flicker, plus the snap pops in on top.
 
-The user wants:
-- No duplicate shelf inside the pinned bridge.
-- The flying toolbox originates from the **real** toolbox already sitting on the bottom shelf of `AboutToProjectsBridge`.
-- Only one toolbox visible at any moment.
+Previous direction tried a *hard* handoff. That made the gap shorter but didn't remove it: any rounding between two RAF samples can still drop one frame.
 
-## Plan
+**Fix — symmetric crossfade in the same window, both directions:**
 
-### 1. `src/components/ToolboxToSkillsBridge.tsx`
-- Delete the `ShelfLine`, `Book`, and the entire `motion.div` block that renders the duplicate shelves (lines ~287–325).
-- Remove `slotRef`, `shelvesY`, `shelvesOpacity`, and the inner `Book` helper.
-- Replace the slot-based starting position with the live `window.__toolboxRect` published by `AboutToProjectsBridge`:
-  - In `useLayoutEffect`, read `(window as any).__toolboxRect` (poll on `scroll` / `resize`, already wired) to compute `pos.x / pos.y / startScale` from that rect instead of `slotRef`.
-  - `startScale = rect.width / W`.
-- While in flight (smoothProgress > 0 and < ~0.97), set `(window as any).__toolboxInFlight = true` so `AboutToProjectsBridge` hides its own shelf toolbox; clear it otherwise. This already works — `AboutToProjectsBridge` reads the flag and sets opacity to 0.
-- Drop the early scroll hint that says "Scroll to explore" since the recede beat is gone (optional — keep if it still reads well at p≈0).
-- Adjust scroll keyframes so beat 1 (0 → 0.2) is purely the toolbox lifting + rotating from the shelf rect to center stage (no shelf fade needed). Beats 2/3 (open + land) unchanged.
-- Section height can drop from `600vh` to `~450vh` since one beat is removed.
+- `AboutToProjectsBridge.tsx`, inside the RAF:
+  ```ts
+  const shelfFade = clamp01((bridge - 0.985) / 0.015);
+  aboutSpineRef.current.style.opacity = String(shelfFade);
+  aboutSpineRef.current.style.pointerEvents = shelfFade >= 1 ? "auto" : "none";
+  ```
+  No `landedRef` (already removed). Purely reactive, so scrolling back up the spine fades out as `bridge` drops back below 1.0.
+- `HeroIdBadge.tsx`, keep `shelfHandoff = clamp((bridge - 0.985) / 0.015)` and `spineOpacity = 1 - shelfHandoff` (already there). The two opacities now sum to 1.0 across the whole handoff window → no visual gap and no overlap pop.
+- Lock the flying-spine end rect to the shelf slot rect at `bridge = 1.0` so the crossfade happens with both spines at the *same* position. The existing lerp already uses `flyT = seg(0.55, 1.0, bridge)` which reaches 1.0 at `bridge = 1.0`, so positions align — keep as-is.
 
-### 2. `src/components/AboutToProjectsBridge.tsx`
-No structural changes. It already:
-- Renders the realistic `<ToolboxClosed />` on the bottom shelf.
-- Publishes `__toolboxRect` every frame.
-- Hides itself when `__toolboxInFlight` is true.
+This satisfies the prior rule "shelf spine is purely scroll-reactive, reverses cleanly on scroll-up" while removing the gap.
 
-Verify the rect is published even when the section is fully scrolled past (so the bridge below can still read a sane start rect). If not, cache the last rect in the bridge instead of reading per-frame.
+## 2. Shelf toolbox is the same toolbox used in the transition
 
-### 3. No other files touched
-`FinalWorkbench`, `ProjectsShelf`, `Index.tsx`, `index.css`, skill data, doodles, AssemblyHeader — unchanged.
+Today `ToolboxToSkillsBridge.tsx` renders a separate, simplified `ToolboxLid` SVG. Visually it isn't the shelf toolbox — so the user sees one toolbox on the shelf and a different one in the flip.
 
-## Result
+**Refactor to share one source of truth:**
 
-Scrolling past projects: the actual shelf toolbox lifts off the bottom shelf, flies to center, rotates open to reveal skills, then lands on the desk. No second shelf, no second toolbox, no empty frame.
+- Extract the existing shelf toolbox SVG (`AboutToProjectsBridge.tsx` lines ~466–522) into a new `src/components/skills/ToolboxSvg.tsx` that exports:
+  - `<ToolboxClosed width height />` — the full closed-toolbox artwork.
+  - `<ToolboxLidOnly />` — only the `<defs>` + handle + lid `<rect>` + latches, sized to its own viewBox so it can hinge separately.
+  - `<ToolboxBodyOnly />` — body + brushed-metal lines + label plate + feet, viewBox sized to the body region.
+  All three reuse the same gradients (`tbBody`, `tbLid`, `tbHandle`) so colours/finish match exactly. (Use unique gradient IDs scoped to each component to avoid SVG id collisions.)
+- `AboutToProjectsBridge.tsx`: replace the inline `<svg>` with `<ToolboxClosed width={220} height={174} />`.
+- `ToolboxToSkillsBridge.tsx`: 
+  - Replace `ToolboxLid` with `<ToolboxLidOnly />` so the swinging lid is visually identical to the shelf one.
+  - Add `<ToolboxBodyOnly />` as the *back wall* behind the tray interior, so as the lid opens the user sees the same body silhouette they saw on the shelf, now hosting the skills compartments inside.
+  - Keep the existing flip/scale choreography and `ToolboxInterior` content overlay.
+
+No DB/admin changes. No new dependencies. Pure visual unification.
+
+## Files changed
+
+- `src/components/AboutToProjectsBridge.tsx` — crossfade About spine using `(bridge - 0.985)/0.015`; swap inline toolbox SVG for `<ToolboxClosed />`.
+- `src/components/skills/ToolboxSvg.tsx` — **new**, exports `ToolboxClosed`, `ToolboxLidOnly`, `ToolboxBodyOnly` with shared gradients.
+- `src/components/ToolboxToSkillsBridge.tsx` — use `ToolboxLidOnly` for the hinged lid and `ToolboxBodyOnly` behind the tray.
+- `src/components/HeroIdBadge.tsx` — no change required; existing `shelfHandoff` already matches the new shelf-fade window symmetrically. (If during testing the seam still shows, widen both windows from `0.015` to `0.025`.)
+
+## Notes / non-goals
+
+- No changes to the archive ease/window, header plank, toolbox size, or admin Skills tab (all already approved & implemented).
+- Reduced-motion path unaffected.
