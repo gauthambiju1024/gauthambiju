@@ -104,16 +104,19 @@ const ToolboxToSkillsBridge = () => {
   const bgOpacity = useTransform(t, [0, 0.25, 0.40, 0.90, 1], [0, 0, 1, 1, 0.3]);
 
 
-  // Publish 'flip active' so the shelf prop can hide while we render the 3D one
+  // Publish 'flip active' so the shelf prop hides whenever the bridge owns
+  // the toolbox — flag flips ON as soon as the start rect is known.
   useEffect(() => {
-    const unsub = t.on("change", (v) => {
-      (window as any).__skillsFlipActive = v > 0.02;
+    if (!start) return;
+    (window as any).__skillsFlipActive = true;
+    const unsub = t.on("change", () => {
+      (window as any).__skillsFlipActive = true;
     });
     return () => {
       unsub();
       (window as any).__skillsFlipActive = false;
     };
-  }, [t]);
+  }, [t, start]);
 
   return (
     <section
