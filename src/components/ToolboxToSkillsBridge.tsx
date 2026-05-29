@@ -28,13 +28,12 @@ const ToolboxToSkillsBridge = () => {
 
   // Starting position read from the published shelf-toolbox rect so the centre
   // stage begins exactly where the shelf prop sat → seamless handoff.
-  const [start, setStart] = useState({ x: 0, y: 0, scale: 0.4 });
+  const [start, setStart] = useState<{ x: number; y: number; scale: number } | null>(null);
   const [endScale, setEndScale] = useState(1);
 
   useLayoutEffect(() => {
     const update = () => {
       if (!slotRef.current) return;
-      const slotRect = slotRef.current.getBoundingClientRect();
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
 
@@ -42,11 +41,12 @@ const ToolboxToSkillsBridge = () => {
         | { left: number; top: number; width: number; height: number; cx: number; cy: number }
         | null;
 
+      // 40% smaller than viewport-max
       const max = Math.min(
         (window.innerWidth * 0.92) / TBX_W,
         (window.innerHeight * 0.78) / TBX_D,
         1.1
-      );
+      ) * 0.6;
       setEndScale(max);
 
       if (shelf && shelf.width > 0) {
@@ -55,8 +55,6 @@ const ToolboxToSkillsBridge = () => {
           y: shelf.cy - screenCy,
           scale: shelf.width / TBX_W,
         });
-      } else {
-        setStart({ x: 0, y: window.innerHeight * 0.35, scale: 0.25 });
       }
     };
     update();
@@ -70,15 +68,17 @@ const ToolboxToSkillsBridge = () => {
     };
   }, []);
 
+  const s = start ?? { x: 0, y: 0, scale: 0.25 };
+
   // Position: park on shelf rect (re-read live below) → centre → settle
   // We hold the actor exactly over the shelf prop until ~0.30 so the handoff
   // happens IN the same viewport as the shelf.
-  const x = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.x, start.x, 0, 0, 0]);
-  const y = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [start.y, start.y, 0, 0, 40]);
+  const x = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [s.x, s.x, 0, 0, 0]);
+  const y = useTransform(t, [0, 0.3, 0.45, 0.85, 1], [s.y, s.y, 0, 0, 40]);
   const scale = useTransform(
     t,
     [0, 0.3, 0.45, 0.85, 1],
-    [start.scale, start.scale, endScale, endScale, endScale * 0.85]
+    [s.scale, s.scale, endScale, endScale, endScale * 0.85]
   );
 
   // Rotations — start front-on (matches shelf prop), then flip to top-down, then settle.
@@ -100,20 +100,21 @@ const ToolboxToSkillsBridge = () => {
   const interiorOpacity = useTransform(t, [0.50, 0.60, 0.78, 0.84], [0, 1, 1, 0]);
   const interiorY = useTransform(t, [0.50, 0.60, 0.78, 0.84], [30, 0, 0, -10]);
 
-  // Section background fade — starts transparent so shelf shows through during park
-  const bgOpacity = useTransform(t, [0, 0.25, 0.40, 0.90, 1], [0, 0, 1, 1, 0.3]);
 
 
-  // Publish 'flip active' so the shelf prop can hide while we render the 3D one
+  // Publish 'flip active' so the shelf prop hides whenever the bridge actually
+  // owns the toolbox (pin engaged AND we have a valid start rect).
   useEffect(() => {
-    const unsub = t.on("change", (v) => {
-      (window as any).__skillsFlipActive = v > 0.02;
-    });
+    const apply = (v: number) => {
+      (window as any).__skillsFlipActive = !!start && v > 0.001 && v < 0.999;
+    };
+    apply(t.get());
+    const unsub = t.on("change", apply);
     return () => {
       unsub();
       (window as any).__skillsFlipActive = false;
     };
-  }, [t]);
+  }, [t, start]);
 
   return (
     <section
@@ -124,17 +125,6 @@ const ToolboxToSkillsBridge = () => {
       className="relative"
     >
       <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        {/* Dark stage background */}
-        <motion.div
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            opacity: bgOpacity,
-            background:
-              "radial-gradient(ellipse at 50% 40%, hsl(220 18% 8%) 0%, hsl(220 22% 5%) 60%, hsl(220 24% 3%) 100%)",
-          }}
-        />
-
         {/* slot used purely as a screen-centre anchor for the layout-effect math */}
         <div ref={slotRef} className="absolute left-1/2 top-1/2 w-1 h-1" aria-hidden />
 
@@ -145,7 +135,7 @@ const ToolboxToSkillsBridge = () => {
         >
           <motion.div
             className="relative"
-            style={{ x, y, pointerEvents: "auto" }}
+            style={{ x, y, pointerEvents: "auto", opacity: start ? 1 : 0 }}
           >
             <Toolbox3D
               scale={scale}

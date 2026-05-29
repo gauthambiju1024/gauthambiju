@@ -386,21 +386,21 @@ interface ClosedProps {
 export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220 }) => {
   const ratio = (TBX_H_BASE + TBX_H_LID) / TBX_W;
   const bodyHeight = width * ratio;
-  // Handle sticks ~50px above the lid in unit space — account for it so the
-  // toolbox sits flush on the shelf plank without being clipped.
+  // Handle overhang sits ABOVE the lid → reserve top space so the body's
+  // bottom edge lands exactly on the shelf plank (no floating gap).
   const handleOverhang = 50 * (width / TBX_W);
-  const height = bodyHeight + handleOverhang;
   const scale = width / TBX_W;
   return (
     <div
       style={{
         width,
-        height,
+        height: bodyHeight,
+        paddingTop: handleOverhang,
+        boxSizing: "content-box",
         perspective: 1400,
         perspectiveOrigin: "50% 50%",
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
+        display: "block",
+        position: "relative",
       }}
     >
       <div
@@ -409,6 +409,10 @@ export const ToolboxClosed: React.FC<ClosedProps> = ({ width = 220 }) => {
           height: TBX_H_BASE + TBX_H_LID,
           transform: `scale(${scale})`,
           transformOrigin: "bottom center",
+          position: "absolute",
+          left: "50%",
+          bottom: 0,
+          marginLeft: -TBX_W / 2,
         }}
       >
         <Toolbox3D
