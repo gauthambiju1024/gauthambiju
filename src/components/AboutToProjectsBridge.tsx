@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
-import Toolbox3D from "@/components/skills/Toolbox3D";
+import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
 
 
 /** Narrow spine width used by the hero filing animation; About spine stays this wide forever. */
@@ -127,17 +127,17 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
     const update = () => {
       const t = clamp01(progressMV.get());
-      // Compress shelf draw + archive to t=0.70..0.86, then DWELL at fully-settled
-      // through 0.86..0.94 so the user can pause and explore. Takeover ramps
-      // 0.94..1.0.
-      const bridge = seg(0.70, 0.86, t);
+      const bridge = seg(0.72, 1.0, t);
 
-      // Phase A — toolbox takeover (raw t 0.94 → 1.0).
-      const takeoverRaw = clamp01((t - 0.94) / (1.0 - 0.94));
+      // Phase A — toolbox takeover: as we scroll the last slice of the section
+      // (raw t 0.88 → 1.0), the shelf fades and the flying toolbox lifts to
+      // center stage. Published for ToolboxToSkillsBridge to consume.
+      const takeoverRaw = clamp01((t - 0.88) / (1.0 - 0.88));
       const takeover = easeInOut(takeoverRaw);
       (window as any).__toolboxTakeoverProgress = takeover;
 
-      // Shelf is fully visible & interactive during dwell, fades during takeover.
+      // Shelf fades in just as the packet starts shrinking, then fades out
+      // during the takeover phase.
       const shelfIn = seg(0.70, 0.80, bridge);
       shelfWrap.style.opacity = String(shelfIn * (1 - takeover));
       shelfWrap.style.transform = `translateX(-50%) scale(${(1 - takeover * 0.08).toFixed(3)})`;
@@ -476,7 +476,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                             pointerEvents: "auto",
                           }}
                         >
-                          <Toolbox3D staticPose />
+                          <ToolboxClosed width={220} height={174} />
                         </a>
                       </div>
                     );

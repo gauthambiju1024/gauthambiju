@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useScroll } from "framer-motion";
 import ToolboxInterior from "./skills/ToolboxInterior";
-import Toolbox3D, { Toolbox3DHandle } from "./skills/Toolbox3D";
+import { Toolbox, ToolboxHandle } from "./skills/ToolboxSvg";
 
 /**
  * ToolboxToSkillsBridge — continuous choreography spanning the END of the
@@ -9,9 +9,8 @@ import Toolbox3D, { Toolbox3DHandle } from "./skills/Toolbox3D";
  *
  * Driven by TWO progresses:
  *   - window.__toolboxTakeoverProgress (0→1) — published by AboutToProjectsBridge
- *     during its tail. Drives LIFT + CARRY from shelf rect → center.
- *   - this section's scrollYProgress (0→1) — drives TILT to top view, LATCHES,
- *     LID swing, and INTERIOR reveal.
+ *     during its tail (0.88→1.0). Drives LIFT + CARRY from shelf rect → center.
+ *   - this section's scrollYProgress (0→1) — drives TILT, LATCHES, LID, INTERIOR.
  *
  * One toolbox node only. No fades on the toolbox itself.
  */
@@ -21,6 +20,7 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 const easeOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
 const easeInOutQuart = (x: number) =>
   x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
+
 const phase = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
 
 const ToolboxToSkillsBridge = () => {
@@ -28,8 +28,15 @@ const ToolboxToSkillsBridge = () => {
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
 
   const flyRef = useRef<HTMLDivElement>(null);
-  const toolboxHandle = useRef<Toolbox3DHandle>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const toolboxHandle = useRef<ToolboxHandle>(null);
+  const interiorSideRef = useRef<HTMLDivElement>(null);
+  const interiorTopRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  // Toggle interior variant when we cross top-view threshold (avoids re-render on every frame)
+  const [topView, setTopView] = useState(false);
+  const topViewRef = useRef(false);
 
   useEffect(() => {
     let raf = 0;
@@ -41,7 +48,8 @@ const ToolboxToSkillsBridge = () => {
       const takeover = clamp01((window as any).__toolboxTakeoverProgress ?? 0);
       const rect = (window as any).__toolboxRect;
       const fly = flyRef.current;
-      if (!fly) {
+      const inner = innerRef.current;
+      if (!fly || !inner) {
         raf = requestAnimationFrame(tick);
         return;
       }
@@ -49,13 +57,11 @@ const ToolboxToSkillsBridge = () => {
       const active = takeover > 0.001 || (ownP > 0.0005 && ownP < 0.9995);
       if (!active || !rect) {
         fly.style.opacity = "0";
-        fly.style.pointerEvents = "none";
         (window as any).__toolboxInFlight = false;
         raf = requestAnimationFrame(tick);
         return;
       }
       fly.style.opacity = "1";
-      fly.style.pointerEvents = ownP > 0.6 ? "auto" : "none";
       (window as any).__toolboxInFlight = true;
 
       // Center-stage rect
@@ -66,17 +72,17 @@ const ToolboxToSkillsBridge = () => {
       const cL = vw / 2 - cw / 2;
       const cT = vh / 2 - ch / 2;
 
-      // While in own section, lock position at center; before that, use takeover.
+      // Drive: while in own section, freeze position at center; before that, use takeover.
       const liftCarryT = ownP > 0.0005 ? 1 : takeover;
       const liftT = easeOutQuart(phase(liftCarryT, 0.0, 0.30));
       const carryT = smooth(phase(liftCarryT, 0.20, 1.0));
 
-      // Phase windows for the 3D box
-      const tiltT = easeInOutQuart(phase(ownP, 0.05, 0.40)); // rotateX 0 → -62
-      const latchT = smooth(phase(ownP, 0.30, 0.38));         // 0 → 1
-      const lidT = easeOutQuart(phase(ownP, 0.38, 0.62));     // 0 → 1
-      const interiorT = phase(ownP, 0.60, 0.92);              // 0 → 1
-      const headerT = phase(ownP, 0.85, 1.0);
+      // Phase B/C/D — own scroll
+      const tiltT = easeInOutQuart(phase(ownP, 0.05, 0.40));   // rotateX 0→18deg
+      const latchT = smooth(phase(ownP, 0.25, 0.35));            // 0→1
+      const lidT = easeOutQuart(phase(ownP, 0.32, 0.58));        // 0→1
+      const interiorT = phase(ownP, 0.55, 0.92);                 // 0→1
+      const headerT = phase(ownP, 0.78, 0.96);
 
       // ----- Position & size -----
       const shelfL = rect.left, shelfT = rect.top;
@@ -108,18 +114,37 @@ const ToolboxToSkillsBridge = () => {
       fly.style.width = `${curW.toFixed(2)}px`;
       fly.style.height = `${curH.toFixed(2)}px`;
 
-      const shadowBlur = 10 + carryT * 30;
-      const shadowY = 8 + carryT * 24;
-      const shadowAlpha = 0.4 + carryT * 0.3;
+      // Shadow grows with size/altitude
+      const shadowBlur = 10 + carryT * 28;
+      const shadowY = 8 + carryT * 22;
+      const shadowAlpha = 0.4 + carryT * 0.25;
       fly.style.filter = `drop-shadow(0 ${shadowY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0,0,0,${shadowAlpha.toFixed(2)}))`;
 
-      // ----- 3D parts -----
-      const h = toolboxHandle.current;
-      if (h) {
-        h.setRotX(-tiltT * 62);
-        h.setLatches(latchT * 90);
-        h.setLid(-lidT * 140);
-        h.setInteriorReveal(interiorT);
+      // Inner: 3D tilt (perspective rotateX). Subtle forward tilt to suggest peering into the box.
+      const tiltDeg = tiltT * 18;
+      inner.style.transform = `perspective(1400px) rotateX(${tiltDeg.toFixed(2)}deg)`;
+
+      // ----- Toolbox parts -----
+      toolboxHandle.current?.setLatches(latchT * 90);
+      toolboxHandle.current?.setLid(-lidT * 165);
+      // Dim front face once lid is opening so the interior reads (geometry, not fade)
+      toolboxHandle.current?.setBodyOpacity(1 - lidT * 0.65);
+
+      // Top-view toggle: once tilt + lid both engaged, show top-down foam tray
+      const wantTop = ownP > 0.45;
+      if (wantTop !== topViewRef.current) {
+        topViewRef.current = wantTop;
+        setTopView(wantTop);
+      }
+
+      // Interior reveal (top-down tray) via clip-path from bottom
+      if (interiorTopRef.current) {
+        const insetTop = (1 - clamp01(interiorT)) * 100;
+        interiorTopRef.current.style.clipPath = `inset(${insetTop.toFixed(2)}% 0 0 0)`;
+        interiorTopRef.current.style.opacity = wantTop ? "1" : "0";
+      }
+      if (interiorSideRef.current) {
+        interiorSideRef.current.style.opacity = "0";
       }
 
       if (headerRef.current) {
@@ -150,7 +175,7 @@ const ToolboxToSkillsBridge = () => {
           ref={headerRef}
           className="absolute left-1/2 -translate-x-1/2"
           style={{
-            bottom: "6vh",
+            bottom: "8vh",
             clipPath: "inset(100% 0 0 0)",
             willChange: "clip-path",
           }}
@@ -165,7 +190,7 @@ const ToolboxToSkillsBridge = () => {
         </div>
       </div>
 
-      {/* The ONE flying 3D toolbox — fixed to viewport */}
+      {/* The ONE flying toolbox — fixed to viewport */}
       <div
         ref={flyRef}
         aria-hidden
@@ -175,13 +200,44 @@ const ToolboxToSkillsBridge = () => {
           top: 0,
           width: 220,
           height: 174,
-          pointerEvents: "auto",
+          pointerEvents: "none",
           zIndex: 30,
           opacity: 0,
           willChange: "transform, left, top, width, height, filter",
         }}
       >
-        <Toolbox3D ref={toolboxHandle} interior={<ToolboxInterior variant="top" />} />
+        <div
+          ref={innerRef}
+          style={{
+            position: "absolute",
+            inset: 0,
+            transformStyle: "preserve-3d",
+            transformOrigin: "50% 70%",
+            willChange: "transform",
+          }}
+        >
+          <Toolbox ref={toolboxHandle} />
+
+          {/* Top-down foam tray — covers the body region, revealed via clip-path */}
+          <div
+            ref={interiorTopRef}
+            style={{
+              position: "absolute",
+              left: "8.333%",
+              top: "47.368%",
+              width: "83.333%",
+              height: "42.105%",
+              clipPath: "inset(100% 0 0 0)",
+              willChange: "clip-path, opacity",
+              overflow: "visible",
+              pointerEvents: "auto",
+              opacity: 0,
+              transition: "opacity 220ms ease-out",
+            }}
+          >
+            {topView ? <ToolboxInterior variant="top" /> : null}
+          </div>
+        </div>
       </div>
     </section>
   );
