@@ -24,7 +24,7 @@ const ToolboxToSkillsBridge = () => {
     target: pinRef,
     offset: ["start start", "end end"],
   });
-  const t = useSpring(scrollYProgress, { stiffness: 80, damping: 22, restDelta: 0.001 });
+  const t = useSpring(scrollYProgress, { stiffness: 70, damping: 20, restDelta: 0.001 });
 
   // Starting position read from the published shelf-toolbox rect so the centre
   // stage begins exactly where the shelf prop sat → seamless handoff.
@@ -35,8 +35,6 @@ const ToolboxToSkillsBridge = () => {
     const update = () => {
       if (!slotRef.current) return;
       const slotRect = slotRef.current.getBoundingClientRect();
-      const cx = slotRect.left + slotRect.width / 2;
-      const cy = slotRect.top + slotRect.height / 2;
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
 
@@ -58,7 +56,6 @@ const ToolboxToSkillsBridge = () => {
           scale: shelf.width / TBX_W,
         });
       } else {
-        // Fallback: come up from below if shelf rect not published yet
         setStart({ x: 0, y: window.innerHeight * 0.35, scale: 0.25 });
       }
     };
@@ -73,36 +70,37 @@ const ToolboxToSkillsBridge = () => {
     };
   }, []);
 
-  // Stage X/Y: shelf-rect → centre → centre → desk-settle (slight offset).
-  const x = useTransform(t, [0, 0.2, 0.8, 1], [start.x, 0, 0, 0]);
-  const y = useTransform(t, [0, 0.2, 0.8, 1], [start.y, 0, 0, 40]);
+  // Position: shelf → centre → centre → slight settle drop
+  const x = useTransform(t, [0, 0.1, 0.8, 1], [start.x, 0, 0, 0]);
+  const y = useTransform(t, [0, 0.1, 0.8, 1], [start.y, 0, 0, 40]);
   const scale = useTransform(
     t,
-    [0, 0.05, 0.2, 0.8, 0.95],
+    [0, 0.1, 0.2, 0.8, 0.95],
     [start.scale, start.scale, endScale, endScale, endScale * 0.85]
   );
 
-  // Rotations: rest → tilt → top-down → hold → desk view
+  // Rotations — exactly the user's scaffold
   const rotX = useTransform(
     t,
-    [0, 0.05, 0.2, 0.65, 0.95],
-    ["0deg", "-12deg", "-90deg", "-90deg", "-15deg"]
+    [0, 0.1, 0.2, 0.8, 0.95],
+    ["0deg", "-15deg", "-90deg", "-90deg", "-15deg"]
   );
   const rotY = useTransform(
     t,
-    [0, 0.05, 0.2, 0.65, 0.95],
-    ["0deg", "-6deg", "0deg", "0deg", "30deg"]
+    [0, 0.1, 0.2, 0.8, 0.95],
+    ["0deg", "-5deg", "0deg", "0deg", "35deg"]
   );
 
-  // Lid hinge — closed → open → closed-on-settle
-  const lidRot = useTransform(t, [0.30, 0.42, 0.65, 0.78], ["0deg", "125deg", "125deg", "0deg"]);
+  // Lid hinge
+  const lidRot = useTransform(t, [0.25, 0.4, 0.65, 0.75], ["0deg", "125deg", "125deg", "0deg"]);
 
-  // Interior reveal — fades in once the lid is mostly open, fades out before settle
-  const interiorOpacity = useTransform(t, [0.40, 0.50, 0.65, 0.75], [0, 1, 1, 0]);
-  const interiorY = useTransform(t, [0.40, 0.50, 0.65, 0.75], [30, 0, 0, -10]);
+  // Interior reveal — visible while lid is open
+  const interiorOpacity = useTransform(t, [0.40, 0.50, 0.65, 0.72], [0, 1, 1, 0]);
+  const interiorY = useTransform(t, [0.40, 0.50, 0.65, 0.72], [30, 0, 0, -10]);
 
-  // Section background fade (so the shelf below shows through at start)
-  const bgOpacity = useTransform(t, [0, 0.18, 0.82, 1], [0, 1, 1, 0.3]);
+  // Section background fade
+  const bgOpacity = useTransform(t, [0, 0.12, 0.85, 1], [0, 1, 1, 0.3]);
+
 
   // Publish 'flip active' so the shelf prop can hide while we render the 3D one
   useEffect(() => {
