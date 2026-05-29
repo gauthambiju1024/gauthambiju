@@ -231,7 +231,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         });
       });
 
-      // Publish toolbox rect for the next-stage bridge (Toolbox→Skills flip).
+      // Publish toolbox rect for the Toolbox→Skills choreography. The flying
+      // toolbox in that bridge tracks this rect every frame, so at p=0 it sits
+      // pixel-perfect on the shelf — same SVG, same position, no handoff seam.
       if (toolboxRef.current) {
         const tr = toolboxRef.current.getBoundingClientRect();
         (window as any).__toolboxRect = {
@@ -239,7 +241,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
           visible: bridge >= 1.0,
         };
+        // While the flying toolbox is active, hide the shelf copy so there's
+        // only one toolbox on screen. At rest the shelf one is shown.
+        const inFlight = !!(window as any).__toolboxInFlight;
+        toolboxRef.current.style.opacity = inFlight ? "0" : "1";
       }
+
 
       publishSlotRect();
     };

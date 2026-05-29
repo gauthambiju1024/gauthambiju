@@ -1,44 +1,163 @@
-import { useRef } from "react";
-import { useScroll, useTransform, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { useScroll } from "framer-motion";
 import ToolboxInterior from "./skills/ToolboxInterior";
-import { ToolboxClosed, ToolboxLidOnly, ToolboxBodyOnly } from "./skills/ToolboxSvg";
-
+import { Toolbox, ToolboxHandle } from "./skills/ToolboxSvg";
 
 /**
- * ToolboxToSkillsBridge — pinned scroll-driven flip.
- * 0.00–0.30  The SAME closed toolbox from the shelf scales up and centres.
- * 0.30–0.42  Closed toolbox crossfades into the open lid+body assembly
- *            (visually identical silhouette → no jump, no blank).
- * 0.30–0.65  Lid swings open along its hinge; tray body reveals.
- * 0.65–1.00  Interior (skills) fades & scales in; section becomes interactive.
+ * ToolboxToSkillsBridge — one toolbox, six-phase scroll choreography.
+ *
+ * The SAME toolbox SVG from the projects shelf is rendered here as a single
+ * fixed-position node. It reads `window.__toolboxRect` (published by the shelf)
+ * and at p=0 sits exactly on the shelf — visually identical pixels, no handoff
+ * needed. As scroll progresses it lifts, carries, sets down, unlatches, hinges
+ * open, and the interior is revealed by a clip mask. Fully reversible.
+ *
+ * No opacity fades anywhere in the choreography — geometry-only.
  */
+
+const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+const smooth = (x: number) => x * x * (3 - 2 * x);
+const easeOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
+const easeBack = (x: number) => {
+  // light back-overshoot for the lift
+  const s = 1.2;
+  return x * x * ((s + 1) * x - s) + x; // gentle
+};
+
+const phase = (p: number, a: number, b: number) => clamp01((p - a) / (b - a));
+
 const ToolboxToSkillsBridge = () => {
   const pinRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start start", "end end"] });
 
-  // Stage container — scales/centres
-  const trayScale = useTransform(scrollYProgress, [0, 0.3, 1], [0.55, 1, 1]);
-  const trayY = useTransform(scrollYProgress, [0, 0.3], [60, 0]);
-  const trayOpacity = useTransform(scrollYProgress, [0, 0.15], [0, 1]);
+  const flyRef = useRef<HTMLDivElement>(null);
+  const toolboxHandle = useRef<ToolboxHandle>(null);
+  const interiorRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
-  // Closed shelf toolbox — visible at start, fades into the open assembly at ~0.32–0.42.
-  const closedOpacity = useTransform(scrollYProgress, [0.30, 0.42], [1, 0]);
-  // Open assembly (lid + body tray) fades in just as closed fades out — same silhouette → no blank.
-  const openOpacity = useTransform(scrollYProgress, [0.30, 0.42], [0, 1]);
+  useEffect(() => {
+    let raf = 0;
+    let mounted = true;
 
-  // Lid — hinge open (rotateX). Lid sits above the tray, hinge at its bottom.
-  const lidRotate = useTransform(scrollYProgress, [0.42, 0.72], [0, -135]);
-  const lidFilter = useTransform(scrollYProgress, [0.42, 0.72], [
-    "drop-shadow(0 10px 15px rgba(0,0,0,0.5))",
-    "drop-shadow(0 3px 6px rgba(0,0,0,0.15))",
-  ]);
+    const tick = () => {
+      if (!mounted) return;
+      const p = clamp01(scrollYProgress.get());
+      const rect = (window as any).__toolboxRect;
+      const fly = flyRef.current;
+      if (!fly) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
 
-  // Interior reveal
-  const interiorOpacity = useTransform(scrollYProgress, [0.55, 0.78], [0, 1]);
-  const interiorScale = useTransform(scrollYProgress, [0.55, 0.78], [0.92, 1]);
+      // Visibility gates
+      const shelfReady = !!rect && rect.visible;
+      const sectionActive = p > 0.0005 && p < 0.9995;
 
-  // Settle indicator
-  const settledOpacity = useTransform(scrollYProgress, [0.7, 0.85], [0, 1]);
+      // Flying toolbox only matters while the section is active (it's
+      // pixel-identical to the shelf one at p=0, so hiding it at the bounds
+      // is invisible to the user).
+      if (!sectionActive || !shelfReady) {
+        fly.style.opacity = "0";
+        (window as any).__toolboxInFlight = false;
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      fly.style.opacity = "1";
+      (window as any).__toolboxInFlight = true;
+
+      // Center-stage rect
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cw = Math.min(vw * 0.56, 480);
+      const ch = cw * (76 / 96);
+      const cL = vw / 2 - cw / 2;
+      const cT = vh / 2 - ch / 2;
+
+      // Per-phase progress (single timeline)
+      const liftT = easeBack(phase(p, 0.0, 0.18));        // 0→1
+      const carryT = smooth(phase(p, 0.18, 0.42));        // 0→1
+      const settleT = smooth(phase(p, 0.42, 0.50));       // 0→1
+      const latchT = smooth(phase(p, 0.50, 0.56));        // 0→1
+      const lidT = easeOutQuart(phase(p, 0.56, 0.78));    // 0→1
+      const interiorT = phase(p, 0.62, 1.0);              // 0→1 (linear; tile stagger lives in clip)
+
+      // ----- Position & size -----
+      // Anchors
+      const shelfL = rect.left, shelfT = rect.top;
+      const shelfW = rect.width, shelfH = rect.height;
+      const hoverL = shelfL;
+      const hoverT = shelfT - 80;
+
+      let curL: number, curT: number, curW: number, curH: number;
+      if (carryT <= 0) {
+        // Phase 1 — straight lift, no size change
+        curL = shelfL + (hoverL - shelfL) * liftT;
+        curT = shelfT + (hoverT - shelfT) * liftT;
+        curW = shelfW;
+        curH = shelfH;
+      } else {
+        // Phase 2 — quadratic bezier arc to center, size lerps shelf→center
+        const sL = hoverL, sT = hoverT;
+        const eL = cL, eT = cT;
+        const midX = (sL + eL) / 2;
+        const midY = Math.min(sT, eT) - 80;
+        const t = carryT;
+        const omt = 1 - t;
+        curL = omt * omt * sL + 2 * omt * t * midX + t * t * eL;
+        curT = omt * omt * sT + 2 * omt * t * midY + t * t * eT;
+        curW = shelfW + (cw - shelfW) * carryT;
+        curH = shelfH + (ch - shelfH) * carryT;
+      }
+
+      // Settle overshoot (Phase 3 — small bounce after arrival)
+      if (settleT > 0 && settleT < 1) {
+        curT += Math.sin(settleT * Math.PI) * 5;
+      }
+
+      // Carry sway (Phase 2 — pendulum tilt that resolves to 0)
+      let sway = 0;
+      if (carryT > 0 && carryT < 1) {
+        sway = Math.sin(carryT * Math.PI * 1.2) * 4 - carryT * 2;
+      }
+
+      fly.style.left = `${curL.toFixed(2)}px`;
+      fly.style.top = `${curT.toFixed(2)}px`;
+      fly.style.width = `${curW.toFixed(2)}px`;
+      fly.style.height = `${curH.toFixed(2)}px`;
+      fly.style.transform = `rotate(${sway.toFixed(2)}deg)`;
+
+      // Shadow grows with size/altitude
+      const shadowBlur = 10 + carryT * 28 + settleT * 6;
+      const shadowY = 8 + carryT * 22 + settleT * 4;
+      const shadowAlpha = 0.4 + carryT * 0.25;
+      fly.style.filter = `drop-shadow(0 ${shadowY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0,0,0,${shadowAlpha.toFixed(2)}))`;
+
+      // ----- Toolbox parts -----
+      toolboxHandle.current?.setLatches(latchT * 90);
+      toolboxHandle.current?.setLid(-lidT * 118);
+
+      // Interior reveal via CSS clip-path (inset from top — grows upward as
+      // it shrinks). At pct=0 fully clipped, at pct=1 fully shown.
+      if (interiorRef.current) {
+        const insetTop = (1 - clamp01(interiorT)) * 100;
+        interiorRef.current.style.clipPath = `inset(${insetTop.toFixed(2)}% 0 0 0)`;
+      }
+
+      // Header reveal — also clipped, no fade.
+      if (headerRef.current) {
+        const insetTop = (1 - clamp01(phase(p, 0.78, 0.95))) * 100;
+        headerRef.current.style.clipPath = `inset(${insetTop.toFixed(2)}% 0 0 0)`;
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      mounted = false;
+      cancelAnimationFrame(raf);
+      (window as any).__toolboxInFlight = false;
+    };
+  }, [scrollYProgress]);
 
   return (
     <section
@@ -48,114 +167,65 @@ const ToolboxToSkillsBridge = () => {
       style={{ height: "260vh" }}
       className="relative"
     >
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        <div className="w-full h-full pt-[100px] pb-6 flex items-center justify-center">
-          {/* Stage */}
-          <motion.div
-            style={{
-              y: trayY,
-              scale: trayScale,
-              opacity: trayOpacity,
-              width: "min(92vw, 1100px)",
-              height: "min(72vh, 620px)",
-              position: "relative",
-              perspective: "1200px",
-            }}
-          >
-            {/* Closed shelf toolbox — same artwork that sat on the projects shelf.
-                Visible until ~scroll 0.42, then crossfades into the open assembly. */}
-            <motion.div
-              aria-hidden
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: closedOpacity,
-                pointerEvents: "none",
-                filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.45)) drop-shadow(0 6px 10px rgba(0,0,0,0.35))",
-              }}
-            >
-              <div style={{ width: "min(60%, 420px)", aspectRatio: "96 / 76" }}>
-                <ToolboxClosed width="100%" height="100%" />
-              </div>
-            </motion.div>
+      {/* Sticky stage just holds the section height — the toolbox itself is
+          fixed and tracks the shelf rect directly. */}
+      <div className="sticky top-0 w-full" style={{ height: "100vh", pointerEvents: "none" }}>
+        <div
+          ref={headerRef}
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: "10vh",
+            clipPath: "inset(100% 0 0 0)",
+            willChange: "clip-path",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-px w-16" style={{ background: "hsl(220 5% 28%)" }} />
+            <span className="text-[11px] tracking-[0.35em] uppercase font-mono" style={{ color: "hsl(40 6% 60%)" }}>
+              Skills · The Toolbox
+            </span>
+            <div className="h-px w-16" style={{ background: "hsl(220 5% 28%)" }} />
+          </div>
+        </div>
+      </div>
 
-            {/* Open assembly (lid + body tray) — fades in as the closed toolbox fades out. */}
-            <motion.div style={{ position: "absolute", inset: 0, opacity: openOpacity }}>
-              {/* Lid (hinged at bottom edge) */}
-              <motion.div
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  left: 0, right: 0,
-                  bottom: "100%",
-                  height: "min(14vh, 92px)",
-                  transformOrigin: "bottom center",
-                  transformStyle: "preserve-3d",
-                  rotateX: lidRotate,
-                  filter: lidFilter,
-                }}
-              >
-                <ToolboxLidOnly />
-              </motion.div>
-
-
-            {/* Tray body */}
-            <div
-              className="rounded-md w-full h-full p-4 md:p-6 relative"
-              style={{
-                background: "linear-gradient(180deg, hsl(220 6% 22%) 0%, hsl(220 6% 16%) 100%)",
-                border: "1px solid hsl(220 6% 10%)",
-                boxShadow:
-                  "inset 0 1px 0 hsl(220 6% 32%), inset 0 -1px 0 hsl(220 8% 8%), 0 18px 40px -10px rgba(0,0,0,0.6)",
-                backgroundImage:
-                  "linear-gradient(180deg, hsl(220 6% 22%) 0%, hsl(220 6% 16%) 100%), repeating-linear-gradient(180deg, transparent 0 2px, rgba(255,255,255,0.015) 2px 3px)",
-              }}
-            >
-              {/* Same body silhouette as shelf toolbox — back wall of the open tray */}
-              <div aria-hidden className="absolute inset-0 pointer-events-none opacity-40">
-                <ToolboxBodyOnly />
-              </div>
-
-
-              {/* Header strip */}
-              <motion.div
-                className="flex items-center gap-3 mb-4"
-                style={{ opacity: settledOpacity }}
-              >
-                <div className="h-px flex-1" style={{ background: "hsl(220 5% 28%)" }} />
-                <span className="text-[10px] tracking-[0.3em] uppercase font-mono" style={{ color: "hsl(40 6% 52%)" }}>
-                  Skills · The Toolbox
-                </span>
-                <div className="h-px flex-1" style={{ background: "hsl(220 5% 28%)" }} />
-              </motion.div>
-
-              {/* Interior */}
-              <motion.div
-                style={{ opacity: interiorOpacity, scale: interiorScale }}
-                className="h-[calc(100%-2rem)]"
-              >
-                <ToolboxInterior />
-              </motion.div>
-            </div>
-            </motion.div>
-
-
-            {/* Subtle drop-shadow under closed/opening toolbox */}
-            <div
-              aria-hidden
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: -24,
-                width: "70%",
-                height: 24,
-                background: "radial-gradient(50% 100% at 50% 0%, rgba(0,0,0,0.45), rgba(0,0,0,0))",
-                filter: "blur(6px)",
-              }}
-            />
-          </motion.div>
+      {/* The ONE flying toolbox — fixed to viewport, position is shelf rect at p=0 */}
+      <div
+        ref={flyRef}
+        aria-hidden
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: 220,
+          height: 174,
+          pointerEvents: "none",
+          zIndex: 30,
+          opacity: 0,
+          willChange: "transform, left, top, width, height, filter",
+        }}
+      >
+        <Toolbox ref={toolboxHandle} />
+        {/* Interior HTML overlay positioned over the body region of the SVG
+            (viewBox 96×76, body x:8-88 / y:36-68 → 8.33%/47.37% / 83.33%/42.11%).
+            Revealed by clip-path inset — no opacity fade. */}
+        <div
+          ref={interiorRef}
+          style={{
+            position: "absolute",
+            left: "8.333%",
+            top: "47.368%",
+            width: "83.333%",
+            height: "42.105%",
+            clipPath: "inset(100% 0 0 0)",
+            willChange: "clip-path",
+            overflow: "hidden",
+            pointerEvents: "auto",
+          }}
+        >
+          <div style={{ width: "100%", height: "100%", padding: "4%" }}>
+            <ToolboxInterior />
+          </div>
         </div>
       </div>
     </section>
