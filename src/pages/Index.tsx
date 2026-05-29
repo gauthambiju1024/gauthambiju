@@ -3,7 +3,6 @@ import HeroAboutFlip from "@/components/HeroAboutFlip";
 import ThinkingWall from "@/components/ThinkingWall";
 import ToolboxToSkillsBridge from "@/components/ToolboxToSkillsBridge";
 import WritingDesk from "@/components/WritingDesk";
-import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
 import { AssemblyHeader } from "@/components/AssemblyHeader";
 import { AssemblyHeaderMobile } from "@/components/AssemblyHeaderMobile";
@@ -17,7 +16,6 @@ import { useMotionValue } from "framer-motion";
 const trailingStations = [
   { id: "thinking", Frame: CorkboardFrame, Section: ThinkingWall },
   { id: "writing", Frame: NotebookFrame, Section: WritingDesk },
-  { id: "contact", Frame: LetterFrame, Section: ContactClosing },
 ] as const;
 
 const Index = () => {
