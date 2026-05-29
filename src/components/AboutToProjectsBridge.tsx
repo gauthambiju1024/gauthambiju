@@ -245,12 +245,10 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         (window as any).__toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
-          visible: bridge >= 1.0,
+          visible: bridge >= 0.92,
         };
-        // While the flying toolbox is active, hide the shelf copy so there's
-        // only one toolbox on screen. At rest the shelf one is shown.
         const inFlight = !!(window as any).__toolboxInFlight;
-        toolboxRef.current.style.opacity = inFlight ? "0" : "1";
+        toolboxRef.current.style.opacity = inFlight ? "0" : String(1 - takeover);
       }
 
 
