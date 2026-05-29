@@ -460,10 +460,11 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                             pointerEvents: "auto",
                           }}
                         >
-                          <svg width="220" height="174" viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                              <linearGradient id="tbBody" x1="0" y1="0" x2="0" y2="1">
                           <ToolboxClosed width={220} height={174} />
+                        </a>
+                      </div>
+                    );
+                  })()}
 
                   })()}
                 </div>
