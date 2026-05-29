@@ -1,73 +1,103 @@
 
-# Toolbox takeover — continuous, no empty frames, top-down reveal
+# Let the library breathe + real 3D toolbox
 
-## Problem
-Today the lift-to-center happens **inside** `ToolboxToSkillsBridge`, which only activates once its own pinned section is in view. By then the projects shelf has already scrolled away, leaving an empty viewport between the two pins. The toolbox also stays in side view the whole time, so "skills inside the toolbox" never reads as inside.
+## Part 1 — Let projects fully appear and settle before transition
 
-## Fix (one continuous timeline across both sections)
+Today the takeover ramps over the very last 12% of the projects pin (`HeroAboutFlip` height 340vh, takeover 0.88→1.0 ≈ 41vh). That leaves no "settled" dwell — the shelf finishes archiving and immediately starts fading.
 
-### Phase A — Library hand-off (lives inside `HeroAboutFlip`, driven by its own `progressMV` 0.88 → 1.0)
-Happens **while the projects shelf is still on screen** — no scroll jump, no blank frame.
+Restructure the timeline of `HeroAboutFlip` (pin height) + `AboutToProjectsBridge` (segment windows):
 
-1. The shelf (`shelfWrapRef`) fades + scales down (opacity 1→0, scale 1→0.92, slight blur 0→4px).
-2. The shelf toolbox slot publishes its rect (already done). A new shared flag `window.__toolboxTakeoverProgress` (0→1) is published.
-3. The **same** flying toolbox node (still owned by `ToolboxToSkillsBridge`, rendered as `position: fixed`) reads `__toolboxTakeoverProgress` in addition to its own scroll progress, so it can begin lifting while the previous section is still pinned. From rest on the shelf it lifts straight up (~80px) and starts arcing toward viewport center.
-4. By the end of `HeroAboutFlip` the toolbox is sitting dead-center, large (`min(56vw, 480px)`), still in front view, latches closed, lid closed. Shelf is fully faded.
+```
+t = 0.00 ─ 0.30   Hero & ID-card (unchanged)
+t = 0.30 ─ 0.55   Card flies + scales (unchanged)
+t = 0.55 ─ 0.70   Card flips Y (unchanged)
+t = 0.70 ─ 0.86   Shelf draws + spines archive  (was 0.72–1.0, now compressed earlier)
+t = 0.86 ─ 0.94   DWELL — shelf fully settled, fully opaque, fully interactive
+t = 0.94 ─ 1.00   Takeover — shelf fades, toolbox lifts to center
+```
 
-### Phase B — Rotate to top-down (inside `ToolboxToSkillsBridge`, p 0.00 → 0.30)
-Now the next pinned section takes over. Toolbox is already centered (no jump).
+Concrete edits:
 
-1. **Tilt** — `transform: perspective(1200px) rotateX(0deg → 72deg)`, easing `easeInOutQuart`. The handle catches light and rolls back.
-2. **Latches click open** — both latch rects rotate 90° around their pivots (0.18 → 0.24).
-3. **Lid opens AWAY from camera** — because we're now looking top-down, the lid's hinge runs along the back edge; it rotates `−110°` away from the viewer (0.24 → 0.30). At the end, the lid is flush against the back, out of sight.
+- `HeroAboutFlip.tsx`: bump pin height from `340vh` → `460vh`. This gives ~37vh of pure dwell where the user can stop scrolling and look at the shelf without anything moving, plus a smooth ~28vh takeover.
+- `AboutToProjectsBridge.tsx`:
+  - Move `bridge = seg(0.70, 0.86, t)` (was 0.72–1.0) so the archive completes earlier.
+  - Move takeover window to `seg(0.94, 1.0, t)` (was 0.88–1.0). Stays at 0 through the dwell phase, then ramps cleanly.
+  - Adjust the per-row draw/archive sub-windows proportionally (they're relative to `bridge`, so no change needed beyond the window shift).
+  - During dwell (bridge ≥ 1.0, takeover === 0): shelf is fully interactive — spines and toolbox clickable.
 
-### Phase C — Top-down interior reveal (p 0.30 → 0.85)
-The toolbox body is now a tray seen from above. Replace the current side-view interior with a new top-down layout:
+## Part 2 — Real 3D toolbox (CSS 3D faces, no R3F)
 
-1. **Tool tray graphic** — the existing SVG body is replaced (only in the top-view state) with a 3-compartment foam-insert tray:
-   ```
-   ┌──────────┬──────────┬──────────┐
-   │ PRODUCT  │ TECHNICAL│ BUSINESS │
-   │  ▭▭ ▭▭   │  ⚙  ⚙  ⚙ │  ▭ ▭ ▭   │
-   │  ▭▭ ▭▭   │  ⚙  ⚙  ⚙ │  ▭ ▭ ▭   │
-   └──────────┴──────────┴──────────┘
-   ```
-   Each compartment has a milled foam recess (inset shadow) and the skill chips are styled as **actual tools resting in the foam** — wrench-shaped for technical, square plates for product, calipers for business. Chip text is laser-etched on the tool surface.
-2. Tools rise into their slots one by one (staggered ~50ms) via `clip-path: inset(...)` reveal — geometry only, no opacity fade.
-3. Section header ("Skills · The Toolbox") fades up below the tray.
+Today the "rotation" is a single flat SVG with `rotateX`, which foreshortens the front face but never shows an actual top. Replace the SVG with a true 3D cube built from CSS-3D faces. Lightweight, no new deps, fits the project's "DOM direct mutation, no re-renders" pattern.
 
-### Phase D — Skill interaction (p ≥ 0.85)
-Tools are interactive (hover lifts ~3px out of foam, click pops the context tooltip). Same data source as today (`useSiteContent("skills", "groups")`).
+### New component `src/components/skills/Toolbox3D.tsx`
 
-## Files to change
+A reusable 3D box that renders six face divs plus a hinged lid:
 
-- `src/components/AboutToProjectsBridge.tsx`
-  - Add `phaseA` segment 0.88 → 1.0: drive shelf opacity/scale/blur and publish `window.__toolboxTakeoverProgress`. Keep all existing shelf draw/archive logic untouched.
-  - At the end of phase A, set `__toolboxRect` to the **center-stage rect** (not the slot rect) so the bridge knows where the toolbox should be by the time scroll enters the next section.
+```text
+       ┌──── lid (hinged at back-top edge) ────┐
+       │                                       │
+       │      ┌── TOP (foam tray) ──┐         │
+       │      │ [P] [T] [B] columns │         │
+       │      └─────────────────────┘         │
+   ┌───┤  FRONT face (same look as today)     ├───┐
+   │ L │                                        │ R │
+   │   │   ┌─── BACK ───┐                       │   │
+   └───┤   └────────────┘                       ├───┘
+       └────── BOTTOM ────────┘
+```
 
-- `src/components/ToolboxToSkillsBridge.tsx`
-  - Remove the current lift/carry phases. Read both `scrollYProgress` (for B/C/D) and `window.__toolboxTakeoverProgress` (for A). When takeover > 0 and own progress = 0, drive lift/carry from the takeover value. When own progress > 0, use it.
-  - Add **rotateX tilt** (Phase B) on the fly node wrapper: `perspective(1200px) rotateX(…)`.
-  - Swap to top-view interior at `rotateX > 35°` — body SVG fades to dark (inside-of-box color) and the foam-tray HTML overlay takes the full body area instead of the current side-view chip overlay.
-  - Keep the single-toolbox principle (one SVG, parts mutated by ref).
+Faces (each is an absolutely-positioned `<div>` styled to match the current SVG palette):
+- **Front** — same metallic gradient as today, with the "TOOLS" panel + corner studs (rendered with nested divs/SVG paths).
+- **Back** — slightly darker version of front.
+- **Top** — narrow rim (closed lid sits on it). Becomes the visible opening once the lid swings back.
+- **Bottom** — flat dark.
+- **Left / Right** — short side panels, ~28px deep at center-stage size, scaled proportionally.
+- **Lid** — separate flat plane hinged along the back-top edge. Closed = sits flush over top. Open = `rotateX(-140°)` swings up & back, exposing the top opening.
+- **Interior tray** — sits inside the box at the top face's z-plane. Holds the foam-compartment skills layout from `ToolboxInterior` variant="top". Always present; only visible when the box is tilted forward enough to see down into it.
 
-- `src/components/skills/ToolboxInterior.tsx`
-  - Add a new `variant: "top-view"` prop. When set, render the 3-compartment foam tray with tool-shaped chips (each compartment a CSS recess; tools as flex children with custom clip-paths / SVG silhouettes). Existing side-view variant kept for fallback.
-  - Reuse existing skill data + tooltip code; only the chip styling changes.
+Imperative handle (`Toolbox3DHandle`):
+- `setView(rotX: number, rotY: number)` — overall box rotation in degrees.
+- `setLid(deg: number)` — lid rotation around its hinge.
+- `setLatches(deg: number)` — both side latches.
+- `setInteriorReveal(pct: number)` — clip-path inset on the interior tray.
 
-- `src/components/skills/ToolboxSvg.tsx`
-  - Add a `lidAway` prop (or expose via the existing handle) so the lid rotation pivots around the **back edge** (y=22, top of viewBox) when top-view is engaged, instead of around the front hinge. Implemented by switching the lid group's `transform-origin` based on a `setLidPivot('front' | 'back')` imperative call.
+All setters write directly to refs (style attribute / setAttribute), zero React re-renders during scroll.
 
-## Technical notes (for the engineer)
+### Choreography in `ToolboxToSkillsBridge.tsx`
 
-- No new dependencies. All RAF, direct DOM mutation, no React re-renders during scroll.
-- Z-index: the flying toolbox sits at `z-30` (already set). The shelf fade happens on `shelfWrapRef` which is below the fixed toolbox node — they coexist visually during Phase A.
-- `__toolboxTakeoverProgress` lifecycle: set to 0 on mount, ramps 0→1 across HeroAboutFlip 0.88→1.0, then stays at 1 while the next section is active, reset to 0 on scroll back.
-- All Phase A↔B handoff math uses the **same** end rect (center stage), so the toolbox is pixel-identical at the boundary — no jump.
-- No opacity fades on the toolbox itself anywhere; the shelf fade is the only opacity animation in the sequence.
+Section pin height stays 260vh. The flying box uses `Toolbox3D` instead of `Toolbox`. Per-phase progress on this section's own `scrollYProgress`:
 
-## What stays untouched
-- Hero ID-card flip
-- Projects shelf draw/archive choreography
-- Skills data model and tooltips
-- Margin doodles, header, entropy background
+| Phase             | Range      | Action                                                                 |
+|-------------------|-----------|------------------------------------------------------------------------|
+| Carry in         | (driven by takeover from Phase 1) | Box arrives at center, rotX = 0, lid closed. |
+| **Tilt to top view** | 0.05–0.40 | `rotateX: 0° → −62°` (front face tips away, top opening rotates toward camera). |
+| **Latches click**    | 0.30–0.38 | Both latches snap 90° to "unlocked". |
+| **Lid swings open**  | 0.38–0.62 | Lid rotates `0 → −140°` around back-top hinge — folds back and out of view. |
+| **Interior reveal**  | 0.60–0.92 | Foam tray inside the box becomes visible via clip-path inset (top-down, tools rise into their compartments). |
+| **Header**           | 0.85–1.00 | "Skills · The Toolbox" caption fades up below the box. |
+
+Final view at p ≈ 0.95: camera looks down into a real 3-compartment tray with skill-tools resting in foam. Hover/click on a tool pops its context card (existing behavior).
+
+### Shelf rendering
+
+`AboutToProjectsBridge.tsx` continues to render the shelf toolbox in its slot. Replace the inline `<ToolboxClosed>` with `<Toolbox3D static />` (a no-tilt rest pose). At rest it's pixel-equivalent to the current closed look (front face dominant, lid flush). The flying `Toolbox3D` in the bridge takes over rect-perfectly, same as today.
+
+## Technical notes (engineer)
+
+- Pure CSS 3D: `transform-style: preserve-3d`, `backface-visibility: hidden`, `perspective: 1400px` on the wrapper.
+- All face dimensions derive from container width × `(76/96)` aspect ratio to match current viewBox proportions.
+- Lid hinge: `transform-origin: 50% 0%` on the lid plane, which sits at `translateZ(depth/2)` and `translateY(0)` aligned with the top face's back edge.
+- No new dependencies. No R3F (would require WebGL canvas + lifecycle and is overkill for one box).
+- `Toolbox3D` exports a `ClosedRest` named export so `AboutToProjectsBridge` can use it without managing refs.
+- Delete `ToolboxSvg.tsx` once `Toolbox3D` is wired in both places (or keep as fallback). Plan keeps the file for one commit so rollback is easy, then removes it.
+
+## Files touched
+
+- **NEW** `src/components/skills/Toolbox3D.tsx` — CSS-3D box component + imperative handle.
+- `src/components/HeroAboutFlip.tsx` — pin height 340 → 460vh.
+- `src/components/AboutToProjectsBridge.tsx` — shift segment windows (draw/archive earlier, takeover later), swap `ToolboxClosed` → `Toolbox3D` rest pose.
+- `src/components/ToolboxToSkillsBridge.tsx` — swap `Toolbox` → `Toolbox3D`, replace tilt math (single rotateX on inner) with the new view/lid/interior calls; tighter phase windows.
+- `src/components/skills/ToolboxInterior.tsx` — no logic change; top-down variant already exists, used by the interior tray inside the 3D box.
+
+## Out of scope
+- Hero ID-card flip, projects shelf row draw/archive (only window shifts), assembly header, margin doodles, entropy background — untouched.
