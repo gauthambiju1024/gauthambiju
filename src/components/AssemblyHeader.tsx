@@ -396,82 +396,126 @@ export function AssemblyHeader({ panelIds }: Props) {
 
     let t = 0;
     let rafId = 0;
+    let lastP = -1;
+    let lastStage = -1;
 
     function frame() {
       t++;
       const p = progressRef.current;
-
-      for (let i = 0; i < rMarks.length; i++) {
-        const cx = parseFloat(rMarks[i].getAttribute("data-cx") || "0");
-        const a = (t * 0.3 + i * 0.4) % (Math.PI * 2);
-        rMarks[i].setAttribute("x2", String(cx + Math.sin(a) * 1.2));
-        rMarks[i].setAttribute("y2", String(Y + Math.cos(a) * 1.2));
-      }
-
-      if (overallFillRef.current) {
-        overallFillRef.current.setAttribute("height", String(70 * p));
-      }
-      if (overallChipRef.current) {
-        overallChipRef.current.setAttribute("y", String(12 + 70 * p - 2.5));
-      }
-      if (overallPctRef.current) {
-        overallPctRef.current.textContent = String(Math.round(p * 100)).padStart(2, "0");
-        overallPctRef.current.setAttribute("y", String(14 + 70 * p));
-      }
-
-      const prodX = BS + 45 + p * (BL - 90);
-      prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
-
+      const pChanged = Math.abs(p - lastP) > 0.0005;
       const stage = Math.min(STAGE_TOTAL - 1, Math.floor(p * STAGE_TOTAL));
       const stageProg = p * STAGE_TOTAL - stage;
-      renderProduct(stage, stageProg);
-      renderPreview(stage, stageProg);
+      const stageChanged = stage !== lastStage;
 
-      if (prtRef.current) {
-          const partCount = Math.min(STAGE_TOTAL, stage + (stageProg > 0 ? 1 : 0));
-        prtRef.current.textContent = String(partCount).padStart(2, "0");
-      }
-
-      for (let i = 0; i < navEls.length; i++) {
-        if (i === stage) {
-          navEls[i].setAttribute("fill", "hsl(38 65% 74%)");
-          navEls[i].setAttribute("font-weight", "500");
-          navUnderlines[i].setAttribute("opacity", "0.9");
-          navUnderlines[i].setAttribute("stroke", "hsl(38 65% 74%)");
-        } else if (i < stage) {
-          navEls[i].setAttribute("fill", "hsl(38 52% 62%)");
-          navEls[i].setAttribute("font-weight", "400");
-          navUnderlines[i].setAttribute("opacity", "0.55");
-          navUnderlines[i].setAttribute("stroke", "hsl(38 52% 62%)");
-        } else {
-          navEls[i].setAttribute("fill", INK);
-          navEls[i].setAttribute("font-weight", "400");
-          navUnderlines[i].setAttribute("opacity", "0");
+      // Roller marks: pure time-based; throttle to every 2nd frame (~30fps)
+      if (t % 2 === 0) {
+        for (let i = 0; i < rMarks.length; i++) {
+          const cx = parseFloat(rMarks[i].getAttribute("data-cx") || "0");
+          const a = (t * 0.3 + i * 0.4) % (Math.PI * 2);
+          rMarks[i].setAttribute("x2", String(cx + Math.sin(a) * 1.2));
+          rMarks[i].setAttribute("y2", String(Y + Math.cos(a) * 1.2));
         }
       }
 
-      for (let i = 0; i < armEls.length; i++) {
-        const ax = parseFloat(armEls[i].getAttribute("data-x") || "0");
-        const dist = Math.abs(ax - prodX);
-        const close = dist < 40;
-        const engage = dist < 12;
-        const ext = close ? Math.max(0, 1 - dist / 40) : 0;
-        const jit = engage ? Math.sin(t * 0.6) * 0.5 : 0;
-        const s1 = armEls[i].querySelector(".h7-s1") as SVGLineElement;
-        const s2 = armEls[i].querySelector(".h7-s2") as SVGLineElement;
-        const j = armEls[i].querySelector(".h7-j") as SVGCircleElement;
-        const tp = armEls[i].querySelector(".h7-t") as SVGCircleElement;
-        const jY = 40 + ext * 2;
-        const tY = 44 + ext * 8 + jit;
-        s1.setAttribute("y2", String(jY));
-        j.setAttribute("cy", String(jY));
-        s2.setAttribute("y1", String(jY));
-        s2.setAttribute("y2", String(tY));
-        tp.setAttribute("cy", String(tY));
-        tp.setAttribute("stroke", engage ? INK_HOT : INK_BRIGHT);
-        if (engage && t % 4 === 0) emitSpark(ax, tY);
+      // Scroll-driven writes: only when progress actually changed
+      if (pChanged) {
+        if (overallFillRef.current) {
+          overallFillRef.current.setAttribute("height", String(70 * p));
+        }
+        if (overallChipRef.current) {
+          overallChipRef.current.setAttribute("y", String(12 + 70 * p - 2.5));
+        }
+        if (overallPctRef.current) {
+          overallPctRef.current.textContent = String(Math.round(p * 100)).padStart(2, "0");
+          overallPctRef.current.setAttribute("y", String(14 + 70 * p));
+        }
+
+        const prodX = BS + 45 + p * (BL - 90);
+        prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
+
+        renderProduct(stage, stageProg);
+        renderPreview(stage, stageProg);
+
+        if (prtRef.current) {
+          const partCount = Math.min(STAGE_TOTAL, stage + (stageProg > 0 ? 1 : 0));
+          prtRef.current.textContent = String(partCount).padStart(2, "0");
+        }
+
+        // Nav highlights: only repaint on stage change, not every micro-tick
+        if (stageChanged) {
+          for (let i = 0; i < navEls.length; i++) {
+            if (i === stage) {
+              navEls[i].setAttribute("fill", "hsl(38 65% 74%)");
+              navEls[i].setAttribute("font-weight", "500");
+              navUnderlines[i].setAttribute("opacity", "0.9");
+              navUnderlines[i].setAttribute("stroke", "hsl(38 65% 74%)");
+            } else if (i < stage) {
+              navEls[i].setAttribute("fill", "hsl(38 52% 62%)");
+              navEls[i].setAttribute("font-weight", "400");
+              navUnderlines[i].setAttribute("opacity", "0.55");
+              navUnderlines[i].setAttribute("stroke", "hsl(38 52% 62%)");
+            } else {
+              navEls[i].setAttribute("fill", INK);
+              navEls[i].setAttribute("font-weight", "400");
+              navUnderlines[i].setAttribute("opacity", "0");
+            }
+          }
+        }
+
+        // Arms: respond to product position; throttle the jitter sub-anim to every 2nd frame
+        if (t % 2 === 0) {
+          for (let i = 0; i < armEls.length; i++) {
+            const ax = parseFloat(armEls[i].getAttribute("data-x") || "0");
+            const dist = Math.abs(ax - prodX);
+            const close = dist < 40;
+            const engage = dist < 12;
+            const ext = close ? Math.max(0, 1 - dist / 40) : 0;
+            const jit = engage ? Math.sin(t * 0.6) * 0.5 : 0;
+            const s1 = armEls[i].querySelector(".h7-s1") as SVGLineElement;
+            const s2 = armEls[i].querySelector(".h7-s2") as SVGLineElement;
+            const j = armEls[i].querySelector(".h7-j") as SVGCircleElement;
+            const tp = armEls[i].querySelector(".h7-t") as SVGCircleElement;
+            const jY = 40 + ext * 2;
+            const tY = 44 + ext * 8 + jit;
+            s1.setAttribute("y2", String(jY));
+            j.setAttribute("cy", String(jY));
+            s2.setAttribute("y1", String(jY));
+            s2.setAttribute("y2", String(tY));
+            tp.setAttribute("cy", String(tY));
+            tp.setAttribute("stroke", engage ? INK_HOT : INK_BRIGHT);
+            if (engage && t % 6 === 0) emitSpark(ax, tY);
+          }
+        }
+
+        if (etaRef.current) etaRef.current.textContent = `ETA ${(3.2 * (1 - p)).toFixed(1)}s`;
+
+        if (dispatchDotRef.current) {
+          if (p >= 0.99) {
+            dispatchDotRef.current.setAttribute("fill", "hsl(120 50% 55%)");
+            dispatchDotRef.current.setAttribute("opacity", "1");
+            dispatchDotRef.current.setAttribute("r", "1.3");
+          } else {
+            const fillAmount = stage / 8;
+            dispatchDotRef.current.setAttribute("fill", INK_BRIGHT);
+            dispatchDotRef.current.setAttribute("opacity", String(0.3 + fillAmount * 0.6));
+            dispatchDotRef.current.setAttribute("r", String(0.8 + fillAmount * 0.5));
+          }
+        }
+        if (dispRef.current) {
+          if (p >= 0.99) {
+            dispRef.current.textContent = "ok";
+            dispRef.current.setAttribute("fill", "hsl(120 50% 55%)");
+          } else {
+            dispRef.current.textContent = "--";
+            dispRef.current.setAttribute("fill", INK_DIM);
+          }
+        }
+
+        lastP = p;
+        lastStage = stage;
       }
 
+      // Sparks: physics needs every frame, but pool not needed at small counts
       for (let i = sparkList.length - 1; i >= 0; i--) {
         const s = sparkList[i];
         s.x += s.vx;
@@ -487,36 +531,15 @@ export function AssemblyHeader({ panelIds }: Props) {
         }
       }
 
+      // Clock + intake pulse: low-frequency
       if (clockRef.current && t % 30 === 0) {
         const d = new Date();
         clockRef.current.textContent =
           String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
       }
-      if (etaRef.current) etaRef.current.textContent = `ETA ${(3.2 * (1 - p)).toFixed(1)}s`;
-      if (intakeDotRef.current) {
+      if (intakeDotRef.current && t % 2 === 0) {
         const pulse = 0.4 + Math.abs(Math.sin(t * 0.15)) * 0.6;
         intakeDotRef.current.setAttribute("opacity", String(pulse));
-      }
-      if (dispatchDotRef.current) {
-        if (p >= 0.99) {
-          dispatchDotRef.current.setAttribute("fill", "hsl(120 50% 55%)");
-          dispatchDotRef.current.setAttribute("opacity", "1");
-          dispatchDotRef.current.setAttribute("r", "1.3");
-        } else {
-          const fillAmount = stage / 8;
-          dispatchDotRef.current.setAttribute("fill", INK_BRIGHT);
-          dispatchDotRef.current.setAttribute("opacity", String(0.3 + fillAmount * 0.6));
-          dispatchDotRef.current.setAttribute("r", String(0.8 + fillAmount * 0.5));
-        }
-      }
-      if (dispRef.current) {
-        if (p >= 0.99) {
-          dispRef.current.textContent = "ok";
-          dispRef.current.setAttribute("fill", "hsl(120 50% 55%)");
-        } else {
-          dispRef.current.textContent = "--";
-          dispRef.current.setAttribute("fill", INK_DIM);
-        }
       }
 
       rafId = requestAnimationFrame(frame);
