@@ -147,6 +147,7 @@ const NAV = [
   { key: "skill", label: "Skill" },
   { key: "send", label: "Send" },
 ];
+const STAGE_TOTAL = NAV.length;
 
 function bbox(strokes: Stroke[]) {
   let mx = Infinity, my = Infinity, Mx = -Infinity, My = -Infinity;
@@ -292,7 +293,6 @@ export function AssemblyHeader({ panelIds }: Props) {
     const BE = 1390;
     const BL = BE - BS;
     const Y = 52;
-    const stageTotal = NAV.length;
 
     let rollersHtml = "";
     for (let rx = BS + 14; rx < BE; rx += 12) {
@@ -330,7 +330,7 @@ export function AssemblyHeader({ panelIds }: Props) {
     });
 
     let armsHtml = "";
-    const armCount = Math.max(1, stageTotal - 1);
+    const armCount = Math.max(1, STAGE_TOTAL - 1);
     const stationSpacing = (BL - 90) / armCount;
     for (let i = 0; i < armCount; i++) {
       const x = BS + 45 + (i / armCount) * (BL - 90) + stationSpacing / 2;
@@ -421,13 +421,13 @@ export function AssemblyHeader({ panelIds }: Props) {
       const prodX = BS + 45 + p * (BL - 90);
       prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
 
-      const stage = Math.min(stageTotal - 1, Math.floor(p * stageTotal));
-      const stageProg = p * stageTotal - stage;
+      const stage = Math.min(STAGE_TOTAL - 1, Math.floor(p * STAGE_TOTAL));
+      const stageProg = p * STAGE_TOTAL - stage;
       renderProduct(stage, stageProg);
       renderPreview(stage, stageProg);
 
       if (prtRef.current) {
-          const partCount = Math.min(stageTotal, stage + (stageProg > 0 ? 1 : 0));
+          const partCount = Math.min(STAGE_TOTAL, stage + (stageProg > 0 ? 1 : 0));
         prtRef.current.textContent = String(partCount).padStart(2, "0");
       }
 
@@ -664,7 +664,7 @@ export function AssemblyHeader({ panelIds }: Props) {
               SRC·<tspan ref={srcRef} fill={INK_BRIGHT}>DRONE-V1</tspan>
             </text>
             <text x="317" y="8">
-              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
+              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/{String(STAGE_TOTAL).padStart(2, "0")}
             </text>
             <text x="1390" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>
