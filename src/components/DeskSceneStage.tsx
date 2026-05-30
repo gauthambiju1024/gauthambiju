@@ -458,7 +458,7 @@ const DeskSceneStage = () => {
               {/* COFFEE MUG */}
               <div
                 className="dsk-mug absolute pointer-events-none"
-                style={{ left: "72%", top: "68.5%", width: "7%", minWidth: "90px", maxWidth: "125px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "74%", top: "69%", width: "8%", minWidth: "105px", maxWidth: "145px", opacity: 0, willChange: "transform, opacity", zIndex: 6 }}
               >
                 <svg viewBox="0 0 120 130" className="w-full h-auto">
                   <g stroke="rgba(184,146,74,0.45)" strokeWidth="1" fill="none">
