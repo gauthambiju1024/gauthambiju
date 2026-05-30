@@ -120,7 +120,7 @@ const DeskSceneStage = () => {
                 <stop offset="1" stopColor="#8a6a2a" stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path className="dsk-edge" d="M 0 720 L 1600 720" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
+            <path className="dsk-edge" d="M 0 661.5 L 1600 661.5" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
           </svg>
 
           {/* Scene wrapper */}
