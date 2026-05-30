@@ -43,8 +43,8 @@ const DeskSceneStage = () => {
         const el = root.querySelector<HTMLElement>(sel);
         if (!el) return;
         el.style.opacity = String(v);
-        const extraX = sel === ".dsk-laptop" ? " translateX(-50%)" : "";
-        if (ty || extraX) el.style.transform = `translateY(${ty}px)${extraX}`;
+        const extraX = sel === ".dsk-laptop" ? " translate(-50%, -50%)" : "";
+        if (ty || extraX) el.style.transform = sel === ".dsk-laptop" ? `translate(-50%, calc(-50% + ${ty}px))` : `translateY(${ty}px)`;
       };
       const setStroke = (sel: string, v: number) => {
         const el = root.querySelector<SVGPathElement>(sel);
@@ -121,7 +121,7 @@ const DeskSceneStage = () => {
                 <stop offset="1" stopColor="#8a6a2a" stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path className="dsk-edge" d="M 0 661.5 L 1600 661.5" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
+            <path className="dsk-edge" d="M 0 657 L 1600 657" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
           </svg>
 
           {/* Scene wrapper */}
@@ -142,7 +142,7 @@ const DeskSceneStage = () => {
               {/* FIELD NOTES — top, only left corner peeks behind laptop */}
               <div
                 className="dsk-notes absolute pointer-events-auto"
-                style={{ left: "52%", top: "14%", width: "43%", height: "43%", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "50%", top: "13%", width: "46%", height: "43%", opacity: 0, willChange: "transform, opacity", zIndex: 3 }}
               >
                 <div
                   className="relative rounded-md border p-5"
@@ -203,7 +203,7 @@ const DeskSceneStage = () => {
               {/* PLANT POT — botanical line-art, positioned so toolbox occludes lower-right (3D depth) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "3%", top: "48%", width: "10%", minWidth: "115px", maxWidth: "165px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "3%", top: "47%", width: "10%", minWidth: "120px", maxWidth: "170px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 140 240" className="w-full h-auto">
                   {/* central curved stem */}
@@ -262,20 +262,80 @@ const DeskSceneStage = () => {
                 </svg>
               </div>
 
-              {/* TOOLBOX SLOT — invisible target the actor lands on (left of laptop) */}
+              {/* TOOLBOX — solid SVG perspective object (also serves as landing slot) */}
               <div
-                className="dsk-toolbox-slot absolute pointer-events-none"
-                style={{ left: "7.5%", top: "58%", width: "25%", minWidth: "280px", maxWidth: "390px", height: "130px" }}
-              />
+                className="dsk-toolbox-slot final-toolbox absolute pointer-events-none"
+                style={{ left: "6.5%", top: "57.5%", width: "28%", minWidth: "310px", maxWidth: "430px", zIndex: 6, filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.45))" }}
+              >
+                <svg viewBox="0 0 420 230" className="w-full h-auto block">
+                  {/* Side face */}
+                  <path d="M 62 62 L 92 92 L 92 184 L 62 154 Z"
+                    fill="rgba(5,8,11,0.96)" stroke="rgba(184,146,74,0.42)" strokeWidth="1.1" />
+                  {/* Top face */}
+                  <path d="M 62 62 L 340 62 L 382 92 L 92 92 Z"
+                    fill="rgba(18,22,27,0.96)" stroke="rgba(184,146,74,0.48)" strokeWidth="1.2" />
+                  {/* Right side face */}
+                  <path d="M 340 62 L 382 92 L 382 184 L 340 154 Z"
+                    fill="rgba(5,8,11,0.96)" stroke="rgba(184,146,74,0.42)" strokeWidth="1.1" />
+                  {/* Front face */}
+                  <path d="M 92 92 L 382 92 L 382 184 L 92 184 Z"
+                    fill="rgba(7,10,13,0.98)" stroke="rgba(184,146,74,0.58)" strokeWidth="1.3" />
+                  {/* Lid seam */}
+                  <line x1="92" y1="118" x2="382" y2="118" stroke="rgba(239,231,213,0.13)" strokeWidth="1" />
+                  {/* Handle */}
+                  <path d="M 185 62 C 185 34, 260 34, 260 62"
+                    fill="none" stroke="rgba(229,196,122,0.72)" strokeWidth="2" strokeLinecap="round" />
+                  <rect x="176" y="56" width="22" height="10" rx="2"
+                    fill="rgba(184,146,74,0.18)" stroke="rgba(229,196,122,0.72)" strokeWidth="1.1" />
+                  <rect x="247" y="56" width="22" height="10" rx="2"
+                    fill="rgba(184,146,74,0.18)" stroke="rgba(229,196,122,0.72)" strokeWidth="1.1" />
+                  {/* Latches */}
+                  <rect x="145" y="112" width="28" height="48" rx="4"
+                    fill="rgba(184,146,74,0.16)" stroke="rgba(229,196,122,0.72)" strokeWidth="1.2" />
+                  <line x1="148" y1="120" x2="170" y2="120" stroke="rgba(229,196,122,0.6)" strokeWidth="0.8" />
+                  <rect x="156" y="132" width="6" height="6" fill="rgba(7,10,13,0.95)" stroke="rgba(229,196,122,0.6)" strokeWidth="0.8" />
+                  <rect x="300" y="112" width="28" height="48" rx="4"
+                    fill="rgba(184,146,74,0.16)" stroke="rgba(229,196,122,0.72)" strokeWidth="1.2" />
+                  <line x1="303" y1="120" x2="325" y2="120" stroke="rgba(229,196,122,0.6)" strokeWidth="0.8" />
+                  <rect x="311" y="132" width="6" height="6" fill="rgba(7,10,13,0.95)" stroke="rgba(229,196,122,0.6)" strokeWidth="0.8" />
+                  {/* Corner guards */}
+                  <path d="M 92 92 L 105 92 M 92 92 L 92 105" stroke="rgba(229,196,122,0.7)" strokeWidth="1.4" fill="none" />
+                  <path d="M 382 92 L 369 92 M 382 92 L 382 105" stroke="rgba(229,196,122,0.7)" strokeWidth="1.4" fill="none" />
+                  <path d="M 92 184 L 105 184 M 92 184 L 92 171" stroke="rgba(229,196,122,0.7)" strokeWidth="1.4" fill="none" />
+                  <path d="M 382 184 L 369 184 M 382 184 L 382 171" stroke="rgba(229,196,122,0.7)" strokeWidth="1.4" fill="none" />
+                  {/* Label plate */}
+                  <rect x="197" y="138" width="86" height="36" rx="3"
+                    fill="rgba(12,16,20,0.92)" stroke="rgba(229,196,122,0.55)" strokeWidth="1" />
+                  <text x="240" y="153" textAnchor="middle" fontFamily="monospace" fontSize="10" fontWeight="700" letterSpacing="3"
+                    fill="rgba(229,196,122,0.86)">TOOLS</text>
+                  <text x="240" y="167" textAnchor="middle" fontFamily="monospace" fontSize="7" letterSpacing="2"
+                    fill="rgba(229,196,122,0.6)">SKILLS PACKED</text>
+                  {/* Feet */}
+                  <rect x="108" y="184" width="34" height="10" rx="2"
+                    fill="rgba(7,10,13,0.98)" stroke="rgba(184,146,74,0.5)" strokeWidth="1" />
+                  <rect x="332" y="184" width="34" height="10" rx="2"
+                    fill="rgba(7,10,13,0.98)" stroke="rgba(184,146,74,0.5)" strokeWidth="1" />
+                  {/* Subtle top highlight */}
+                  <line x1="70" y1="68" x2="335" y2="68" stroke="rgba(239,231,213,0.13)" strokeWidth="1" />
+                  {/* Rivets */}
+                  <circle cx="100" cy="100" r="1.5" fill="rgba(229,196,122,0.55)" />
+                  <circle cx="374" cy="100" r="1.5" fill="rgba(229,196,122,0.55)" />
+                  <circle cx="100" cy="176" r="1.5" fill="rgba(229,196,122,0.55)" />
+                  <circle cx="374" cy="176" r="1.5" fill="rgba(229,196,122,0.55)" />
+                  {/* Ground shadow */}
+                  <ellipse cx="237" cy="200" rx="155" ry="6" fill="#000" opacity="0.4" />
+                </svg>
+              </div>
 
               {/* LAPTOP — CSS 3D */}
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "50%", top: "58.5%", width: "41%", minWidth: "520px", maxWidth: "660px",
-                  transform: "translateX(-50%)",
+                  left: "51.5%", top: "60%", width: "36%", minWidth: "470px", maxWidth: "590px",
+                  transform: "translate(-50%, -50%)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
+                  zIndex: 8,
                 }}
               >
                 <div
@@ -398,7 +458,7 @@ const DeskSceneStage = () => {
               {/* COFFEE MUG */}
               <div
                 className="dsk-mug absolute pointer-events-none"
-                style={{ left: "72%", top: "68.5%", width: "7%", minWidth: "90px", maxWidth: "125px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "74%", top: "69%", width: "8%", minWidth: "105px", maxWidth: "145px", opacity: 0, willChange: "transform, opacity", zIndex: 6 }}
               >
                 <svg viewBox="0 0 120 130" className="w-full h-auto">
                   <g stroke="rgba(184,146,74,0.45)" strokeWidth="1" fill="none">
