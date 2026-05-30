@@ -1,836 +1,145 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    /* Paper background #F8F5F1 → hsl(36, 37%, 96%) */
-    --background: 220 15% 12%;
-    --foreground: 220 25% 20%;
-
-    /* Paper surface #F8F5F1 */
-    --card: 36 37% 96%;
-    --card-foreground: 218 30% 21%;
-
-    --popover: 36 37% 96%;
-    --popover-foreground: 218 30% 21%;
-
-    /* Blue accent */
-    --primary: 220 60% 50%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Light paper shadow #E3E6E8 */
-    --secondary: 210 8% 93%;
-    --secondary-foreground: 218 30% 21%;
-
-    --muted: 210 12% 87%;
-    --muted-foreground: 214 14% 50%;
-
-    /* Sweater blue #5B708C */
-    --accent: 214 21% 45%;
-    --accent-foreground: 36 37% 96%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    /* Grid #C3CDD6 */
-    --border: 210 16% 84%;
-    --input: 210 16% 84%;
-    --ring: 16 21% 42%;
-
-    --radius: 0.5rem;
-
-    /* Notebook-specific */
-    --notebook-border: 16 21% 42%;
-    --notebook-paper: 36 37% 96%;
-    --notebook-grid: 210 16% 84%;
-    --notebook-ruling: 210 16% 84%;
-    --ink: 218 30% 21%;
-
-    /* Typography */
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-serif: 'Instrument Serif', serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-    --font-handwritten: 'Caveat', cursive;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Gold accent */
-    --gold: 38 60% 52%;
-    --gold-foreground: 38 10% 16%;
-
-    /* Section-specific */
-    --shelf-wood: 25 15% 16%;
-    --shelf-wood-light: 25 12% 26%;
-    --whiteboard: 210 8% 96%;
-    --toolbox-metal: 220 10% 22%;
-    --editorial-cream: 40 30% 96%;
-  }
+  --dsk-laptop-width: 580px;
+  --dsk-laptop-height: 404px;
+  --dsk-plant-left: 0px;
+  --dsk-plant-top: 299px;
+  --dsk-plant-width: 227px;
+  --dsk-plant-height: 369px;
+  --dsk-toolbox-left: 106px;
+  --dsk-toolbox-top: 502px;
+  --dsk-toolbox-width: 364px;
+  --dsk-toolbox-height: 165px;
+  --dsk-mug-left: 1049px;
+  --dsk-mug-top: 649px;
+  --dsk-mug-width: 156px;
+  --dsk-mug-height: 154px;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    background: hsl(var(--background));
-    color: hsl(var(--ink));
-    font-family: var(--font-handwritten);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-handwritten);
-  }
-
-  ::selection {
-    background: hsl(var(--primary) / 0.2);
-    color: hsl(var(--card-foreground));
-  }
+.dsk-desk-line {
+  transform: translateY(calc(var(--dsk-desk-y, 642px) - 657px));
 }
 
-@layer components {
-  .font-display {
-    font-family: var(--font-display);
+@media (max-width: 1199px) and (min-width: 900px) {
+  .dsk-stage {
+    --dsk-desk-y: 628px;
+    --dsk-horizon-left: -181px;
+    --dsk-horizon-width: 1875px;
+    --dsk-horizon-height: 14px;
+    --dsk-notes-left: 197px;
+    --dsk-notes-top: 111px;
+    --dsk-notes-width: 724px;
+    --dsk-notes-height: 272px;
+    --dsk-laptop-left: 284px;
+    --dsk-laptop-top: 543px;
+    --dsk-laptop-width: 520px;
+    --dsk-laptop-height: 362px;
+    --dsk-plant-left: 13px;
+    --dsk-plant-top: 343px;
+    --dsk-plant-width: 190px;
+    --dsk-plant-height: 310px;
+    --dsk-toolbox-left: 86px;
+    --dsk-toolbox-top: 492px;
+    --dsk-toolbox-width: 302px;
+    --dsk-toolbox-height: 168px;
+    --dsk-mug-left: 799px;
+    --dsk-mug-top: 681px;
+    --dsk-mug-width: 180px;
+    --dsk-mug-height: 136px;
   }
 
-  .font-serif-i {
-    font-family: var(--font-serif);
-  }
-
-  .font-mono {
-    font-family: var(--font-mono);
-  }
-
-  .font-handwritten {
-    font-family: var(--font-handwritten);
-  }
-
-  /* Notebook container */
-  .notebook {
-    background: hsl(var(--notebook-paper));
-    background-image:
-      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
-    position: relative;
-    overflow: clip;
-    box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
-      0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
-  }
-
-  /* Grid paper background — grid removed for clean look */
-  .notebook-grid {
-    /* plain paper, no grid lines */
-  }
-
-  /* Ruled lines */
-  .notebook-ruled {
-    background-image:
-      linear-gradient(transparent 23px, hsl(var(--notebook-ruling) / 0.4) 23px, hsl(var(--notebook-ruling) / 0.4) 24px, transparent 24px);
-    background-size: 100% 24px;
-  }
-
-  /* Notebook spine/binding */
-  .notebook-spine {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 48px;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--notebook-border) / 0.15) 0%,
-      hsl(var(--notebook-border) / 0.08) 40%,
-      transparent 100%
-    );
-    border-right: 2px solid hsl(var(--primary) / 0.12);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .notebook-margin {
-    pointer-events: none;
-  }
-
-  /* Red margin line */
-  .notebook-margin {
-    position: absolute;
-    left: 72px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: hsl(var(--primary) / 0.2);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  /* Hole punches */
-  .notebook-holes {
-    position: absolute;
-    left: 18px;
-    top: 0;
-    bottom: 0;
-    width: 14px;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  .notebook-hole {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: hsl(var(--background));
-    border: 1.5px solid hsl(var(--notebook-border) / 0.3);
-    position: absolute;
-    left: 0;
-  }
-
-  /* Page fold corner */
-  .page-fold {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(
-      135deg,
-      transparent 50%,
-      hsl(var(--muted) / 0.8) 50%,
-      hsl(var(--muted)) 100%
-    );
-    box-shadow: -2px -2px 6px hsl(0 0% 0% / 0.06);
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  /* Section divider — torn paper edge feel */
-  .section-divider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--notebook-ruling) / 0.5) 15%,
-      hsl(var(--notebook-ruling) / 0.5) 85%,
-      transparent 100%
-    );
-    margin: 0 2rem;
-  }
-
-  /* Desk scatter decorations */
-
-  /* Marquee */
-  .marquee-track {
-    display: flex;
-    animation: marquee-scroll 30s linear infinite;
-  }
-
-  @keyframes marquee-scroll {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  /* Notebook page — stacked pages in a binder */
-  .notebook-page {
-    background: hsl(var(--notebook-paper));
-    border-radius: 1rem;
-    border: 3px solid hsl(var(--notebook-border));
-    position: relative;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px hsl(var(--notebook-border) / 0.3),
-      0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
-  }
-
-  .notebook-page + .notebook-page {
-    margin-top: 8px;
-  }
-
-  /* Ribbon bookmark */
-  .ribbon-bookmark {
-    position: absolute;
-    right: -3px;
-    width: 28px;
-    height: 52px;
-    background: hsl(var(--primary));
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
-    box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
-    z-index: 10;
-    pointer-events: none;
-    border: none;
-    padding: 0;
-  }
-
-  .ribbon-bookmark-interactive {
-    pointer-events: auto;
-    cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
-  }
-
-  .ribbon-bookmark-interactive:hover {
-    transform: translateX(-3px);
-    box-shadow: -4px 2px 8px hsl(0 0% 0% / 0.25);
-  }
-
-  .ribbon-bookmark-interactive:active {
-    transform: translateX(-1px) scale(0.97);
-  }
-
-  /* Card hover */
-  .card-hover {
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px -8px hsl(var(--primary) / 0.12);
-  }
-
-  /* Tape strip decoration */
-  .tape-strip {
-    background: hsl(45 40% 88% / 0.7);
-    backdrop-filter: blur(2px);
-    transform: rotate(-2deg);
-    border: 1px solid hsl(45 30% 80% / 0.5);
-  }
-
-  /* Bookmark tab */
-  .bookmark-tab {
-    width: 32px;
-    height: 64px;
-    background: hsl(var(--primary));
-    position: absolute;
-    right: -3px;
-    border-radius: 0 0 4px 4px;
-    box-shadow: -2px 2px 4px hsl(0 0% 0% / 0.15);
-    z-index: 10;
-  }
-
-  /* Corner marks */
-  .corner-marks {
-    position: relative;
-  }
-
-  .corner-marks::before,
-  .corner-marks::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-color: hsl(var(--primary) / 0.35);
-  }
-
-  .corner-marks::before {
-    top: -1px;
-    left: -1px;
-    border-top: 1.5px solid;
-    border-left: 1.5px solid;
-  }
-
-  .corner-marks::after {
-    bottom: -1px;
-    right: -1px;
-    border-bottom: 1.5px solid;
-    border-right: 1.5px solid;
-  }
-
-  /* Section backgrounds */
-  .shelf-bg {
-    background: hsl(var(--shelf-wood));
-    background-image:
-      repeating-linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent 120px,
-        hsl(var(--shelf-wood-light) / 0.08) 120px,
-        hsl(var(--shelf-wood-light) / 0.08) 121px
-      );
-  }
-
-  .whiteboard-bg {
-    background: hsl(var(--whiteboard));
-    background-image:
-      radial-gradient(circle at 20% 50%, hsl(var(--primary) / 0.02) 0%, transparent 50%),
-      radial-gradient(circle at 80% 30%, hsl(var(--accent) / 0.03) 0%, transparent 40%);
-  }
-
-  .toolbox-bg {
-    background: hsl(var(--toolbox-metal));
-    background-image:
-      linear-gradient(135deg, hsl(0 0% 100% / 0.02) 25%, transparent 25%),
-      linear-gradient(225deg, hsl(0 0% 100% / 0.02) 25%, transparent 25%);
-    background-size: 60px 60px;
-  }
-
-  .editorial-bg {
-    background: hsl(var(--editorial-cream));
-  }
-
-
-  .font-serif-display {
-    font-family: 'Playfair Display', serif;
-  }
-
-  /* Floating section panel — shadow now driven by JS motion */
-  .section-panel {
-    border-radius: 1rem;
-    border-width: 1px;
-    padding: 1px;
-    position: relative;
-    overflow: hidden;
-    box-shadow:
-      0 12px 40px -8px hsl(0 0% 0% / 0.35),
-      0 4px 12px -2px hsl(0 0% 0% / 0.2);
-  }
-
-
-  /* Blueprint surface — dark green with grid */
-  .blueprint-surface {
-    background-color: hsl(160 20% 16%);
-    background-image:
-      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
-    border-radius: 1rem;
-    border: 3px solid hsl(160 15% 24%);
-    overflow: hidden;
-    box-shadow:
-      0 25px 80px -12px hsl(0 0% 0% / 0.5),
-      0 8px 24px -4px hsl(0 0% 0% / 0.3);
-  }
-
-  /* Corner bracket marks for framing elements */
-  .corner-brackets {
-    position: relative;
-  }
-
-  .corner-brackets::before,
-  .corner-brackets::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border-color: hsl(0 0% 100% / 0.4);
-    pointer-events: none;
-  }
-
-  .corner-brackets::before {
-    top: -4px;
-    left: -4px;
-    border-top: 1.5px solid;
-    border-left: 1.5px solid;
-  }
-
-  .corner-brackets::after {
-    bottom: -4px;
-    right: -4px;
-    border-bottom: 1.5px solid;
-    border-right: 1.5px solid;
-  }
-
-  /* Dimension line marker */
-  .dimension-line {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: hsl(0 0% 100% / 0.3);
-    font-family: var(--font-mono);
-    font-size: 8px;
-    letter-spacing: 0.1em;
-  }
-
-  .dimension-line::before,
-  .dimension-line::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: hsl(0 0% 100% / 0.2);
-  }
 }
 
-@layer components {
-  /* ─── MARGIN DOODLE SYSTEM ─── */
-  .margin-bg {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    width: var(--margin-col-width, 220px);
-    background: transparent;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
+.dsk-stage[data-workbench-bucket="laptop"] {
+  --dsk-desk-y: 628px;
+  --dsk-horizon-left: -181px;
+  --dsk-horizon-width: 1875px;
+  --dsk-horizon-height: 14px;
+  --dsk-notes-left: 197px;
+  --dsk-notes-top: 111px;
+  --dsk-notes-width: 724px;
+  --dsk-notes-height: 272px;
+  --dsk-laptop-left: 284px;
+  --dsk-laptop-top: 543px;
+  --dsk-laptop-width: 520px;
+  --dsk-laptop-height: 362px;
+  --dsk-plant-left: 13px;
+  --dsk-plant-top: 343px;
+  --dsk-plant-width: 190px;
+  --dsk-plant-height: 310px;
+  --dsk-toolbox-left: 86px;
+  --dsk-toolbox-top: 492px;
+  --dsk-toolbox-width: 302px;
+  --dsk-toolbox-height: 168px;
+  --dsk-mug-left: 799px;
+  --dsk-mug-top: 681px;
+  --dsk-mug-width: 180px;
+  --dsk-mug-height: 136px;
+}
+
+@media (max-width: 899px) {
+  .dsk-stage {
+    --dsk-desk-y: 624px;
+    --dsk-horizon-left: -181px;
+    --dsk-horizon-width: 1875px;
+    --dsk-horizon-height: 14px;
+    --dsk-notes-left: 16px;
+    --dsk-notes-top: 52px;
+    --dsk-notes-width: 359px;
+    --dsk-notes-height: 317px;
+    --dsk-laptop-left: 18px;
+    --dsk-laptop-top: 607px;
+    --dsk-laptop-width: 354px;
+    --dsk-laptop-height: 310px;
+    --dsk-plant-left: 310px;
+    --dsk-plant-top: 444px;
+    --dsk-plant-width: 118px;
+    --dsk-plant-height: 192px;
+    --dsk-toolbox-left: 72px;
+    --dsk-toolbox-top: 575px;
+    --dsk-toolbox-width: 190px;
+    --dsk-toolbox-height: 88px;
+    --dsk-mug-left: 406px;
+    --dsk-mug-top: 762px;
+    --dsk-mug-width: 92px;
+    --dsk-mug-height: 90px;
   }
 
-  .margin-bg--left {
-    left: 2px;
+  .dsk-notes .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .margin-bg--right {
-    right: 2px;
-  }
-
-  .margin-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255, 0.03) 1px, transparent 1px),
-      linear-gradient(rgba(255,255,255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
-    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 80%);
-    pointer-events: none;
-  }
-
-  .margin-bg::after {
+  .dsk-notes .grid > a:nth-child(3) {
     display: none;
   }
 
-
-  .margin-content-wrapper {
-    position: relative;
-    z-index: 2;
+  .dsk-laptop h2 {
+    font-size: 18px !important;
   }
 
-  @media (min-width: 800px) {
-    .margin-content-wrapper {
-      padding-left: calc(var(--margin-col-width, 60px) + 4px);
-      padding-right: calc(var(--margin-col-width, 60px) + 4px);
-    }
-  }
-
-  .margin-doodles {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    width: var(--margin-col-width, 110px);
-    z-index: 1;
-    pointer-events: none;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .margin-doodles--left { left: 2px; }
-  .margin-doodles--right { right: 2px; }
-
-  .doodle {
-    position: absolute;
-    width: 80%;
-    padding: 0;
-  }
-
-  .doodle svg {
-    width: 100%;
-    height: auto;
-    display: block;
-    overflow: visible;
-  }
-
-  .doodle svg .draw {
-    stroke-dasharray: var(--len, 500);
-    stroke-dashoffset: var(--len, 500);
-  }
-
-  .doodle svg .fade {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-  }
-
-  .doodle.complete svg .fade {
-    opacity: 1;
-  }
-
-  .doodle svg text {
-    font-family: 'Caveat', cursive;
-    font-weight: 500;
-  }
-
-  .doodle svg text.label {
-    font-family: 'Caveat', cursive;
-    font-weight: 400;
-  }
 }
 
-:root {
-  --margin-col-width: 60px;
-}
-
-@media (max-width: 1280px) {
-  :root { --margin-col-width: 50px; }
-}
-
-@media (max-width: 1100px) {
-  :root { --margin-col-width: 28px; }
-  .doodle { padding: 0; left: 0; right: 0; }
-}
-
-@layer base {
-  [id] {
-    scroll-margin-top: 100px;
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.animate-blink {
-  animation: blink 0.7s step-end infinite;
-}
-
-/* Custom scrollbar for notebook interior */
-.notebook-scroll-area {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--notebook-border) / 0.3) transparent;
-}
-
-.notebook-scroll-area::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notebook-scroll-area::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.notebook-scroll-area::-webkit-scrollbar-thumb {
-  background: hsl(var(--notebook-border) / 0.3);
-  border-radius: 3px;
-}
-
-.notebook-scroll-area::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--notebook-border) / 0.5);
-}
-
-/* ============================================
-   DESK STAGE — frame fit + scroll utilities
-   (3D desk now rendered with React Three Fiber in DeskScene.tsx;
-    legacy CSS desk/slots/glow overlays removed.)
-   ============================================ */
-
-.stage-fit {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.stage-fit > * { flex: 1 1 auto; min-height: 0; }
-.stage-scroll {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Inner scroll for panels that need it (Library, Cases) */
-.panel-inner-scroll {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border)) transparent;
-}
-.panel-inner-scroll::-webkit-scrollbar { width: 6px; }
-.panel-inner-scroll::-webkit-scrollbar-track { background: transparent; }
-.panel-inner-scroll::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
-.panel-inner-scroll::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-}
-
-/* FRAMES — skeuomorphic shells */
-
-/* HOME — green self-healing CUTTING MAT */
-.frame-blueprint {
-  background:
-    radial-gradient(ellipse at 50% 40%, hsl(160 22% 19%), hsl(160 25% 13%) 80%);
-  box-shadow:
-    inset 0 0 0 2px hsl(0 0% 0% / 0.55),
-    inset 0 0 0 3px hsl(160 30% 30% / 0.6),
-    inset 0 1px 0 hsl(160 30% 45% / 0.25),
-    0 30px 60px -20px hsl(0 0% 0% / 0.7);
-  border-radius: 6px;
-}
-.frame-blueprint::before {
-  content: "";
-  position: absolute;
-  inset: 14px;
-  background-image:
-    /* major 1cm grid */
-    linear-gradient(hsl(0 0% 100% / 0.10) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(0 0% 100% / 0.10) 1px, transparent 1px),
-    /* minor 2mm grid */
-    linear-gradient(hsl(0 0% 100% / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(0 0% 100% / 0.04) 1px, transparent 1px);
-  background-size: 60px 60px, 60px 60px, 12px 12px, 12px 12px;
-  pointer-events: none;
-  border-radius: 2px;
-}
-.frame-blueprint::after {
-  content: "";
-  position: absolute;
-  inset: 14px;
-  background-image:
-    /* corner 45° angle marks */
-    linear-gradient(45deg, transparent 49.5%, hsl(0 0% 100% / 0.18) 50%, transparent 50.5%),
-    linear-gradient(-45deg, transparent 49.5%, hsl(0 0% 100% / 0.18) 50%, transparent 50.5%);
-  background-size: 36px 36px, 36px 36px;
-  background-position: 0 0, 100% 100%;
-  background-repeat: no-repeat;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-.frame-blueprint-curl {
-  /* repurposed: rubber-edge highlight */
-  background: linear-gradient(180deg,
-    hsl(160 30% 35% / 0.4) 0%,
-    transparent 12%,
-    transparent 88%,
-    hsl(0 0% 0% / 0.35) 100%);
-  pointer-events: none;
-  border-radius: 6px;
-}
-
-.frame-card {
-  background:
-    radial-gradient(ellipse at 30% 20%, hsl(36 40% 98%), hsl(36 30% 92%));
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.7),
-    0 1px 0 hsl(0 0% 0% / 0.05),
-    0 30px 50px -15px hsl(0 0% 0% / 0.65);
-}
-.frame-card-foil {
-  background: linear-gradient(135deg, hsl(45 80% 65%), hsl(38 70% 50%));
-  clip-path: polygon(100% 0, 0 0, 100% 100%);
-  opacity: 0.85;
-}
-
-.frame-shelf {
-  background: linear-gradient(180deg, hsl(25 30% 18%), hsl(25 30% 12%));
-  box-shadow:
-    inset 0 1px 0 hsl(40 30% 60% / 0.1),
-    0 30px 60px -15px hsl(0 0% 0% / 0.7);
-}
-
-.frame-cork {
-  background: hsl(30 40% 38%);
-  background-image:
-    radial-gradient(hsl(30 30% 28%) 1px, transparent 1.5px),
-    radial-gradient(hsl(30 35% 30%) 1px, transparent 1.5px);
-  background-size: 7px 7px, 11px 11px;
-  background-position: 0 0, 3px 4px;
-  box-shadow:
-    inset 0 0 0 4px hsl(25 35% 22%),
-    inset 0 0 0 6px hsl(40 30% 60% / 0.15),
-    0 30px 60px -15px hsl(0 0% 0% / 0.7);
-}
-
-.frame-toolbox {
-  background: linear-gradient(180deg, hsl(0 50% 30%), hsl(0 55% 22%));
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.1),
-    0 30px 60px -15px hsl(0 0% 0% / 0.7);
-}
-.frame-toolbox-lid {
-  background: linear-gradient(180deg, hsl(0 60% 38%), hsl(0 50% 25%));
-  box-shadow: 0 1px 0 hsl(0 0% 0% / 0.5);
-}
-
-.frame-scroll {
-  background: linear-gradient(180deg, hsl(36 35% 88%), hsl(36 30% 82%));
-  box-shadow:
-    inset 0 0 80px hsl(36 30% 60% / 0.2),
-    0 30px 60px -15px hsl(0 0% 0% / 0.6);
-}
-.frame-scroll-rod {
-  background: linear-gradient(180deg, hsl(36 40% 50%), hsl(36 35% 35%));
-  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.5);
-}
-
-.frame-notebook {
-  background: hsl(36 30% 94%);
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0,
-      transparent 23px,
-      hsl(218 30% 21% / 0.12) 24px
-    );
-  box-shadow:
-    inset 0 1px 0 hsl(0 0% 100% / 0.6),
-    0 30px 60px -15px hsl(0 0% 0% / 0.65);
-}
-.frame-notebook-spine {
-  background: repeating-linear-gradient(
-    0deg,
-    hsl(0 0% 30%) 0,
-    hsl(0 0% 30%) 4px,
-    transparent 4px,
-    transparent 10px
-  );
-}
-
-.frame-letter {
-  background: hsl(36 25% 92%);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent 0,
-    transparent 14px,
-    hsl(0 60% 35% / 0.08) 14px,
-    hsl(0 60% 35% / 0.08) 16px,
-    transparent 16px,
-    transparent 30px,
-    hsl(220 50% 35% / 0.08) 30px,
-    hsl(220 50% 35% / 0.08) 32px
-  );
-  box-shadow:
-    inset 0 0 0 1px hsl(0 0% 0% / 0.08),
-    0 30px 60px -15px hsl(0 0% 0% / 0.65);
-}
-.frame-letter-seal {
-  background: radial-gradient(circle at 30% 30%, hsl(0 70% 50%), hsl(0 60% 30%));
-  box-shadow: 0 2px 4px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.3);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .stage-float { animation: none !important; }
-}
-
-/* Console rail scrollbar hiding */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.dsk-stage[data-workbench-bucket="mobile"] {
+  --dsk-desk-y: 624px;
+  --dsk-horizon-left: -181px;
+  --dsk-horizon-width: 1875px;
+  --dsk-horizon-height: 14px;
+  --dsk-notes-left: 16px;
+  --dsk-notes-top: 52px;
+  --dsk-notes-width: 359px;
+  --dsk-notes-height: 317px;
+  --dsk-laptop-left: 18px;
+  --dsk-laptop-top: 607px;
+  --dsk-laptop-width: 354px;
+  --dsk-laptop-height: 310px;
+  --dsk-plant-left: 310px;
+  --dsk-plant-top: 444px;
+  --dsk-plant-width: 118px;
+  --dsk-plant-height: 192px;
+  --dsk-toolbox-left: 72px;
+  --dsk-toolbox-top: 575px;
+  --dsk-toolbox-width: 190px;
+  --dsk-toolbox-height: 88px;
+  --dsk-mug-left: 406px;
+  --dsk-mug-top: 762px;
+  --dsk-mug-width: 92px;
+  --dsk-mug-height: 90px;
 
