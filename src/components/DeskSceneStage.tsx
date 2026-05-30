@@ -138,9 +138,10 @@ const DeskSceneStage = () => {
               />
 
               {/* FIELD NOTES — top-right behind/above laptop */}
+              {/* FIELD NOTES — top, only left corner peeks behind laptop */}
               <div
                 className="dsk-notes absolute pointer-events-auto"
-                style={{ right: "3%", top: "4%", width: "min(44%, 580px)", opacity: 0, willChange: "transform, opacity" }}
+                style={{ right: "4%", top: "2%", width: "min(40%, 520px)", opacity: 0, willChange: "transform, opacity" }}
               >
                 <div
                   className="relative rounded-md border p-5"
