@@ -54,16 +54,13 @@ const DeskSceneStage = () => {
       };
 
       setStroke(".dsk-edge", easeInOut(seg(0.0, 0.18, p)));
-      setStroke(".dsk-persp-1", easeInOut(seg(0.04, 0.22, p)));
-      setStroke(".dsk-persp-2", easeInOut(seg(0.06, 0.24, p)));
-      setStroke(".dsk-persp-3", easeInOut(seg(0.08, 0.26, p)));
+      set(".dsk-wall", easeInOut(seg(0.0, 0.18, p)));
 
       const tPlant = easeInOut(seg(0.2, 0.4, p));
       set(".dsk-plant", tPlant, (1 - tPlant) * 18);
 
       const tLap = easeInOut(seg(0.3, 0.55, p));
       set(".dsk-laptop", tLap, (1 - tLap) * 30);
-      set(".dsk-screen", easeInOut(seg(0.45, 0.65, p)));
 
       const tMug = easeInOut(seg(0.55, 0.75, p));
       set(".dsk-mug", tMug, (1 - tMug) * 16);
