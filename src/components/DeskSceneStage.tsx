@@ -199,10 +199,10 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — behind toolbox */}
+              {/* PLANT POT — behind toolbox (zIndex below actor) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "9%", bottom: "26%", width: "120px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "6%", bottom: "22%", width: "120px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 120 160" className="w-full h-auto">
                   <g stroke="#7fb18a" strokeWidth="1.2" fill="none" opacity="0.85">
