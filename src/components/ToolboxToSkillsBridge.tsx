@@ -184,7 +184,7 @@ const ToolboxToSkillsBridge = () => {
         <DeskSceneStage />
         <div
           className="absolute inset-0 flex items-center justify-center [perspective:1200px]"
-          style={{ pointerEvents: "none" }}
+          style={{ pointerEvents: "none", zIndex: 10 }}
         >
           <div
             ref={actorRef}

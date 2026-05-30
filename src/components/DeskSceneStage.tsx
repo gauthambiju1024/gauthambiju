@@ -97,7 +97,7 @@ const DeskSceneStage = () => {
   const topPosts = posts.slice(0, 3);
 
   return (
-        <div ref={rootRef} className="absolute inset-0 pointer-events-none" aria-label="Contact & Writing desk">
+        <div ref={rootRef} className="absolute inset-0 pointer-events-none" style={{ opacity: 0, zIndex: 20 }} aria-label="Contact & Writing desk">
 
           {/* Blueprint perspective + table edge */}
           <svg
