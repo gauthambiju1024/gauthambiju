@@ -43,7 +43,8 @@ const DeskSceneStage = () => {
         const el = root.querySelector<HTMLElement>(sel);
         if (!el) return;
         el.style.opacity = String(v);
-        if (ty) el.style.transform = `translateY(${ty}px)`;
+        const extraX = sel === ".dsk-laptop" ? " translateX(-50%)" : "";
+        if (ty || extraX) el.style.transform = `translateY(${ty}px)${extraX}`;
       };
       const setStroke = (sel: string, v: number) => {
         const el = root.querySelector<SVGPathElement>(sel);
@@ -120,7 +121,7 @@ const DeskSceneStage = () => {
                 <stop offset="1" stopColor="#8a6a2a" stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path className="dsk-edge" d="M 0 720 L 1600 720" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
+            <path className="dsk-edge" d="M 0 661.5 L 1600 661.5" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
           </svg>
 
           {/* Scene wrapper */}
@@ -141,7 +142,7 @@ const DeskSceneStage = () => {
               {/* FIELD NOTES — top, only left corner peeks behind laptop */}
               <div
                 className="dsk-notes absolute pointer-events-auto"
-                style={{ right: "4%", top: "2%", width: "min(40%, 520px)", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "52%", top: "14%", width: "43%", height: "43%", opacity: 0, willChange: "transform, opacity" }}
               >
                 <div
                   className="relative rounded-md border p-5"
@@ -202,7 +203,7 @@ const DeskSceneStage = () => {
               {/* PLANT POT — botanical line-art, positioned so toolbox occludes lower-right (3D depth) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "3%", bottom: "12%", width: "150px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "3%", top: "48%", width: "10%", minWidth: "115px", maxWidth: "165px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 140 240" className="w-full h-auto">
                   {/* central curved stem */}
@@ -264,14 +265,15 @@ const DeskSceneStage = () => {
               {/* TOOLBOX SLOT — invisible target the actor lands on (left of laptop) */}
               <div
                 className="dsk-toolbox-slot absolute pointer-events-none"
-                style={{ left: "10%", bottom: "14%", width: "200px", height: "130px" }}
+                style={{ left: "7.5%", top: "58%", width: "25%", minWidth: "280px", maxWidth: "390px", height: "130px" }}
               />
 
               {/* LAPTOP — CSS 3D */}
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "34%", bottom: "6%", width: "min(44%, 600px)",
+                  left: "50%", top: "58.5%", width: "41%", minWidth: "520px", maxWidth: "660px",
+                  transform: "translateX(-50%)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
                 }}
@@ -396,7 +398,7 @@ const DeskSceneStage = () => {
               {/* COFFEE MUG */}
               <div
                 className="dsk-mug absolute pointer-events-none"
-                style={{ right: "10%", bottom: "10%", width: "110px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "72%", top: "68.5%", width: "7%", minWidth: "90px", maxWidth: "125px", opacity: 0, willChange: "transform, opacity" }}
               >
                 <svg viewBox="0 0 120 130" className="w-full h-auto">
                   <g stroke="rgba(184,146,74,0.45)" strokeWidth="1" fill="none">
