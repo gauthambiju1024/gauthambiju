@@ -130,8 +130,8 @@ const ToolboxToSkillsBridge = () => {
         x = lerp(0, deskX, deskU);
         y = lerp(40, deskY, deskU);
         scl = lerp(endScale * 0.92, deskScale, deskU);
-        rx = lerp(-15, -12, deskU);
-        ry = lerp(35, 28, deskU);
+        rx = lerp(-15, 0, deskU);
+        ry = lerp(35, 0, deskU);
       }
 
       actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
