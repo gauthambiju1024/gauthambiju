@@ -204,7 +204,7 @@ const DeskSceneStage = () => {
     };
 
     const currentLayout = () => {
-      const next: WorkbenchLayout & { __viewport?: { bucket: string; width: number; height: number } } = {
+      const next: WorkbenchLayout & { __viewport?: Record<string, any> } = {
         __viewport: {
           bucket: getWorkbenchBucket(),
           browserWidth: window.innerWidth,
