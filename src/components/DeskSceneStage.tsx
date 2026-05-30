@@ -54,16 +54,13 @@ const DeskSceneStage = () => {
       };
 
       setStroke(".dsk-edge", easeInOut(seg(0.0, 0.18, p)));
-      setStroke(".dsk-persp-1", easeInOut(seg(0.04, 0.22, p)));
-      setStroke(".dsk-persp-2", easeInOut(seg(0.06, 0.24, p)));
-      setStroke(".dsk-persp-3", easeInOut(seg(0.08, 0.26, p)));
+      set(".dsk-wall", easeInOut(seg(0.0, 0.18, p)));
 
       const tPlant = easeInOut(seg(0.2, 0.4, p));
       set(".dsk-plant", tPlant, (1 - tPlant) * 18);
 
       const tLap = easeInOut(seg(0.3, 0.55, p));
       set(".dsk-laptop", tLap, (1 - tLap) * 30);
-      set(".dsk-screen", easeInOut(seg(0.45, 0.65, p)));
 
       const tMug = easeInOut(seg(0.55, 0.75, p));
       set(".dsk-mug", tMug, (1 - tMug) * 16);
@@ -99,7 +96,17 @@ const DeskSceneStage = () => {
   return (
         <div ref={rootRef} className="absolute inset-0 pointer-events-none" style={{ opacity: 0, zIndex: 20 }} aria-label="Contact & Writing desk">
 
-          {/* Blueprint perspective + table edge */}
+          {/* Wall / table tonal split */}
+          <div
+            className="dsk-wall absolute inset-0 pointer-events-none"
+            style={{
+              opacity: 0,
+              background:
+                "linear-gradient(to bottom, rgba(10,14,18,0.0) 0%, rgba(10,14,18,0.0) 78%, rgba(0,0,0,0.55) 80%, rgba(14,11,7,0.35) 82%, rgba(14,11,7,0.0) 100%)",
+            }}
+          />
+
+          {/* Table horizon line */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 1600 900"
@@ -113,11 +120,7 @@ const DeskSceneStage = () => {
                 <stop offset="1" stopColor="#8a6a2a" stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path className="dsk-persp-1" d="M -50 900 L 800 470" stroke="rgba(184,146,74,0.22)" strokeWidth="1" fill="none" />
-            <path className="dsk-persp-2" d="M 1650 900 L 800 470" stroke="rgba(184,146,74,0.22)" strokeWidth="1" fill="none" />
-            <path className="dsk-persp-3" d="M 800 900 L 800 470" stroke="rgba(184,146,74,0.12)" strokeWidth="1" fill="none" strokeDasharray="4 6" />
             <path className="dsk-edge" d="M 0 720 L 1600 720" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
-            <path className="dsk-edge" d="M 0 724 L 1600 724" stroke="rgba(184,146,74,0.2)" strokeWidth="1" fill="none" />
           </svg>
 
           {/* Scene wrapper */}
@@ -135,9 +138,10 @@ const DeskSceneStage = () => {
               />
 
               {/* FIELD NOTES — top-right behind/above laptop */}
+              {/* FIELD NOTES — top, only left corner peeks behind laptop */}
               <div
                 className="dsk-notes absolute pointer-events-auto"
-                style={{ right: "3%", top: "4%", width: "min(44%, 580px)", opacity: 0, willChange: "transform, opacity" }}
+                style={{ right: "4%", top: "2%", width: "min(40%, 520px)", opacity: 0, willChange: "transform, opacity" }}
               >
                 <div
                   className="relative rounded-md border p-5"
@@ -195,10 +199,10 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — behind toolbox */}
+              {/* PLANT POT — behind toolbox (zIndex below actor) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "9%", bottom: "26%", width: "120px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "6%", bottom: "22%", width: "120px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 120 160" className="w-full h-auto">
                   <g stroke="#7fb18a" strokeWidth="1.2" fill="none" opacity="0.85">
@@ -216,10 +220,10 @@ const DeskSceneStage = () => {
                 </svg>
               </div>
 
-              {/* TOOLBOX SLOT — invisible target the actor lands on */}
+              {/* TOOLBOX SLOT — invisible target the actor lands on (left of laptop) */}
               <div
                 className="dsk-toolbox-slot absolute pointer-events-none"
-                style={{ left: "18%", bottom: "18%", width: "220px", height: "140px" }}
+                style={{ left: "10%", bottom: "14%", width: "200px", height: "130px" }}
               />
 
               {/* LAPTOP — CSS 3D */}
@@ -286,7 +290,6 @@ const DeskSceneStage = () => {
                       border: "1px solid rgba(184,146,74,0.40)",
                       transform: "rotateX(-55deg)",
                       transformOrigin: "bottom",
-                      opacity: 0,
                     }}
                   >
                     <div
