@@ -290,7 +290,6 @@ const DeskSceneStage = () => {
                       border: "1px solid rgba(184,146,74,0.40)",
                       transform: "rotateX(-55deg)",
                       transformOrigin: "bottom",
-                      opacity: 0,
                     }}
                   >
                     <div
