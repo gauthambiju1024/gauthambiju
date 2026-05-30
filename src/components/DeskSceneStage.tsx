@@ -199,24 +199,39 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — behind toolbox (zIndex below actor) */}
+              {/* PLANT POT — further left, smaller (perspective), behind toolbox */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "6%", bottom: "22%", width: "120px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "2%", bottom: "20%", width: "140px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
-                <svg viewBox="0 0 120 160" className="w-full h-auto">
-                  <g stroke="#7fb18a" strokeWidth="1.2" fill="none" opacity="0.85">
-                    <path d="M 60 90 C 30 70, 28 40, 45 20" />
-                    <path d="M 60 90 C 90 70, 92 40, 75 20" />
-                    <path d="M 60 90 C 50 60, 55 30, 60 10" />
-                    <ellipse cx="42" cy="40" rx="10" ry="18" transform="rotate(-25 42 40)" />
-                    <ellipse cx="78" cy="40" rx="10" ry="18" transform="rotate(25 78 40)" />
-                    <ellipse cx="60" cy="22" rx="9" ry="16" />
-                    <ellipse cx="36" cy="62" rx="9" ry="14" transform="rotate(-40 36 62)" />
-                    <ellipse cx="84" cy="62" rx="9" ry="14" transform="rotate(40 84 62)" />
+                <svg viewBox="0 0 140 200" className="w-full h-auto">
+                  <defs>
+                    <linearGradient id="leafGradDsk" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#a8cba8" stopOpacity="0.95" />
+                      <stop offset="1" stopColor="#4a6e4f" stopOpacity="0.9" />
+                    </linearGradient>
+                    <linearGradient id="potGradDsk" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#8a6238" />
+                      <stop offset="1" stopColor="#3a2614" />
+                    </linearGradient>
+                  </defs>
+                  {/* organic foliage — layered leaves */}
+                  <g>
+                    <path d="M 70 122 C 48 112, 28 82, 26 42 C 40 58, 56 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
+                    <path d="M 70 122 C 92 112, 112 82, 114 42 C 100 58, 84 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" opacity="0.92"/>
+                    <path d="M 70 122 C 60 92, 58 52, 70 16 C 82 52, 80 92, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
+                    <path d="M 70 122 C 44 118, 22 98, 14 66 C 32 82, 54 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
+                    <path d="M 70 122 C 96 118, 118 98, 126 66 C 108 82, 86 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
+                    <g stroke="#243a2b" strokeWidth="0.5" fill="none" opacity="0.55">
+                      <path d="M 70 122 C 62 95, 56 65, 40 45" />
+                      <path d="M 70 122 C 78 95, 84 65, 100 45" />
+                      <path d="M 70 122 L 70 22" />
+                    </g>
                   </g>
-                  <path d="M 32 92 L 88 92 L 82 150 L 38 150 Z" stroke="#b8924a" strokeWidth="1.3" fill="rgba(20,16,12,0.7)" />
-                  <line x1="30" y1="98" x2="90" y2="98" stroke="#b8924a" strokeWidth="1" />
+                  {/* terracotta pot */}
+                  <path d="M 38 124 L 102 124 L 96 192 L 44 192 Z" fill="url(#potGradDsk)" stroke="#1f1208" strokeWidth="1.2" />
+                  <path d="M 34 124 L 106 124 L 104 134 L 36 134 Z" fill="#5d4226" stroke="#1f1208" strokeWidth="1" />
+                  <ellipse cx="70" cy="124" rx="34" ry="3" fill="#120a04" opacity="0.7" />
                 </svg>
               </div>
 
@@ -230,7 +245,7 @@ const DeskSceneStage = () => {
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "34%", bottom: "10%", width: "min(44%, 600px)",
+                  left: "34%", bottom: "22%", width: "min(44%, 600px)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
                 }}
@@ -281,7 +296,7 @@ const DeskSceneStage = () => {
                     </div>
                   </div>
 
-                  {/* Screen */}
+                  {/* Screen — "Let's Connect" text layout */}
                   <div
                     className="dsk-screen absolute inset-x-0 rounded-t-2xl flex p-2 sm:p-3"
                     style={{
@@ -293,49 +308,60 @@ const DeskSceneStage = () => {
                     }}
                   >
                     <div
-                      className="w-full h-full rounded-lg overflow-hidden relative flex flex-col p-3 sm:p-4"
+                      className="w-full h-full rounded-lg overflow-hidden relative flex flex-col items-center justify-center px-6 py-5"
                       style={{
-                        background: "#05080a",
+                        background: "#070b10",
                         border: "1px solid rgba(184,146,74,0.30)",
-                        boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
+                        boxShadow: "inset 0 0 30px rgba(0,0,0,0.6)",
                       }}
                     >
+                      {/* subtle dot grid */}
                       <div
-                        className="absolute inset-0 opacity-[0.04]"
+                        className="absolute inset-0 opacity-[0.06]"
                         style={{
-                          backgroundImage:
-                            "linear-gradient(rgba(239,231,213,1) 1px, transparent 1px), linear-gradient(90deg, rgba(239,231,213,1) 1px, transparent 1px)",
-                          backgroundSize: "24px 24px",
+                          backgroundImage: "radial-gradient(rgba(184,146,74,0.6) 1px, transparent 1px)",
+                          backgroundSize: "18px 18px",
                         }}
                       />
-                      <div className="flex justify-between items-start z-10 w-full mb-2">
-                        <h5 className="font-mono text-[9px] sm:text-[10px] tracking-widest uppercase flex items-center gap-2" style={{ color: "#7fb18a" }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#7fb18a" }} /> BUILD.OS / CONTACT
-                        </h5>
-                        <div className="opacity-50 font-serif text-xl sm:text-2xl border px-2 rounded-sm" style={{ color: "#e8c98a", borderColor: "rgba(184,146,74,0.3)", background: "rgba(0,0,0,0.3)" }}>GB</div>
+
+                      <h2 className="relative z-10 font-serif text-2xl sm:text-3xl md:text-4xl mb-2 text-center" style={{ color: "#cbd5e1", letterSpacing: "0.01em" }}>
+                        Let's Connect
+                      </h2>
+                      <p className="relative z-10 text-[10px] sm:text-[11px] md:text-xs text-center max-w-[80%] mb-4 leading-relaxed" style={{ color: "rgba(203,213,225,0.55)" }}>
+                        I'm always open to conversations about product, technology, and building things that matter.
+                      </p>
+
+                      <div className="relative z-10 w-full max-w-[78%] flex flex-col gap-2">
+                        {[
+                          { icon: Mail, label: "Email", value: "gauthambiju02@gmail.com", href: "mailto:gauthambiju02@gmail.com" },
+                          { icon: Linkedin, label: "LinkedIn", value: "in/gauthambiju", href: "https://www.linkedin.com/in/gauthambiju" },
+                          { icon: FileText, label: "Resume", value: "view / download", href: "/resume.pdf" },
+                          { icon: Mail, label: "Twitter", value: "@gauthambiju", href: "https://twitter.com/gauthambiju" },
+                        ].map((item, i) => {
+                          const Icon = item.icon;
+                          return (
+                            <a
+                              key={i}
+                              href={item.href}
+                              target={item.href.startsWith("http") ? "_blank" : undefined}
+                              rel="noreferrer"
+                              className="flex items-center justify-between gap-3 rounded-md px-3 py-1.5 font-mono text-[10px] sm:text-[11px] transition-colors hover:bg-[rgba(184,146,74,0.06)]"
+                              style={{ border: "1px solid rgba(148,163,184,0.22)", color: "rgba(203,213,225,0.85)" }}
+                            >
+                              <span className="flex items-center gap-2">
+                                <Icon className="w-3 h-3" style={{ color: "rgba(148,163,184,0.55)" }} />
+                                <span style={{ color: "rgba(148,163,184,0.7)" }}>{item.label}</span>
+                              </span>
+                              <span className="flex items-center gap-2" style={{ color: "rgba(203,213,225,0.9)" }}>
+                                {item.value}
+                                <span style={{ color: "rgba(148,163,184,0.5)" }}>↗</span>
+                              </span>
+                            </a>
+                          );
+                        })}
                       </div>
-                      <div className="z-10 mt-1">
-                        <h2 className="text-lg sm:text-xl font-serif mb-1" style={{ color: "#efe7d5" }}>Gautham Biju</h2>
-                        <p className="font-mono text-[9px] sm:text-[10px] tracking-[0.2em] mb-2 uppercase" style={{ color: "#b8924a" }}>Product · Strategy · Systems</p>
-                        <p className="text-[10px] sm:text-[11px] leading-relaxed max-w-[80%] font-serif" style={{ color: "rgba(239,231,213,0.6)" }}>
-                          Building thoughtful products with AI, design and business logic.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 font-mono text-[10px] sm:text-[11px] mt-3 z-10" style={{ color: "#efe7d5" }}>
-                        <span className="border rounded-sm px-1.5 py-0.5 text-[8px] sm:text-[9px]" style={{ color: "#7fb18a", borderColor: "rgba(127,177,138,0.4)" }}>✉</span>
-                        <a href="mailto:gauthambiju02@gmail.com" className="hover:text-[#e8c98a]">gauthambiju02@gmail.com</a>
-                      </div>
-                      <div className="flex gap-2 mt-auto z-10 w-full">
-                        <a href="mailto:gauthambiju02@gmail.com" className="flex-1 text-center flex items-center justify-center gap-1.5 h-8 sm:h-9 rounded font-mono text-[9px] sm:text-[10px] uppercase hover:bg-[rgba(184,146,74,0.08)] transition-colors" style={{ border: "1px solid rgba(184,146,74,0.38)", color: "#efe7d5" }}>
-                          <Mail className="w-3 h-3" /> EMAIL
-                        </a>
-                        <a href="https://www.linkedin.com/in/gauthambiju" target="_blank" rel="noreferrer" className="flex-1 text-center flex items-center justify-center gap-1.5 h-8 sm:h-9 rounded font-mono text-[9px] sm:text-[10px] uppercase hover:bg-[rgba(184,146,74,0.08)] transition-colors" style={{ border: "1px solid rgba(184,146,74,0.38)", color: "#efe7d5" }}>
-                          <Linkedin className="w-3 h-3" /> LINKEDIN
-                        </a>
-                        <a href="/resume.pdf" className="flex-1 text-center flex items-center justify-center gap-1.5 h-8 sm:h-9 rounded font-mono text-[9px] sm:text-[10px] uppercase hover:bg-[rgba(184,146,74,0.08)] transition-colors" style={{ border: "1px solid rgba(184,146,74,0.38)", color: "#efe7d5" }}>
-                          <FileText className="w-3 h-3" /> RESUME
-                        </a>
-                      </div>
+
+                      <p className="relative z-10 mt-4 font-serif italic text-[11px]" style={{ color: "rgba(148,163,184,0.45)" }}>— GB</p>
                     </div>
                   </div>
                 </div>
@@ -344,7 +370,7 @@ const DeskSceneStage = () => {
               {/* COFFEE MUG */}
               <div
                 className="dsk-mug absolute pointer-events-none"
-                style={{ right: "10%", bottom: "16%", width: "110px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ right: "10%", bottom: "26%", width: "110px", opacity: 0, willChange: "transform, opacity" }}
               >
                 <svg viewBox="0 0 120 130" className="w-full h-auto">
                   <g stroke="rgba(184,146,74,0.45)" strokeWidth="1" fill="none">
