@@ -199,39 +199,35 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — further left, smaller (perspective), behind toolbox */}
+              {/* PLANT POT — line-art style matching mug, pushed into the left margin behind toolbox */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "2%", bottom: "20%", width: "140px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "-2%", bottom: "18%", width: "130px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 140 200" className="w-full h-auto">
-                  <defs>
-                    <linearGradient id="leafGradDsk" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#a8cba8" stopOpacity="0.95" />
-                      <stop offset="1" stopColor="#4a6e4f" stopOpacity="0.9" />
-                    </linearGradient>
-                    <linearGradient id="potGradDsk" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#8a6238" />
-                      <stop offset="1" stopColor="#3a2614" />
-                    </linearGradient>
-                  </defs>
-                  {/* organic foliage — layered leaves */}
-                  <g>
-                    <path d="M 70 122 C 48 112, 28 82, 26 42 C 40 58, 56 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
-                    <path d="M 70 122 C 92 112, 112 82, 114 42 C 100 58, 84 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" opacity="0.92"/>
-                    <path d="M 70 122 C 60 92, 58 52, 70 16 C 82 52, 80 92, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
-                    <path d="M 70 122 C 44 118, 22 98, 14 66 C 32 82, 54 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
-                    <path d="M 70 122 C 96 118, 118 98, 126 66 C 108 82, 86 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
-                    <g stroke="#243a2b" strokeWidth="0.5" fill="none" opacity="0.55">
-                      <path d="M 70 122 C 62 95, 56 65, 40 45" />
-                      <path d="M 70 122 C 78 95, 84 65, 100 45" />
-                      <path d="M 70 122 L 70 22" />
-                    </g>
+                  {/* foliage — outline strokes only, same gold as mug/laptop */}
+                  <g stroke="#b8924a" strokeWidth="1.2" fill="none" opacity="0.85" strokeLinecap="round" strokeLinejoin="round">
+                    {/* stems */}
+                    <path d="M 70 122 C 50 100, 38 70, 36 38" />
+                    <path d="M 70 122 C 90 100, 102 70, 104 38" />
+                    <path d="M 70 122 C 66 90, 68 56, 70 20" />
+                    <path d="M 70 122 C 46 116, 28 96, 22 70" />
+                    <path d="M 70 122 C 94 116, 112 96, 118 70" />
+                    {/* leaves */}
+                    <path d="M 36 38 C 24 32, 22 18, 32 10 C 42 14, 44 26, 36 38 Z" />
+                    <path d="M 104 38 C 116 32, 118 18, 108 10 C 98 14, 96 26, 104 38 Z" />
+                    <path d="M 70 20 C 60 14, 60 2, 70 -2 C 80 2, 80 14, 70 20 Z" />
+                    <path d="M 22 70 C 10 66, 6 54, 14 46 C 24 50, 28 60, 22 70 Z" />
+                    <path d="M 118 70 C 130 66, 134 54, 126 46 C 116 50, 112 60, 118 70 Z" />
+                    {/* mid leaves */}
+                    <ellipse cx="50" cy="60" rx="10" ry="16" transform="rotate(-30 50 60)" />
+                    <ellipse cx="90" cy="60" rx="10" ry="16" transform="rotate(30 90 60)" />
+                    <ellipse cx="70" cy="50" rx="9" ry="14" />
                   </g>
-                  {/* terracotta pot */}
-                  <path d="M 38 124 L 102 124 L 96 192 L 44 192 Z" fill="url(#potGradDsk)" stroke="#1f1208" strokeWidth="1.2" />
-                  <path d="M 34 124 L 106 124 L 104 134 L 36 134 Z" fill="#5d4226" stroke="#1f1208" strokeWidth="1" />
-                  <ellipse cx="70" cy="124" rx="34" ry="3" fill="#120a04" opacity="0.7" />
+                  {/* terracotta pot — outline style */}
+                  <path d="M 38 124 L 102 124 L 96 192 L 44 192 Z" fill="rgba(20,16,12,0.7)" stroke="#b8924a" strokeWidth="1.3" />
+                  <line x1="34" y1="124" x2="106" y2="124" stroke="#b8924a" strokeWidth="1.2" />
+                  <line x1="36" y1="134" x2="104" y2="134" stroke="#b8924a" strokeWidth="1" opacity="0.7" />
                 </svg>
               </div>
 
@@ -245,7 +241,7 @@ const DeskSceneStage = () => {
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "34%", bottom: "22%", width: "min(44%, 600px)",
+                  left: "34%", bottom: "6%", width: "min(44%, 600px)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
                 }}
@@ -370,7 +366,7 @@ const DeskSceneStage = () => {
               {/* COFFEE MUG */}
               <div
                 className="dsk-mug absolute pointer-events-none"
-                style={{ right: "10%", bottom: "26%", width: "110px", opacity: 0, willChange: "transform, opacity" }}
+                style={{ right: "10%", bottom: "10%", width: "110px", opacity: 0, willChange: "transform, opacity" }}
               >
                 <svg viewBox="0 0 120 130" className="w-full h-auto">
                   <g stroke="rgba(184,146,74,0.45)" strokeWidth="1" fill="none">
