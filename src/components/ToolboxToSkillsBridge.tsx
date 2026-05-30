@@ -114,8 +114,6 @@ const ToolboxToSkillsBridge = () => {
       const finalU = easeInOut(seg(0.85, 1.0, p));
       let rx = lerp(0, -90, flipU) + finalU * 75;
       let ry = finalU * 35;
-      rotX.set(`${rx.toFixed(2)}deg`);
-      rotY.set(`${ry.toFixed(2)}deg`);
 
       const lidOpen = easeInOut(seg(0.55, 0.7, p));
       const lidClose = easeInOut(seg(0.92, 1.0, p));
@@ -138,6 +136,8 @@ const ToolboxToSkillsBridge = () => {
 
       actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
       scale.set(scl);
+      rotX.set(`${rx.toFixed(2)}deg`);
+      rotY.set(`${ry.toFixed(2)}deg`);
       lidRot.set(`${lid.toFixed(2)}deg`);
 
       const intIn = easeInOut(seg(0.62, 0.74, p));
