@@ -275,7 +275,7 @@ const DeskSceneStage = () => {
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "51.5%", top: "60%", width: "36%", minWidth: "470px", maxWidth: "590px",
+                  left: "51.5%", top: "72%", width: "36%", minWidth: "470px", maxWidth: "590px",
                   transform: "translate(-50%, -50%)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
