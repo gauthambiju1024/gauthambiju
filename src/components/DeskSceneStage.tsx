@@ -142,7 +142,7 @@ const DeskSceneStage = () => {
               {/* FIELD NOTES — top, only left corner peeks behind laptop */}
               <div
                 className="dsk-notes absolute pointer-events-auto"
-                style={{ left: "52%", top: "14%", width: "43%", height: "43%", opacity: 0, willChange: "transform, opacity" }}
+                style={{ left: "50%", top: "13%", width: "46%", height: "43%", opacity: 0, willChange: "transform, opacity", zIndex: 3 }}
               >
                 <div
                   className="relative rounded-md border p-5"
