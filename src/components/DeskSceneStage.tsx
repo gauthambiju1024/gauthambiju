@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Linkedin, FileText } from "lucide-react";
 import { useBlogPosts } from "@/hooks/useSiteData";
-import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
+
 
 /**
  * Desk Stage decorations for the final contact + writing viewport.
@@ -263,13 +263,11 @@ const DeskSceneStage = () => {
                 </svg>
               </div>
 
-              {/* TOOLBOX — solid opaque shelf toolbox (also serves as landing slot) */}
+              {/* TOOLBOX SLOT — invisible landing target; the real 3D Toolbox actor from ToolboxToSkillsBridge lands here */}
               <div
-                className="dsk-toolbox-slot final-toolbox absolute pointer-events-none flex justify-center items-end"
-                style={{ left: "6.5%", top: "57.5%", width: "28%", minWidth: "310px", maxWidth: "430px", zIndex: 6, filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.45))" }}
-              >
-                <ToolboxClosed width={400} />
-              </div>
+                className="dsk-toolbox-slot absolute pointer-events-none"
+                style={{ left: "6.5%", top: "57.5%", width: "28%", minWidth: "310px", maxWidth: "430px", height: "170px" }}
+              />
 
               {/* LAPTOP — CSS 3D */}
               <div
