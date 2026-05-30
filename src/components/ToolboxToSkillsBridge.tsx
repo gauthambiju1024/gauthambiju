@@ -133,10 +133,16 @@ const ToolboxToSkillsBridge = () => {
       // === Publish handoff flags ===
       // Hide shelf prop & fade the whole shelf away as soon as the bridge
       // actually owns the toolbox.
-      const owns = !!shelf && p > 0.001 && p < 0.999;
+      const owns = shelfVisible && p > 0.001 && p < 0.999;
       (window as any).__skillsFlipActive = owns;
       // Shelf + spines fade out shortly after the actor lifts off.
-      (window as any).__bridgeFadeOut = clamp(seg(0.2, 0.45, p));
+      (window as any).__bridgeFadeOut = clamp(seg(0.25, 0.5, p));
+
+      // Actor opacity — only visible while the shelf has actually arrived.
+      // During fly+flip phases (p>0.25) it remains visible regardless because
+      // we own the toolbox.
+      const showActor = shelfVisible || p > 0.05;
+      actor.style.opacity = showActor ? "1" : "0";
 
       raf = requestAnimationFrame(tick);
     };
