@@ -234,8 +234,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         });
       });
 
-      // Publish toolbox rect for the next-stage bridge (Toolbox→Skills flip).
+      // Publish toolbox element + rect for the next-stage bridge (Toolbox→Skills flip).
       if (toolboxRef.current) {
+        (window as any).__toolboxEl = toolboxRef.current;
         const tr = toolboxRef.current.getBoundingClientRect();
         (window as any).__toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
