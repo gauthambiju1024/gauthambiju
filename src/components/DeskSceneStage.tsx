@@ -24,7 +24,6 @@ import { useBlogPosts } from "@/hooks/useSiteData";
 const easeInOut = (x: number) => x * x * (3 - 2 * x);
 const clamp = (x: number, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
 const seg = (a: number, b: number, x: number) => clamp((x - a) / (b - a));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const DeskSceneStage = () => {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -98,15 +97,7 @@ const DeskSceneStage = () => {
   const topPosts = posts.slice(0, 3);
 
   return (
-    <section
-      ref={pinRef}
-      id="desk-scene"
-      aria-label="Contact & Writing desk"
-      style={{ height: "320vh" }}
-      className="relative"
-    >
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        <div ref={rootRef} className="absolute inset-0">
+        <div ref={rootRef} className="absolute inset-0 pointer-events-none" aria-label="Contact & Writing desk">
 
           {/* Blueprint perspective + table edge */}
           <svg
@@ -367,27 +358,7 @@ const DeskSceneStage = () => {
 
             </div>
           </div>
-
-          {/* Toolbox actor (centre on entry, lands on .dsk-toolbox-slot) */}
-          <div
-            className="absolute inset-0 flex items-center justify-center [perspective:1200px] pointer-events-none"
-          >
-            <div
-              ref={actorRef}
-              className="relative"
-              style={{ pointerEvents: "auto", willChange: "transform" }}
-            >
-              <Toolbox3D
-                scale={scale}
-                rotateX={rotX}
-                rotateY={rotY}
-                lidRotateX={lidRot}
-              />
-            </div>
-          </div>
         </div>
-      </div>
-    </section>
   );
 };
 
