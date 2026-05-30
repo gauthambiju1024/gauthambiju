@@ -96,7 +96,17 @@ const DeskSceneStage = () => {
   return (
         <div ref={rootRef} className="absolute inset-0 pointer-events-none" style={{ opacity: 0, zIndex: 20 }} aria-label="Contact & Writing desk">
 
-          {/* Blueprint perspective + table edge */}
+          {/* Wall / table tonal split */}
+          <div
+            className="dsk-wall absolute inset-0 pointer-events-none"
+            style={{
+              opacity: 0,
+              background:
+                "linear-gradient(to bottom, rgba(10,14,18,0.0) 0%, rgba(10,14,18,0.0) 78%, rgba(0,0,0,0.55) 80%, rgba(14,11,7,0.35) 82%, rgba(14,11,7,0.0) 100%)",
+            }}
+          />
+
+          {/* Table horizon line */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox="0 0 1600 900"
@@ -110,11 +120,7 @@ const DeskSceneStage = () => {
                 <stop offset="1" stopColor="#8a6a2a" stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path className="dsk-persp-1" d="M -50 900 L 800 470" stroke="rgba(184,146,74,0.22)" strokeWidth="1" fill="none" />
-            <path className="dsk-persp-2" d="M 1650 900 L 800 470" stroke="rgba(184,146,74,0.22)" strokeWidth="1" fill="none" />
-            <path className="dsk-persp-3" d="M 800 900 L 800 470" stroke="rgba(184,146,74,0.12)" strokeWidth="1" fill="none" strokeDasharray="4 6" />
             <path className="dsk-edge" d="M 0 720 L 1600 720" stroke="url(#goldStrokeDesk)" strokeWidth="1.5" fill="none" />
-            <path className="dsk-edge" d="M 0 724 L 1600 724" stroke="rgba(184,146,74,0.2)" strokeWidth="1" fill="none" />
           </svg>
 
           {/* Scene wrapper */}
