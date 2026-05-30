@@ -199,24 +199,39 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — behind toolbox (zIndex below actor) */}
+              {/* PLANT POT — further left, smaller (perspective), behind toolbox */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "6%", bottom: "22%", width: "120px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "2%", bottom: "20%", width: "140px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
-                <svg viewBox="0 0 120 160" className="w-full h-auto">
-                  <g stroke="#7fb18a" strokeWidth="1.2" fill="none" opacity="0.85">
-                    <path d="M 60 90 C 30 70, 28 40, 45 20" />
-                    <path d="M 60 90 C 90 70, 92 40, 75 20" />
-                    <path d="M 60 90 C 50 60, 55 30, 60 10" />
-                    <ellipse cx="42" cy="40" rx="10" ry="18" transform="rotate(-25 42 40)" />
-                    <ellipse cx="78" cy="40" rx="10" ry="18" transform="rotate(25 78 40)" />
-                    <ellipse cx="60" cy="22" rx="9" ry="16" />
-                    <ellipse cx="36" cy="62" rx="9" ry="14" transform="rotate(-40 36 62)" />
-                    <ellipse cx="84" cy="62" rx="9" ry="14" transform="rotate(40 84 62)" />
+                <svg viewBox="0 0 140 200" className="w-full h-auto">
+                  <defs>
+                    <linearGradient id="leafGradDsk" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#a8cba8" stopOpacity="0.95" />
+                      <stop offset="1" stopColor="#4a6e4f" stopOpacity="0.9" />
+                    </linearGradient>
+                    <linearGradient id="potGradDsk" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#8a6238" />
+                      <stop offset="1" stopColor="#3a2614" />
+                    </linearGradient>
+                  </defs>
+                  {/* organic foliage — layered leaves */}
+                  <g>
+                    <path d="M 70 122 C 48 112, 28 82, 26 42 C 40 58, 56 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
+                    <path d="M 70 122 C 92 112, 112 82, 114 42 C 100 58, 84 80, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" opacity="0.92"/>
+                    <path d="M 70 122 C 60 92, 58 52, 70 16 C 82 52, 80 92, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.8" />
+                    <path d="M 70 122 C 44 118, 22 98, 14 66 C 32 82, 54 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
+                    <path d="M 70 122 C 96 118, 118 98, 126 66 C 108 82, 86 102, 70 122 Z" fill="url(#leafGradDsk)" stroke="#2f4a36" strokeWidth="0.7" opacity="0.85"/>
+                    <g stroke="#243a2b" strokeWidth="0.5" fill="none" opacity="0.55">
+                      <path d="M 70 122 C 62 95, 56 65, 40 45" />
+                      <path d="M 70 122 C 78 95, 84 65, 100 45" />
+                      <path d="M 70 122 L 70 22" />
+                    </g>
                   </g>
-                  <path d="M 32 92 L 88 92 L 82 150 L 38 150 Z" stroke="#b8924a" strokeWidth="1.3" fill="rgba(20,16,12,0.7)" />
-                  <line x1="30" y1="98" x2="90" y2="98" stroke="#b8924a" strokeWidth="1" />
+                  {/* terracotta pot */}
+                  <path d="M 38 124 L 102 124 L 96 192 L 44 192 Z" fill="url(#potGradDsk)" stroke="#1f1208" strokeWidth="1.2" />
+                  <path d="M 34 124 L 106 124 L 104 134 L 36 134 Z" fill="#5d4226" stroke="#1f1208" strokeWidth="1" />
+                  <ellipse cx="70" cy="124" rx="34" ry="3" fill="#120a04" opacity="0.7" />
                 </svg>
               </div>
 
