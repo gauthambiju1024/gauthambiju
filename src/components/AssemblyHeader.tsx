@@ -320,10 +320,11 @@ export function AssemblyHeader({ panelIds }: Props) {
       const handler = () => {
         const target = document.getElementById(panelIds[i]);
         if (!target) return;
-        // Use raw document position to bypass the global `[id] { scroll-margin-top: 100px }`
-        // rule in index.css — that rule offsets scrollIntoView and lands panels off-center.
-        const top = target.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top, behavior: "smooth" });
+        // Route via Lenis (or native fallback) — single source of truth for the
+        // ~100px Assembly-Header offset, and inherits inertia smoothness.
+        import("@/lib/smoothScroll").then(({ smoothScrollTo }) =>
+          smoothScrollTo(target, { offset: -90 })
+        );
       };
       el.addEventListener("click", handler);
       clickHandlers.push(handler);
