@@ -144,11 +144,10 @@ const NAV = [
   { key: "home", label: "Home" },
   { key: "about", label: "About" },
   { key: "work", label: "Work" },
-  { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
+const STAGE_TOTAL = NAV.length;
 
 function bbox(strokes: Stroke[]) {
   let mx = Infinity, my = Infinity, Mx = -Infinity, My = -Infinity;
@@ -331,9 +330,10 @@ export function AssemblyHeader({ panelIds }: Props) {
     });
 
     let armsHtml = "";
-    const stationSpacing = (BL - 90) / 7;
-    for (let i = 0; i < 7; i++) {
-      const x = BS + 45 + (i / 7) * (BL - 90) + stationSpacing / 2;
+    const armCount = Math.max(1, STAGE_TOTAL - 1);
+    const stationSpacing = (BL - 90) / armCount;
+    for (let i = 0; i < armCount; i++) {
+      const x = BS + 45 + (i / armCount) * (BL - 90) + stationSpacing / 2;
       armsHtml += `<g class="h7-arm" data-x="${x}">`;
       armsHtml += `<line x1="${x - 3}" y1="18" x2="${x + 3}" y2="18" stroke="${METAL}" stroke-width="0.8" opacity="0.7"/>`;
       armsHtml += `<line x1="${x}" y1="18" x2="${x}" y2="36" stroke="${INK}" stroke-width="0.3" stroke-dasharray="1 1" opacity="0.35"/>`;
@@ -421,13 +421,13 @@ export function AssemblyHeader({ panelIds }: Props) {
       const prodX = BS + 45 + p * (BL - 90);
       prod!.setAttribute("transform", `translate(${prodX.toFixed(1)}, ${Y})`);
 
-      const stage = Math.min(7, Math.floor(p * 8));
-      const stageProg = p * 8 - stage;
+      const stage = Math.min(STAGE_TOTAL - 1, Math.floor(p * STAGE_TOTAL));
+      const stageProg = p * STAGE_TOTAL - stage;
       renderProduct(stage, stageProg);
       renderPreview(stage, stageProg);
 
       if (prtRef.current) {
-        const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
+          const partCount = Math.min(STAGE_TOTAL, stage + (stageProg > 0 ? 1 : 0));
         prtRef.current.textContent = String(partCount).padStart(2, "0");
       }
 
@@ -664,7 +664,7 @@ export function AssemblyHeader({ panelIds }: Props) {
               SRC·<tspan ref={srcRef} fill={INK_BRIGHT}>DRONE-V1</tspan>
             </text>
             <text x="317" y="8">
-              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/08
+              PARTS·<tspan ref={prtRef} fill={INK_BRIGHT}>00</tspan>/{String(STAGE_TOTAL).padStart(2, "0")}
             </text>
             <text x="1390" y="8" textAnchor="end">
               UTC <tspan ref={clockRef} fill={INK_BRIGHT}>14:23:07</tspan>

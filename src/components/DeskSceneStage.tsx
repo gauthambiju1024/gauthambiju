@@ -1,19 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Linkedin, FileText } from "lucide-react";
-import { motion, useMotionValue } from "framer-motion";
-import { Toolbox3D, TBX_W, TBX_D, TBX_H_BASE, TBX_H_LID } from "./skills/ToolboxSvg";
 import { useBlogPosts } from "@/hooks/useSiteData";
 
 /**
- * Desk Stage — separate pinned viewport right after the Skills bridge.
+ * Desk Stage decorations for the final contact + writing viewport.
  *
- * Continuity: the SAME Toolbox3D (re-instantiated here with matching final
- * state of the skills bridge) starts at centre-screen, closed, and as the
- * user scrolls it shrinks + translates to the desk-slot on the left of the
- * table. Around it, the desk decorations (perspective table edges, plant,
- * 3D CSS laptop with contact panel, coffee mug, field-notes board with
- * blog posts, lamp glow) draw in one by one.
+ * IMPORTANT: this component does NOT render a toolbox. Toolbox continuity is
+ * owned by ToolboxToSkillsBridge so the exact same actor that closes after the
+ * skills view shrinks and lands into .dsk-toolbox-slot.
  *
  * Phases (p):
  *   0.00–0.15  table edges + perspective lines draw
@@ -29,49 +24,19 @@ import { useBlogPosts } from "@/hooks/useSiteData";
 const easeInOut = (x: number) => x * x * (3 - 2 * x);
 const clamp = (x: number, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
 const seg = (a: number, b: number, x: number) => clamp((x - a) / (b - a));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const DeskSceneStage = () => {
-  const pinRef = useRef<HTMLElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const actorRef = useRef<HTMLDivElement>(null);
   const { posts } = useBlogPosts(true);
 
-  const scale = useMotionValue(0.5);
-  const rotX = useMotionValue("-15deg");
-  const rotY = useMotionValue("35deg");
-  const lidRot = useMotionValue("0deg");
-
-  const [startScale, setStartScale] = useState(0.5);
-
-  useLayoutEffect(() => {
-    const compute = () => {
-      // Match the final settled scale of the skills bridge
-      const max =
-        Math.min(
-          (window.innerWidth * 0.92) / TBX_W,
-          (window.innerHeight * 0.78) / TBX_D,
-          1.1
-        ) * 0.6;
-      setStartScale(max * 0.92);
-    };
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, []);
-
   useEffect(() => {
-    const pin = pinRef.current;
     const root = rootRef.current;
-    const actor = actorRef.current;
-    if (!pin || !root || !actor) return;
+    if (!root) return;
 
     let raf = 0;
     const tick = () => {
-      const rect = pin.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const total = Math.max(1, rect.height - vh);
-      const p = clamp(-rect.top / total);
+      const p = clamp(Number((window as any).__deskProgress ?? 0));
+      root.style.opacity = String(easeInOut(seg(0.02, 0.16, p)));
 
       // === Desk decoration draw-ins ===
       const set = (sel: string, v: number, ty = 0) => {
@@ -108,51 +73,31 @@ const DeskSceneStage = () => {
 
       set(".dsk-lamp", easeInOut(seg(0.8, 1.0, p)) * 0.9);
 
-      // === Toolbox handoff & landing ===
       const slotEl = root.querySelector<HTMLElement>(".dsk-toolbox-slot");
-      const TBX_H = TBX_H_BASE + TBX_H_LID;
-      let dx = 0, dy = 0, dScale = startScale * 0.35;
       if (slotEl) {
         const tr = slotEl.getBoundingClientRect();
         if (tr.width > 0) {
-          dScale = tr.width / TBX_W;
-          const slotBottom = tr.top + tr.height;
-          dx = tr.left + tr.width / 2 - window.innerWidth / 2;
-          dy = slotBottom - (TBX_H * dScale) / 2 - window.innerHeight / 2;
+          (window as any).__deskToolboxSlot = {
+            left: tr.left,
+            top: tr.top,
+            width: tr.width,
+            height: tr.height,
+            cx: tr.left + tr.width / 2,
+            bottom: tr.top + tr.height,
+          };
         }
       }
-
-      // Land 0.10 → 0.35
-      const landU = easeInOut(seg(0.1, 0.35, p));
-      const x = lerp(0, dx, landU);
-      const y = lerp(0, dy, landU);
-      const scl = lerp(startScale, dScale, landU);
-
-      actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-      scale.set(scl);
-      // Keep settled orientation throughout (matches skills end state).
-      rotX.set("-15deg");
-      rotY.set("35deg");
-      lidRot.set("0deg");
 
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [startScale, scale, rotX, rotY, lidRot]);
+  }, []);
 
   const topPosts = posts.slice(0, 3);
 
   return (
-    <section
-      ref={pinRef}
-      id="desk-scene"
-      aria-label="Contact & Writing desk"
-      style={{ height: "320vh" }}
-      className="relative"
-    >
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
-        <div ref={rootRef} className="absolute inset-0">
+        <div ref={rootRef} className="absolute inset-0 pointer-events-none" style={{ opacity: 0, zIndex: 20 }} aria-label="Contact & Writing desk">
 
           {/* Blueprint perspective + table edge */}
           <svg
@@ -413,27 +358,7 @@ const DeskSceneStage = () => {
 
             </div>
           </div>
-
-          {/* Toolbox actor (centre on entry, lands on .dsk-toolbox-slot) */}
-          <div
-            className="absolute inset-0 flex items-center justify-center [perspective:1200px] pointer-events-none"
-          >
-            <div
-              ref={actorRef}
-              className="relative"
-              style={{ pointerEvents: "auto", willChange: "transform" }}
-            >
-              <Toolbox3D
-                scale={scale}
-                rotateX={rotX}
-                rotateY={rotY}
-                lidRotateX={lidRot}
-              />
-            </div>
-          </div>
         </div>
-      </div>
-    </section>
   );
 };
 
