@@ -19,11 +19,10 @@ const NAV = [
   { key: "home", label: "Home" },
   { key: "about", label: "About" },
   { key: "work", label: "Work" },
-  { key: "think", label: "Think" },
   { key: "skill", label: "Skill" },
-  { key: "write", label: "Write" },
   { key: "send", label: "Send" },
 ];
+const STAGE_TOTAL = NAV.length;
 
 type Props = {
   panelIds: string[];
@@ -58,9 +57,9 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
     };
   }, [open]);
 
-  const stage = Math.min(7, Math.floor(progress * 8));
-  const stageProg = progress * 8 - stage;
-  const partCount = Math.min(8, stage + (stageProg > 0 ? 1 : 0));
+  const stage = Math.min(STAGE_TOTAL - 1, Math.floor(progress * STAGE_TOTAL));
+  const stageProg = progress * STAGE_TOTAL - stage;
+  const partCount = Math.min(STAGE_TOTAL, stage + (stageProg > 0 ? 1 : 0));
   const activeLabel = NAV[stage]?.label ?? "Home";
 
   const jumpTo = (i: number) => {
@@ -116,7 +115,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
               <span style={{ color: INK_BRIGHT }}>
                 {String(partCount).padStart(2, "0")}
               </span>
-              /08
+              /{String(STAGE_TOTAL).padStart(2, "0")}
             </span>
           </div>
 
@@ -164,7 +163,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
             >
               ─── STATIONS ·{" "}
               <span style={{ color: INK_DIM }}>
-                {String(stage + 1).padStart(2, "0")}/08
+                {String(stage + 1).padStart(2, "0")}/{String(STAGE_TOTAL).padStart(2, "0")}
               </span>
             </div>
             <button
@@ -251,7 +250,7 @@ export function AssemblyHeaderMobile({ panelIds }: Props) {
               <span style={{ color: INK_BRIGHT }}>
                 {String(partCount).padStart(2, "0")}
               </span>
-              /08
+              /{String(STAGE_TOTAL).padStart(2, "0")}
             </span>
             <span>BUILD·{Math.round(progress * 100)}%</span>
           </div>
