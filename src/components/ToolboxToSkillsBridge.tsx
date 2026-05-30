@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
-import { Toolbox3D, TBX_W, TBX_D } from "./skills/ToolboxSvg";
+import { Toolbox3D, TBX_W, TBX_D, TBX_H_BASE, TBX_H_LID } from "./skills/ToolboxSvg";
 import ToolboxInterior from "./skills/ToolboxInterior";
 
 /**
@@ -76,16 +76,23 @@ const ToolboxToSkillsBridge = () => {
       const screenCy = window.innerHeight / 2;
 
       const shelf = (window as any).__toolboxRect as
-        | { left: number; top: number; width: number; height: number; cx: number; cy: number }
+        | { left: number; top: number; width: number; height: number; cx: number; cy: number; visible?: boolean }
         | null;
 
-      // Start (parked-on-shelf) values — read LIVE so the actor sticks to the
-      // shelf prop pixel-perfect, no matter how the shelf moves with scroll.
+      // Only show the actor when the shelf has actually settled into view
+      // (prevents the toolbox from appearing during the About panel).
+      const shelfVisible = !!shelf && shelf.width > 0 && shelf.visible === true;
+
+      // Start (parked-on-shelf) values — align by the BOTTOM of the actor to
+      // the bottom of the shelf prop so the body rests ON the plank (no float).
+      const TBX_H = TBX_H_BASE + TBX_H_LID; // 240
       let sx = 0, sy = 0, sScale = 0.25;
-      if (shelf && shelf.width > 0) {
-        sx = shelf.cx - screenCx;
-        sy = shelf.cy - screenCy;
-        sScale = shelf.width / TBX_W;
+      if (shelfVisible) {
+        sScale = shelf!.width / TBX_W;
+        const shelfBottom = shelf!.top + shelf!.height;
+        sx = shelf!.cx - screenCx;
+        // actor's geometric centre needs to sit (TBX_H*scale)/2 above shelf bottom
+        sy = shelfBottom - (TBX_H * sScale) / 2 - screenCy;
         if (!hasShelf) setHasShelf(true);
       }
 
@@ -126,10 +133,16 @@ const ToolboxToSkillsBridge = () => {
       // === Publish handoff flags ===
       // Hide shelf prop & fade the whole shelf away as soon as the bridge
       // actually owns the toolbox.
-      const owns = !!shelf && p > 0.001 && p < 0.999;
+      const owns = shelfVisible && p > 0.001 && p < 0.999;
       (window as any).__skillsFlipActive = owns;
       // Shelf + spines fade out shortly after the actor lifts off.
-      (window as any).__bridgeFadeOut = clamp(seg(0.2, 0.45, p));
+      (window as any).__bridgeFadeOut = clamp(seg(0.25, 0.5, p));
+
+      // Actor opacity — only visible while the shelf has actually arrived.
+      // During fly+flip phases (p>0.25) it remains visible regardless because
+      // we own the toolbox.
+      const showActor = shelfVisible || p > 0.05;
+      actor.style.opacity = showActor ? "1" : "0";
 
       raf = requestAnimationFrame(tick);
     };
@@ -159,8 +172,8 @@ const ToolboxToSkillsBridge = () => {
             className="relative"
             style={{
               pointerEvents: "auto",
-              willChange: "transform",
-              opacity: hasShelf ? 1 : 0,
+              willChange: "transform, opacity",
+              opacity: 0,
             }}
           >
             <Toolbox3D
