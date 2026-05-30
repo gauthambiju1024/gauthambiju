@@ -199,35 +199,65 @@ const DeskSceneStage = () => {
                 </div>
               </div>
 
-              {/* PLANT POT — line-art style matching mug, pushed into the left margin behind toolbox */}
+              {/* PLANT POT — botanical line-art, positioned so toolbox occludes lower-right (3D depth) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "-2%", bottom: "18%", width: "130px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "3%", bottom: "12%", width: "150px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
-                <svg viewBox="0 0 140 200" className="w-full h-auto">
-                  {/* foliage — outline strokes only, same gold as mug/laptop */}
-                  <g stroke="#b8924a" strokeWidth="1.2" fill="none" opacity="0.85" strokeLinecap="round" strokeLinejoin="round">
-                    {/* stems */}
-                    <path d="M 70 122 C 50 100, 38 70, 36 38" />
-                    <path d="M 70 122 C 90 100, 102 70, 104 38" />
-                    <path d="M 70 122 C 66 90, 68 56, 70 20" />
-                    <path d="M 70 122 C 46 116, 28 96, 22 70" />
-                    <path d="M 70 122 C 94 116, 112 96, 118 70" />
-                    {/* leaves */}
-                    <path d="M 36 38 C 24 32, 22 18, 32 10 C 42 14, 44 26, 36 38 Z" />
-                    <path d="M 104 38 C 116 32, 118 18, 108 10 C 98 14, 96 26, 104 38 Z" />
-                    <path d="M 70 20 C 60 14, 60 2, 70 -2 C 80 2, 80 14, 70 20 Z" />
-                    <path d="M 22 70 C 10 66, 6 54, 14 46 C 24 50, 28 60, 22 70 Z" />
-                    <path d="M 118 70 C 130 66, 134 54, 126 46 C 116 50, 112 60, 118 70 Z" />
-                    {/* mid leaves */}
-                    <ellipse cx="50" cy="60" rx="10" ry="16" transform="rotate(-30 50 60)" />
-                    <ellipse cx="90" cy="60" rx="10" ry="16" transform="rotate(30 90 60)" />
-                    <ellipse cx="70" cy="50" rx="9" ry="14" />
+                <svg viewBox="0 0 140 240" className="w-full h-auto">
+                  {/* central curved stem */}
+                  <path
+                    d="M 70 140 C 68 110, 74 78, 70 48 C 68 30, 72 18, 70 12"
+                    stroke="#7fb18a" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.85"
+                  />
+
+                  {/* leaf pairs — bottom (largest, drooping) → top (smallest, vertical) */}
+                  <g stroke="#7fb18a" strokeWidth="1.1" fill="rgba(127,177,138,0.16)" strokeLinejoin="round">
+                    {/* pair 1 — bottom, drooping out */}
+                    <path d="M 70 128 C 50 140, 30 142, 18 132 C 32 122, 54 120, 70 128 Z" />
+                    <line x1="70" y1="128" x2="22" y2="134" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+                    <path d="M 70 128 C 90 140, 110 142, 122 132 C 108 122, 86 120, 70 128 Z" />
+                    <line x1="70" y1="128" x2="118" y2="134" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+
+                    {/* pair 2 — near horizontal */}
+                    <path d="M 70 104 C 50 108, 30 102, 22 90 C 38 86, 58 92, 70 104 Z" />
+                    <line x1="70" y1="104" x2="24" y2="94" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+                    <path d="M 70 104 C 90 108, 110 102, 118 90 C 102 86, 82 92, 70 104 Z" />
+                    <line x1="70" y1="104" x2="116" y2="94" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+
+                    {/* pair 3 — angled up */}
+                    <path d="M 70 80 C 54 78, 36 70, 28 56 C 44 54, 60 64, 70 80 Z" />
+                    <line x1="70" y1="80" x2="32" y2="60" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+                    <path d="M 70 80 C 86 78, 104 70, 112 56 C 96 54, 80 64, 70 80 Z" />
+                    <line x1="70" y1="80" x2="108" y2="60" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+
+                    {/* pair 4 — smaller, angled up */}
+                    <path d="M 70 56 C 58 50, 44 40, 40 28 C 54 30, 66 42, 70 56 Z" />
+                    <line x1="70" y1="56" x2="42" y2="32" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+                    <path d="M 70 56 C 82 50, 96 40, 100 28 C 86 30, 74 42, 70 56 Z" />
+                    <line x1="70" y1="56" x2="98" y2="32" stroke="#7fb18a" strokeWidth="0.6" opacity="0.7" />
+
+                    {/* pair 5 — smallest, nearly vertical */}
+                    <path d="M 70 32 C 62 24, 56 14, 58 6 C 66 10, 70 20, 70 32 Z" />
+                    <path d="M 70 32 C 78 24, 84 14, 82 6 C 74 10, 70 20, 70 32 Z" />
+
+                    {/* terminal leaf */}
+                    <path d="M 70 14 C 66 8, 66 2, 70 -2 C 74 2, 74 8, 70 14 Z" />
                   </g>
-                  {/* terracotta pot — outline style */}
-                  <path d="M 38 124 L 102 124 L 96 192 L 44 192 Z" fill="rgba(20,16,12,0.7)" stroke="#b8924a" strokeWidth="1.3" />
-                  <line x1="34" y1="124" x2="106" y2="124" stroke="#b8924a" strokeWidth="1.2" />
-                  <line x1="36" y1="134" x2="104" y2="134" stroke="#b8924a" strokeWidth="1" opacity="0.7" />
+
+                  {/* terracotta pot */}
+                  <path
+                    d="M 38 140 L 102 140 L 96 215 L 44 215 Z"
+                    fill="rgba(20,16,12,0.85)" stroke="#b8924a" strokeWidth="1.4"
+                  />
+                  {/* wider rim band */}
+                  <path
+                    d="M 32 140 L 108 140 L 106 152 L 34 152 Z"
+                    fill="rgba(30,22,14,0.9)" stroke="#b8924a" strokeWidth="1.3"
+                  />
+                  <line x1="38" y1="152" x2="102" y2="152" stroke="#b8924a" strokeWidth="0.8" opacity="0.6" />
+                  {/* ground shadow */}
+                  <ellipse cx="70" cy="218" rx="34" ry="3" fill="#000" opacity="0.55" />
                 </svg>
               </div>
 
