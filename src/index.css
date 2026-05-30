@@ -921,7 +921,7 @@
     --dsk-notes-width: 724px;
     --dsk-notes-height: 272px;
     --dsk-laptop-left: 284px;
-    --dsk-laptop-top: 543px;
+    --dsk-laptop-top: 525px;
     --dsk-laptop-width: 520px;
     --dsk-laptop-height: 362px;
     --dsk-plant-left: 13px;
@@ -949,7 +949,7 @@
   --dsk-notes-width: 724px;
   --dsk-notes-height: 272px;
   --dsk-laptop-left: 284px;
-  --dsk-laptop-top: 543px;
+  --dsk-laptop-top: 510px;
   --dsk-laptop-width: 520px;
   --dsk-laptop-height: 362px;
   --dsk-plant-left: 13px;
@@ -961,7 +961,7 @@
   --dsk-toolbox-width: 302px;
   --dsk-toolbox-height: 168px;
   --dsk-mug-left: 799px;
-  --dsk-mug-top: 681px;
+  --dsk-mug-top: 600px;
   --dsk-mug-width: 180px;
   --dsk-mug-height: 136px;
 }
