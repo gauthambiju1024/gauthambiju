@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Linkedin, FileText } from "lucide-react";
 import { useBlogPosts } from "@/hooks/useSiteData";
-import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
+
 
 /**
  * Desk Stage decorations for the final contact + writing viewport.
