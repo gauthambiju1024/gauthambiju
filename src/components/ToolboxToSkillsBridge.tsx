@@ -110,9 +110,6 @@ const ToolboxToSkillsBridge = () => {
       let y = lerp(sy, 0, flyU) + settleU * 40;
       let scl = lerp(sScale, endScale, flyU) * lerp(1, 0.92, settleU);
 
-      actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-      scale.set(scl);
-
       const flipU = easeInOut(seg(0.45, 0.6, p));
       const finalU = easeInOut(seg(0.85, 1.0, p));
       let rx = lerp(0, -90, flipU) + finalU * 75;
@@ -179,10 +176,12 @@ const ToolboxToSkillsBridge = () => {
       ref={pinRef}
       id="skills"
       aria-label="Skills toolbox"
-      style={{ height: "220vh" }}
+      style={{ height: "340vh" }}
       className="relative"
     >
+      <span id="desk-scene" className="absolute left-0 w-1 h-1 pointer-events-none" style={{ top: "120vh" }} aria-hidden />
       <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
+        <DeskSceneStage />
         <div
           className="absolute inset-0 flex items-center justify-center [perspective:1200px]"
           style={{ pointerEvents: "none" }}
