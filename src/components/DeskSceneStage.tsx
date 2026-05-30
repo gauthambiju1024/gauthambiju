@@ -264,14 +264,15 @@ const DeskSceneStage = () => {
               {/* TOOLBOX SLOT — invisible target the actor lands on (left of laptop) */}
               <div
                 className="dsk-toolbox-slot absolute pointer-events-none"
-                style={{ left: "10%", bottom: "14%", width: "200px", height: "130px" }}
+                style={{ left: "7.5%", top: "58%", width: "25%", minWidth: "280px", maxWidth: "390px", height: "130px" }}
               />
 
               {/* LAPTOP — CSS 3D */}
               <div
                 className="dsk-laptop absolute pointer-events-auto"
                 style={{
-                  left: "34%", bottom: "6%", width: "min(44%, 600px)",
+                  left: "50%", top: "58.5%", width: "41%", minWidth: "520px", maxWidth: "660px",
+                  transform: "translateX(-50%)",
                   opacity: 0, willChange: "transform, opacity",
                   perspective: "1200px",
                 }}
