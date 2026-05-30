@@ -76,16 +76,23 @@ const ToolboxToSkillsBridge = () => {
       const screenCy = window.innerHeight / 2;
 
       const shelf = (window as any).__toolboxRect as
-        | { left: number; top: number; width: number; height: number; cx: number; cy: number }
+        | { left: number; top: number; width: number; height: number; cx: number; cy: number; visible?: boolean }
         | null;
 
-      // Start (parked-on-shelf) values — read LIVE so the actor sticks to the
-      // shelf prop pixel-perfect, no matter how the shelf moves with scroll.
+      // Only show the actor when the shelf has actually settled into view
+      // (prevents the toolbox from appearing during the About panel).
+      const shelfVisible = !!shelf && shelf.width > 0 && shelf.visible === true;
+
+      // Start (parked-on-shelf) values — align by the BOTTOM of the actor to
+      // the bottom of the shelf prop so the body rests ON the plank (no float).
+      const TBX_H = TBX_H_BASE + TBX_H_LID; // 240
       let sx = 0, sy = 0, sScale = 0.25;
-      if (shelf && shelf.width > 0) {
-        sx = shelf.cx - screenCx;
-        sy = shelf.cy - screenCy;
-        sScale = shelf.width / TBX_W;
+      if (shelfVisible) {
+        sScale = shelf!.width / TBX_W;
+        const shelfBottom = shelf!.top + shelf!.height;
+        sx = shelf!.cx - screenCx;
+        // actor's geometric centre needs to sit (TBX_H*scale)/2 above shelf bottom
+        sy = shelfBottom - (TBX_H * sScale) / 2 - screenCy;
         if (!hasShelf) setHasShelf(true);
       }
 
