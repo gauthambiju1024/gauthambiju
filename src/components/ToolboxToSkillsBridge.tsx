@@ -24,6 +24,8 @@ import ToolboxInterior from "./skills/ToolboxInterior";
 const ToolboxToSkillsBridge = () => {
   const pinRef = useRef<HTMLElement>(null);
   const actorRef = useRef<HTMLDivElement>(null);
+  const hasSeenShelfRef = useRef(false);
+  const handoffStartRef = useRef<number | null>(null);
 
   // Motion values written imperatively each frame — no spring, no bounce.
   const scale = useMotionValue(0.25);
@@ -34,7 +36,6 @@ const ToolboxToSkillsBridge = () => {
   const interiorY = useMotionValue(30);
 
   const [endScale, setEndScale] = useState(1);
-  const [hasShelf, setHasShelf] = useState(false);
 
   // Compute the centre-stage target scale (40% smaller than viewport max).
   useLayoutEffect(() => {
@@ -70,7 +71,7 @@ const ToolboxToSkillsBridge = () => {
       // Total scrollable distance for this pinned section.
       const total = Math.max(1, rect.height - vh);
       // progress from when sticky engages to when it disengages
-      const p = clamp(-rect.top / total);
+      const rawP = clamp(-rect.top / total);
 
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
@@ -82,6 +83,17 @@ const ToolboxToSkillsBridge = () => {
       // Only show the actor when the shelf has actually settled into view
       // (prevents the toolbox from appearing during the About panel).
       const shelfVisible = !!shelf && shelf.width > 0 && shelf.visible === true;
+      if (shelfVisible && !hasSeenShelfRef.current) {
+        hasSeenShelfRef.current = true;
+        handoffStartRef.current = rawP;
+      }
+      if (!shelfVisible && rawP <= 0.01) {
+        hasSeenShelfRef.current = false;
+        handoffStartRef.current = null;
+      }
+
+      const startP = handoffStartRef.current ?? rawP;
+      const p = hasSeenShelfRef.current ? clamp((rawP - startP) / Math.max(0.52, 1 - startP)) : 0;
 
       // Start (parked-on-shelf) values — align by the BOTTOM of the actor to
       // the bottom of the shelf prop so the body rests ON the plank (no float).
@@ -93,7 +105,6 @@ const ToolboxToSkillsBridge = () => {
         sx = shelf!.cx - screenCx;
         // actor's geometric centre needs to sit (TBX_H*scale)/2 above shelf bottom
         sy = shelfBottom - (TBX_H * sScale) / 2 - screenCy;
-        if (!hasShelf) setHasShelf(true);
       }
 
       // === Position / scale ===
@@ -132,13 +143,13 @@ const ToolboxToSkillsBridge = () => {
 
       // === Publish handoff flags ===
       // Actor is visible whenever the shelf is in view OR we're past park.
-      const showActor = shelfVisible || p > 0.05;
+      const showActor = shelfVisible || (hasSeenShelfRef.current && p > 0.05);
       actor.style.opacity = showActor ? "1" : "0";
       // Hide shelf prop the entire time the bridge actor is on screen —
       // otherwise both toolboxes render at the same time.
       (window as any).__skillsFlipActive = showActor && p < 0.999;
       // Shelf + spines fade out shortly after the actor lifts off.
-      (window as any).__bridgeFadeOut = clamp(seg(0.25, 0.5, p));
+      (window as any).__bridgeFadeOut = showActor ? clamp(seg(0.2, 0.45, p)) : 0;
 
       raf = requestAnimationFrame(tick);
     };
@@ -148,7 +159,7 @@ const ToolboxToSkillsBridge = () => {
       (window as any).__skillsFlipActive = false;
       (window as any).__bridgeFadeOut = 0;
     };
-  }, [endScale, hasShelf, scale, rotX, rotY, lidRot, interiorOpacity, interiorY]);
+  }, [endScale, scale, rotX, rotY, lidRot, interiorOpacity, interiorY]);
 
   return (
     <section
