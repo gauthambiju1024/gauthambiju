@@ -203,7 +203,7 @@ const DeskSceneStage = () => {
               {/* PLANT POT — botanical line-art, positioned so toolbox occludes lower-right (3D depth) */}
               <div
                 className="dsk-plant absolute pointer-events-none"
-                style={{ left: "3%", top: "48%", width: "10%", minWidth: "115px", maxWidth: "165px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
+                style={{ left: "3%", top: "47%", width: "10%", minWidth: "120px", maxWidth: "170px", opacity: 0, willChange: "transform, opacity", zIndex: 5 }}
               >
                 <svg viewBox="0 0 140 240" className="w-full h-auto">
                   {/* central curved stem */}
