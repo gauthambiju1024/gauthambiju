@@ -43,8 +43,8 @@ const DeskSceneStage = () => {
         const el = root.querySelector<HTMLElement>(sel);
         if (!el) return;
         el.style.opacity = String(v);
-        const extraX = sel === ".dsk-laptop" ? " translateX(-50%)" : "";
-        if (ty || extraX) el.style.transform = `translateY(${ty}px)${extraX}`;
+        const extraX = sel === ".dsk-laptop" ? " translate(-50%, -50%)" : "";
+        if (ty || extraX) el.style.transform = sel === ".dsk-laptop" ? `translate(-50%, calc(-50% + ${ty}px))` : `translateY(${ty}px)`;
       };
       const setStroke = (sel: string, v: number) => {
         const el = root.querySelector<SVGPathElement>(sel);
