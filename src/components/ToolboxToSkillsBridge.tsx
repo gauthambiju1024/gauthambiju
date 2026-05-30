@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
-import { Toolbox3D, TBX_W, TBX_D } from "./skills/ToolboxSvg";
+import { Toolbox3D, TBX_W, TBX_D, TBX_H_BASE, TBX_H_LID } from "./skills/ToolboxSvg";
 import ToolboxInterior from "./skills/ToolboxInterior";
 
 /**
