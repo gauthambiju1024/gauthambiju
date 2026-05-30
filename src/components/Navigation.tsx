@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { smoothScrollTo } from "@/lib/smoothScroll";
 
 const navItems = [
   { id: "home", label: "Home" },
@@ -58,12 +57,10 @@ const Navigation = ({ embedded = false }: NavigationProps) => {
     if (location.pathname !== '/') {
       navigate('/');
       setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) smoothScrollTo(el, { offset: -90 });
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     } else {
-      const el = document.getElementById(sectionId);
-      if (el) smoothScrollTo(el, { offset: -90 });
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
     }
   };
 

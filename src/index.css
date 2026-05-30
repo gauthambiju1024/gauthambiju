@@ -83,29 +83,6 @@
     @apply border-border;
   }
 
-  /* Lenis owns the smooth-scroll feel. Disable native smooth-scroll so the
-     two don't fight, but keep scroll-padding-top so anchor jumps land below
-     the fixed Assembly Header. */
-  html {
-    scroll-behavior: auto;
-    scroll-padding-top: 100px;
-  }
-
-  /* When Lenis is active it adds .lenis html element classes. */
-  html.lenis,
-  html.lenis body {
-    height: auto;
-  }
-  .lenis.lenis-smooth {
-    scroll-behavior: auto !important;
-  }
-  .lenis.lenis-smooth [data-lenis-prevent] {
-    overscroll-behavior: contain;
-  }
-  .lenis.lenis-stopped {
-    overflow: clip;
-  }
-
   body {
     background: hsl(var(--background));
     color: hsl(var(--ink));
@@ -126,28 +103,6 @@
   ::selection {
     background: hsl(var(--primary) / 0.2);
     color: hsl(var(--card-foreground));
-  }
-
-  /* Scroll-perf hints for elements animated every frame */
-  .dsk-plant,
-  .dsk-laptop,
-  .dsk-mug,
-  .dsk-notes,
-  .dsk-toolbox-slot {
-    will-change: transform, opacity;
-  }
-  .margin-doodles .doodle .draw {
-    will-change: stroke-dashoffset;
-  }
-
-  /* Honor reduced-motion globally — short, snappy transitions only */
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
   }
 }
 

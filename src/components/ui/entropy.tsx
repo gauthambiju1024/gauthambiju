@@ -103,40 +103,10 @@ export function Entropy() {
       })
     }
 
-    let time = 0;
-    let animationId: number;
-    let visible = true;
-    let lastDrawnProgress = -1;
-    let lastDrawTime = -1;
-
-    // Pause canvas when off-screen (it's fixed-position, but if Lenis or page
-    // hides the background container we don't want to keep drawing).
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
-      },
-      { threshold: 0 }
-    );
-    io.observe(canvas);
+    let time = 0
+    let animationId: number
 
     function animate() {
-      animationId = requestAnimationFrame(animate)
-
-      if (!visible) return;
-
-      const sp = scrollProgressRef.current;
-      const progressChanged = Math.abs(sp - lastDrawnProgress) > 0.001;
-      // Particles need a tick to settle when scroll moves OR briefly after the
-      // last change (so the chaos motion completes), then we idle.
-      const settling = lastDrawTime >= 0 && (time - lastDrawTime) < 30;
-
-      if (!progressChanged && !settling) return;
-
-      if (progressChanged) {
-        lastDrawnProgress = sp;
-        lastDrawTime = time;
-      }
-
       ctx.clearRect(0, 0, w, h)
 
       if (time % 30 === 0) updateNeighbors()
@@ -159,14 +129,12 @@ export function Entropy() {
       })
 
       time++
+      animationId = requestAnimationFrame(animate)
     }
 
     animate()
 
-    return () => {
-      cancelAnimationFrame(animationId);
-      io.disconnect();
-    };
+    return () => cancelAnimationFrame(animationId)
   }, [])
 
   useEffect(() => {

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,7 +19,6 @@ import AdminLinks from "./pages/admin/AdminLinks";
 import AdminSections from "./pages/admin/AdminSections";
 import AdminCaseStudies from "./pages/admin/AdminCaseStudies";
 import CaseStudyPage from "./pages/CaseStudyPage";
-import { initSmoothScroll, destroySmoothScroll } from "./lib/smoothScroll";
 
 const queryClient = new QueryClient();
 
@@ -51,23 +49,16 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => {
-  useEffect(() => {
-    initSmoothScroll();
-    return () => destroySmoothScroll();
-  }, []);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AnimatedRoutes />
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
