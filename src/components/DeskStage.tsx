@@ -112,7 +112,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     const el = containerRef.current;
     const total = sections.length;
     const targetProgress = (idx + 0.5) / total;
-    const scrollable = (total - 1) * window.innerHeight;
+    const scrollable = (total - 1) * window.innerHeight * 1.65;
     const top = el.offsetTop + targetProgress * scrollable;
     window.scrollTo({ top, behavior: "smooth" });
   };
@@ -133,7 +133,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
     <div ref={containerRef} className="relative" style={{ height: `${sections.length * 165}vh` }}>
       {sections.map((s, i) => {
         const total = sections.length;
-        const topVh = ((i + 0.5) / total) * (total - 1) * 100;
+        const topVh = ((i + 0.5) / total) * (total - 1) * 165;
         return (
           <span
             key={s.id}
