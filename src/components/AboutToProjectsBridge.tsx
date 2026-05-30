@@ -125,34 +125,43 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       return easeInOut(u);
     };
 
+    let lastBridge = -1;
     const update = () => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // Fade in as the packet starts shrinking. Fade OUT when the
-      // Toolbox→Skills bridge has taken centre stage in the same viewport.
+      // Always-fresh global flags (cheap, single assignments) so downstream
+      // bridges read consistent state even when we skip the heavy write pass.
       const fadeOut = Number((window as any).__bridgeFadeOut ?? 0);
+      (window as any).__bridgeProgress = bridge;
+      (window as any).__bridgeActive = bridge > 0 && bridge < 1;
+      const settled = bridge >= 1.0;
+      (window as any).__bridgeSettled = settled;
+
+      // Toolbox visibility flag must be reactive to skills flip even when
+      // bridge value itself hasn't moved.
+      if (toolboxRef.current) {
+        (window as any).__toolboxEl = toolboxRef.current;
+        const flipping = bridge >= 1.0 || (window as any).__skillsFlipActive === true;
+        toolboxRef.current.style.opacity = flipping ? "0" : "1";
+        toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
+      }
+
+      // Skip the entire heavy write pass when bridge progress hasn't moved.
+      if (Math.abs(bridge - lastBridge) < 0.0005) {
+        return;
+      }
+      lastBridge = bridge;
+
       const baseOp = seg(0.70, 0.80, bridge);
       shelfWrap.style.opacity = String(Math.max(0, baseOp * (1 - fadeOut)));
       shelfWrap.style.pointerEvents = bridge >= 1.0 && fadeOut < 0.1 ? "auto" : "none";
 
-      (window as any).__bridgeActive = bridge > 0 && bridge < 1;
-      (window as any).__bridgeProgress = bridge;
-
-      const settled = bridge >= 1.0;
-      (window as any).__bridgeSettled = settled;
-      // Shelf spine appears slightly BEFORE the flying spine starts fading,
-      // and both stay at opacity 1 for an overlap window. Because they render
-      // pixel-aligned (flying spine's end rect == slot rect), the overlap is
-      // invisible — but it guarantees no missing frame → no flicker. On scroll
-      // up the shelf spine hides again as soon as we drop below the threshold.
       if (aboutSpineRef.current) {
         const shelfOn = bridge >= 0.97 ? 1 : 0;
         aboutSpineRef.current.style.opacity = String(shelfOn);
         aboutSpineRef.current.style.pointerEvents = bridge >= 1 ? "auto" : "none";
       }
-
-
 
       // === DRAW: per-row rule stroke + plank scaleX, both left→right and in sync.
       const drawWinStart = 0.74;
@@ -190,22 +199,19 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       });
 
       // === ARCHIVE: project spines fly TOWARD the shelf, top→bottom by row,
-      // left→right within each row. Window starts while About is still being
-      // shelved, so first spines emerge gracefully behind the flight.
+      // left→right within each row.
       const archWinStart = 0.86;
       const archWinEnd = 1.0;
       const archWinLen = archWinEnd - archWinStart;
-      const archSpan = archWinLen * 0.55; // longer, softer arrival per spine
+      const archSpan = archWinLen * 0.55;
       const archStaggerTotal = archWinLen - archSpan;
       let maxOrderRaw = 0;
       spineRefs.current.forEach((row, r) => {
         row.forEach((_, c) => {
-          // row-dominant ordering (top fills first), col secondary
           const raw = r * 1.0 + c * 0.18;
           if (raw > maxOrderRaw) maxOrderRaw = raw;
         });
       });
-      // easeOutQuint: gentler, more elegant settle than cubic.
       const easeOutQuint = (x: number) => 1 - Math.pow(1 - x, 5);
       spineRefs.current.forEach((row, r) => {
         row.forEach((el, c) => {
@@ -216,7 +222,6 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
           const end = start + archSpan;
           const u = clamp01((bridge - start) / (end - start));
           const eOut = u <= 0 ? 0 : u >= 1 ? 1 : easeOutQuint(u);
-          // Softer arrival: lower Z, smaller scale, less rotateY overshoot.
           const z = lerp(180, 0, eOut);
           const s = lerp(1.18, 1, eOut);
           let ry: number;
@@ -234,30 +239,23 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         });
       });
 
-      // Publish toolbox element + rect for the next-stage bridge (Toolbox→Skills flip).
+      // Publish toolbox rect (used by Skills bridge handoff)
       if (toolboxRef.current) {
-        (window as any).__toolboxEl = toolboxRef.current;
         const tr = toolboxRef.current.getBoundingClientRect();
         (window as any).__toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
           visible: bridge >= 1.0,
         };
-        // Once the projects shelf has settled, the bridge actor owns the exact
-        // same rect; hide this prop immediately so two toolboxes never flash.
-        const flipping = bridge >= 1.0 || (window as any).__skillsFlipActive === true;
-        toolboxRef.current.style.opacity = flipping ? "0" : "1";
-        toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
       }
 
       publishSlotRect();
     };
 
     update();
-    const onResize = () => { measureRules(); update(); publishSlotRect(); };
+    const onResize = () => { measureRules(); lastBridge = -1; update(); publishSlotRect(); };
     window.addEventListener("resize", onResize);
-    // Re-measure shortly after mount in case fonts/layout shift
-    const reMeasure = setTimeout(() => { measureRules(); update(); }, 80);
+    const reMeasure = setTimeout(() => { measureRules(); lastBridge = -1; update(); }, 80);
     let raf = 0;
     const loop = () => { update(); raf = requestAnimationFrame(loop); };
     raf = requestAnimationFrame(loop);

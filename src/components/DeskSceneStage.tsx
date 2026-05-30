@@ -109,60 +109,85 @@ const DeskSceneStage = () => {
     if (!root) return;
 
     let raf = 0;
+    let lastP = -1;
+    let slotRectCache: { width: number; cx: number; bottom: number } | null = null;
+    let slotRectStale = true;
+    const markSlotStale = () => { slotRectStale = true; };
+    window.addEventListener("resize", markSlotStale);
+    // Refresh cache on scroll too (cheap: just sets a flag; the read happens next rAF)
+    window.addEventListener("scroll", markSlotStale, { passive: true });
+
     const tick = () => {
       const p = editMode ? 1 : clamp(Number((window as any).__deskProgress ?? 0));
-      root.style.opacity = editMode ? "1" : String(easeInOut(seg(0.02, 0.16, p)));
 
-      // === Desk decoration draw-ins ===
-      const set = (sel: string, v: number, ty = 0) => {
-        const el = root.querySelector<HTMLElement>(sel);
-        if (!el) return;
-        el.style.opacity = String(v);
-        if (editMode) return;
-        if (ty) el.style.transform = `translateY(${ty}px)`;
-      };
-      const setStroke = (sel: string, v: number) => {
-        const el = root.querySelector<SVGPathElement>(sel);
-        if (!el) return;
-        const len = (el as any).__len || ((el as any).__len = el.getTotalLength?.() ?? 1000);
-        el.style.strokeDasharray = `${len}`;
-        el.style.strokeDashoffset = `${len * (1 - v)}`;
-      };
+      // Skip the entire DOM-write pass when scroll progress hasn't moved.
+      if (Math.abs(p - lastP) > 0.0005 || editMode) {
+        root.style.opacity = editMode ? "1" : String(easeInOut(seg(0.02, 0.16, p)));
 
-      setStroke(".dsk-edge", easeInOut(seg(0.0, 0.18, p)));
-      set(".dsk-wall", easeInOut(seg(0.0, 0.18, p)));
+        // === Desk decoration draw-ins ===
+        const set = (sel: string, v: number, ty = 0) => {
+          const el = root.querySelector<HTMLElement>(sel);
+          if (!el) return;
+          el.style.opacity = String(v);
+          if (editMode) return;
+          if (ty) el.style.transform = `translate3d(0,${ty}px,0)`;
+        };
+        // Only mutate strokeDashoffset per tick; strokeDasharray is set once and cached.
+        const setStroke = (sel: string, v: number) => {
+          const el = root.querySelector<SVGPathElement>(sel);
+          if (!el) return;
+          let len = (el as any).__len as number | undefined;
+          if (len === undefined) {
+            len = el.getTotalLength?.() ?? 1000;
+            (el as any).__len = len;
+            el.style.strokeDasharray = `${len}`;
+          }
+          el.style.strokeDashoffset = `${len * (1 - v)}`;
+        };
 
-      const tPlant = easeInOut(seg(0.2, 0.4, p));
-      set(".dsk-plant", tPlant, (1 - tPlant) * 18);
+        setStroke(".dsk-edge", easeInOut(seg(0.0, 0.18, p)));
+        set(".dsk-wall", easeInOut(seg(0.0, 0.18, p)));
 
-      const tLap = easeInOut(seg(0.3, 0.55, p));
-      set(".dsk-laptop", tLap, (1 - tLap) * 30);
+        const tPlant = easeInOut(seg(0.2, 0.4, p));
+        set(".dsk-plant", tPlant, (1 - tPlant) * 18);
 
-      const tMug = easeInOut(seg(0.55, 0.75, p));
-      set(".dsk-mug", tMug, (1 - tMug) * 16);
+        const tLap = easeInOut(seg(0.3, 0.55, p));
+        set(".dsk-laptop", tLap, (1 - tLap) * 30);
 
-      const tNotes = easeInOut(seg(0.65, 0.9, p));
-      set(".dsk-notes", tNotes, (1 - tNotes) * -20);
+        const tMug = easeInOut(seg(0.55, 0.75, p));
+        set(".dsk-mug", tMug, (1 - tMug) * 16);
 
-      const slotEl = root.querySelector<HTMLElement>(".dsk-toolbox-slot");
-      if (slotEl) {
-        const tr = slotEl.getBoundingClientRect();
-        if (tr.width > 0) {
-          (window as any).__deskToolboxSlot = {
-            left: tr.left,
-            top: tr.top,
-            width: tr.width,
-            height: tr.height,
-            cx: tr.left + tr.width / 2,
-            bottom: tr.top + tr.height,
-          };
+        const tNotes = easeInOut(seg(0.65, 0.9, p));
+        set(".dsk-notes", tNotes, (1 - tNotes) * -20);
+
+        lastP = p;
+      }
+
+      // Slot rect: only re-measure when invalidated by scroll/resize
+      if (slotRectStale) {
+        const slotEl = root.querySelector<HTMLElement>(".dsk-toolbox-slot");
+        if (slotEl) {
+          const tr = slotEl.getBoundingClientRect();
+          if (tr.width > 0) {
+            slotRectCache = {
+              width: tr.width,
+              cx: tr.left + tr.width / 2,
+              bottom: tr.top + tr.height,
+            };
+            (window as any).__deskToolboxSlot = slotRectCache;
+          }
         }
+        slotRectStale = false;
       }
 
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", markSlotStale);
+      window.removeEventListener("scroll", markSlotStale);
+    };
   }, []);
 
   useEffect(() => {
