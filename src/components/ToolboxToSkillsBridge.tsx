@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { Toolbox3D, TBX_W, TBX_D, TBX_H_BASE, TBX_H_LID } from "./skills/ToolboxSvg";
 import ToolboxInterior from "./skills/ToolboxInterior";
+import DeskSceneStage from "./DeskSceneStage";
 
 /**
  * Toolbox → Skills bridge — RESTORED to the "perfect" version.
@@ -58,8 +59,12 @@ const ToolboxToSkillsBridge = () => {
     const tick = () => {
       const rect = pin.getBoundingClientRect();
       const vh = window.innerHeight;
-      const total = Math.max(1, rect.height - vh);
-      const rawP = clamp(-rect.top / total);
+      // Preserve the original 220vh skills choreography exactly: it used a
+      // 120vh scrollable runway. The added desk stage starts only after that.
+      const skillsRunway = vh * 1.2;
+      const scrollPx = -rect.top;
+      const rawP = clamp(scrollPx / skillsRunway);
+      const deskP = clamp((scrollPx - skillsRunway) / skillsRunway);
 
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
@@ -101,23 +106,41 @@ const ToolboxToSkillsBridge = () => {
 
       const flyU = easeInOut(seg(0.25, 0.45, p));
       const settleU = seg(0.85, 1.0, p);
-      const x = lerp(sx, 0, flyU);
-      const y = lerp(sy, 0, flyU) + settleU * 40;
-      const scl = lerp(sScale, endScale, flyU) * lerp(1, 0.92, settleU);
+      let x = lerp(sx, 0, flyU);
+      let y = lerp(sy, 0, flyU) + settleU * 40;
+      let scl = lerp(sScale, endScale, flyU) * lerp(1, 0.92, settleU);
 
       actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
       scale.set(scl);
 
       const flipU = easeInOut(seg(0.45, 0.6, p));
       const finalU = easeInOut(seg(0.85, 1.0, p));
-      const rx = lerp(0, -90, flipU) + finalU * 75;
-      const ry = finalU * 35;
+      let rx = lerp(0, -90, flipU) + finalU * 75;
+      let ry = finalU * 35;
       rotX.set(`${rx.toFixed(2)}deg`);
       rotY.set(`${ry.toFixed(2)}deg`);
 
       const lidOpen = easeInOut(seg(0.55, 0.7, p));
       const lidClose = easeInOut(seg(0.92, 1.0, p));
       const lid = lerp(0, 125, lidOpen) * (1 - lidClose);
+
+      const deskSlot = (window as any).__deskToolboxSlot as
+        | { width: number; cx: number; bottom: number }
+        | undefined;
+      const deskU = easeInOut(seg(0.06, 0.38, deskP));
+      if (deskSlot && deskP > 0) {
+        const deskScale = deskSlot.width / TBX_W;
+        const deskX = deskSlot.cx - screenCx;
+        const deskY = deskSlot.bottom - (TBX_H * deskScale) / 2 - screenCy;
+        x = lerp(0, deskX, deskU);
+        y = lerp(40, deskY, deskU);
+        scl = lerp(endScale * 0.92, deskScale, deskU);
+        rx = lerp(-15, -12, deskU);
+        ry = lerp(35, 28, deskU);
+      }
+
+      actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+      scale.set(scl);
       lidRot.set(`${lid.toFixed(2)}deg`);
 
       const intIn = easeInOut(seg(0.62, 0.74, p));
@@ -129,6 +152,7 @@ const ToolboxToSkillsBridge = () => {
       actor.style.opacity = showActor ? "1" : "0";
       (window as any).__skillsFlipActive = showActor && p < 0.999;
       (window as any).__bridgeFadeOut = showActor ? clamp(seg(0.2, 0.45, p)) : 0;
+      (window as any).__deskProgress = deskP;
       // Publish final-state for desk stage handoff
       (window as any).__skillsEndState = {
         scale: scl,
