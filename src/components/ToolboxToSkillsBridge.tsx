@@ -37,7 +37,7 @@ const ToolboxToSkillsBridge = () => {
           (window.innerWidth * 0.92) / TBX_W,
           (window.innerHeight * 0.78) / TBX_D,
           1.1
-        ) * 0.6;
+        ) * 0.84;
       setEndScale(max);
     };
     compute();
