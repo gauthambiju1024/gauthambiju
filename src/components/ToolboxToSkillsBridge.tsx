@@ -76,13 +76,25 @@ const ToolboxToSkillsBridge = () => {
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
 
-      const shelf = (window as any).__toolboxRect as
-        | { left: number; top: number; width: number; height: number; cx: number; cy: number; visible?: boolean }
-        | null;
+      // Read the LIVE shelf-toolbox element rect synchronously in this same
+      // rAF — avoids 1-frame lag against AboutToProjectsBridge's loop which
+      // caused the "bouncy" parked behaviour while scrolling.
+      const shelfEl = (window as any).__toolboxEl as HTMLElement | null;
+      const shelfMeta = (window as any).__toolboxRect as { visible?: boolean } | null;
+      let shelf: { left: number; top: number; width: number; height: number; cx: number; cy: number } | null = null;
+      if (shelfEl && shelfEl.isConnected) {
+        const tr = shelfEl.getBoundingClientRect();
+        if (tr.width > 0) {
+          shelf = {
+            left: tr.left, top: tr.top, width: tr.width, height: tr.height,
+            cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
+          };
+        }
+      }
 
       // Only show the actor when the shelf has actually settled into view
       // (prevents the toolbox from appearing during the About panel).
-      const shelfVisible = !!shelf && shelf.width > 0 && shelf.visible === true;
+      const shelfVisible = !!shelf && shelfMeta?.visible === true;
       if (shelfVisible && !hasSeenShelfRef.current) {
         hasSeenShelfRef.current = true;
         handoffStartRef.current = rawP;
@@ -99,10 +111,10 @@ const ToolboxToSkillsBridge = () => {
       // the bottom of the shelf prop so the body rests ON the plank (no float).
       const TBX_H = TBX_H_BASE + TBX_H_LID; // 240
       let sx = 0, sy = 0, sScale = 0.25;
-      if (shelfVisible) {
-        sScale = shelf!.width / TBX_W;
-        const shelfBottom = shelf!.top + shelf!.height;
-        sx = shelf!.cx - screenCx;
+      if (shelf) {
+        sScale = shelf.width / TBX_W;
+        const shelfBottom = shelf.top + shelf.height;
+        sx = shelf.cx - screenCx;
         // actor's geometric centre needs to sit (TBX_H*scale)/2 above shelf bottom
         sy = shelfBottom - (TBX_H * sScale) / 2 - screenCy;
       }
