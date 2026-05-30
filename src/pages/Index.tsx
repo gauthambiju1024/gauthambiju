@@ -35,7 +35,7 @@ const Index = () => {
       <div className="margin-content-wrapper relative z-[2]">
         <HeroAboutFlip />
 
-        <div style={{ marginTop: "-50vh" }}>
+        <div style={{ marginTop: "-140vh" }}>
           <ToolboxToSkillsBridge />
         </div>
 
