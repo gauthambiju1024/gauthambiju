@@ -134,7 +134,7 @@ const ToolboxToSkillsBridge = () => {
         ry = lerp(35, 0, deskU);
       }
 
-      actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+      actor.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
       scale.set(scl);
       rotX.set(`${rx.toFixed(2)}deg`);
       rotY.set(`${ry.toFixed(2)}deg`);
