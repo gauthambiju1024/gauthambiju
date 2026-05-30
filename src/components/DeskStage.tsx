@@ -130,7 +130,7 @@ const DeskStage = ({ sections }: DeskStageProps) => {
   }
 
   return (
-    <div ref={containerRef} className="relative" style={{ height: `${sections.length * 100}vh` }}>
+    <div ref={containerRef} className="relative" style={{ height: `${sections.length * 165}vh` }}>
       {sections.map((s, i) => {
         const total = sections.length;
         const topVh = ((i + 0.5) / total) * (total - 1) * 100;
