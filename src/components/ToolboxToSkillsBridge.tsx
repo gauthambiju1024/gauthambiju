@@ -59,12 +59,12 @@ const ToolboxToSkillsBridge = () => {
     const tick = () => {
       const rect = pin.getBoundingClientRect();
       const vh = window.innerHeight;
-      // Preserve the original 220vh skills choreography exactly: it used a
-      // 120vh scrollable runway. The added desk stage starts only after that.
-      const skillsRunway = vh * 1.2;
+      // Per-section pacing: 185vh for the skills flip, then 185vh for the desk handoff.
+      const skillsRunway = vh * 1.85;
+      const deskRunway = vh * 1.85;
       const scrollPx = -rect.top;
       const rawP = clamp(scrollPx / skillsRunway);
-      const deskP = clamp((scrollPx - skillsRunway) / skillsRunway);
+      const deskP = clamp((scrollPx - skillsRunway) / deskRunway);
 
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
@@ -176,7 +176,7 @@ const ToolboxToSkillsBridge = () => {
       ref={pinRef}
       id="skills"
       aria-label="Skills toolbox"
-      style={{ height: "340vh" }}
+      style={{ height: "470vh" }}
       className="relative"
     >
       <span id="desk-scene" className="absolute left-0 w-1 h-1 pointer-events-none" style={{ top: "120vh" }} aria-hidden />
