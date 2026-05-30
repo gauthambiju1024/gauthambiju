@@ -129,9 +129,12 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const t = clamp01(progressMV.get());
       const bridge = seg(0.72, 1.0, t);
 
-      // Shelf fades in just as the packet starts shrinking
-      shelfWrap.style.opacity = String(seg(0.70, 0.80, bridge));
-      shelfWrap.style.pointerEvents = bridge >= 1.0 ? "auto" : "none";
+      // Fade in as the packet starts shrinking. Fade OUT when the
+      // Toolbox→Skills bridge has taken centre stage in the same viewport.
+      const fadeOut = Number((window as any).__bridgeFadeOut ?? 0);
+      const baseOp = seg(0.70, 0.80, bridge);
+      shelfWrap.style.opacity = String(Math.max(0, baseOp * (1 - fadeOut)));
+      shelfWrap.style.pointerEvents = bridge >= 1.0 && fadeOut < 0.1 ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
