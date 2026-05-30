@@ -220,10 +220,10 @@ const DeskSceneStage = () => {
                 </svg>
               </div>
 
-              {/* TOOLBOX SLOT — invisible target the actor lands on */}
+              {/* TOOLBOX SLOT — invisible target the actor lands on (left of laptop) */}
               <div
                 className="dsk-toolbox-slot absolute pointer-events-none"
-                style={{ left: "18%", bottom: "18%", width: "220px", height: "140px" }}
+                style={{ left: "10%", bottom: "14%", width: "200px", height: "130px" }}
               />
 
               {/* LAPTOP — CSS 3D */}
