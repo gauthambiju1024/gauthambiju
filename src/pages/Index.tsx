@@ -2,7 +2,6 @@ import HeroAboutFlip from "@/components/HeroAboutFlip";
 
 import ThinkingWall from "@/components/ThinkingWall";
 import ToolboxToSkillsBridge from "@/components/ToolboxToSkillsBridge";
-import DeskSceneStage from "@/components/DeskSceneStage";
 import WritingDesk from "@/components/WritingDesk";
 import ContactClosing from "@/components/ContactClosing";
 import MarginDoodles from "@/components/MarginDoodles";
@@ -39,8 +38,6 @@ const Index = () => {
         <div style={{ marginTop: "-140vh" }}>
           <ToolboxToSkillsBridge />
         </div>
-
-        <DeskSceneStage />
 
         {trailingStations.map(({ id, Frame, Section }) => (
           <div key={id} className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8 my-6 md:my-8">
