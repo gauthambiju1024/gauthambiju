@@ -172,8 +172,8 @@ const ToolboxToSkillsBridge = () => {
             className="relative"
             style={{
               pointerEvents: "auto",
-              willChange: "transform",
-              opacity: hasShelf ? 1 : 0,
+              willChange: "transform, opacity",
+              opacity: 0,
             }}
           >
             <Toolbox3D
