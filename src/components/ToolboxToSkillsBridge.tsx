@@ -37,7 +37,7 @@ const ToolboxToSkillsBridge = () => {
           (window.innerWidth * 0.92) / TBX_W,
           (window.innerHeight * 0.78) / TBX_D,
           1.1
-        ) * 0.84;
+        ) * 0.6;
       setEndScale(max);
     };
     compute();
@@ -59,12 +59,12 @@ const ToolboxToSkillsBridge = () => {
     const tick = () => {
       const rect = pin.getBoundingClientRect();
       const vh = window.innerHeight;
-      // Per-section pacing: 185vh for the skills flip, then 185vh for the desk handoff.
-      const skillsRunway = vh * 1.85;
-      const deskRunway = vh * 1.85;
+      // Preserve the original 220vh skills choreography exactly: it used a
+      // 120vh scrollable runway. The added desk stage starts only after that.
+      const skillsRunway = vh * 1.2;
       const scrollPx = -rect.top;
       const rawP = clamp(scrollPx / skillsRunway);
-      const deskP = clamp((scrollPx - skillsRunway) / deskRunway);
+      const deskP = clamp((scrollPx - skillsRunway) / skillsRunway);
 
       const screenCx = window.innerWidth / 2;
       const screenCy = window.innerHeight / 2;
@@ -134,7 +134,7 @@ const ToolboxToSkillsBridge = () => {
         ry = lerp(35, 0, deskU);
       }
 
-      actor.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
+      actor.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
       scale.set(scl);
       rotX.set(`${rx.toFixed(2)}deg`);
       rotY.set(`${ry.toFixed(2)}deg`);
@@ -176,11 +176,11 @@ const ToolboxToSkillsBridge = () => {
       ref={pinRef}
       id="skills"
       aria-label="Skills toolbox"
-      style={{ height: "470vh", pointerEvents: "none" }}
+      style={{ height: "340vh" }}
       className="relative"
     >
       <span id="desk-scene" className="absolute left-0 w-1 h-1 pointer-events-none" style={{ top: "120vh" }} aria-hidden />
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh", pointerEvents: "none" }}>
+      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
         <DeskSceneStage />
         <div
           className="absolute inset-0 flex items-center justify-center [perspective:1200px]"

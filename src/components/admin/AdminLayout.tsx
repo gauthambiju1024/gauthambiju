@@ -33,7 +33,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="admin-scope min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="p-6 border-b border-border">
           <h1 className="font-handwritten text-2xl text-card-foreground">Admin Panel</h1>

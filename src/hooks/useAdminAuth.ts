@@ -8,49 +8,43 @@ export function useAdminAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
-    const fetchRole = (userId: string) => {
-      // Defer to avoid deadlocking the auth callback
-      setTimeout(async () => {
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .eq('role', 'admin')
-          .maybeSingle();
-        if (mounted) setIsAdmin(!!data);
-      }, 0);
-    };
-
-    // 1. Set up listener FIRST (synchronous handler — no await)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!mounted) return;
+      async (_event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-        setLoading(false);
+
         if (currentUser) {
-          fetchRole(currentUser.id);
+          const { data } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+          setIsAdmin(!!data);
         } else {
           setIsAdmin(false);
         }
+        setLoading(false);
       }
     );
 
-    // 2. THEN restore existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+
+      if (currentUser) {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        setIsAdmin(!!data);
+      }
       setLoading(false);
-      if (currentUser) fetchRole(currentUser.id);
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
