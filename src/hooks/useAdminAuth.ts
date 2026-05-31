@@ -8,43 +8,49 @@ export function useAdminAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+    let mounted = true;
 
-        if (currentUser) {
-          const { data } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', currentUser.id)
-            .eq('role', 'admin')
-            .maybeSingle();
-          setIsAdmin(!!data);
-        } else {
-          setIsAdmin(false);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
+    const fetchRole = (userId: string) => {
+      // Defer to avoid deadlocking the auth callback
+      setTimeout(async () => {
         const { data } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', currentUser.id)
+          .eq('user_id', userId)
           .eq('role', 'admin')
           .maybeSingle();
-        setIsAdmin(!!data);
+        if (mounted) setIsAdmin(!!data);
+      }, 0);
+    };
+
+    // 1. Set up listener FIRST (synchronous handler — no await)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        setLoading(false);
+        if (currentUser) {
+          fetchRole(currentUser.id);
+        } else {
+          setIsAdmin(false);
+        }
       }
+    );
+
+    // 2. THEN restore existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
       setLoading(false);
+      if (currentUser) fetchRole(currentUser.id);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
