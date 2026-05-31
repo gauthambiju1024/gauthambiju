@@ -114,15 +114,13 @@ const DeskSceneStage = () => {
       root.style.opacity = editMode ? "1" : String(easeInOut(seg(0.02, 0.16, p)));
 
       // === Desk decoration draw-ins ===
-      const set = (sel: string, v: number, ty = 0) => {
+      const set = (sel: string, v: number, ty = 0, interactive = false) => {
         const el = root.querySelector<HTMLElement>(sel);
         if (!el) return;
         el.style.opacity = String(v);
-        // Gate pointer events: only clickable once the element is essentially visible.
-        // This prevents the invisible final desk scene from stealing clicks earlier
-        // (e.g. swallowing project-spine clicks and routing every click to /blog).
-        el.style.pointerEvents = v > 0.95 ? "auto" : "none";
         if (editMode) return;
+        // Only interactive elements get pointer events, and only when essentially visible.
+        el.style.pointerEvents = interactive && v > 0.98 ? "auto" : "none";
         if (ty) el.style.transform = `translateY(${ty}px)`;
       };
       const setStroke = (sel: string, v: number) => {
@@ -140,13 +138,13 @@ const DeskSceneStage = () => {
       set(".dsk-plant", tPlant, (1 - tPlant) * 18);
 
       const tLap = easeInOut(seg(0.3, 0.55, p));
-      set(".dsk-laptop", tLap, (1 - tLap) * 30);
+      set(".dsk-laptop", tLap, (1 - tLap) * 30, true);
 
       const tMug = easeInOut(seg(0.55, 0.75, p));
       set(".dsk-mug", tMug, (1 - tMug) * 16);
 
       const tNotes = easeInOut(seg(0.65, 0.9, p));
-      set(".dsk-notes", tNotes, (1 - tNotes) * -20);
+      set(".dsk-notes", tNotes, (1 - tNotes) * -20, true);
 
       const slotEl = root.querySelector<HTMLElement>(".dsk-toolbox-slot");
       if (slotEl) {
