@@ -1033,3 +1033,9 @@
   --dsk-mug-width: 92px;
   --dsk-mug-height: 90px;
 }
+
+/* ─── Admin Panel Theme Override ─── */
+.admin-scope {
+  --background: 36 37% 96%;
+  --foreground: 218 30% 21%;
+}
