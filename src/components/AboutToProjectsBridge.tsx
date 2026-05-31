@@ -300,6 +300,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
             display: "flex",
             flexDirection: "column",
             gap: 18,
+            pointerEvents: "auto",
           }}
         >
           {/* PROJECTS top shelf — same plank treatment as category rows */}
