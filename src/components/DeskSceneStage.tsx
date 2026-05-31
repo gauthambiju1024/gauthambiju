@@ -508,7 +508,7 @@ const DeskSceneStage = () => {
           {/* FIELD NOTES — top-right behind/above laptop */}
           {/* FIELD NOTES — top, only left corner peeks behind laptop */}
           <div
-            className="dsk-notes absolute pointer-events-auto"
+            className="dsk-notes absolute pointer-events-none"
             style={{
               left: "var(--dsk-notes-left, 664px)",
               top: "var(--dsk-notes-top, 96px)",
@@ -713,7 +713,7 @@ const DeskSceneStage = () => {
 
           {/* LAPTOP — grounded screen + shallow base */}
           <div
-            className="dsk-laptop absolute pointer-events-auto"
+            className="dsk-laptop absolute pointer-events-none"
             style={{
               left: "var(--dsk-laptop-left, 409px)",
               top: "var(--dsk-laptop-top, 489px)",
