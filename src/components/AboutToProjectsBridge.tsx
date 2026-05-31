@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MotionValue } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
@@ -134,22 +134,20 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
       const fadeOut = Number((window as any).__bridgeFadeOut ?? 0);
       const baseOp = seg(0.70, 0.80, bridge);
       shelfWrap.style.opacity = String(Math.max(0, baseOp * (1 - fadeOut)));
-      shelfWrap.style.pointerEvents = bridge >= 1.0 && fadeOut < 0.1 ? "auto" : "none";
+      // Gate by VISIBLE opacity (not exact bridge==1) so spines become clickable
+      // as soon as they have visibly landed.
+      const shelfInteractive = baseOp > 0.6 && fadeOut < 0.1;
+      shelfWrap.style.pointerEvents = shelfInteractive ? "auto" : "none";
 
       (window as any).__bridgeActive = bridge > 0 && bridge < 1;
       (window as any).__bridgeProgress = bridge;
 
       const settled = bridge >= 1.0;
       (window as any).__bridgeSettled = settled;
-      // Shelf spine appears slightly BEFORE the flying spine starts fading,
-      // and both stay at opacity 1 for an overlap window. Because they render
-      // pixel-aligned (flying spine's end rect == slot rect), the overlap is
-      // invisible — but it guarantees no missing frame → no flicker. On scroll
-      // up the shelf spine hides again as soon as we drop below the threshold.
       if (aboutSpineRef.current) {
         const shelfOn = bridge >= 0.97 ? 1 : 0;
         aboutSpineRef.current.style.opacity = String(shelfOn);
-        aboutSpineRef.current.style.pointerEvents = bridge >= 1 ? "auto" : "none";
+        aboutSpineRef.current.style.pointerEvents = shelfInteractive ? "auto" : "none";
       }
 
 
@@ -241,11 +239,9 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         (window as any).__toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
-          visible: bridge >= 1.0,
+          visible: shelfInteractive,
         };
-        // Once the projects shelf has settled, the bridge actor owns the exact
-        // same rect; hide this prop immediately so two toolboxes never flash.
-        const flipping = bridge >= 1.0 || (window as any).__skillsFlipActive === true;
+        const flipping = shelfInteractive || (window as any).__skillsFlipActive === true;
         toolboxRef.current.style.opacity = flipping ? "0" : "1";
         toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
       }
@@ -409,7 +405,22 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                         ref={aboutSpineRef}
                         style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", willChange: "opacity" }}
                       >
-                        <ProjectSpine data={ABOUT_SPINE_DATA} interactive onClick={() => setPopupOpen(true)} fullHeight />
+                        <button
+                          type="button"
+                          aria-label="More about me"
+                          onClick={() => setPopupOpen(true)}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            height: "100%",
+                            padding: 0,
+                            border: 0,
+                            background: "transparent",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <ProjectSpine data={ABOUT_SPINE_DATA} interactive fullHeight />
+                        </button>
                       </div>
                     </div>
                   )}
@@ -429,17 +440,29 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
                           filter: "drop-shadow(0 3px 2px rgba(0,0,0,0.5)) drop-shadow(0 6px 8px rgba(0,0,0,0.32))",
                         }}
                       >
-                        <ProjectSpine
-                          data={{
-                            title: p.title,
-                            subtitle: p.subtitle ?? (p.tags ?? [])[0] ?? "",
-                            year: p.year,
-                            color: p.color,
+                        <Link
+                          to={`/projects/${p.slug}`}
+                          aria-label={`Open ${p.title}`}
+                          style={{
+                            display: "block",
+                            padding: 0,
+                            border: 0,
+                            background: "transparent",
+                            cursor: "pointer",
+                            textDecoration: "none",
                           }}
-                          fallbackColor={SPINE_COLORS[(rowIndex * 3 + i) % SPINE_COLORS.length]}
-                          interactive
-                          onClick={() => navigate(`/projects/${p.slug}`)}
-                        />
+                        >
+                          <ProjectSpine
+                            data={{
+                              title: p.title,
+                              subtitle: p.subtitle ?? (p.tags ?? [])[0] ?? "",
+                              year: p.year,
+                              color: p.color,
+                            }}
+                            fallbackColor={SPINE_COLORS[(rowIndex * 3 + i) % SPINE_COLORS.length]}
+                            interactive
+                          />
+                        </Link>
                       </div>
                     );
                   })}

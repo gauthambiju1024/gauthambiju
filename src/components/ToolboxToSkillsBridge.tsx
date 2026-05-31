@@ -176,11 +176,11 @@ const ToolboxToSkillsBridge = () => {
       ref={pinRef}
       id="skills"
       aria-label="Skills toolbox"
-      style={{ height: "470vh" }}
+      style={{ height: "470vh", pointerEvents: "none" }}
       className="relative"
     >
       <span id="desk-scene" className="absolute left-0 w-1 h-1 pointer-events-none" style={{ top: "120vh" }} aria-hidden />
-      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh" }}>
+      <div className="sticky top-0 w-full overflow-hidden" style={{ height: "100vh", pointerEvents: "none" }}>
         <DeskSceneStage />
         <div
           className="absolute inset-0 flex items-center justify-center [perspective:1200px]"
