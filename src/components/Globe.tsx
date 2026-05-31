@@ -1,6 +1,7 @@
 import createGlobe, { COBEOptions } from "cobe";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { detectDeviceCapability } from "@/lib/deviceCapability";
 
 const GLOBE_CONFIG: COBEOptions = {
   width: 800,
@@ -36,6 +37,7 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
   const pointerInteracting = useRef<number | null>(null);
   const pointerInteractionMovement = useRef(0);
   const [r, setR] = useState(0);
+  const dprRef = useRef(2);
 
   const updatePointerInteraction = (value: number | null) => {
     pointerInteracting.current = value;
@@ -56,7 +58,7 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
     (state: Record<string, number>) => {
       if (!pointerInteracting.current) phiRef.current += 0.0006;
       state.phi = phiRef.current + r;
-      const w = widthRef.current * 2;
+      const w = widthRef.current * dprRef.current;
       state.width = w;
       state.height = w;
     },
@@ -67,6 +69,10 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const parent = canvas.parentElement as HTMLElement | null;
+
+    // Phase 5: oversample on desktop (unchanged), lighter on touch devices.
+    const cap = detectDeviceCapability();
+    dprRef.current = cap.coarsePointer ? 1.5 : 2;
 
     const measure = () => {
       const w =
@@ -85,8 +91,8 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
       if (w <= 0) return;
       globe = createGlobe(canvas, {
         ...config,
-        width: w * 2,
-        height: w * 2,
+        width: w * dprRef.current,
+        height: w * dprRef.current,
         onRender,
       });
       requestAnimationFrame(() => {
@@ -104,9 +110,27 @@ const Globe = ({ className, config = GLOBE_CONFIG }: GlobeProps) => {
     ro.observe(canvas);
     window.addEventListener("resize", measure);
 
+    // Phase 5: pause (destroy) the WebGL globe while it is scrolled off-screen,
+    // recreate it when it returns into view.
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.some((e) => e.isIntersecting);
+        if (visible) {
+          tryInit();
+        } else if (globe) {
+          globe.destroy();
+          globe = null;
+          canvas.style.opacity = "0";
+        }
+      },
+      { threshold: 0 }
+    );
+    io.observe(canvas);
+
     return () => {
       globe?.destroy();
       ro.disconnect();
+      io.disconnect();
       window.removeEventListener("resize", measure);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

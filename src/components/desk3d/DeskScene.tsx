@@ -157,10 +157,17 @@ const DeskScene = ({ progress, sectionCount, onJump }: DeskSceneProps) => {
 
   const eod = useEOD(30000, reduceMotion);
 
+  // Phase 5: cap pixel ratio on touch/coarse-pointer devices to save fill cost.
+  const maxDpr =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(pointer: coarse)").matches
+      ? 1.5
+      : 2;
+
   return (
     <Canvas
       shadows
-      dpr={[1, 2]}
+      dpr={[1, maxDpr]}
       camera={{ position: [0, 0.55, 1.25], fov: 42 }}
       frameloop="demand"
       gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}

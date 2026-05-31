@@ -1,4 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
+import { subscribeFrame } from '@/lib/choreography'
+import { detectDeviceCapability } from '@/lib/deviceCapability'
 
 export function Entropy() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -11,9 +13,11 @@ export function Entropy() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Phase 5: scale work to device class. Desktop/high tier is unchanged.
+    const cap = detectDeviceCapability()
     const w = window.innerWidth
     const h = window.innerHeight
-    const dpr = window.devicePixelRatio || 1
+    const dpr = Math.min(window.devicePixelRatio || 1, cap.coarsePointer ? 1.5 : 2)
     canvas.width = w * dpr
     canvas.height = h * dpr
     canvas.style.width = `${w}px`
@@ -80,7 +84,9 @@ export function Entropy() {
     }
 
     const particles: Particle[] = []
-    const gridSize = Math.round(Math.sqrt(w * h) / 25)
+    // Lower particle density on low-power devices; identical on desktop/high.
+    const densityDivisor = cap.tier === 'low' ? 34 : 25
+    const gridSize = Math.round(Math.sqrt(w * h) / densityDivisor)
     const cols = Math.ceil(w / (w / gridSize))
     const rows = Math.ceil(h / (h / gridSize))
     const spacingX = w / cols
@@ -104,9 +110,8 @@ export function Entropy() {
     }
 
     let time = 0
-    let animationId: number
 
-    function animate() {
+    function renderFrame() {
       ctx.clearRect(0, 0, w, h)
 
       if (time % 30 === 0) updateNeighbors()
@@ -129,12 +134,19 @@ export function Entropy() {
       })
 
       time++
-      animationId = requestAnimationFrame(animate)
     }
 
-    animate()
+    // Reduced-motion: render a single settled frame, no animation loop.
+    if (cap.reducedMotion) {
+      scrollProgressRef.current = 1
+      updateNeighbors()
+      renderFrame()
+      return () => {}
+    }
 
-    return () => cancelAnimationFrame(animationId)
+    // Drive the canvas from the app's single rAF ticker (no competing loop).
+    const unsub = subscribeFrame({ mutate: renderFrame })
+    return () => unsub()
   }, [])
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Linkedin, FileText } from "lucide-react";
 import { useBlogPosts } from "@/hooks/useSiteData";
+import { choreo, subscribeFrame } from "@/lib/choreography";
 
 
 /**
@@ -34,9 +35,8 @@ const DeskSceneStage = () => {
     const root = rootRef.current;
     if (!root) return;
 
-    let raf = 0;
-    const tick = () => {
-      const p = clamp(Number((window as any).__deskProgress ?? 0));
+    const mutate = () => {
+      const p = clamp(Number(choreo.deskProgress ?? 0));
       root.style.opacity = String(easeInOut(seg(0.02, 0.16, p)));
 
       // === Desk decoration draw-ins ===
@@ -72,11 +72,15 @@ const DeskSceneStage = () => {
 
       set(".dsk-lamp", easeInOut(seg(0.8, 1.0, p)) * 0.9);
 
+    };
+
+    // Read phase: publish the desk landing slot for the toolbox bridge.
+    const measure = () => {
       const slotEl = root.querySelector<HTMLElement>(".dsk-toolbox-slot");
       if (slotEl) {
         const tr = slotEl.getBoundingClientRect();
         if (tr.width > 0) {
-          (window as any).__deskToolboxSlot = {
+          choreo.deskToolboxSlot = {
             left: tr.left,
             top: tr.top,
             width: tr.width,
@@ -86,11 +90,10 @@ const DeskSceneStage = () => {
           };
         }
       }
-
-      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    const unsub = subscribeFrame({ measure, mutate });
+    return () => unsub();
   }, []);
 
   const topPosts = posts.slice(0, 3);
