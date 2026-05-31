@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import SmoothScroll from "./providers/SmoothScroll";
+import PerfOverlay, { perfOverlayEnabled } from "./components/dev/PerfOverlay";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import BlogPage from "./pages/BlogPage";
@@ -55,7 +57,10 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AnimatedRoutes />
+        <SmoothScroll>
+          <AnimatedRoutes />
+        </SmoothScroll>
+        {perfOverlayEnabled() && <PerfOverlay />}
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -6,6 +6,7 @@ import { useSiteContent } from "@/hooks/useSiteData";
 import AboutCardBack, { AboutJourneyData } from "./about/AboutCardBack";
 import AboutGlobe, { GlobeMarker } from "./about/AboutGlobe";
 import ProjectSpine, { SPINE_HEIGHT, ABOUT_SPINE_DATA } from "./projects/ProjectSpine";
+import { choreo, subscribeFrame } from "@/lib/choreography";
 
 type HeroBadge = {
   name?: string;
@@ -141,10 +142,8 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
     };
     update();
-    let mo: number | null = null;
-    const tick = () => { update(); mo = requestAnimationFrame(tick); };
-    mo = requestAnimationFrame(tick);
-    return () => { if (mo) cancelAnimationFrame(mo); };
+    const unsub = subscribeFrame({ mutate: update });
+    return () => { unsub(); };
   }, [mounted, anchorId]);
 
   // Drag + lanyard + scroll-driven transforms.
@@ -266,8 +265,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
       }
 
       // ============== RECT-BASED SPINE FLIGHT ==============
-      const slotRect = (window as any).__bridgeSlotRect as
-        | { left: number; top: number; width: number; height: number; cx: number; cy: number } | null;
+      const slotRect = choreo.bridgeSlotRect;
 
       // Capture the rendered spine rect at the EXACT moment of handoff — while
       // it is still the clean readable spine pose (bookRotate = 90°).
@@ -378,9 +376,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     };
 
 
-    let raf = 0;
-    const loop = () => { applyTransform(); raf = requestAnimationFrame(loop); };
-    raf = requestAnimationFrame(loop);
+    const unsubFrame = subscribeFrame({ mutate: applyTransform });
 
     const onPointerDown = (e: PointerEvent) => {
       if ((progressMV?.get() ?? 0) > 0.05) return;
@@ -408,7 +404,7 @@ const HeroIdBadge = ({ progressMV, anchorId = "home" }: Props) => {
     ro.observe(stage);
 
     return () => {
-      cancelAnimationFrame(raf);
+      unsubFrame();
       cardWrap.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);

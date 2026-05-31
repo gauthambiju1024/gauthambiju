@@ -5,6 +5,7 @@ import { useProjects } from "@/hooks/useSiteData";
 import ProjectSpine, { SPINE_COLORS, SPINE_WIDTH, SPINE_HEIGHT, ABOUT_SPINE_DATA } from "@/components/projects/ProjectSpine";
 import AboutPopup from "@/components/about/AboutPopup";
 import { ToolboxClosed } from "@/components/skills/ToolboxSvg";
+import { choreo, subscribeFrame } from "@/lib/choreography";
 
 
 /** Narrow spine width used by the hero filing animation; About spine stays this wide forever. */
@@ -114,7 +115,7 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
     const publishSlotRect = () => {
       const r = slot.getBoundingClientRect();
-      (window as any).__bridgeSlotRect = {
+      choreo.bridgeSlotRect = {
         left: r.left, top: r.top, width: r.width, height: r.height,
         cx: r.left + r.width / 2, cy: r.top + r.height / 2,
       };
@@ -131,16 +132,16 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
 
       // Fade in as the packet starts shrinking. Fade OUT when the
       // Toolbox→Skills bridge has taken centre stage in the same viewport.
-      const fadeOut = Number((window as any).__bridgeFadeOut ?? 0);
+      const fadeOut = Number(choreo.bridgeFadeOut ?? 0);
       const baseOp = seg(0.70, 0.80, bridge);
       shelfWrap.style.opacity = String(Math.max(0, baseOp * (1 - fadeOut)));
       shelfWrap.style.pointerEvents = bridge >= 1.0 && fadeOut < 0.1 ? "auto" : "none";
 
-      (window as any).__bridgeActive = bridge > 0 && bridge < 1;
-      (window as any).__bridgeProgress = bridge;
+      choreo.bridgeActive = bridge > 0 && bridge < 1;
+      choreo.bridgeProgress = bridge;
 
       const settled = bridge >= 1.0;
-      (window as any).__bridgeSettled = settled;
+      choreo.bridgeSettled = settled;
       // Shelf spine appears slightly BEFORE the flying spine starts fading,
       // and both stay at opacity 1 for an overlap window. Because they render
       // pixel-aligned (flying spine's end rect == slot rect), the overlap is
@@ -234,41 +235,46 @@ const AboutToProjectsBridge = ({ progressMV }: Props) => {
         });
       });
 
-      // Publish toolbox element + rect for the next-stage bridge (Toolbox→Skills flip).
+      // Once the projects shelf has settled, the bridge actor owns the exact
+      // same rect; hide this prop immediately so two toolboxes never flash.
       if (toolboxRef.current) {
-        (window as any).__toolboxEl = toolboxRef.current;
+        const flipping = bridge >= 1.0 || choreo.skillsFlipActive === true;
+        toolboxRef.current.style.opacity = flipping ? "0" : "1";
+        toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
+      }
+    };
+
+    // Read phase: publish toolbox element + rect + slot rect for downstream bridges.
+    const measure = () => {
+      const t = clamp01(progressMV.get());
+      const bridge = seg(0.72, 1.0, t);
+      if (toolboxRef.current) {
+        choreo.toolboxEl = toolboxRef.current;
         const tr = toolboxRef.current.getBoundingClientRect();
-        (window as any).__toolboxRect = {
+        choreo.toolboxRect = {
           left: tr.left, top: tr.top, width: tr.width, height: tr.height,
           cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
           visible: bridge >= 1.0,
         };
-        // Once the projects shelf has settled, the bridge actor owns the exact
-        // same rect; hide this prop immediately so two toolboxes never flash.
-        const flipping = bridge >= 1.0 || (window as any).__skillsFlipActive === true;
-        toolboxRef.current.style.opacity = flipping ? "0" : "1";
-        toolboxRef.current.style.visibility = flipping ? "hidden" : "visible";
       }
-
       publishSlotRect();
     };
 
+    measure();
     update();
-    const onResize = () => { measureRules(); update(); publishSlotRect(); };
+    const onResize = () => { measureRules(); measure(); update(); };
     window.addEventListener("resize", onResize);
     // Re-measure shortly after mount in case fonts/layout shift
-    const reMeasure = setTimeout(() => { measureRules(); update(); }, 80);
-    let raf = 0;
-    const loop = () => { update(); raf = requestAnimationFrame(loop); };
-    raf = requestAnimationFrame(loop);
+    const reMeasure = setTimeout(() => { measureRules(); measure(); update(); }, 80);
+    const unsub = subscribeFrame({ measure, mutate: update });
 
     return () => {
       window.removeEventListener("resize", onResize);
       clearTimeout(reMeasure);
-      cancelAnimationFrame(raf);
-      (window as any).__bridgeProgress = 0;
-      (window as any).__bridgeActive = false;
-      (window as any).__bridgeSlotRect = null;
+      unsub();
+      choreo.bridgeProgress = 0;
+      choreo.bridgeActive = false;
+      choreo.bridgeSlotRect = null;
     };
   }, [projects, progressMV, rows.length]);
 

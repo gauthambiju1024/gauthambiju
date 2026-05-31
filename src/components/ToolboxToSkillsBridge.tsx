@@ -3,12 +3,27 @@ import { motion, useMotionValue } from "framer-motion";
 import { Toolbox3D, TBX_W, TBX_D, TBX_H_BASE, TBX_H_LID } from "./skills/ToolboxSvg";
 import ToolboxInterior from "./skills/ToolboxInterior";
 import DeskSceneStage from "./DeskSceneStage";
+import { choreo } from "@/lib/choreography";
+import { subscribeFrame } from "@/lib/choreography";
+import { SCROLL_DAMPING } from "@/lib/motion";
 
 /**
- * Toolbox → Skills bridge — RESTORED to the "perfect" version.
+ * Toolbox → Skills bridge.
+ *
+ * Phase 2 rewrite: the 0.0–1.0 keyframe choreography is preserved EXACTLY; only
+ * the way progress reaches the DOM changed:
+ *   • Motion is no longer mapped from RAW scroll. Each frame we compute a target
+ *     progress and interpolate the *rendered* progress toward it
+ *     (rendered += (target - rendered) * damping). At rest rendered === target,
+ *     so resting poses are pixel-identical to before — it only removes stepping.
+ *   • No standalone requestAnimationFrame: subscribes to the app's single
+ *     measure→mutate ticker. All reads happen in `measure`, all writes in
+ *     `mutate`, so there is no read-after-write layout thrash.
+ *   • Cross-component coupling goes through the typed `choreo` store instead of
+ *     window.__* globals (frame-synced, no cross-loop lag).
  *
  * Phases (progress p):
- *   0.00–0.25  park on the shelf rect (shelf prop hidden via __skillsFlipActive)
+ *   0.00–0.25  park on the shelf rect (shelf prop hidden via choreo.skillsFlipActive)
  *   0.25–0.45  fly to centre + scale up
  *   0.45–0.60  rotate to top-down (-90°)
  *   0.55–0.70  lid hinges open
@@ -55,34 +70,62 @@ const ToolboxToSkillsBridge = () => {
     const seg = (a: number, b: number, x: number) => clamp((x - a) / (b - a));
     const easeInOut = (x: number) => x * x * (3 - 2 * x);
 
-    let raf = 0;
-    const tick = () => {
+    // ---- Phase 3: runway derived from a CACHED pixel height ----
+    // The section is 340vh tall with a 100vh sticky child, so 240vh scrolls;
+    // skills owns the first 120vh, the desk stage the next 120vh. Deriving the
+    // runway from the element's pixel height (updated only on real resize) means
+    // the choreography timing no longer shifts when the mobile URL bar resizes
+    // `vh` mid-scroll.
+    let runwayPx = window.innerHeight * 1.2;
+    const computeRunway = () => {
+      const h = pin.offsetHeight;
+      runwayPx = h > 0 ? h * (1.2 / 3.4) : window.innerHeight * 1.2;
+    };
+    computeRunway();
+    const ro = new ResizeObserver(computeRunway);
+    ro.observe(pin);
+    window.addEventListener("resize", computeRunway);
+
+    // ---- per-frame measured values (read phase) ----
+    let rawP = 0;
+    let deskP = 0;
+    let screenCx = window.innerWidth / 2;
+    let screenCy = window.innerHeight / 2;
+    let shelf:
+      | { top: number; height: number; width: number; cx: number }
+      | null = null;
+    let shelfVisible = false;
+
+    // ---- damped rendered progress (the smoothness fix) ----
+    let renderedP = 0;
+    let renderedDeskP = 0;
+    let initialized = false; // snap to target on first frame (no load-in sweep)
+
+    const measure = () => {
       const rect = pin.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // Preserve the original 220vh skills choreography exactly: it used a
-      // 120vh scrollable runway. The added desk stage starts only after that.
-      const skillsRunway = vh * 1.2;
+      screenCx = window.innerWidth / 2;
+      screenCy = window.innerHeight / 2;
+      // Skills choreography keeps its 120vh runway; sourced from the cached
+      // pixel height so it is stable against mobile URL-bar resize.
+      const skillsRunway = runwayPx;
       const scrollPx = -rect.top;
-      const rawP = clamp(scrollPx / skillsRunway);
-      const deskP = clamp((scrollPx - skillsRunway) / skillsRunway);
+      rawP = clamp(scrollPx / skillsRunway);
+      deskP = clamp((scrollPx - skillsRunway) / skillsRunway);
 
-      const screenCx = window.innerWidth / 2;
-      const screenCy = window.innerHeight / 2;
-
-      const shelfEl = (window as any).__toolboxEl as HTMLElement | null;
-      const shelfMeta = (window as any).__toolboxRect as { visible?: boolean } | null;
-      let shelf: { left: number; top: number; width: number; height: number; cx: number; cy: number } | null = null;
-      if (shelfEl && shelfEl.isConnected) {
-        const tr = shelfEl.getBoundingClientRect();
-        if (tr.width > 0) {
-          shelf = {
-            left: tr.left, top: tr.top, width: tr.width, height: tr.height,
-            cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2,
-          };
-        }
+      // Shelf geometry comes from the store (published by AboutToProjectsBridge)
+      // — no second getBoundingClientRect on the shelf element here.
+      const tr = choreo.toolboxRect;
+      if (tr && tr.width > 0) {
+        shelf = { top: tr.top, height: tr.height, width: tr.width, cx: tr.cx };
+        shelfVisible = tr.visible === true;
+      } else {
+        shelf = null;
+        shelfVisible = false;
       }
+    };
 
-      const shelfVisible = !!shelf && shelfMeta?.visible === true;
+    const mutate = () => {
+      // --- handoff state machine (runs on RAW progress, unchanged logic) ---
       if (shelfVisible && !hasSeenShelfRef.current) {
         hasSeenShelfRef.current = true;
         handoffStartRef.current = rawP;
@@ -93,10 +136,29 @@ const ToolboxToSkillsBridge = () => {
       }
 
       const startP = handoffStartRef.current ?? rawP;
-      const p = hasSeenShelfRef.current ? clamp((rawP - startP) / Math.max(0.52, 1 - startP)) : 0;
+      const targetP = hasSeenShelfRef.current
+        ? clamp((rawP - startP) / Math.max(0.52, 1 - startP))
+        : 0;
+
+      // --- damp rendered progress toward the targets ---
+      if (!initialized) {
+        renderedP = targetP;
+        renderedDeskP = deskP;
+        initialized = true;
+      } else {
+        renderedP += (targetP - renderedP) * SCROLL_DAMPING;
+        renderedDeskP += (deskP - renderedDeskP) * SCROLL_DAMPING;
+        // Snap when essentially settled so resting poses are pixel-exact.
+        if (Math.abs(targetP - renderedP) < 0.0005) renderedP = targetP;
+        if (Math.abs(deskP - renderedDeskP) < 0.0005) renderedDeskP = deskP;
+      }
+      const p = renderedP;
+      const dp = renderedDeskP;
 
       const TBX_H = TBX_H_BASE + TBX_H_LID;
-      let sx = 0, sy = 0, sScale = 0.25;
+      let sx = 0,
+        sy = 0,
+        sScale = 0.25;
       if (shelf) {
         sScale = shelf.width / TBX_W;
         const shelfBottom = shelf.top + shelf.height;
@@ -119,11 +181,9 @@ const ToolboxToSkillsBridge = () => {
       const lidClose = easeInOut(seg(0.92, 1.0, p));
       const lid = lerp(0, 125, lidOpen) * (1 - lidClose);
 
-      const deskSlot = (window as any).__deskToolboxSlot as
-        | { width: number; cx: number; bottom: number }
-        | undefined;
-      const deskU = easeInOut(seg(0.06, 0.38, deskP));
-      if (deskSlot && deskP > 0) {
+      const deskSlot = choreo.deskToolboxSlot;
+      const deskU = easeInOut(seg(0.06, 0.38, dp));
+      if (deskSlot && dp > 0) {
         const deskScale = deskSlot.width / TBX_W;
         const deskX = deskSlot.cx - screenCx;
         const deskY = deskSlot.bottom - (TBX_H * deskScale) / 2 - screenCy;
@@ -145,29 +205,35 @@ const ToolboxToSkillsBridge = () => {
       interiorOpacity.set(intIn * (1 - intOut));
       interiorY.set(lerp(30, 0, intIn));
 
-      const showActor = shelfVisible || (hasSeenShelfRef.current && p > 0.05);
+      // Visibility gating stays on RAW progress so the actor never disappears
+      // early while the damped pose is still catching up.
+      const showActor = shelfVisible || (hasSeenShelfRef.current && rawP > 0.05);
       actor.style.opacity = showActor ? "1" : "0";
-      (window as any).__skillsFlipActive = showActor && p < 0.999;
-      (window as any).__bridgeFadeOut = showActor ? clamp(seg(0.2, 0.45, p)) : 0;
-      (window as any).__deskProgress = deskP;
-      // Publish final-state for desk stage handoff
-      (window as any).__skillsEndState = {
+
+      // will-change scoped to the active actor only (removed when idle).
+      actor.style.willChange = showActor ? "transform, opacity" : "auto";
+
+      choreo.skillsFlipActive = showActor && rawP < 0.999;
+      choreo.bridgeFadeOut = showActor ? clamp(seg(0.2, 0.45, p)) : 0;
+      choreo.deskProgress = dp;
+      choreo.skillsEndState = {
         scale: scl,
-        rx, ry,
-        // actor's screen-centre after settle
+        rx,
+        ry,
         cx: screenCx + x,
         cy: screenCy + y,
         active: showActor,
-        done: p >= 0.999,
+        done: rawP >= 0.999,
       };
-
-      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+
+    const unsub = subscribeFrame({ measure, mutate });
     return () => {
-      cancelAnimationFrame(raf);
-      (window as any).__skillsFlipActive = false;
-      (window as any).__bridgeFadeOut = 0;
+      unsub();
+      ro.disconnect();
+      window.removeEventListener("resize", computeRunway);
+      choreo.skillsFlipActive = false;
+      choreo.bridgeFadeOut = 0;
     };
   }, [endScale, scale, rotX, rotY, lidRot, interiorOpacity, interiorY]);
 
