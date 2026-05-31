@@ -118,6 +118,10 @@ const DeskSceneStage = () => {
         const el = root.querySelector<HTMLElement>(sel);
         if (!el) return;
         el.style.opacity = String(v);
+        // Gate pointer events: only clickable once the element is essentially visible.
+        // This prevents the invisible final desk scene from stealing clicks earlier
+        // (e.g. swallowing project-spine clicks and routing every click to /blog).
+        el.style.pointerEvents = v > 0.95 ? "auto" : "none";
         if (editMode) return;
         if (ty) el.style.transform = `translateY(${ty}px)`;
       };
